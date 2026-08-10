@@ -1,0 +1,9 @@
+<main class="shell">
+  <nz-card [nzTitle]="title()">
+    <p>Statut de l'API backend, vérifié toutes les 2 secondes :</p>
+    <nz-tag [nzColor]="health() === 'ok' ? 'success' : health() === 'down' ? 'error' : 'processing'">
+      {{ health() === 'ok' ? 'OK' : health() === 'down' ? 'Indisponible' : 'Vérification…' }}
+    </nz-tag>
+  </nz-card>
+  <router-outlet />
+</main>

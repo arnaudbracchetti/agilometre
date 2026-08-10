@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-agilometre}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agilometre}
+      POSTGRES_DB: ${POSTGRES_DB:-agilometre}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agilometre}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-agilometre}:${POSTGRES_PASSWORD:-agilometre}@postgres:5432/${POSTGRES_DB:-agilometre}?schema=public
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET est requis}
+      SMTP_HOST: ${SMTP_HOST:?SMTP_HOST est requis}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-Agilomètre <no-reply@agilometre.local>}
+    ports:
+      - "8080:3000"
+
+volumes:
+  postgres-data:

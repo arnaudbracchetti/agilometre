@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+.angular/
+coverage/
+*.log
+.env
+.env.local
+.DS_Store
+
+.claude/settings.local.json
+.claude/worktrees/

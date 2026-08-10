@@ -1,0 +1,140 @@
+// Squelette de modèle de domaine (PRD §4). À affiner au fil de l'implémentation.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  COACH
+  MANAGER
+  DIRECTION
+}
+
+enum OrigineReponse {
+  SESSION
+  POULS
+}
+
+enum StatutSession {
+  OUVERTE
+  CLOTUREE
+}
+
+// --- Référentiel : importé une fois au déploiement, figé ensuite (§4, §10) ---
+
+model Theme {
+  id        String     @id @default(uuid())
+  libelle   String
+  ordre     Int
+  questions Question[]
+}
+
+model Question {
+  id      String   @id @default(uuid())
+  libelle String
+  theme   Theme    @relation(fields: [themeId], references: [id])
+  themeId String
+  options Option[]
+}
+
+model Option {
+  id         String   @id @default(uuid())
+  libelle    String
+  niveau     Int // 1 à 4
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId String
+}
+
+// --- Organisation : entités / BU > équipes > membres (§4) ---
+
+model Entite {
+  id      String   @id @default(uuid())
+  nom     String
+  equipes Equipe[]
+}
+
+model Equipe {
+  id        String          @id @default(uuid())
+  nom       String
+  entite    Entite          @relation(fields: [entiteId], references: [id])
+  entiteId  String
+  membres   Membre[]
+  sessions  Session[]
+  campagnes CampagnePouls[]
+}
+
+model Membre {
+  id             String  @id @default(uuid())
+  nom            String
+  email          String  @unique
+  role           Role
+  equipe         Equipe  @relation(fields: [equipeId], references: [id])
+  equipeId       String
+  // Mot de passe local (comptes coach/manager/direction, §10). Absent pour les
+  // membres qui ne se connectent que via jeton de séance ou lien de pouls.
+  motDePasseHash String?
+}
+
+// --- Session animée (§4, §7) ---
+
+model Session {
+  id       String        @id @default(uuid())
+  equipe   Equipe        @relation(fields: [equipeId], references: [id])
+  equipeId String
+  date     DateTime      @default(now())
+  statut   StatutSession @default(OUVERTE)
+  tours    TourDeVote[]
+}
+
+model TourDeVote {
+  id         String    @id @default(uuid())
+  session    Session   @relation(fields: [sessionId], references: [id])
+  sessionId  String
+  questionId String
+  numero     Int
+  ouvertLe   DateTime  @default(now())
+  clotureLe  DateTime?
+  reponses   Reponse[]
+}
+
+// --- Campagne de pouls (§4, §8) ---
+
+model CampagnePouls {
+  id                String          @id @default(uuid())
+  equipe            Equipe          @relation(fields: [equipeId], references: [id])
+  equipeId          String
+  rythmeJours       Int
+  questionsParEnvoi Int             @default(1)
+  dateFin           DateTime?
+  sollicitations    Sollicitation[]
+}
+
+// Trace qui a été sollicité, sur quelle question, sans jamais lier à la réponse (§5).
+model Sollicitation {
+  id         String        @id @default(uuid())
+  campagne   CampagnePouls @relation(fields: [campagneId], references: [id])
+  campagneId String
+  membreId   String
+  questionId String
+  tokenHash  String        @unique
+  envoyeeLe  DateTime      @default(now())
+  expireLe   DateTime
+  honoreeLe  DateTime?
+}
+
+// --- Réponse anonyme (§4, §5) : aucun lien vers l'identité du répondant ---
+
+model Reponse {
+  id         String         @id @default(uuid())
+  questionId String
+  niveau     Int // 1 à 4
+  equipeId   String
+  horodatage DateTime       @default(now())
+  origine    OrigineReponse
+  tour       TourDeVote?    @relation(fields: [tourId], references: [id])
+  tourId     String?
+}

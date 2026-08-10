@@ -1,0 +1,25 @@
+{
+  "name": "agilometre",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "pnpm run --parallel --filter backend --filter frontend dev",
+    "dev:db": "docker compose up postgres",
+    "build": "pnpm --filter shared build && pnpm --filter backend build && pnpm --filter frontend build",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test",
+    "prisma:migrate": "pnpm --filter backend exec prisma migrate dev"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
+  }
+}
