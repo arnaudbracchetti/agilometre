@@ -97,3 +97,13 @@ add new required env vars here, not just to `.env.example`.
   image just to regenerate the client.
 - Postgres is published on host port `5433` by default (`POSTGRES_PORT` in `.env`), not 5432 —
   avoids clashing with other local Postgres instances.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (arnaudbracchetti/agilometre), via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context layout — one `CONTEXT.md` + `docs/adr/` at the repo root (not created yet; `/domain-modeling` generates them lazily as terms/decisions get resolved). See `docs/agents/domain.md`.
