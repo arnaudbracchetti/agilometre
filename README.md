@@ -37,6 +37,16 @@ packages/shared Types partagés (rôles, scoring)
 - `pnpm build` — build de production (shared → backend → frontend)
 - `pnpm lint` / `pnpm test` — sur tous les workspaces
 
+## Scripts de développement
+
+- `scripts/import-referentiel.sh <fichier.yaml> [url_base]` — recharge le Référentiel depuis un
+  fichier YAML : aperçu (`POST /api/referentiel/import/apercu`), demande confirmation, puis
+  application (`POST /api/referentiel/import/application`) si confirmé. N'appelle jamais
+  l'application si l'aperçu détecte des erreurs ou si la confirmation est refusée. Flags :
+  `--apercu-only` (aperçu seul, jamais d'écriture) ou `-y` (bypasse la confirmation, applique
+  directement). Exemple :
+  `scripts/import-referentiel.sh -y "apps/backend/referentiel_questions/questions Axe1.yaml"`.
+
 ## Déploiement
 
 ```bash
