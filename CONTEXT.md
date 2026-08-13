@@ -64,6 +64,10 @@ Un envoi individuel généré par une Campagne de pouls vers un Membre, portant 
 **Jeton**:
 Un identifiant à usage unique attaché à une Sollicitation, consommé à la réception de la Réponse puis sans lien conservé vers celle-ci.
 
+**Honorer** (une Sollicitation):
+Marquer qu'une Sollicitation a reçu une réponse, en renseignant `honoreeLe`, au moment précis où le Jeton résout la Sollicitation - avant que celle-ci ne soit définitivement désolidarisée de la Réponse écrite.
+_Avoid_: Répondre à (réservé à l'acte du Membre ; "honorer" est l'effet côté Sollicitation)
+
 **Taux de participation**:
 La part des Sollicitations honorées sur une période - le critère de succès principal du produit (PRD §11).
 _Avoid_: Taux de réponse (même notion, formulation alternative du PRD §11)
