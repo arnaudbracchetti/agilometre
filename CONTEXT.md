@@ -10,8 +10,20 @@ le Pouls (micro-sondages email récurrents). Glossaire distillé de
 ### Référentiel
 
 **Référentiel**:
-Le catalogue de Thèmes et Questions, importé une fois au déploiement puis figé - jamais modifié depuis l'application.
+Le catalogue de Thèmes et Questions. Jamais modifié depuis l'application ; mis à jour uniquement par ré-import explicite d'un fichier structuré, jamais automatiquement au démarrage du serveur. Chaque ré-import réconcilie avec l'existant via la Clé stable de chaque Thème/Question.
 _Avoid_: Questionnaire
+
+**Clé stable**:
+L'identifiant métier porté par un Thème ou une Question dans le fichier d'import, qui persiste d'un import à l'autre et permet de reconnaître "la même" entité malgré un changement de libellé ou de Thème.
+
+**Aperçu d'import**:
+Le calcul, sans aucune écriture, de ce qu'un ré-import du Référentiel changerait (créations, mises à jour, réaffectations de Thème, archivages, réactivations) - donné à relire avant application.
+
+**Application de l'import**:
+L'écriture effective des changements calculés par l'Aperçu d'import ; refusée si le fichier fourni est invalide.
+
+**Archiver** (un Thème, une Question):
+Marquer qu'il/elle a disparu du dernier import, sans le/la supprimer physiquement - préserve la lisibilité des Réponses déjà enregistrées. Réversible : la réapparition de la même Clé stable dans un import ultérieur le/la réactive.
 
 **Thème**:
 Un regroupement de Questions à l'intérieur du Référentiel.
