@@ -8,6 +8,7 @@ export type TypeErreurParsingReferentiel =
   | 'yaml-mal-forme'
   | 'cle-manquante'
   | 'cle-dupliquee'
+  | 'libelle-manquant'
   | 'nombre-options-invalide'
   | 'niveau-invalide';
 
@@ -24,13 +25,13 @@ export type ResultatParsingReferentiel =
 interface ThemeBrut {
   id?: unknown;
   libelle?: unknown;
-  questions?: QuestionBrute[];
+  questions?: unknown;
 }
 
 interface QuestionBrute {
   id?: unknown;
   libelle?: unknown;
-  options?: OptionBrute[];
+  options?: unknown;
 }
 
 interface OptionBrute {
@@ -91,9 +92,36 @@ export function parseReferentielYaml(
     clesThemesVues.add(themeBrut.id);
     const themeId = themeBrut.id;
 
+    if (
+      typeof themeBrut.libelle !== 'string' ||
+      themeBrut.libelle.length === 0
+    ) {
+      erreurs.push({
+        type: 'libelle-manquant',
+        message: 'libelle de Thème manquant',
+        chemin: cheminTheme,
+      });
+      return;
+    }
+
+    const questionsBrutesRaw = themeBrut.questions;
+    if (
+      questionsBrutesRaw !== undefined &&
+      questionsBrutesRaw !== null &&
+      !Array.isArray(questionsBrutesRaw)
+    ) {
+      erreurs.push({
+        type: 'yaml-mal-forme',
+        message: 'questions doit être une liste',
+        chemin: cheminTheme,
+      });
+      return;
+    }
+    const questionsBrutes = (questionsBrutesRaw ?? []) as QuestionBrute[];
+
     const questions: EntreeThemeImport['questions'] = [];
 
-    (themeBrut.questions ?? []).forEach(
+    questionsBrutes.forEach(
       (questionBrute: QuestionBrute, indexQuestion: number) => {
         const cheminQuestion = `${cheminTheme}.questions[${indexQuestion}]`;
 
@@ -118,7 +146,47 @@ export function parseReferentielYaml(
         }
         clesQuestionsVues.add(questionBrute.id);
 
-        const optionsBrutes = questionBrute.options ?? [];
+        if (
+          typeof questionBrute.libelle !== 'string' ||
+          questionBrute.libelle.length === 0
+        ) {
+          erreurs.push({
+            type: 'libelle-manquant',
+            message: 'libelle de Question manquant',
+            chemin: cheminQuestion,
+          });
+          return;
+        }
+
+        const optionsBrutesRaw = questionBrute.options;
+        if (
+          optionsBrutesRaw !== undefined &&
+          optionsBrutesRaw !== null &&
+          !Array.isArray(optionsBrutesRaw)
+        ) {
+          erreurs.push({
+            type: 'yaml-mal-forme',
+            message: 'options doit être une liste',
+            chemin: cheminQuestion,
+          });
+          return;
+        }
+        const optionsBrutes = (optionsBrutesRaw ?? []) as OptionBrute[];
+
+        const indexOptionLibelleManquant = optionsBrutes.findIndex(
+          (optionBrute: OptionBrute) =>
+            typeof optionBrute?.libelle !== 'string' ||
+            optionBrute.libelle.length === 0,
+        );
+        if (indexOptionLibelleManquant !== -1) {
+          erreurs.push({
+            type: 'libelle-manquant',
+            message: "libelle d'Option manquant",
+            chemin: `${cheminQuestion}.options[${indexOptionLibelleManquant}]`,
+          });
+          return;
+        }
+
         const niveauxResultats = optionsBrutes.map((optionBrute: OptionBrute) =>
           Niveau.creer(Number(optionBrute.niveau)),
         );

@@ -203,4 +203,89 @@ themes:
     if (resultat.type !== 'invalide') throw new Error('unreachable');
     expect(resultat.erreurs[0].type).toBe('niveau-invalide');
   });
+
+  it('rejette un libelle de Thème manquant', () => {
+    const yaml = `
+themes:
+  - id: t1
+    questions: []
+`;
+    const resultat = parseReferentielYaml(yaml);
+
+    expect(resultat.type).toBe('invalide');
+    if (resultat.type !== 'invalide') throw new Error('unreachable');
+    expect(resultat.erreurs[0].type).toBe('libelle-manquant');
+  });
+
+  it('rejette un libelle de Question manquant', () => {
+    const yaml = `
+themes:
+  - id: t1
+    libelle: Thème 1
+    questions:
+      - id: q1
+        options:
+          - { libelle: Jamais, niveau: 1 }
+          - { libelle: Parfois, niveau: 2 }
+          - { libelle: Souvent, niveau: 3 }
+          - { libelle: Toujours, niveau: 4 }
+`;
+    const resultat = parseReferentielYaml(yaml);
+
+    expect(resultat.type).toBe('invalide');
+    if (resultat.type !== 'invalide') throw new Error('unreachable');
+    expect(resultat.erreurs[0].type).toBe('libelle-manquant');
+  });
+
+  it("rejette un libelle d'Option manquant", () => {
+    const yaml = `
+themes:
+  - id: t1
+    libelle: Thème 1
+    questions:
+      - id: q1
+        libelle: Question 1
+        options:
+          - { niveau: 1 }
+          - { libelle: Parfois, niveau: 2 }
+          - { libelle: Souvent, niveau: 3 }
+          - { libelle: Toujours, niveau: 4 }
+`;
+    const resultat = parseReferentielYaml(yaml);
+
+    expect(resultat.type).toBe('invalide');
+    if (resultat.type !== 'invalide') throw new Error('unreachable');
+    expect(resultat.erreurs[0].type).toBe('libelle-manquant');
+  });
+
+  it("rejette des questions qui ne sont pas une liste sans lever d'exception", () => {
+    const yaml = `
+themes:
+  - id: t1
+    libelle: Thème 1
+    questions: "oops"
+`;
+    const resultat = parseReferentielYaml(yaml);
+
+    expect(resultat.type).toBe('invalide');
+    if (resultat.type !== 'invalide') throw new Error('unreachable');
+    expect(resultat.erreurs[0].type).toBe('yaml-mal-forme');
+  });
+
+  it("rejette des options qui ne sont pas une liste sans lever d'exception", () => {
+    const yaml = `
+themes:
+  - id: t1
+    libelle: Thème 1
+    questions:
+      - id: q1
+        libelle: Question 1
+        options: "oops"
+`;
+    const resultat = parseReferentielYaml(yaml);
+
+    expect(resultat.type).toBe('invalide');
+    if (resultat.type !== 'invalide') throw new Error('unreachable');
+    expect(resultat.erreurs[0].type).toBe('yaml-mal-forme');
+  });
 });
