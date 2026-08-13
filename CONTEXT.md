@@ -47,11 +47,17 @@ _Avoid_: BU (synonyme utilisé dans le PRD - Entité est le terme retenu)
 Le regroupement de Membres auquel sont rattachées les Sessions et les Campagnes de pouls.
 
 **Membre**:
-Une personne dotée d'un compte dans l'Organisation, rattachée à une Équipe, porteuse d'un Rôle.
-_Avoid_: seul, pour désigner le Rôle "Membre d'équipe" - dans ce sens précis toujours écrire "Membre d'équipe" en entier, pour ne pas le confondre avec ce sens générique (voir Rôle).
+Une personne recensée dans le roster d'une Équipe ; référence au plus un Utilisateur, optionnellement - un Membre n'a pas besoin de compte pour répondre à une Session ou un Pouls (voir Code, Jeton). Quand un Utilisateur est référencé, il porte toujours le Rôle Membre d'équipe. Supprimé en cascade avec son Équipe.
+_Avoid_: seul, pour désigner le Rôle "Membre d'équipe" - dans ce sens précis toujours écrire "Membre d'équipe" en entier, pour ne pas le confondre avec ce sens générique.
+
+**Utilisateur**:
+Un compte de connexion à l'Organisation, portant un Rôle unique et, selon ce Rôle, une ou plusieurs Habilitations. Un Utilisateur Membre d'équipe est celui qu'un Membre référence pour se connecter et consulter les résultats de son Équipe.
+
+**Habilitation**:
+Le rattachement d'un Utilisateur Manager d'équipe (à une ou plusieurs Équipes) ou Direction (à une ou plusieurs Entités) qui détermine sa portée d'accès. Distinct de Membre : une pure autorisation, sans lien avec le roster d'une Équipe ni l'anonymat des Réponses. Un Utilisateur Coach n'a aucune Habilitation - son accès est transversal, déterminé par son Rôle seul.
 
 **Rôle**:
-Une des quatre valeurs qui détermine ce qu'un Membre voit et peut faire : Coach, Membre d'équipe, Manager d'équipe, Direction.
+Une des quatre valeurs portées par un Utilisateur, qui détermine ce qu'il voit et peut faire : Coach (transversal, aucune Habilitation), Membre d'équipe (consulte les résultats des Équipes où il est référencé comme Membre), Manager d'équipe (Habilitation sur une ou plusieurs Équipes), Direction (Habilitation sur une ou plusieurs Entités).
 
 ### Session animée
 
