@@ -20,8 +20,20 @@ reponse=$(curl -sS -w '\n%{http_code}' -X POST "$url_base/api/referentiel/import
 statut="${reponse##*$'\n'}"
 corps="${reponse%$'\n'*}"
 
-if command -v jq >/dev/null 2>&1; then
-  echo "$corps" | jq
+if command -v python3 >/dev/null 2>&1; then
+  echo "$corps" | python3 -c '
+import json
+import sys
+
+corps = json.load(sys.stdin)
+print(json.dumps(corps, indent=2, ensure_ascii=False))
+
+resume = corps.get("resume")
+if resume:
+    print()
+    print("--- Résumé ---")
+    print(resume)
+'
 else
   echo "$corps"
 fi

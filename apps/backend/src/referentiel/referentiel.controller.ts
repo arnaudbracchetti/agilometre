@@ -15,7 +15,7 @@ export class ReferentielController {
     if (resultat.type === 'invalide') {
       throw new BadRequestException({ erreurs: resultat.erreurs });
     }
-    return resultat.changeSet;
+    return { changeSet: resultat.changeSet, resume: resultat.resume };
   }
 
   @Post('import/application')

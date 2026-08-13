@@ -7,7 +7,7 @@ import {
 
 export type ResultatPreview =
   | { type: 'invalide'; erreurs: ErreurParsingReferentiel[] }
-  | { type: 'valide'; changeSet: ChangeSet };
+  | { type: 'valide'; changeSet: ChangeSet; resume: string };
 
 export class PreviewImportReferentiel {
   constructor(private readonly repository: ReferentielRepository) {}
@@ -20,6 +20,6 @@ export class PreviewImportReferentiel {
 
     const referentiel = await this.repository.charger();
     const changeSet = referentiel.calculerChangements(resultatParsing.themes);
-    return { type: 'valide', changeSet };
+    return { type: 'valide', changeSet, resume: changeSet.resume() };
   }
 }

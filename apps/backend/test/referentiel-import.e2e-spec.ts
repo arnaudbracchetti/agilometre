@@ -11,6 +11,11 @@ interface ChangeSetReponse {
   questions: { type: string; id: string; apres: { themeId: string } }[];
 }
 
+interface ApercuReponse {
+  changeSet: ChangeSetReponse;
+  resume: string;
+}
+
 describe('Référentiel — import (aperçu + application) (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
@@ -61,7 +66,7 @@ describe('Référentiel — import (aperçu + application) (e2e)', () => {
       .send(yaml)
       .expect(201);
 
-    const changeSet = reponse.body as ChangeSetReponse;
+    const { changeSet, resume } = reponse.body as ApercuReponse;
     expect(changeSet.themes).toHaveLength(1);
     expect(changeSet.themes[0]).toMatchObject({ type: 'creation', id: 't1' });
     expect(changeSet.questions[0]).toMatchObject({
@@ -69,6 +74,8 @@ describe('Référentiel — import (aperçu + application) (e2e)', () => {
       id: 'q1',
       apres: { themeId: 't1' },
     });
+    expect(resume).toContain('Thèmes (1 création)');
+    expect(resume).toContain('Questions (1 création)');
 
     await expect(prisma.theme.count()).resolves.toBe(0);
     await expect(prisma.question.count()).resolves.toBe(0);
@@ -133,9 +140,11 @@ describe('Référentiel — import (aperçu + application) (e2e)', () => {
       .send(yaml)
       .expect(201);
 
-    const changeSet2 = reponseApercu2.body as ChangeSetReponse;
+    const { changeSet: changeSet2, resume: resume2 } =
+      reponseApercu2.body as ApercuReponse;
     expect(changeSet2.themes).toHaveLength(0);
     expect(changeSet2.questions).toHaveLength(0);
+    expect(resume2).toBe('Aucun changement détecté.');
   });
 
   it('POST /api/referentiel/import/application — YAML mal formé → 400, base inchangée', async () => {

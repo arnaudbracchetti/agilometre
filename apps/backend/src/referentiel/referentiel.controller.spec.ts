@@ -30,16 +30,18 @@ describe('ReferentielController', () => {
     controller = module.get(ReferentielController);
   });
 
-  it('renvoie le ChangeSet pour un YAML valide', async () => {
+  it('renvoie le ChangeSet et son résumé pour un YAML valide', async () => {
     const changeSet = ChangeSet.creer([], []);
     previewImportReferentiel.executer.mockResolvedValue({
       type: 'valide',
       changeSet,
+      resume: 'Aucun changement détecté.',
     });
 
-    await expect(controller.previewImport('themes: []')).resolves.toBe(
+    await expect(controller.previewImport('themes: []')).resolves.toEqual({
       changeSet,
-    );
+      resume: 'Aucun changement détecté.',
+    });
   });
 
   it('lève une BadRequestException pour un YAML invalide', async () => {
@@ -60,9 +62,7 @@ describe('ReferentielController', () => {
       changeSet,
     });
 
-    await expect(controller.applyImport('themes: []')).resolves.toBe(
-      changeSet,
-    );
+    await expect(controller.applyImport('themes: []')).resolves.toBe(changeSet);
   });
 
   it('lève une BadRequestException pour un YAML invalide sur application', async () => {

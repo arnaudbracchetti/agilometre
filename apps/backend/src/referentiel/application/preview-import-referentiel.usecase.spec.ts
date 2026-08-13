@@ -42,6 +42,8 @@ describe('PreviewImportReferentiel', () => {
     expect(resultat.changeSet.themes[0].type).toBe('creation');
     expect(resultat.changeSet.questions).toHaveLength(1);
     expect(resultat.changeSet.questions[0].type).toBe('creation');
+    expect(resultat.resume).toContain('Thèmes (1 création)');
+    expect(resultat.resume).toContain('Questions (1 création)');
     expect(repository.sauvegarderAppele).toBe(false);
   });
 
