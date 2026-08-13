@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Communication
+
+Talk to the user in French, even though this file, the code, and the agent skills invoked while
+working here (`/ddd`, `/grilling`, `/domain-modeling`, wayfinder, etc.) are all written in
+English.
+
 ## What this is
 
 Agilomètre — an agile maturity diagnostic tool. Coaches run live voting sessions with teams
