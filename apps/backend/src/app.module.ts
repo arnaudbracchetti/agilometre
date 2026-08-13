@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
+import { ReferentielModule } from './referentiel/referentiel.module';
 
 // Le build Docker copie le frontend Angular dans apps/backend/public (voir Dockerfile) ;
 // __dirname pointe ici vers dist/src, donc apps/backend/public = ../../public.
@@ -45,6 +46,7 @@ const publicDir = join(__dirname, '..', '..', 'public');
     ScheduleModule.forRoot(),
     PrismaModule,
     HealthModule,
+    ReferentielModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -24,21 +24,28 @@ enum StatutSession {
   CLOTUREE
 }
 
-// --- Référentiel : importé une fois au déploiement, figé ensuite (§4, §10) ---
+// --- Référentiel : ré-importable dans le temps via Clé stable (ADR 0004) ---
+
+model Referentiel {
+  id            String   @id @default("singleton")
+  derniereMajLe DateTime
+}
 
 model Theme {
-  id        String     @id @default(uuid())
+  id        String     @id
   libelle   String
   ordre     Int
+  retireLe  DateTime?
   questions Question[]
 }
 
 model Question {
-  id      String   @id @default(uuid())
-  libelle String
-  theme   Theme    @relation(fields: [themeId], references: [id])
-  themeId String
-  options Option[]
+  id        String    @id
+  libelle   String
+  theme     Theme     @relation(fields: [themeId], references: [id])
+  themeId   String
+  retireeLe DateTime?
+  options   Option[]
 }
 
 model Option {

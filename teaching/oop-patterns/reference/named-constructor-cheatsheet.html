@@ -1,0 +1,70 @@
+<title>Fiche — Named constructor</title>
+<link rel="stylesheet" href="../assets/style.css">
+<body class="lesson">
+
+<div class="kicker">Fiche de référence</div>
+<h1>Named constructor / static factory method</h1>
+
+<h2>Anatomie</h2>
+<pre><code>export class MaClasse {
+  private constructor(/* champs */) { /* ? validation ici ? */ }
+
+  static creer(/* args bruts */): MaClasse {
+    // ? validation ici ?
+    return new MaClasse(/* ... */);
+  }
+
+  static reconstituer(/* args déjà valides */): MaClasse {
+    return new MaClasse(/* ... */);
+  }
+}</code></pre>
+
+<h2>Checklist de revue</h2>
+<ol>
+  <li>Lister toutes les méthodes <code>static</code> qui appellent le constructeur privé.</li>
+  <li>Localiser où vit la validation d'invariant : constructeur, ou une factory précise ?</li>
+  <li>Si elle est dans une factory : chaque <em>autre</em> factory la rappelle-t-elle, ou existe-t-il
+  un chemin silencieux qui la contourne ?</li>
+  <li>Si un chemin la contourne délibérément (ex: recharger des données déjà validées), est-ce
+  <strong>documenté</strong>, pas seulement implicite ?</li>
+</ol>
+
+<h2>Deux écoles</h2>
+<div class="compare">
+  <div>
+    <h4>Valider dans le constructeur</h4>
+    <p style="margin:0; font-size:0.9rem;">Garantie structurelle : impossible de créer une
+    instance invalide, quel que soit le chemin. Lève une exception → tout appelant doit gérer
+    l'échec.</p>
+  </div>
+  <div>
+    <h4>Valider dans la factory</h4>
+    <p style="margin:0; font-size:0.9rem;">Constructeur "muet". Permet de retourner un
+    <code>Result&lt;T&gt;</code> au lieu de lever. Risque : une factory ajoutée plus tard peut
+    oublier de revalider.</p>
+  </div>
+</div>
+
+<h2>Vocabulaire</h2>
+<ul>
+  <li><strong>Named constructor</strong> — méthode statique nommée qui construit l'objet, en
+  complément ou remplacement d'un constructeur public.</li>
+  <li><strong>Invariant</strong> — une règle qui doit toujours être vraie pour qu'une instance
+  soit valide (ex: un <code>Niveau</code> est toujours entre 1 et 4).</li>
+  <li><strong>Result type</strong> — un objet qui encode succès/échec comme une valeur de retour
+  normale, sans lever d'exception.</li>
+</ul>
+
+<h2>Sources</h2>
+<ul>
+  <li><a href="https://khalilstemmler.com/blogs/typescript/when-to-use-a-private-constructor/">When to Use a Private Constructor — Khalil Stemmler</a></li>
+  <li><a href="https://www.baeldung.com/java-constructors-vs-static-factory-methods">Effective Java, Item 1 — résumé Baeldung</a></li>
+  <li><a href="https://www.bennadel.com/blog/3445-static-methods-can-access-private-class-constructors-in-typescript.htm">Static Methods Can Access Private Class Constructors In TypeScript — Ben Nadel</a></li>
+</ul>
+
+<div class="nav-links">
+  <span>← <a href="../lessons/0001-named-constructor-pattern.html">Leçon 0001</a></span>
+  <span></span>
+</div>
+
+</body>

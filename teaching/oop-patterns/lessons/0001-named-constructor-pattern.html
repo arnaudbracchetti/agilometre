@@ -1,0 +1,231 @@
+<title>Le pattern "named constructor"</title>
+<link rel="stylesheet" href="../assets/style.css">
+<body class="lesson">
+
+<div class="kicker">Leçon 0001 — Patterns de construction d'objets</div>
+<h1>Le pattern « named constructor »</h1>
+
+<p>
+Vous avez repéré ce code dans <code>referentiel/domain/niveau.ts</code> et posé la bonne
+question : pourquoi la validation ne vit-elle pas dans le constructeur ?
+</p>
+
+<pre><code>export class Niveau {
+  private constructor(readonly valeur: number) {}
+
+  static creer(valeur: number): Niveau {
+    if (valeur &lt; Niveau.MIN || valeur &gt; Niveau.MAX) {
+      throw new NiveauInvalideError(valeur);
+    }
+    return new Niveau(valeur);
+  }
+}</code></pre>
+
+<p>
+Cette leçon répond à cette question — et à la question plus large qu'elle cache : qu'est-ce que ce
+pattern, pourquoi existe-t-il, et où est-ce que <em>vous</em> devez placer votre attention quand
+vous le voyez dans du code écrit par un agent.
+</p>
+
+<h2>Ce que fait le pattern</h2>
+
+<p>
+Un <strong>named constructor</strong> (aussi appelé <em>static factory method</em>) combine deux
+éléments :
+</p>
+
+<ol>
+  <li>Un constructeur <code>private</code> — personne à l'extérieur de la classe ne peut écrire
+  <code>new Niveau(5)</code>.</li>
+  <li>Une ou plusieurs méthodes statiques nommées (<code>creer</code>, <code>reconstituer</code>,
+  <code>vide</code>…) qui, elles, ont le droit d'appeler ce constructeur privé — parce qu'en
+  TypeScript, une méthode statique d'une classe peut toujours accéder au constructeur privé de
+  <em>cette même classe</em>.</li>
+</ol>
+
+<p class="aside">
+Mécanisme TypeScript exact : <a href="https://www.bennadel.com/blog/3445-static-methods-can-access-private-class-constructors-in-typescript.htm">Static Methods Can Access Private Class Constructors In TypeScript — Ben Nadel</a>.
+</p>
+
+<h2>Pourquoi ce détour, plutôt qu'un constructeur public ?</h2>
+
+<p>
+Trois raisons reviennent dans la littérature — retenez surtout la première, c'est celle qui a
+causé le bug :
+</p>
+
+<ul>
+  <li><strong>Des noms qui expriment une intention.</strong> <code>Niveau.creer(4)</code> et
+  <code>Niveau.reconstituer(4)</code> disent deux choses différentes : l'un valide une entrée
+  fraîche, l'autre recharge une valeur déjà connue. <code>new Niveau(4)</code> ne dit rien de
+  tout ça.</li>
+  <li><strong>Empêcher un objet invalide d'exister.</strong> En interdisant <code>new</code> de
+  l'extérieur, on force tout le monde à passer par un chemin contrôlé par la classe.</li>
+  <li><strong>Réutilisation / sous-types / cache.</strong> Une factory peut retourner une instance
+  mise en cache, ou une sous-classe — un constructeur ne le peut jamais. (Non pertinent pour
+  <code>Niveau</code>, mais fait partie du pattern plus large.)</li>
+</ul>
+
+<p class="aside">
+Source de référence sur ces trois bénéfices, dans un contexte Java mais transposable :
+<a href="https://www.baeldung.com/java-constructors-vs-static-factory-methods">Effective Java, Item 1 — résumé Baeldung</a>.
+</p>
+
+<h2>La question qui a causé le bug : où valider ?</h2>
+
+<p>
+Le pattern répond à « comment nommer et contrôler la construction ». Il ne répond <strong>pas</strong>
+à « où doit vivre la validation d'un invariant ». Sur ce point précis, deux écoles valables
+existent — et le confondre avec la première question est ce qui a produit le bug.
+</p>
+
+<div class="compare">
+  <div>
+    <h4>Valider dans la factory</h4>
+    <pre><code>private constructor(v: number) {}
+
+static creer(v: number) {
+  if (invalide(v)) throw ...
+  return new Niveau(v);
+}
+
+static reconstituer(v: number) {
+  return new Niveau(v); // ⚠️ pas revalidé
+}</code></pre>
+  </div>
+  <div>
+    <h4>Valider dans le constructeur</h4>
+    <pre><code>private constructor(v: number) {
+  if (invalide(v)) throw ...
+}
+
+static creer(v: number) {
+  return new Niveau(v); // validé
+}
+
+static reconstituer(v: number) {
+  return new Niveau(v); // validé aussi
+}</code></pre>
+  </div>
+</div>
+
+<p>
+Tant qu'une classe n'a <strong>qu'une seule</strong> factory, les deux approches sont
+équivalentes. Le problème apparaît dès qu'une seconde factory arrive — ici
+<code>reconstituer</code>, ajoutée plus tard pour recharger un <code>Niveau</code> depuis la base
+de données. Si la validation vit dans <code>creer</code>, <code>reconstituer</code> ne la voit
+jamais : rien ne l'oblige à la rappeler, et le compilateur ne peut pas le détecter. C'est
+exactement ce qui s'est produit deux fois dans <code>referentiel/domain/</code>.
+</p>
+
+<div class="callout bad">
+  <strong>Ce qui a cassé</strong>
+  La validation vivait dans <code>Question.creer()</code>. <code>Question.reconstituer()</code>,
+  utilisée par le repository Prisma pour recharger une Question depuis la base, appelait
+  directement le constructeur privé sans repasser par la validation — un chemin de construction
+  entier échappait à l'invariant.
+</div>
+
+<h2>Deux écoles, un seul faux consensus</h2>
+
+<p>
+Il serait tentant de conclure « il faut toujours valider dans le constructeur ». Ce n'est pas ce
+que dit la littérature. Khalil Stemmler, référence TypeScript/DDD, défend explicitement
+l'inverse :
+</p>
+
+<blockquote>
+"When we use the <code>new</code> keyword, there's not really an elegant way to prevent a
+<code>User</code> from being created if certain validation rules don't pass." — il recommande de
+garder le constructeur "muet" et de faire vivre la validation dans la factory, qui retourne un
+<code>Result&lt;T&gt;</code> plutôt que de lever une exception.
+<div class="source-tag">— <a href="https://khalilstemmler.com/blogs/typescript/when-to-use-a-private-constructor/">When to Use a Private Constructor — Khalil Stemmler</a></div>
+</blockquote>
+
+<p>
+Sa raison : lever une exception depuis un constructeur oblige <em>tout</em> appelant à gérer un
+<code>try/catch</code>, même pour de la validation attendue et fréquente (un formulaire mal
+rempli, par exemple) — alors qu'un <code>Result</code> se traite comme une valeur normale.
+</p>
+
+<div class="callout good">
+  <strong>Ce qu'il faut en retenir</strong>
+  Les deux écoles sont défendables. Ce qui est <em>indéfendable</em>, c'est de choisir « valider
+  dans la factory » sans se poser la question à chaque nouvelle factory ajoutée. Si vous gardez la
+  validation hors du constructeur, la discipline à tenir est : chaque nouvelle factory doit soit
+  rappeler explicitement la routine de validation, soit documenter pourquoi elle en est
+  dispensée (ex: <code>reconstituer</code> charge des données déjà validées à l'import — un choix
+  qui doit être écrit, pas silencieux).
+</div>
+
+<h2>Comment challenger l'agent la prochaine fois</h2>
+
+<p>
+Quand vous voyez ce pattern dans du code généré, trois questions suffisent :
+</p>
+
+<ol>
+  <li>Combien de factories statiques cette classe a-t-elle ? (Cherchez tous les <code>static</code>
+  qui appellent le constructeur privé.)</li>
+  <li>La validation d'invariant est-elle dans le constructeur, ou dans une factory précise ?</li>
+  <li>Si elle est dans une factory précise : est-ce que <em>toutes</em> les autres factories la
+  rappellent, ou existe-t-il un chemin silencieux qui la contourne ?</li>
+</ol>
+
+<p class="ask-agent">
+Une question n'est pas claire, ou vous voulez creuser un exemple du projet ? Demandez à l'agent —
+c'est votre professeur ici, il peut réexpliquer, montrer d'autres classes du dépôt qui utilisent ce
+pattern, ou construire un contre-exemple.
+</p>
+
+<h2>Vérifiez votre compréhension</h2>
+
+<div class="quiz" data-quiz>
+  <div class="question">Une classe a deux factories, <code>creer</code> et <code>depuisJson</code>, et un constructeur privé sans validation. <code>creer</code> valide ses arguments avant d'appeler le constructeur. Que se passe-t-il si <code>depuisJson</code> ne revalide pas ?</div>
+  <div class="options">
+    <button class="option" data-correct="false">TypeScript refuse de compiler le fichier</button>
+    <button class="option" data-correct="true">Un objet invalide peut exister sans erreur</button>
+    <button class="option" data-correct="false">Le constructeur lève une erreur à l'exécution</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="question">D'après Khalil Stemmler, pourquoi éviter de lever une exception depuis le constructeur ?</div>
+  <div class="options">
+    <button class="option" data-correct="false">Les exceptions ralentissent l'exécution du code</button>
+    <button class="option" data-correct="true">Ça force tout appelant à gérer un try/catch</button>
+    <button class="option" data-correct="false">TypeScript interdit throw dans un constructeur</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<div class="nav-links">
+  <span>← Retour au sommaire</span>
+  <span>Référence : <a href="../reference/named-constructor-cheatsheet.html">fiche named constructor</a></span>
+</div>
+
+<script>
+document.querySelectorAll('[data-quiz]').forEach((quiz) => {
+  const buttons = quiz.querySelectorAll('.option');
+  const feedback = quiz.querySelector('.feedback');
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (quiz.dataset.answered) return;
+      quiz.dataset.answered = 'true';
+      const isCorrect = btn.dataset.correct === 'true';
+      buttons.forEach((b) => {
+        b.disabled = true;
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+      });
+      if (!isCorrect) btn.classList.add('incorrect');
+      feedback.textContent = isCorrect
+        ? 'Exact.'
+        : 'Pas tout à fait — la bonne réponse est surlignée.';
+      feedback.className = 'feedback ' + (isCorrect ? 'correct' : 'incorrect');
+    });
+  });
+});
+</script>
+
+</body>

@@ -8,6 +8,12 @@ Talk to the user in French, even though this file, the code, and the agent skill
 working here (`/ddd`, `/grilling`, `/domain-modeling`, wayfinder, etc.) are all written in
 English.
 
+## Git workflow
+
+Always ask for confirmation before creating a git commit — even at the end of a skill (like
+`/implement`) whose written instructions say to commit. Never commit silently as an implicit last
+step.
+
 ## What this is
 
 Agilomètre — an agile maturity diagnostic tool. Coaches run live voting sessions with teams
@@ -68,6 +74,26 @@ wholesale.
 
 `PrismaService` (`apps/backend/src/prisma/prisma.service.ts`) is `@Global()`-provided via
 `PrismaModule` — inject it directly, no need to re-import the module per-feature-module.
+
+### Domain validation: `Result<T, E>`, never throw for expected invariant failures
+
+Domain factories that validate a business invariant (e.g. `Niveau.creer`, `Question.creer`) must
+return `Result<T, E>` (`apps/backend/src/shared-kernel/result.ts`), not throw. Validation failure
+is an expected, common outcome — not an exceptional one — and a thrown exception forces every
+caller into `try/catch` for a case that should be handled as an ordinary value. This decision
+follows [Khalil Stemmler's static-factory-method guidance](https://khalilstemmler.com/blogs/typescript/when-to-use-a-private-constructor/):
+keep the constructor "dumb" (no validation), do all validation in the named static factory
+(`creer`, not the constructor).
+
+**Be vigilant when an aggregate/entity has more than one static factory** (e.g. `creer` +
+`reconstituer`). A private constructor only guarantees *some* code path validates — not that
+*every* path does. Each additional factory must either call the same validation and return a
+`Result`, or explicitly document why it's exempt (e.g. `reconstituer` in
+`apps/backend/src/referentiel/domain/question.ts` deliberately skips re-validation because it
+only rehydrates data that already passed `creer` at import time — this must stay a documented,
+deliberate choice per factory, never a silent gap). This exact gap (validation only in `creer`,
+silently bypassed by a later `reconstituer`) has already caused a real bug once — check for it
+specifically when reviewing or writing a new factory.
 
 ### Single-container deployment
 
