@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ApplyImportReferentiel } from './application/apply-import-referentiel.usecase';
 import { PreviewImportReferentiel } from './application/preview-import-referentiel.usecase';
 import { PrismaReferentielRepository } from './infrastructure/prisma-referentiel.repository';
 import { ReferentielController } from './referentiel.controller';
@@ -11,6 +12,12 @@ import { ReferentielController } from './referentiel.controller';
       provide: PreviewImportReferentiel,
       useFactory: (repository: PrismaReferentielRepository) =>
         new PreviewImportReferentiel(repository),
+      inject: [PrismaReferentielRepository],
+    },
+    {
+      provide: ApplyImportReferentiel,
+      useFactory: (repository: PrismaReferentielRepository) =>
+        new ApplyImportReferentiel(repository),
       inject: [PrismaReferentielRepository],
     },
   ],

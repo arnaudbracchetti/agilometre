@@ -50,9 +50,63 @@ export class PrismaReferentielRepository implements ReferentielRepository {
     return Referentiel.reconstituer(referentielRow.derniereMajLe, themes);
   }
 
-  sauvegarder(): Promise<void> {
-    return Promise.reject(
-      new Error('Non implémenté (réservé à une issue future sous #13)'),
-    );
+  async sauvegarder(referentiel: Referentiel): Promise<void> {
+    const derniereMajLe = referentiel.derniereMajLe;
+    if (derniereMajLe === null) {
+      throw new Error(
+        'Impossible de sauvegarder un Référentiel sans derniereMajLe — appeler appliquerChangements() avant sauvegarder()',
+      );
+    }
+    const themes = referentiel.themes;
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const [ordre, theme] of themes.entries()) {
+        await tx.theme.upsert({
+          where: { id: theme.id },
+          create: {
+            id: theme.id,
+            libelle: theme.libelle,
+            ordre,
+            retireLe: theme.retireLe,
+          },
+          update: { libelle: theme.libelle, ordre, retireLe: theme.retireLe },
+        });
+
+        for (const question of theme.questions) {
+          await tx.question.upsert({
+            where: { id: question.id },
+            create: {
+              id: question.id,
+              libelle: question.libelle,
+              themeId: question.themeId,
+              retireeLe: question.retireeLe,
+            },
+            update: {
+              libelle: question.libelle,
+              themeId: question.themeId,
+              retireeLe: question.retireeLe,
+            },
+          });
+
+          // Option est un Value Object sans Clé stable (remplacé en bloc à chaque import,
+          // cf. docs/design/agregat-referentiel.md) : aucune table ne référence Option.id
+          // (Reponse.niveau est un entier recopié, pas une FK), donc supprimer/recréer est sûr.
+          await tx.option.deleteMany({ where: { questionId: question.id } });
+          await tx.option.createMany({
+            data: question.options.map((option) => ({
+              questionId: question.id,
+              libelle: option.libelle,
+              niveau: option.niveau.valeur,
+            })),
+          });
+        }
+      }
+
+      await tx.referentiel.upsert({
+        where: { id: 'singleton' },
+        create: { id: 'singleton', derniereMajLe },
+        update: { derniereMajLe },
+      });
+    });
   }
 }

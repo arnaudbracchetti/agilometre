@@ -1,3 +1,4 @@
+import { ChangeSet } from './change-set';
 import { EntreeThemeImport, Referentiel } from './referentiel';
 
 function entreesImport(): EntreeThemeImport[] {
@@ -100,5 +101,77 @@ describe('Referentiel.calculerChangements', () => {
     referentiel.calculerChangements(entreesImport());
 
     expect(referentiel.themesActifs()).toHaveLength(0);
+  });
+});
+
+describe('Referentiel.appliquerChangements', () => {
+  it('crée les Thèmes et Questions du ChangeSet dans l’agrégat', () => {
+    const referentiel = Referentiel.vide();
+    const changeSet = referentiel.calculerChangements(entreesImport());
+
+    referentiel.appliquerChangements(changeSet);
+
+    const themes = referentiel.themesActifs();
+    expect(themes.map((t) => t.id).sort()).toEqual(['t1', 't2']);
+
+    const theme1 = themes.find((t) => t.id === 't1')!;
+    expect(theme1.libelle).toBe('Thème 1');
+    expect(theme1.questions.map((q) => q.id).sort()).toEqual(['q1', 'q2']);
+
+    const question1 = theme1.questions.find((q) => q.id === 'q1')!;
+    expect(question1.libelle).toBe('Question 1');
+    expect(question1.themeId).toBe('t1');
+    expect(
+      question1.options.map((o) => ({ libelle: o.libelle, niveau: o.niveau.valeur })),
+    ).toEqual([
+      { libelle: 'Jamais', niveau: 1 },
+      { libelle: 'Parfois', niveau: 2 },
+      { libelle: 'Souvent', niveau: 3 },
+      { libelle: 'Toujours', niveau: 4 },
+    ]);
+
+    const theme2 = themes.find((t) => t.id === 't2')!;
+    expect(theme2.questions.map((q) => q.id)).toEqual(['q3']);
+  });
+
+  it('met à jour derniereMajLe', () => {
+    const referentiel = Referentiel.vide();
+    const changeSet = referentiel.calculerChangements(entreesImport());
+
+    expect(referentiel.derniereMajLe).toBeNull();
+    referentiel.appliquerChangements(changeSet);
+
+    expect(referentiel.derniereMajLe).toBeInstanceOf(Date);
+  });
+
+  it('lève pour un type de changement Thème non pris en charge', () => {
+    const referentiel = Referentiel.vide();
+    const changeSet = ChangeSet.creer(
+      [{ type: 'archivage', id: 't1', avant: { libelle: 'Thème 1' }, apres: { libelle: 'Thème 1' } }],
+      [],
+    );
+
+    expect(() => referentiel.appliquerChangements(changeSet)).toThrow(
+      /Type de changement Thème non supporté/,
+    );
+  });
+
+  it('lève pour un type de changement Question non pris en charge', () => {
+    const referentiel = Referentiel.vide();
+    const changeSet = ChangeSet.creer(
+      [],
+      [
+        {
+          type: 'archivage',
+          id: 'q1',
+          avant: { libelle: 'Question 1', themeId: 't1', options: [] },
+          apres: { libelle: 'Question 1', themeId: 't1', options: [] },
+        },
+      ],
+    );
+
+    expect(() => referentiel.appliquerChangements(changeSet)).toThrow(
+      /Type de changement Question non supporté/,
+    );
   });
 });

@@ -4,7 +4,7 @@ export class Theme {
   private constructor(
     readonly id: string,
     private readonly _libelle: string,
-    private readonly _questions: Question[],
+    private _questions: Question[],
     private readonly _retireLe: Date | null,
   ) {}
 
@@ -31,5 +31,9 @@ export class Theme {
 
   get retireLe(): Date | null {
     return this._retireLe;
+  }
+
+  ajouterQuestion(question: Question): void {
+    this._questions.push(question);
   }
 }

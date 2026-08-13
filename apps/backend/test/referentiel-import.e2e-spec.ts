@@ -11,7 +11,7 @@ interface ChangeSetReponse {
   questions: { type: string; id: string; apres: { themeId: string } }[];
 }
 
-describe("Référentiel — aperçu d'import (e2e)", () => {
+describe('Référentiel — import (aperçu + application) (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
 
@@ -80,5 +80,73 @@ describe("Référentiel — aperçu d'import (e2e)", () => {
       .set('Content-Type', 'text/plain')
       .send('themes: [ not: valid')
       .expect(400);
+  });
+
+  it('apercu puis application — base vide, YAML valide → écrit les Thèmes/Questions/Options, puis apercu ne montre plus de création', async () => {
+    const yaml = [
+      'themes:',
+      '  - id: t1',
+      '    libelle: Thème 1',
+      '    questions:',
+      '      - id: q1',
+      '        libelle: Question 1',
+      '        options:',
+      '          - { libelle: Jamais, niveau: 1 }',
+      '          - { libelle: Parfois, niveau: 2 }',
+      '          - { libelle: Souvent, niveau: 3 }',
+      '          - { libelle: Toujours, niveau: 4 }',
+    ].join('\n');
+
+    await request(app.getHttpServer())
+      .post('/api/referentiel/import/apercu')
+      .set('Content-Type', 'text/plain')
+      .send(yaml)
+      .expect(201);
+
+    const reponseApplication = await request(app.getHttpServer())
+      .post('/api/referentiel/import/application')
+      .set('Content-Type', 'text/plain')
+      .send(yaml)
+      .expect(201);
+
+    const changeSet = reponseApplication.body as ChangeSetReponse;
+    expect(changeSet.themes[0]).toMatchObject({ type: 'creation', id: 't1' });
+    expect(changeSet.questions[0]).toMatchObject({
+      type: 'creation',
+      id: 'q1',
+      apres: { themeId: 't1' },
+    });
+
+    await expect(prisma.theme.count()).resolves.toBe(1);
+    await expect(prisma.question.count()).resolves.toBe(1);
+    await expect(prisma.option.count()).resolves.toBe(4);
+    const themeEnBase = await prisma.theme.findUniqueOrThrow({
+      where: { id: 't1' },
+    });
+    expect(themeEnBase.libelle).toBe('Thème 1');
+    const referentielEnBase = await prisma.referentiel.findFirst();
+    expect(referentielEnBase?.derniereMajLe).toBeInstanceOf(Date);
+
+    const reponseApercu2 = await request(app.getHttpServer())
+      .post('/api/referentiel/import/apercu')
+      .set('Content-Type', 'text/plain')
+      .send(yaml)
+      .expect(201);
+
+    const changeSet2 = reponseApercu2.body as ChangeSetReponse;
+    expect(changeSet2.themes).toHaveLength(0);
+    expect(changeSet2.questions).toHaveLength(0);
+  });
+
+  it('POST /api/referentiel/import/application — YAML mal formé → 400, base inchangée', async () => {
+    await request(app.getHttpServer())
+      .post('/api/referentiel/import/application')
+      .set('Content-Type', 'text/plain')
+      .send('themes: [ not: valid')
+      .expect(400);
+
+    await expect(prisma.theme.count()).resolves.toBe(0);
+    await expect(prisma.question.count()).resolves.toBe(0);
+    await expect(prisma.referentiel.count()).resolves.toBe(0);
   });
 });
