@@ -1,0 +1,114 @@
+themes:
+  - id: axe-1-collaboration
+    libelle: La collaboration au sein de l’équipe
+    questions:
+      - id: collab-blocage
+        libelle: Quand un membre de l’équipe rencontre un blocage, que se passe-t-il le plus souvent ?
+        options:
+          - libelle: Il essaie de le résoudre seul ou attend qu’on lui demande de partager son problème avec une autre personne.
+            niveau: 1
+          - libelle: Il en parle le lendemain en daily et on lui donne des conseils en séance
+            niveau: 2
+          - libelle: Il en parle le lendemain en daily l’équipe décide qu’une personne va travailler avec lui résoudre son problème
+            niveau: 3
+          - libelle: Le sujet est rapidement discuté au sein de l’équipe sans attendre le daily pour trouver une solution.
+            niveau: 4
+      - id: collab-dailies
+        libelle: Lors des Dailies, quel est le mode de fonctionnement dominant ?
+        options:
+          - libelle: Chacun fait son reporting au Scrum Master ou au PO.
+            niveau: 1
+          - libelle: Quelques personnes échangent, les autres restent en retrait.
+            niveau: 2
+          - libelle: Les échanges sont ouverts et l’équipe identifie ensemble comment avancer.
+            niveau: 3
+          - libelle: La discussion est orientée sur l’objectif de sprint et décisions rapides sont prises pour le maximiser.
+            niveau: 4
+      - id: collab-organisation
+        libelle: Comment se prennent les décisions d’organisation de l’équipe ?
+        options:
+          - libelle: Le PO, le tech lead, ou un manager décide seul.
+            niveau: 1
+          - libelle: Le Scrum Master facilite les discussions, mais les décisions restent concentrées sur une ou deux personnes.
+            niveau: 2
+          - libelle: L’équipe peut proposer des solutions et ses propositions sont prises en compte par des décideurs.
+            niveau: 3
+          - libelle: L’équipe décide collectivement de manière fluide et autonome.
+            niveau: 4
+      - id: collab-desaccord
+        libelle: Si un désaccord fort survient dans l’équipe, comment est-il géré ?
+        options:
+          - libelle: L’équipe évite d’en parler au nom de l’harmonie du groupe.
+            niveau: 1
+          - libelle: Il est tranché par le PO, le Scrum Master, le Lead tech ou un manager.
+            niveau: 2
+          - libelle: L’équipe prend le temps d’en discuter pour trouver une solution acceptable.
+            niveau: 3
+          - libelle: Les désaccords sont vus comme des opportunités d’apprentissage collectif, des évolutions de l’équipe en découlent.
+            niveau: 4
+      - id: collab-qualite
+        libelle: Qui porte la responsabilité de la qualité des livrables ?
+        options:
+          - libelle: Un expert ou le PO.
+            niveau: 1
+          - libelle: Chacun est responsable de son périmètre.
+            niveau: 2
+          - libelle: L’équipe s’assure collectivement de la qualité de l’ensemble du code.
+            niveau: 3
+          - libelle: La qualité est une responsabilité partagée et intégrée dans la façon de travailler.
+            niveau: 4
+      - id: collab-review
+        libelle: Pendant les Sprints Review, qui s’implique le plus ?
+        options:
+          - libelle: Le PO présente, l’équipe reste en retrait.
+            niveau: 1
+          - libelle: Quelques développeurs interviennent ponctuellement.
+            niveau: 2
+          - libelle: L’équipe dans son ensemble présente et répond aux questions.
+            niveau: 3
+          - libelle: La Review est une véritable discussion collective avec toutes les parties prenantes.
+            niveau: 4
+      - id: collab-autonomie
+        libelle: Dans quelle mesure l’équipe se sent autonome pour organiser son travail ?
+        options:
+          - libelle: Les tâches sont attribuées par le PO, le Scrum Master ou un manager.
+            niveau: 1
+          - libelle: L’équipe répartit parfois son travail, mais certaines affectations restent imposées.
+            niveau: 2
+          - libelle: L’équipe répartit librement son travail mais sans avoir une stratégie précise.
+            niveau: 3
+          - libelle: L’équipe adapte en continu sa manière de s’organiser dans le but de diminuer les risque et d’atteindre au mieux ses objectifs.
+            niveau: 4
+      - id: collab-imprevus
+        libelle: Comment l’équipe réagit face aux imprévus en cours de Sprint ?
+        options:
+          - libelle: L’équipe attend une décision du PO, du Scrum Master ou d’un manager avant d’agir.
+            niveau: 1
+          - libelle: Un ou deux membres peuvent prendre des initiatives isolées, sans réelle coordination avec le reste de l’équipe.
+            niveau: 2
+          - libelle: L’équipe en discute collectivement et décide d’un ajustement du plan, mais cela peut prendre du temps ou générer des tensions.
+            niveau: 3
+          - libelle: L’équipe réagit rapidement et de manière collective, en adaptant son plan de travail tout en essayant de préserver ses objectifs de Sprint.
+            niveau: 4
+      - id: collab-retrospectives
+        libelle: Quelle est la dynamique pendant les rétrospectives ?
+        options:
+          - libelle: Peu de participation, une formalité animée par le Scrum Master.
+            niveau: 1
+          - libelle: Quelques membres partagent, les autres restent en retrait.
+            niveau: 2
+          - libelle: La majorité participe et des actions concrètes sont décidées.
+            niveau: 3
+          - libelle: La rétrospective est un moment attendu où l’équipe réfléchit et les actions sont suivies d’effets
+            niveau: 4
+      - id: collab-dependances
+        libelle: Dans quelle mesure vous gérez vos dépendances à d’autres équipes ?
+        options:
+          - libelle: Les échanges passent uniquement par le PO ou le Scrum Master.
+            niveau: 1
+          - libelle: Quelques contacts existent, mais restent rares.
+            niveau: 2
+          - libelle: Les équipes échangent directement quand nécessaire, mais chaque partie défend sa position.
+            niveau: 3
+          - libelle: Les équipes interagissent régulièrement dans un esprit de collaboration.
+            niveau: 4
