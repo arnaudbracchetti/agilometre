@@ -72,7 +72,10 @@ describe('ApplyImportReferentiel', () => {
       new ReferentielRepositoryFake(),
     ).executer(yamlValide);
 
-    if (changeSetPreview.type !== 'valide' || changeSetApply.type !== 'applique') {
+    if (
+      changeSetPreview.type !== 'valide' ||
+      changeSetApply.type !== 'applique'
+    ) {
       throw new Error('unreachable');
     }
     expect(changeSetApply.changeSet).toEqual(changeSetPreview.changeSet);

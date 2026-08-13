@@ -27,10 +27,10 @@ export class Question {
 
   private constructor(
     readonly id: string,
-    private readonly _libelle: string,
-    private readonly _themeId: string,
-    private readonly _options: Option[],
-    private readonly _retireeLe: Date | null,
+    private _libelle: string,
+    private _themeId: string,
+    private _options: Option[],
+    private _retireeLe: Date | null,
   ) {}
 
   static creer(
@@ -98,5 +98,36 @@ export class Question {
 
   get retireeLe(): Date | null {
     return this._retireeLe;
+  }
+
+  /**
+   * Deuxième point d'entrée à travers validerOptions, après `creer` (cf. CLAUDE.md : vigilance
+   * requise pour toute factory/mutateur additionnel d'une entité déjà validée ailleurs). Valide
+   * avant de muter, pour ne jamais laisser la Question dans un état partiellement mis à jour.
+   */
+  mettreAJourLibelleEtOptions(
+    libelle: string,
+    options: Option[],
+  ): Result<void, ErreurInvariantQuestion> {
+    const validation = Question.validerOptions(options);
+    if (validation.estEchec) {
+      return Result.echec(validation.erreur);
+    }
+    this._libelle = libelle;
+    this._options = options;
+    return Result.succes(undefined);
+  }
+
+  reaffecterVers(themeId: string): void {
+    this._themeId = themeId;
+  }
+
+  /** `le` est fourni par l'appelant pour que tous les items retirés dans le même import partagent le même instant. */
+  retirer(le: Date): void {
+    this._retireeLe = le;
+  }
+
+  reactiver(): void {
+    this._retireeLe = null;
   }
 }

@@ -21,7 +21,7 @@ describe('ChangeSet.resume', () => {
     );
 
     expect(changeSet.resume()).toBe(
-      'Thèmes (1 création)\n- Création : « Facilitation »',
+      'Thèmes (1 création)\n- Création : « Facilitation » (id: t1)',
     );
   });
 
@@ -43,7 +43,7 @@ describe('ChangeSet.resume', () => {
     );
 
     expect(changeSet.resume()).toBe(
-      'Questions (1 création)\n- Création : « Le Product Owner priorise-t-il le backlog ? »',
+      'Questions (1 création)\n- Création : « Le Product Owner priorise-t-il le backlog ? » (id: q1)',
     );
   });
 
@@ -72,8 +72,8 @@ describe('ChangeSet.resume', () => {
     );
 
     expect(changeSet.resume()).toBe(
-      'Thèmes (1 création)\n- Création : « Facilitation »\n\n' +
-        'Questions (1 création)\n- Création : « Le Product Owner priorise-t-il le backlog ? »',
+      'Thèmes (1 création)\n- Création : « Facilitation » (id: t1)\n\n' +
+        'Questions (1 création)\n- Création : « Le Product Owner priorise-t-il le backlog ? » (id: q1)',
     );
   });
 
@@ -99,7 +99,7 @@ describe('ChangeSet.resume', () => {
     );
 
     expect(changeSet.resume()).toBe(
-      'Questions (1 mise à jour)\n- Mise à jour : « Ancien libellé » → « Nouveau libellé »',
+      'Questions (1 mise à jour)\n- Mise à jour : « Ancien libellé » → « Nouveau libellé » (id: q2)',
     );
   });
 
@@ -125,7 +125,7 @@ describe('ChangeSet.resume', () => {
     );
 
     expect(changeSet.resume()).toBe(
-      'Questions (1 mise à jour)\n- Mise à jour : « Même libellé » (options modifiées)',
+      'Questions (1 mise à jour)\n- Mise à jour : « Même libellé » (options modifiées) (id: q2)',
     );
   });
 
@@ -165,10 +165,10 @@ describe('ChangeSet.resume', () => {
 
     expect(changeSet.resume()).toBe(
       'Thèmes (1 archivage, 1 réactivation)\n' +
-        '- Archivage : « Facilitation »\n' +
-        '- Réactivation : « Delivery »\n\n' +
+        '- Archivage : « Facilitation » (id: t1)\n' +
+        '- Réactivation : « Delivery » (id: t2)\n\n' +
         'Questions (1 réaffectation)\n' +
-        '- Réaffectation : « Question »',
+        '- Réaffectation : « Question » (id: q1)',
     );
   });
 
@@ -193,8 +193,8 @@ describe('ChangeSet.resume', () => {
 
     expect(changeSet.resume()).toBe(
       'Thèmes (1 création, 1 mise à jour)\n' +
-        '- Création : « Facilitation »\n' +
-        '- Mise à jour : « Ancien » → « Nouveau »',
+        '- Création : « Facilitation » (id: t2)\n' +
+        '- Mise à jour : « Ancien » → « Nouveau » (id: t1)',
     );
   });
 });

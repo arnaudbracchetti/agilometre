@@ -130,38 +130,39 @@ export class ChangeSet {
   private ligneTheme(changement: ChangementTheme): string {
     switch (changement.type) {
       case 'creation':
-        return `- Création : « ${changement.apres.libelle} »`;
+        return `- Création : « ${changement.apres.libelle} » (id: ${changement.id})`;
       case 'maj':
-        return this.ligneMaj(changement.avant, changement.apres);
+        return this.ligneMaj(changement.id, changement.avant, changement.apres);
       case 'archivage':
-        return `- Archivage : « ${changement.apres.libelle} »`;
+        return `- Archivage : « ${changement.apres.libelle} » (id: ${changement.id})`;
       case 'reactivation':
-        return `- Réactivation : « ${changement.apres.libelle} »`;
+        return `- Réactivation : « ${changement.apres.libelle} » (id: ${changement.id})`;
     }
   }
 
   private ligneQuestion(changement: ChangementQuestion): string {
     switch (changement.type) {
       case 'creation':
-        return `- Création : « ${changement.apres.libelle} »`;
+        return `- Création : « ${changement.apres.libelle} » (id: ${changement.id})`;
       case 'maj':
-        return this.ligneMaj(changement.avant, changement.apres);
+        return this.ligneMaj(changement.id, changement.avant, changement.apres);
       case 'reaffectation':
-        return `- Réaffectation : « ${changement.apres.libelle} »`;
+        return `- Réaffectation : « ${changement.apres.libelle} » (id: ${changement.id})`;
       case 'archivage':
-        return `- Archivage : « ${changement.apres.libelle} »`;
+        return `- Archivage : « ${changement.apres.libelle} » (id: ${changement.id})`;
       case 'reactivation':
-        return `- Réactivation : « ${changement.apres.libelle} »`;
+        return `- Réactivation : « ${changement.apres.libelle} » (id: ${changement.id})`;
     }
   }
 
   private ligneMaj(
+    id: string,
     avant: EtatTheme | EtatQuestion | null,
     apres: EtatTheme | EtatQuestion,
   ): string {
     if (avant && avant.libelle !== apres.libelle) {
-      return `- Mise à jour : « ${avant.libelle} » → « ${apres.libelle} »`;
+      return `- Mise à jour : « ${avant.libelle} » → « ${apres.libelle} » (id: ${id})`;
     }
-    return `- Mise à jour : « ${apres.libelle} » (options modifiées)`;
+    return `- Mise à jour : « ${apres.libelle} » (options modifiées) (id: ${id})`;
   }
 }
