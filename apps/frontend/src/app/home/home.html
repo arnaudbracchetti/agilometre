@@ -1,0 +1,53 @@
+<div class="home">
+  <div class="home__topbar">Agilomètre — diagnostic de maturité agile</div>
+
+  <header class="home__header">
+    <span class="home__brand">Agilomètre</span>
+    <nav class="home__nav">
+      <a href="javascript:void(0)">Comment ça marche</a>
+      <a href="javascript:void(0)">Le référentiel</a>
+      <button nz-button nzType="primary">Se connecter</button>
+    </nav>
+  </header>
+
+  <section class="home__hero">
+    <h1>Mesurer la maturité agile de vos équipes, sans jamais rompre l’anonymat.</h1>
+    <p>
+      Agilomètre combine des séances de vote animées et des campagnes de pouls par email pour suivre la
+      progression de vos équipes dans la durée — avec un score jamais reliable à un individu.
+    </p>
+    <div class="home__cta">
+      <button nz-button nzType="primary" nzSize="large">Se connecter</button>
+      <button nz-button nzType="default" nzGhost nzSize="large" class="home__cta-ghost">
+        Voir comment ça marche
+      </button>
+    </div>
+  </section>
+
+  <section class="home__chiffres">
+    @for (chiffre of chiffresCles; track chiffre.libelle) {
+      <div class="home__chiffre">
+        <strong>{{ chiffre.valeur }}</strong>
+        <span>{{ chiffre.libelle }}</span>
+      </div>
+    }
+  </section>
+
+  <section class="home__dispositifs">
+    @for (dispositif of dispositifs; track dispositif.titre) {
+      <nz-card>
+        <span nz-icon [nzType]="dispositif.icone" nzTheme="outline" class="home__dispositif-icone"></span>
+        <h3>{{ dispositif.titre }}</h3>
+        <p>{{ dispositif.texte }}</p>
+      </nz-card>
+    }
+  </section>
+
+  <footer class="home__footer">
+    <span>Agilomètre — outil déployé sur site, aucune donnée ne quitte votre système d’information.</span>
+    <nav>
+      <a href="javascript:void(0)">Mentions légales</a>
+      <a href="javascript:void(0)">Contact</a>
+    </nav>
+  </footer>
+</div>

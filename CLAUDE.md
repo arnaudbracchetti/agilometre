@@ -95,6 +95,25 @@ deliberate choice per factory, never a silent gap). This exact gap (validation o
 silently bypassed by a later `reconstituer`) has already caused a real bug once — check for it
 specifically when reviewing or writing a new factory.
 
+### Frontend charte: design tokens in `styles.scss`, never hardcoded values
+
+The visual identity (navy `#0f2f5f` primary / red `#e1000f` accent, insee.fr-inspired) was
+validated via the `/prototype` skill against the home page (`apps/frontend/src/app/home/`) and is
+now the charte for **every** screen, not just that page. It lives as CSS custom properties in
+`apps/frontend/src/styles.scss` (global, framework-agnostic, no build config needed) — primitives
+(`--color-navy-*`, `--color-red-*`, `--color-gray-*`) plus the semantic tokens components actually
+consume (`--color-primary`, `--color-ink`, `--color-accent`, `--font-size-*`, `--space-*`, …).
+**New component styles reference `var(--color-primary)` etc., never a hex value or a local Sass
+variable** — see `apps/frontend/src/app/home/home.scss` for the pattern. `apps/frontend/src/theme.less`
+(ng-zorro-antd's own Less variables — `@primary-color`, `@link-color`) is kept in sync with the
+same hex values by hand, since Less can't read CSS custom properties at compile time; if the
+palette changes, update both files.
+
+`--color-on-primary` exists specifically so text/icons placed on a `--color-primary` or
+`--color-primary-emphasis` background (hero sections, dark headers) never default back to the
+near-black ink color — that exact bug (illegible dark text on the navy hero) is what surfaced
+during the prototype and is why the token exists.
+
 ### Single-container deployment
 
 In production there is **one** container: NestJS serves both the API (under `/api`, set via

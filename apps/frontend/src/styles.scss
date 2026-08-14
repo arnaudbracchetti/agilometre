@@ -1,1 +1,83 @@
-/* You can add global styles to this file, and also import other style files */
+/*
+ * Charte graphique Agilomètre — design tokens globaux.
+ *
+ * Validée à partir de la variante A du prototype de page d'accueil (inspiration insee.fr).
+ * Tous les écrans consomment ces custom properties (var(--color-primary), etc.) plutôt que
+ * des couleurs/tailles codées en dur, pour rester homogènes avec ce modèle.
+ *
+ * - Primitives (--color-navy-*, --color-red-*, --color-gray-*) : la palette brute.
+ * - Sémantiques (--color-primary, --color-ink, --color-surface, ...) : ce que les composants
+ *   utilisent réellement. Un composant ne référence jamais une primitive directement.
+ * - theme.less (variables Less ng-zorro-antd) garde les mêmes valeurs de couleur primaire —
+ *   ils ne peuvent pas partager ces custom properties (préprocesseurs différents), donc en cas
+ *   de changement de teinte, mettre à jour les deux fichiers.
+ */
+:root {
+  /* Primitives — couleurs */
+  --color-navy-900: #081b38;
+  --color-navy-700: #0f2f5f;
+  --color-navy-500: #24507f;
+  --color-navy-100: #e8edf4;
+  --color-red-700: #b8000c;
+  --color-red-600: #e1000f;
+  --color-gray-900: #1d1d1d;
+  --color-gray-700: #444444;
+  --color-gray-500: #6b6b6b;
+  --color-gray-300: #e2e2e2;
+  --color-gray-100: #f5f6f8;
+  --color-white: #ffffff;
+
+  /* Sémantiques — couleurs */
+  --color-bg: var(--color-white);
+  --color-surface: var(--color-white);
+  --color-surface-alt: var(--color-gray-100);
+  --color-border: var(--color-gray-300);
+  --color-ink: var(--color-gray-900);
+  --color-ink-muted: var(--color-gray-700);
+  --color-primary: var(--color-navy-700);
+  --color-primary-emphasis: var(--color-navy-900);
+  --color-primary-hover: var(--color-navy-500);
+  --color-primary-subtle: var(--color-navy-100);
+  --color-accent: var(--color-red-600);
+  --color-accent-emphasis: var(--color-red-700);
+  /* Texte/icônes posés sur un fond --color-primary ou --color-primary-emphasis. */
+  --color-on-primary: var(--color-white);
+
+  /* Typographie — une seule famille, échelle fixe (rem), ratio resserré (~1.125–1.2) */
+  --font-family-base:
+    'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.125rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 1.875rem;
+  --font-size-display: 2.25rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.2;
+  --line-height-base: 1.5;
+
+  /* Espacements — base 4px */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Rayons */
+  --radius-sm: 4px;
+  --radius-pill: 999px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family-base);
+  color: var(--color-ink);
+  background: var(--color-bg);
+}

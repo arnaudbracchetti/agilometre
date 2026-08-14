@@ -1,7 +1,12 @@
 // Thème ng-zorro-antd. Les variables Less ci-dessous sont évaluées paresseusement :
 // on peut les redéfinir ici même après l'import, elles écrasent les valeurs par défaut.
 // Point d'entrée pour caler l'aspect des composants sur la charte d'un client donné.
+//
+// Couleurs alignées sur les design tokens de styles.scss (--color-primary, --color-accent).
+// Le Less ne peut pas lire ces custom properties CSS au moment de la compilation : en cas de
+// changement de teinte, mettre à jour les deux fichiers.
 @import 'ng-zorro-antd/ng-zorro-antd.less';
 
-@primary-color: #1890ff;
-@border-radius-base: 4px;
+@primary-color: #0f2f5f; // --color-primary
+@link-color: #0f2f5f; // --color-primary
+@border-radius-base: 4px; // --radius-sm
