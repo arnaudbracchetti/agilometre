@@ -1,65 +1,175 @@
 <div class="organisation">
-  <section class="organisation__liste">
-    <h2 class="organisation__titre">Entités</h2>
+  <section class="organisation__arbre">
+    <h2 class="organisation__titre">Organisation</h2>
 
-    <form class="organisation__creation" (ngSubmit)="creer()">
-      <input
-        nz-input
-        name="nouveauNom"
-        placeholder="Nom de la nouvelle Entité"
-        [ngModel]="nouveauNom()"
-        (ngModelChange)="nouveauNom.set($event)"
-      />
-      <button nz-button nzType="primary" type="submit" [nzLoading]="creationEnCours()">
-        Créer
-      </button>
-    </form>
-
-    <nz-list [nzDataSource]="entites()" nzBordered>
-      @for (entite of entites(); track entite.id) {
-        <li
-          nz-list-item
-          class="organisation__item"
-          [class.organisation__item--selectionne]="entite.id === selectionId()"
-          role="button"
-          tabindex="0"
-          (click)="selectionner(entite)"
-          (keydown.enter)="selectionner(entite)"
-          (keydown.space)="selectionner(entite)"
-        >
-          {{ entite.nom }}
-        </li>
-      } @empty {
-        <li nz-list-item class="organisation__item-vide">Aucune Entité pour le moment.</li>
-      }
-    </nz-list>
+    <nz-tree
+      class="organisation__tree"
+      [nzData]="treeData()"
+      [nzSelectedKeys]="selectedKeys()"
+      [nzExpandedKeys]="expandedKeys()"
+      (nzExpandChange)="onNodeExpand($event)"
+      (nzClick)="onNodeClick($event)"
+      nzBlockNode
+    ></nz-tree>
   </section>
 
   <section class="organisation__detail">
     @if (entiteSelectionnee(); as entite) {
       <h2 class="organisation__titre">{{ entite.nom }}</h2>
 
-      <form class="organisation__renommage" (ngSubmit)="renommer()">
-        <label for="nomRenomme">Nom</label>
+      <form class="organisation__formulaire" (ngSubmit)="renommerEntite()">
+        <label for="nomRenommeEntite">Renommer l’Entité</label>
         <input
           nz-input
-          id="nomRenomme"
-          name="nomRenomme"
-          [ngModel]="nomRenomme()"
-          (ngModelChange)="nomRenomme.set($event)"
+          id="nomRenommeEntite"
+          name="nomRenommeEntite"
+          [ngModel]="nomRenommeEntite()"
+          (ngModelChange)="nomRenommeEntite.set($event)"
         />
         <button
           nz-button
           nzType="primary"
           type="submit"
-          [disabled]="!renommagePossible()"
-          [nzLoading]="renommageEnCours()"
+          [disabled]="!renommageEntitePossible()"
+          [nzLoading]="renommageEntiteEnCours()"
         >
           Renommer
         </button>
       </form>
+
+      <form class="organisation__formulaire" (ngSubmit)="creerEquipe()">
+        <label for="nouveauNomEquipe">Créer une Équipe dans cette Entité</label>
+        <input
+          nz-input
+          id="nouveauNomEquipe"
+          name="nouveauNomEquipe"
+          placeholder="Nom de la nouvelle Équipe"
+          [ngModel]="nouveauNomEquipe()"
+          (ngModelChange)="nouveauNomEquipe.set($event)"
+        />
+        <button nz-button nzType="primary" type="submit" [nzLoading]="creationEquipeEnCours()">
+          Créer l’Équipe
+        </button>
+      </form>
+    } @else if (equipeSelectionnee(); as equipe) {
+      <h2 class="organisation__titre">{{ equipe.nom }}</h2>
+
+      <form class="organisation__formulaire" (ngSubmit)="renommerEquipe()">
+        <label for="nomRenommeEquipe">Renommer l’Équipe</label>
+        <input
+          nz-input
+          id="nomRenommeEquipe"
+          name="nomRenommeEquipe"
+          [ngModel]="nomRenommeEquipe()"
+          (ngModelChange)="nomRenommeEquipe.set($event)"
+        />
+        <button
+          nz-button
+          nzType="primary"
+          type="submit"
+          [disabled]="!renommageEquipePossible()"
+          [nzLoading]="renommageEquipeEnCours()"
+        >
+          Renommer
+        </button>
+      </form>
+
+      <button
+        nz-button
+        nzDanger
+        class="organisation__supprimer"
+        nz-popconfirm
+        nzPopconfirmTitle="Supprimer cette Équipe et tous ses Membres ?"
+        (nzOnConfirm)="supprimerEquipe()"
+      >
+        Supprimer l’Équipe
+      </button>
+
+      <form class="organisation__formulaire" (ngSubmit)="ajouterMembre()">
+        <label for="nouveauMembreNom">Ajouter un Membre au roster</label>
+        <input
+          nz-input
+          id="nouveauMembreNom"
+          name="nouveauMembreNom"
+          placeholder="Nom"
+          [ngModel]="nouveauMembreNom()"
+          (ngModelChange)="nouveauMembreNom.set($event)"
+        />
+        <input
+          nz-input
+          id="nouveauMembreEmail"
+          name="nouveauMembreEmail"
+          placeholder="Email"
+          type="email"
+          [ngModel]="nouveauMembreEmail()"
+          (ngModelChange)="nouveauMembreEmail.set($event)"
+        />
+        <button nz-button nzType="primary" type="submit" [nzLoading]="ajoutMembreEnCours()">
+          Ajouter au roster
+        </button>
+      </form>
+    } @else if (membreSelectionne(); as selection) {
+      <h2 class="organisation__titre">{{ selection.membre.nom }}</h2>
+
+      <form class="organisation__formulaire" (ngSubmit)="modifierMembre()">
+        <label for="nomModifieMembre">Nom</label>
+        <input
+          nz-input
+          id="nomModifieMembre"
+          name="nomModifieMembre"
+          [ngModel]="nomModifieMembre()"
+          (ngModelChange)="nomModifieMembre.set($event)"
+        />
+        <label for="emailModifieMembre">Email</label>
+        <input
+          nz-input
+          id="emailModifieMembre"
+          name="emailModifieMembre"
+          type="email"
+          [ngModel]="emailModifieMembre()"
+          (ngModelChange)="emailModifieMembre.set($event)"
+        />
+        <button
+          nz-button
+          nzType="primary"
+          type="submit"
+          [disabled]="!modificationMembrePossible()"
+          [nzLoading]="modificationMembreEnCours()"
+        >
+          Enregistrer
+        </button>
+      </form>
+
+      <button
+        nz-button
+        nzDanger
+        nz-popconfirm
+        nzPopconfirmTitle="Retirer ce Membre du roster ?"
+        (nzOnConfirm)="retirerMembre()"
+      >
+        Retirer du roster
+      </button>
     } @else {
-      <p class="organisation__etat-vide">Sélectionnez une Entité dans la liste.</p>
+      <h2 class="organisation__titre">Entités</h2>
+
+      <form class="organisation__formulaire" (ngSubmit)="creerEntite()">
+        <label for="nouveauNomEntite">Créer une Entité</label>
+        <input
+          nz-input
+          id="nouveauNomEntite"
+          name="nouveauNomEntite"
+          placeholder="Nom de la nouvelle Entité"
+          [ngModel]="nouveauNomEntite()"
+          (ngModelChange)="nouveauNomEntite.set($event)"
+        />
+        <button nz-button nzType="primary" type="submit" [nzLoading]="creationEntiteEnCours()">
+          Créer
+        </button>
+      </form>
+
+      <p class="organisation__etat-vide">
+        Sélectionnez une Entité, une Équipe ou un Membre dans l’arbre pour la gérer.
+      </p>
     }
   </section>
 </div>

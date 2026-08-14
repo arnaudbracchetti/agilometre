@@ -78,16 +78,18 @@ model Equipe {
   campagnes CampagnePouls[]
 }
 
+// Roster d'une Équipe, sans compte de connexion obligatoire (agrégat Organisation,
+// docs/design/agregat-organisation.md). `email` n'est volontairement pas unique globalement :
+// une même personne peut apparaître dans plusieurs rosters. `utilisateurId` référence par id un
+// futur Utilisateur (pas de relation Prisma : ce modèle n'existe pas encore, voir #21/#23) — même
+// pattern que Sollicitation.membreId.
 model Membre {
-  id             String  @id @default(uuid())
-  nom            String
-  email          String  @unique
-  role           Role
-  equipe         Equipe  @relation(fields: [equipeId], references: [id])
-  equipeId       String
-  // Mot de passe local (comptes coach/manager/direction, §10). Absent pour les
-  // membres qui ne se connectent que via jeton de séance ou lien de pouls.
-  motDePasseHash String?
+  id            String  @id @default(uuid())
+  nom           String
+  email         String
+  equipe        Equipe  @relation(fields: [equipeId], references: [id], onDelete: Cascade)
+  equipeId      String
+  utilisateurId String?
 }
 
 // --- Session animée (§4, §7) ---

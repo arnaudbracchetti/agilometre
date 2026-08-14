@@ -18,7 +18,7 @@
     margin: 0 0 var(--space-4);
   }
 
-  &__liste,
+  &__arbre,
   &__detail {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -26,35 +26,28 @@
     padding: var(--space-5);
   }
 
-  &__creation {
-    display: flex;
-    gap: var(--space-2);
-    margin-bottom: var(--space-4);
-  }
-
-  &__item {
-    cursor: pointer;
-
-    &--selectionne {
+  &__tree {
+    ::ng-deep .ant-tree-node-selected {
       background: var(--color-primary-subtle);
       font-weight: var(--font-weight-medium);
     }
   }
 
-  &__item-vide {
-    color: var(--color-ink-muted);
-  }
-
-  &__renommage {
+  &__formulaire {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     max-width: 24rem;
+    margin-bottom: var(--space-5);
 
     label {
       font-size: var(--font-size-sm);
       color: var(--color-ink-muted);
     }
+  }
+
+  &__supprimer {
+    margin-bottom: var(--space-5);
   }
 
   &__etat-vide {

@@ -29,11 +29,17 @@ Trois agrégats racines, indépendants, référencés entre eux par id (pas d'im
   d'Équipes et des centaines de Membres par Entité, l'imbriquer aurait fait de `Entité` un
   agrégat-dieu (contention d'écriture entre Équipes sans rapport, chargement lourd à chaque
   opération) - voir `theory/aggregate-design.md` du skill `/ddd`, anti-pattern 8.
-- **`Équipe`** (racine) : id, `nom`, `entiteId`. Possède **`Membre`** comme entité enfant (chargée/
-  sauvegardée avec elle, supprimée en cascade avec elle) : id, `utilisateurId: string | null` -
-  quand renseigné, référence toujours un Utilisateur `Rôle=MEMBRE` (invariant cross-agrégat, voir
-  section 2). Voir [ADR 0007](../adr/0007-membre-utilisateur-optionnel-anticipe-sur-prd-v1.md) sur
-  pourquoi ce champ existe dès maintenant alors que le PRD v1 ne prévoit pas de compte pour ce rôle.
+- **`Équipe`** (racine) : id, `nom` (unique dans toute l'Organisation, insensible à la casse — même
+  règle que le nom d'Entité), `entiteId`. Possède **`Membre`** comme entité enfant (chargée/
+  sauvegardée avec elle, supprimée en cascade avec elle) : id, `nom`, `email` (tous deux
+  obligatoires — une personne recensée dans un roster doit être identifiable à l'écran même sans
+  compte de connexion associé), `utilisateurId: string | null` - quand renseigné, référence
+  toujours un Utilisateur `Rôle=MEMBRE` (invariant cross-agrégat, voir section 2). Voir
+  [ADR 0007](../adr/0007-membre-utilisateur-optionnel-anticipe-sur-prd-v1.md) sur pourquoi ce champ
+  existe dès maintenant alors que le PRD v1 ne prévoit pas de compte pour ce rôle. Quand un Membre
+  sera lié à un Utilisateur (#23), `nom`/`email` resteront portés par `Membre` mais seront éclipsés
+  à l'affichage par ceux de l'Utilisateur lié — mécanisme à construire dans ce ticket futur, pas
+  dans celui-ci (US#22).
 - **`Utilisateur`** (racine) : id, identifiants de connexion, `Rôle` (Value Object, une des 4
   valeurs `COACH` / `MEMBRE` / `MANAGER` / `DIRECTION`), liste d'**`Habilitation`** (entité enfant) :
   `équipeId: string | null`, `entiteId: string | null` (exactement un des deux selon le Rôle - voir
@@ -44,6 +50,8 @@ Trois agrégats racines, indépendants, référencés entre eux par id (pas d'im
 | Invariant | Portée |
 |---|---|
 | Deux Entités ne peuvent pas porter le même nom (comparaison insensible à la casse) | Use cases `CreerEntite`/`RenommerEntite`, via `EntiteRepository.trouverParNom(nom)` - **pas** une méthode de domaine sur `Entité`, qui ne connaît pas les autres instances (règle de coordination, cf. `/ddd`) ; filet de sécurité en base via un index unique fonctionnel sur `LOWER(nom)` |
+| Deux Équipes ne peuvent pas porter le même nom, même règle et même portée globale que pour Entité (pas scopée à une Entité) | Use cases `CreerEquipe`/`RenommerEquipe`, via `EquipeRepository.trouverParNom(nom)` ; filet de sécurité en base via un index unique fonctionnel sur `LOWER(nom)` |
+| `Membre.nom` et `Membre.email` sont obligatoires ; deux Membres d'une même Équipe ne peuvent pas partager le même email (comparaison insensible à la casse) | `Équipe.ajouterMembre()` - invariant purement local à l'agrégat, l'Équipe porte déjà tout son roster |
 | Une Habilitation est cohérente avec le Rôle : `équipeId` seul si `MANAGER`, `entiteId` seul si `DIRECTION`, aucune Habilitation si `COACH` | `Utilisateur.ajouterHabilitation()` |
 | Pas de doublon d'Habilitation (même Équipe/Entité deux fois) | `Utilisateur.ajouterHabilitation()` |
 | Un Membre référence au plus un Utilisateur | Structurel (`utilisateurId` singulier, pas une liste) |
@@ -64,7 +72,7 @@ Trois agrégats racines, indépendants, référencés entre eux par id (pas d'im
 | Créer une Équipe (rattachée à une Entité) | Commande | Méthode de domaine | Racine (`Équipe`) |
 | Renommer une Équipe | Commande | Méthode de domaine | Racine (`Équipe`) |
 | Supprimer une Équipe (cascade Membres) | Commande | Use case (suppression + nettoyage des Habilitations `équipeId` orphelines) | Racine (`Équipe`) |
-| Ajouter un Membre à une Équipe (avec ou sans Utilisateur) | Commande | Use case + `équipe.ajouterMembre(utilisateurId?)` - vérifie `Rôle=MEMBRE` si un Utilisateur est fourni | Enfant (`Membre`), délégué par la racine |
+| Ajouter un Membre à une Équipe (nom, email obligatoires ; sans Utilisateur dans cette itération) | Commande | Use case + `équipe.ajouterMembre(id, nom, email)` - rejette un email déjà présent dans le roster de cette Équipe. La liaison à un Utilisateur (US#19 story 8, vérification `Rôle=MEMBRE`) est différée à #23 | Enfant (`Membre`), délégué par la racine |
 | Retirer un Membre d'une Équipe | Commande | `équipe.retirerMembre(id)` | Enfant (`Membre`), délégué par la racine |
 | Lier un Utilisateur existant à un Membre | Commande | Use case + `membre.lierUtilisateur(utilisateurId)` - vérifie `Rôle=MEMBRE` | Enfant (`Membre`) |
 | Délier l'Utilisateur d'un Membre | Commande | `membre.delierUtilisateur()` | Enfant (`Membre`) |
@@ -89,6 +97,8 @@ interface EntiteRepository {
 
 interface EquipeRepository {
   findById(id: string): Equipe | null      // agrégat complet, avec ses Membres
+  findByEntiteId(entiteId: string): Equipe[]  // Équipes d'une Entité, agrégats complets
+  trouverParNom(nom: string): Equipe | null   // insensible à la casse - garde d'unicité (Créer/Renommer)
   save(equipe: Equipe): void
   remove(id: string): void
   compterParEntite(entiteId: string): number  // pour la garde de suppression d'Entité
