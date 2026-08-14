@@ -43,6 +43,7 @@ Trois agrégats racines, indépendants, référencés entre eux par id (pas d'im
 
 | Invariant | Portée |
 |---|---|
+| Deux Entités ne peuvent pas porter le même nom (comparaison insensible à la casse) | Use cases `CreerEntite`/`RenommerEntite`, via `EntiteRepository.trouverParNom(nom)` - **pas** une méthode de domaine sur `Entité`, qui ne connaît pas les autres instances (règle de coordination, cf. `/ddd`) ; filet de sécurité en base via un index unique fonctionnel sur `LOWER(nom)` |
 | Une Habilitation est cohérente avec le Rôle : `équipeId` seul si `MANAGER`, `entiteId` seul si `DIRECTION`, aucune Habilitation si `COACH` | `Utilisateur.ajouterHabilitation()` |
 | Pas de doublon d'Habilitation (même Équipe/Entité deux fois) | `Utilisateur.ajouterHabilitation()` |
 | Un Membre référence au plus un Utilisateur | Structurel (`utilisateurId` singulier, pas une liste) |
@@ -80,6 +81,8 @@ Trois agrégats racines, indépendants, référencés entre eux par id (pas d'im
 ```
 interface EntiteRepository {
   findById(id: string): Entite | null
+  findAll(): Entite[]              // liste des Entités (écran Organisation, carte #20)
+  trouverParNom(nom: string): Entite | null  // insensible à la casse - garde d'unicité (Créer/Renommer)
   save(entite: Entite): void
   remove(id: string): void        // appelé uniquement par le use case SupprimerEntite
 }

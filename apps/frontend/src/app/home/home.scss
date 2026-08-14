@@ -4,45 +4,6 @@
   font-family: var(--font-family-base);
   color: var(--color-ink);
 
-  &__topbar {
-    background: var(--color-primary-emphasis);
-    color: var(--color-on-primary);
-    font-size: var(--font-size-xs);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding: var(--space-2) var(--space-6);
-  }
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-4) var(--space-6);
-    border-bottom: 3px solid var(--color-primary);
-  }
-
-  &__brand {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-primary);
-  }
-
-  &__nav {
-    display: flex;
-    align-items: center;
-    gap: var(--space-5);
-
-    a {
-      color: var(--color-primary);
-      text-decoration: none;
-      font-weight: var(--font-weight-medium);
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-  }
-
   &__hero {
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-emphasis) 100%);
     color: var(--color-on-primary);
@@ -123,11 +84,15 @@
 
   &__dispositifs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: var(--space-5);
     padding: var(--space-7) var(--space-6);
 
-    @media (max-width: 900px) {
+    @media (max-width: 1100px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 560px) {
       grid-template-columns: 1fr;
     }
 
@@ -147,6 +112,10 @@
   &__dispositif-icone {
     font-size: var(--font-size-xl);
     color: var(--color-accent);
+  }
+
+  &__dispositif-action {
+    margin-top: var(--space-4);
   }
 
   &__footer {

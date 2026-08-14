@@ -1,14 +1,7 @@
 <div class="home">
-  <div class="home__topbar">Agilomètre — diagnostic de maturité agile</div>
-
-  <header class="home__header">
-    <span class="home__brand">Agilomètre</span>
-    <nav class="home__nav">
-      <a href="javascript:void(0)">Comment ça marche</a>
-      <a href="javascript:void(0)">Le référentiel</a>
-      <button nz-button nzType="primary">Se connecter</button>
-    </nav>
-  </header>
+  <app-header [liens]="liensNav">
+    <button nz-button nzType="primary">Se connecter</button>
+  </app-header>
 
   <section class="home__hero">
     <h1>Mesurer la maturité agile de vos équipes, sans jamais rompre l’anonymat.</h1>
@@ -41,6 +34,12 @@
         <p>{{ dispositif.texte }}</p>
       </nz-card>
     }
+    <nz-card>
+      <span nz-icon nzType="apartment" nzTheme="outline" class="home__dispositif-icone"></span>
+      <h3>Gérer l’organisation</h3>
+      <p>Créez et renommez les Entités de votre organisation avant d’y rattacher des Équipes.</p>
+      <a routerLink="/organisation" nz-button nzType="primary" class="home__dispositif-action">Accéder</a>
+    </nz-card>
   </section>
 
   <footer class="home__footer">

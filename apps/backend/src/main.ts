@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { configureReferentielImportBodyParser } from './referentiel/configure-import-body-parser';
@@ -8,6 +9,7 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
   configureReferentielImportBodyParser(app);
   app.setGlobalPrefix('api');
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();

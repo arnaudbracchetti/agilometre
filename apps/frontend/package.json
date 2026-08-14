@@ -13,7 +13,9 @@
   "private": true,
   "packageManager": "pnpm@10.28.0",
   "dependencies": {
+    "@agilometre/shared": "workspace:*",
     "@ant-design/icons-angular": "^22.0.0",
+    "@angular/animations": "22.1.1",
     "@angular/cdk": "^22.1.1",
     "@angular/common": "^22.1.0",
     "@angular/compiler": "^22.1.0",

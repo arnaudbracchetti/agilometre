@@ -73,6 +73,9 @@
   /* Rayons */
   --radius-sm: 4px;
   --radius-pill: 999px;
+
+  /* Empilement (échelle sémantique, étendre au fur et à mesure des besoins) */
+  --z-sticky: 10;
 }
 
 body {

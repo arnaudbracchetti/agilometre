@@ -1,0 +1,52 @@
+.app-header {
+  font-family: var(--font-family-base);
+
+  &__topbar {
+    background: var(--color-primary-emphasis);
+    color: var(--color-on-primary);
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: var(--space-2) var(--space-6);
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-6);
+    border-bottom: 3px solid var(--color-primary);
+    background: var(--color-surface);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+  }
+
+  &__brand {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+
+    a {
+      color: var(--color-primary);
+      text-decoration: none;
+      font-weight: var(--font-weight-medium);
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &__link--active {
+    text-decoration: underline;
+    text-underline-offset: var(--space-1);
+  }
+}

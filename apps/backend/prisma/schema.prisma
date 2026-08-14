@@ -59,6 +59,9 @@ model Option {
 
 // --- Organisation : entités / BU > équipes > membres (§4) ---
 
+// Unicité de `nom` (insensible à la casse) garantie par un index fonctionnel sur LOWER(nom),
+// ajouté par migration SQL brute (non représentable ici, pas d'index d'expression natif) —
+// voir la migration entite_nom_unique_ci et docs/design/agregat-organisation.md.
 model Entite {
   id      String   @id @default(uuid())
   nom     String

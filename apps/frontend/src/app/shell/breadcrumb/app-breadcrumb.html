@@ -1,0 +1,15 @@
+<nav class="app-breadcrumb" aria-label="Fil d’Ariane">
+  <ol>
+    <li><a routerLink="/">Accueil</a></li>
+    @for (crumb of breadcrumbs(); track crumb.url) {
+      <li class="app-breadcrumb__separator" aria-hidden="true">›</li>
+      <li>
+        @if ($last) {
+          <span aria-current="page">{{ crumb.label }}</span>
+        } @else {
+          <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+        }
+      </li>
+    }
+  </ol>
+</nav>

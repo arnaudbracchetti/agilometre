@@ -1,0 +1,38 @@
+.app-breadcrumb {
+  padding: var(--space-2) var(--space-6);
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-family-base);
+
+  ol {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--font-size-xs);
+    color: var(--color-ink-muted);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  a {
+    color: var(--color-ink-muted);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-primary);
+      text-decoration: underline;
+    }
+  }
+
+  span[aria-current='page'] {
+    color: var(--color-ink);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__separator {
+    color: var(--color-border);
+  }
+}
