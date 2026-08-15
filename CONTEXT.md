@@ -61,8 +61,15 @@ Une des quatre valeurs portées par un Utilisateur, qui détermine ce qu'il voit
 
 ### Session animée
 
+**Modèle de session**:
+Une Sélection de Questions nommée, indépendante de toute Équipe, que le Coach compose et réutilise pour créer des Sessions. Librement supprimable, y compris après avoir servi à créer une ou plusieurs Sessions - aucun lien retour vers les Sessions qui en sont issues.
+_Avoid_: Template, Template de session (anglicisme utilisé en discussion, écarté au profit d'un glossaire 100% français)
+
+**Sélection**:
+Une liste ordonnée de Questions. Un Modèle de session porte sa propre Sélection, librement modifiable. Une Session reçoit une copie figée de la Sélection de son Modèle d'origine au moment de sa création - sans lien vivant vers celui-ci.
+
 **Session**:
-Une séance animée par un Coach pour une Équipe, à une date, sur une sélection de Questions ; contient des Tours de vote.
+Une séance animée par un Coach pour une Équipe, à une date, à partir d'un Modèle de session dont la Sélection est copiée au moment de la création ; contient des Tours de vote.
 _Avoid_: Séance (synonyme naturel du PRD narratif - Session est le terme du modèle)
 
 **Tour de vote**:
