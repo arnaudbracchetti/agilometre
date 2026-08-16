@@ -36,8 +36,17 @@ const publicDir = join(__dirname, '..', '..', 'public');
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+        // Le transport `pino-pretty` démarre un worker thread par instance de logger. En dehors
+        // du dev local (un seul process, longue durée), c'est un piège : les tests e2e créent une
+        // AppModule complète — donc un logger, donc un worker thread — par test (`Test.createTestingModule`),
+        // et rien ne les referme à la fermeture de l'app. Accumulés sur toute la suite (45 tests),
+        // ils empêchent Jest de sortir en fin de run (process qui traîne plusieurs minutes alors que
+        // les tests eux-mêmes ont fini en quelques secondes, cf. NODE_ENV=test — défaut appliqué par
+        // Jest lui-même). Exclu explicitement en 'test' comme en 'production' ; le dev local (où
+        // NODE_ENV n'est pas positionné) garde le transport pretty par défaut.
         transport:
-          process.env.NODE_ENV === 'production'
+          process.env.NODE_ENV === 'production' ||
+          process.env.NODE_ENV === 'test'
             ? undefined
             : { target: 'pino-pretty', options: { singleLine: true } },
       },
