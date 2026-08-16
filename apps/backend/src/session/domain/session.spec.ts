@@ -163,6 +163,200 @@ describe('Session', () => {
     });
   });
 
+  describe('estModifiable', () => {
+    it('vrai pour une Session ouverte et non verrouillée', () => {
+      const session = Session.creer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'm1',
+        Selection.vide(),
+      ).valeur;
+
+      expect(session.estModifiable()).toBe(true);
+    });
+
+    it('faux si verrouillée', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        true,
+        Selection.vide(),
+      );
+
+      expect(session.estModifiable()).toBe(false);
+    });
+
+    it('faux si clôturée', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'CLOTUREE',
+        'm1',
+        false,
+        Selection.vide(),
+      );
+
+      expect(session.estModifiable()).toBe(false);
+    });
+  });
+
+  describe('modifierInfos', () => {
+    it('remplace Équipe et Date quand la Session n’est pas verrouillée ni clôturée', () => {
+      const session = Session.creer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'm1',
+        Selection.vide(),
+      ).valeur;
+
+      const resultat = session.modifierInfos('e2', new Date('2026-04-01'));
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.equipeId).toBe('e2');
+      expect(session.date).toEqual(new Date('2026-04-01'));
+    });
+
+    it('rejette une Équipe manquante', () => {
+      const session = Session.creer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'm1',
+        Selection.vide(),
+      ).valeur;
+
+      const resultat = session.modifierInfos('   ', new Date('2026-04-01'));
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('EquipeManquanteError');
+      expect(session.equipeId).toBe('e1');
+    });
+
+    it('rejette la modification quand la Session est verrouillée', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        true,
+        Selection.vide(),
+      );
+
+      const resultat = session.modifierInfos('e2', new Date('2026-04-01'));
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('SessionNonModifiableError');
+      expect(session.equipeId).toBe('e1');
+    });
+
+    it('rejette la modification quand la Session est clôturée', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'CLOTUREE',
+        'm1',
+        false,
+        Selection.vide(),
+      );
+
+      const resultat = session.modifierInfos('e2', new Date('2026-04-01'));
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('SessionNonModifiableError');
+    });
+  });
+
+  describe('changerModele', () => {
+    it('remplace le Modèle et réinitialise entièrement la Sélection', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        false,
+        Selection.reconstituer(['q1', 'q2']),
+      );
+
+      const resultat = session.changerModele(
+        'm2',
+        Selection.reconstituer(['q3']),
+      );
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.modeleSessionId).toBe('m2');
+      expect(session.selection.questionIds).toEqual(['q3']);
+    });
+
+    it('rejette un Modèle manquant', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        false,
+        Selection.reconstituer(['q1']),
+      );
+
+      const resultat = session.changerModele('', Selection.vide());
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('ModeleManquantError');
+      expect(session.modeleSessionId).toBe('m1');
+      expect(session.selection.questionIds).toEqual(['q1']);
+    });
+
+    it('rejette le changement quand la Session est verrouillée', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        true,
+        Selection.reconstituer(['q1']),
+      );
+
+      const resultat = session.changerModele(
+        'm2',
+        Selection.reconstituer(['q3']),
+      );
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('SessionNonModifiableError');
+      expect(session.modeleSessionId).toBe('m1');
+    });
+
+    it('rejette le changement quand la Session est clôturée', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'CLOTUREE',
+        'm1',
+        false,
+        Selection.reconstituer(['q1']),
+      );
+
+      const resultat = session.changerModele(
+        'm2',
+        Selection.reconstituer(['q3']),
+      );
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('SessionNonModifiableError');
+    });
+  });
+
   describe('reconstituer', () => {
     it('recharge une Session avec son statut et son verrou sans revalider', () => {
       const session = Session.reconstituer(

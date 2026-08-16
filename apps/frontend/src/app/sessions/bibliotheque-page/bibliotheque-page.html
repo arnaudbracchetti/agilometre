@@ -18,6 +18,7 @@
         <th>Statut</th>
         <th>Questions</th>
         <th>Modèle utilisé</th>
+        <th class="bibliotheque__colonne-actions">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -32,6 +33,23 @@
           </td>
           <td>{{ ligne.nbQuestions }}</td>
           <td>{{ ligne.modeleSessionNom ?? 'Modèle supprimé' }}</td>
+          <td class="bibliotheque__actions" (click)="$event.stopPropagation()">
+            <button
+              nz-button
+              nzType="text"
+              nzShape="circle"
+              nzDanger
+              class="bibliotheque__action"
+              nz-tooltip
+              [nzTooltipTitle]="estSupprimable(ligne) ? 'Supprimer' : 'Verrouillée ou clôturée : suppression impossible'"
+              [disabled]="!estSupprimable(ligne)"
+              nz-popconfirm
+              nzPopconfirmTitle="Supprimer cette Session ?"
+              (nzOnConfirm)="supprimer(ligne.id)"
+            >
+              <span nz-icon nzType="delete" nzTheme="outline"></span>
+            </button>
+          </td>
         </tr>
       }
     </tbody>

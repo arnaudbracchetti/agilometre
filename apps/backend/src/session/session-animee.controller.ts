@@ -30,10 +30,15 @@ import {
   ObtenirSessionDetail,
   ResultatObtenirSessionDetail,
 } from './application/obtenir-session-detail.usecase';
+import { ModifierInfosSession } from './application/modifier-infos-session.usecase';
+import { ChangerModeleSession } from './application/changer-modele-session.usecase';
+import { SupprimerSession } from './application/supprimer-session.usecase';
 import {
   AjouterQuestionSessionDto,
   AjouterThemeSessionDto,
+  ChangerModeleSessionDto,
   CreerSessionDto,
+  ModifierInfosSessionDto,
   ReordonnerQuestionSessionDto,
 } from './session.dto';
 
@@ -50,6 +55,7 @@ const STATUT_VERS_DTO: Record<StatutSession, StatutSessionDto> = {
 function versSessionDto(
   session: Session,
   equipeNom: string,
+  entiteId: string,
   selectionEnrichie: Question[],
   themesActifs: Theme[],
 ): SessionDto {
@@ -68,6 +74,7 @@ function versSessionDto(
     id: session.id,
     equipeId: session.equipeId,
     equipeNom,
+    entiteId,
     date: session.date.toISOString(),
     statut: STATUT_VERS_DTO[session.statut],
     modeleSessionId: session.modeleSessionId,
@@ -86,6 +93,9 @@ export class SessionAnimeeController {
     private readonly reordonnerQuestionSession: ReordonnerQuestionSession,
     private readonly listerSessions: ListerSessions,
     private readonly obtenirSessionDetail: ObtenirSessionDetail,
+    private readonly modifierInfosSession: ModifierInfosSession,
+    private readonly changerModeleSession: ChangerModeleSession,
+    private readonly supprimerSession: SupprimerSession,
   ) {}
 
   @Get()
@@ -96,6 +106,7 @@ export class SessionAnimeeController {
       equipeNom: ligne.equipeNom,
       date: ligne.date.toISOString(),
       statut: STATUT_VERS_DTO[ligne.statut],
+      verrouillee: ligne.verrouillee,
       nbQuestions: ligne.nbQuestions,
       modeleSessionNom: ligne.modeleSessionNom,
     }));
@@ -126,6 +137,54 @@ export class SessionAnimeeController {
   async obtenir(@Param('id') id: string): Promise<SessionDto> {
     const resultat = await this.obtenirSessionDetail.executer(id);
     return this.versDtoOuIntrouvable(id, resultat);
+  }
+
+  @Patch(':id')
+  async modifierInfos(
+    @Param('id') id: string,
+    @Body() dto: ModifierInfosSessionDto,
+  ): Promise<SessionDto> {
+    const resultat = await this.modifierInfosSession.executer(
+      id,
+      dto.equipeId,
+      new Date(dto.date),
+    );
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Session ${id} introuvable`);
+    }
+    if (resultat.type === 'equipe_introuvable') {
+      throw new NotFoundException(`Équipe ${dto.equipeId} introuvable`);
+    }
+    if (resultat.type === 'invalide') {
+      throw new BadRequestException(resultat.erreur.message);
+    }
+    if (resultat.type === 'non_modifiable') {
+      throw new ConflictException(resultat.erreur.message);
+    }
+    return this.rechargerDetail(id);
+  }
+
+  @Patch(':id/modele')
+  async changerModele(
+    @Param('id') id: string,
+    @Body() dto: ChangerModeleSessionDto,
+  ): Promise<SessionDto> {
+    const resultat = await this.changerModeleSession.executer(
+      id,
+      dto.modeleSessionId,
+    );
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Session ${id} introuvable`);
+    }
+    if (resultat.type === 'modele_introuvable') {
+      throw new NotFoundException(
+        `Modèle de session ${dto.modeleSessionId} introuvable`,
+      );
+    }
+    if (resultat.type === 'non_modifiable') {
+      throw new ConflictException(resultat.erreur.message);
+    }
+    return this.rechargerDetail(id);
   }
 
   @Post(':id/questions')
@@ -208,6 +267,19 @@ export class SessionAnimeeController {
     return this.rechargerDetail(id);
   }
 
+  @Delete(':id')
+  async supprimer(@Param('id') id: string): Promise<void> {
+    const resultat = await this.supprimerSession.executer(id);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Session ${id} introuvable`);
+    }
+    if (resultat.type === 'non_supprimable') {
+      throw new ConflictException(
+        'Cette Session ne peut plus être supprimée : elle est verrouillée ou clôturée',
+      );
+    }
+  }
+
   /** Recharge le détail enrichi après une mutation, pour renvoyer une Sélection à jour et complète. */
   private async rechargerDetail(id: string): Promise<SessionDto> {
     const resultat = await this.obtenirSessionDetail.executer(id);
@@ -224,6 +296,7 @@ export class SessionAnimeeController {
     return versSessionDto(
       resultat.session,
       resultat.equipeNom,
+      resultat.entiteId,
       resultat.selectionEnrichie,
       resultat.themesActifs,
     );

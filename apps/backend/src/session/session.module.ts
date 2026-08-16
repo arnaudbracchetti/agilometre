@@ -20,6 +20,9 @@ import { RetirerQuestionSession } from './application/retirer-question-session.u
 import { ReordonnerQuestionSession } from './application/reordonner-question-session.usecase';
 import { ListerSessions } from './application/lister-sessions.usecase';
 import { ObtenirSessionDetail } from './application/obtenir-session-detail.usecase';
+import { ModifierInfosSession } from './application/modifier-infos-session.usecase';
+import { ChangerModeleSession } from './application/changer-modele-session.usecase';
+import { SupprimerSession } from './application/supprimer-session.usecase';
 import { PrismaModeleSessionRepository } from './infrastructure/prisma-modele-session.repository';
 import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-modele-session-bibliotheque.query';
 import { PrismaSessionRepository } from './infrastructure/prisma-session.repository';
@@ -163,6 +166,28 @@ import { SessionAnimeeController } from './session-animee.controller';
         PrismaEquipeRepository,
         PrismaReferentielRepository,
       ],
+    },
+    {
+      provide: ModifierInfosSession,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        equipes: PrismaEquipeRepository,
+      ) => new ModifierInfosSession(sessions, equipes),
+      inject: [PrismaSessionRepository, PrismaEquipeRepository],
+    },
+    {
+      provide: ChangerModeleSession,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        modeles: PrismaModeleSessionRepository,
+      ) => new ChangerModeleSession(sessions, modeles),
+      inject: [PrismaSessionRepository, PrismaModeleSessionRepository],
+    },
+    {
+      provide: SupprimerSession,
+      useFactory: (sessions: PrismaSessionRepository) =>
+        new SupprimerSession(sessions),
+      inject: [PrismaSessionRepository],
     },
   ],
 })

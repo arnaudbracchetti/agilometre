@@ -37,6 +37,7 @@ describe('SessionsService', () => {
       id: 's1',
       equipeId: 'e1',
       equipeNom: 'Alpha',
+      entiteId: 'ent1',
       date: '2026-04-01',
       statut: 'OUVERTE',
       modeleSessionId: 'm1',
@@ -54,12 +55,59 @@ describe('SessionsService', () => {
       id: 's1',
       equipeId: 'e1',
       equipeNom: 'Alpha',
+      entiteId: 'ent1',
       date: '2026-04-01',
       statut: 'OUVERTE',
       modeleSessionId: 'm1',
       verrouillee: false,
       selection: [],
     });
+  });
+
+  it('modifie Équipe et Date via PATCH /api/sessions/:id', () => {
+    service.modifierInfos('s1', 'e2', '2026-05-01').subscribe();
+
+    const req = httpMock.expectOne('/api/sessions/s1');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ equipeId: 'e2', date: '2026-05-01' });
+    req.flush({
+      id: 's1',
+      equipeId: 'e2',
+      equipeNom: 'Beta',
+      entiteId: 'ent1',
+      date: '2026-05-01',
+      statut: 'OUVERTE',
+      modeleSessionId: 'm1',
+      verrouillee: false,
+      selection: [],
+    });
+  });
+
+  it('change le Modèle via PATCH /api/sessions/:id/modele', () => {
+    service.changerModele('s1', 'm2').subscribe();
+
+    const req = httpMock.expectOne('/api/sessions/s1/modele');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ modeleSessionId: 'm2' });
+    req.flush({
+      id: 's1',
+      equipeId: 'e1',
+      equipeNom: 'Alpha',
+      entiteId: 'ent1',
+      date: '2026-04-01',
+      statut: 'OUVERTE',
+      modeleSessionId: 'm2',
+      verrouillee: false,
+      selection: [],
+    });
+  });
+
+  it('supprime une Session via DELETE /api/sessions/:id', () => {
+    service.supprimer('s1').subscribe();
+
+    const req = httpMock.expectOne('/api/sessions/s1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
   });
 
   it('ajoute une Question via POST /api/sessions/:id/questions', () => {

@@ -41,7 +41,10 @@ export class PrismaSessionRepository implements SessionRepository {
           verrouillee: session.estVerrouillee(),
         },
         update: {
+          equipeId: session.equipeId,
+          date: session.date,
           statut: session.statut,
+          modeleSessionId: session.modeleSessionId,
           verrouillee: session.estVerrouillee(),
         },
       });
@@ -64,5 +67,10 @@ export class PrismaSessionRepository implements SessionRepository {
         });
       }
     });
+  }
+
+  /** SessionSelectionItem est supprimé en cascade (onDelete: Cascade, schema.prisma). */
+  async remove(id: string): Promise<void> {
+    await this.prisma.session.delete({ where: { id } });
   }
 }

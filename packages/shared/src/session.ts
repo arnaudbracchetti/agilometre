@@ -25,6 +25,7 @@ export interface SessionDto {
   id: string;
   equipeId: string;
   equipeNom: string;
+  entiteId: string;
   date: string;
   statut: StatutSession;
   modeleSessionId: string;
@@ -37,6 +38,7 @@ export interface LigneListeSessionDto {
   equipeNom: string;
   date: string;
   statut: StatutSession;
+  verrouillee: boolean;
   nbQuestions: number;
   modeleSessionNom: string | null;
 }

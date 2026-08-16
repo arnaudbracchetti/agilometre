@@ -6,6 +6,7 @@ export interface LigneListeSession {
   equipeNom: string;
   date: Date;
   statut: StatutSession;
+  verrouillee: boolean;
   nbQuestions: number;
   /** `null` si le Modèle source a été supprimé depuis (ADR-0009 : aucune intégrité forte). */
   modeleSessionNom: string | null;

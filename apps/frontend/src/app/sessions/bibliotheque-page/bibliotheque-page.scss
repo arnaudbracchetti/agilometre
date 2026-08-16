@@ -28,4 +28,19 @@
       background: var(--color-surface-alt);
     }
   }
+
+  &__colonne-actions {
+    text-align: right;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-1);
+    white-space: nowrap;
+  }
+
+  &__action {
+    font-size: var(--font-size-md);
+  }
 }

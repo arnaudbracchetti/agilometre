@@ -20,6 +20,20 @@ export class SessionsService {
     return this.http.get<SessionDto>(`${this.baseUrl}/${id}`);
   }
 
+  modifierInfos(id: string, equipeId: string, date: string): Observable<SessionDto> {
+    return this.http.patch<SessionDto>(`${this.baseUrl}/${id}`, { equipeId, date });
+  }
+
+  changerModele(id: string, modeleSessionId: string): Observable<SessionDto> {
+    return this.http.patch<SessionDto>(`${this.baseUrl}/${id}/modele`, {
+      modeleSessionId,
+    });
+  }
+
+  supprimer(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
   ajouterQuestion(id: string, questionId: string, position?: number): Observable<SessionDto> {
     return this.http.post<SessionDto>(`${this.baseUrl}/${id}/questions`, {
       questionId,

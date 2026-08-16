@@ -54,6 +54,10 @@ class SessionRepositoryFake implements SessionRepository {
     this.sessions.push(session);
     return Promise.resolve();
   }
+  remove(id: string): Promise<void> {
+    this.sessions = this.sessions.filter((s) => s.id !== id);
+    return Promise.resolve();
+  }
 }
 
 describe('CreerSession', () => {

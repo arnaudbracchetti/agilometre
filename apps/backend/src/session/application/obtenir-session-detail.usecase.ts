@@ -11,6 +11,7 @@ export type ResultatObtenirSessionDetail =
       type: 'ok';
       session: Session;
       equipeNom: string;
+      entiteId: string;
       selectionEnrichie: Question[];
       themesActifs: Theme[];
     };
@@ -36,6 +37,7 @@ export class ObtenirSessionDetail {
       type: 'ok',
       session,
       equipeNom: equipe?.nom ?? '',
+      entiteId: equipe?.entiteId ?? '',
       selectionEnrichie: session.selectionEnrichie(referentiel),
       themesActifs,
     };

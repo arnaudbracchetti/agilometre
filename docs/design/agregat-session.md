@@ -60,6 +60,8 @@ d'origine.
 | Une Question archivée dans le Référentiel disparaît des méthodes de lecture d'une Sélection, sans en être retirée physiquement (réactivable si la Question réapparaît) | Résolu à la lecture : le Référentiel est passé en paramètre de la méthode de lecture, jamais stocké par référence |
 | Une fois `Session.estVerrouillee()` vrai, ajouter et réordonner sont rejetés (erreur de domaine) ; retirer reste toujours permis | `Session` |
 | La suppression d'un `ModèleSession` n'a aucun effet sur les `Session` déjà créées, même si `modeleSessionId` les référence encore | Structurel — `modeleSessionId` est une donnée simple, pas une clé étrangère à intégrité forte au niveau domaine |
+| Équipe, Date, Modèle source et la Session elle-même (suppression) restent modifiables tant qu'aucune réponse n'a été reçue **et** que la Session n'est pas clôturée ; au-delà, rejetées — garde exposée publiquement via `Session.estModifiable()` (`!estVerrouillee() && statut !== 'CLOTUREE'`), volontairement plus large que celle des Questions ci-dessus qui ne teste que `estVerrouillee()`. `modifierInfos`/`changerModele` s'appuient dessus en interne (`SessionNonModifiableError` si refusé) ; `SupprimerSession` (use case) l'appelle directement, sans mutation à faire en cas de succès | `Session` |
+| Changer le Modèle source d'une `Session` réinitialise entièrement sa Sélection avec une copie figée de la Sélection du nouveau Modèle (jamais une fusion avec la Sélection précédente) | `Session` (remplacement), Use case (copie depuis `ModèleSession`) |
 
 ## 3. Opérations
 
@@ -85,8 +87,12 @@ d'origine.
 | Ajouter une Question / un Thème entier | Commande, rejetée si `estVerrouillee()` | Racine (garde) → Sélection |
 | Retirer une Question | Commande, toujours permise | Racine → Sélection |
 | Réordonner | Commande, rejetée si `estVerrouillee()` | Racine (garde) → Sélection |
+| Modifier Équipe et Date (`modifierInfos`) | Commande, rejetée si verrouillée ou clôturée | Use case (vérifie l'Équipe cible), Racine (garde + remplacement) |
+| Changer le Modèle source (`changerModele`) — réinitialise la Sélection | Commande, rejetée si verrouillée ou clôturée | Use case (lit le nouveau `ModèleSession`, copie sa Sélection), Racine (garde + remplacement) |
+| Supprimer | Commande, rejetée si verrouillée ou clôturée | Use case (`estModifiable()`, puis `repository.remove`) |
 | Détail enrichi (`selectionEnrichie(referentiel)`) | Requête | Racine, Référentiel en paramètre |
 | `estVerrouillee()` | Requête pure | Racine |
+| `estModifiable()` | Requête pure | Racine |
 
 ## 4. Interface de repository
 
@@ -100,6 +106,7 @@ interface ModeleSessionRepository {
 interface SessionRepository {
   findById(id: string): Session | null
   save(session: Session): void
+  remove(id: string): void
 }
 ```
 

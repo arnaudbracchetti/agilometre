@@ -32,6 +32,15 @@ export class SessionVerrouilleeError extends Error {
   }
 }
 
+export class SessionNonModifiableError extends Error {
+  constructor() {
+    super(
+      'Cette Session ne peut plus être modifiée : elle est verrouillée ou clôturée',
+    );
+    this.name = 'SessionNonModifiableError';
+  }
+}
+
 export type ErreurInvariantSession = EquipeManquanteError | ModeleManquantError;
 
 /**
@@ -44,12 +53,12 @@ export type ErreurInvariantSession = EquipeManquanteError | ModeleManquantError;
 export class Session {
   private constructor(
     readonly id: string,
-    readonly equipeId: string,
-    readonly date: Date,
+    private _equipeId: string,
+    private _date: Date,
     private _statut: StatutSession,
-    readonly modeleSessionId: string,
+    private _modeleSessionId: string,
     private _verrouillee: boolean,
-    private readonly _selection: Selection,
+    private _selection: Selection,
   ) {}
 
   static creer(
@@ -114,6 +123,18 @@ export class Session {
     return Result.succes(undefined);
   }
 
+  get equipeId(): string {
+    return this._equipeId;
+  }
+
+  get date(): Date {
+    return this._date;
+  }
+
+  get modeleSessionId(): string {
+    return this._modeleSessionId;
+  }
+
   get statut(): StatutSession {
     return this._statut;
   }
@@ -125,6 +146,57 @@ export class Session {
 
   estVerrouillee(): boolean {
     return this._verrouillee;
+  }
+
+  /**
+   * Garde propre à Équipe/Date/Modèle/Suppression : plus large que celle qui protège déjà
+   * ajouterQuestion/ajouterTheme/reordonnerQuestion (verrouillée uniquement) — ces opérations
+   * doivent aussi être refusées une fois la Session clôturée (docs/design/agregat-session.md §2).
+   * Publique : réutilisée telle quelle par SupprimerSession (use case), qui n'a pas besoin d'un
+   * Result puisqu'il ne mute rien sur l'agrégat lui-même avant de déléguer au repository.
+   */
+  estModifiable(): boolean {
+    return !this._verrouillee && this._statut !== 'CLOTUREE';
+  }
+
+  private garantirModifiable(): Result<void, SessionNonModifiableError> {
+    if (!this.estModifiable()) {
+      return Result.echec(new SessionNonModifiableError());
+    }
+    return Result.succes(undefined);
+  }
+
+  modifierInfos(
+    equipeId: string,
+    date: Date,
+  ): Result<void, EquipeManquanteError | SessionNonModifiableError> {
+    const garde = this.garantirModifiable();
+    if (garde.estEchec) {
+      return garde;
+    }
+    if (equipeId.trim().length === 0) {
+      return Result.echec(new EquipeManquanteError());
+    }
+    this._equipeId = equipeId.trim();
+    this._date = date;
+    return Result.succes(undefined);
+  }
+
+  /** Remplace le Modèle source et réinitialise entièrement la Sélection (copie, pas de fusion). */
+  changerModele(
+    modeleSessionId: string,
+    nouvelleSelection: Selection,
+  ): Result<void, ModeleManquantError | SessionNonModifiableError> {
+    const garde = this.garantirModifiable();
+    if (garde.estEchec) {
+      return garde;
+    }
+    if (modeleSessionId.trim().length === 0) {
+      return Result.echec(new ModeleManquantError());
+    }
+    this._modeleSessionId = modeleSessionId.trim();
+    this._selection = nouvelleSelection;
+    return Result.succes(undefined);
   }
 
   ajouterQuestion(

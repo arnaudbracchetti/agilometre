@@ -267,6 +267,223 @@ describe('Session animée (e2e)', () => {
     });
   });
 
+  it('PATCH /api/sessions/:id — modifie Équipe et Date, persisté après rechargement', async () => {
+    const { equipe, modele } = await contexte();
+    const autreEquipe = await creerEquipe('Équipe Beta', equipe.entiteId);
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+
+    const reponse = await request(app.getHttpServer())
+      .patch(`/api/sessions/${session.id}`)
+      .send({ equipeId: autreEquipe.id, date: '2026-05-01' })
+      .expect(200);
+    expect(reponse.body).toMatchObject({
+      equipeId: autreEquipe.id,
+      equipeNom: 'Équipe Beta',
+    });
+
+    // Vérifie que PrismaSessionRepository.save persiste bien equipeId/date à la mise à jour.
+    const detail = await request(app.getHttpServer())
+      .get(`/api/sessions/${session.id}`)
+      .expect(200);
+    expect((detail.body as SessionDto).equipeId).toBe(autreEquipe.id);
+    expect((detail.body as SessionDto).date.slice(0, 10)).toBe('2026-05-01');
+  });
+
+  it('PATCH /api/sessions/:id — 404 si la nouvelle Équipe est inconnue', async () => {
+    const { equipe, modele } = await contexte();
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+
+    await request(app.getHttpServer())
+      .patch(`/api/sessions/${session.id}`)
+      .send({ equipeId: 'inconnue', date: '2026-05-01' })
+      .expect(404);
+  });
+
+  it('PATCH /api/sessions/:id — 409 si la Session est verrouillée', async () => {
+    const { equipe, modele } = await contexte();
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+    await prisma.session.update({
+      where: { id: session.id },
+      data: { verrouillee: true },
+    });
+
+    await request(app.getHttpServer())
+      .patch(`/api/sessions/${session.id}`)
+      .send({ equipeId: equipe.id, date: '2026-05-01' })
+      .expect(409);
+  });
+
+  it('PATCH /api/sessions/:id/modele — remplace le Modèle et réinitialise entièrement la Sélection', async () => {
+    const { equipe, modele } = await contexte();
+    const autreModele = await creerModele('Suivi');
+    await request(app.getHttpServer())
+      .post(`/api/modeles-session/${autreModele.id}/themes`)
+      .send({ questionIds: ['q3'] })
+      .expect(201);
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+    // Ajustement manuel avant le changement de Modèle : doit être perdu par la réinitialisation.
+    await request(app.getHttpServer())
+      .patch(`/api/sessions/${session.id}/questions/q1`)
+      .send({ position: 1 })
+      .expect(200);
+
+    const reponse = await request(app.getHttpServer())
+      .patch(`/api/sessions/${session.id}/modele`)
+      .send({ modeleSessionId: autreModele.id })
+      .expect(200);
+    const sessionModifiee = reponse.body as SessionDto;
+
+    expect(sessionModifiee.modeleSessionId).toBe(autreModele.id);
+    expect(sessionModifiee.selection.map((q) => q.questionId)).toEqual(['q3']);
+
+    const detail = await request(app.getHttpServer())
+      .get(`/api/sessions/${session.id}`)
+      .expect(200);
+    expect((detail.body as SessionDto).modeleSessionId).toBe(autreModele.id);
+  });
+
+  it('PATCH /api/sessions/:id/modele — 404 si le nouveau Modèle est inconnu', async () => {
+    const { equipe, modele } = await contexte();
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+
+    await request(app.getHttpServer())
+      .patch(`/api/sessions/${session.id}/modele`)
+      .send({ modeleSessionId: 'inconnu' })
+      .expect(404);
+  });
+
+  it('PATCH /api/sessions/:id/modele — 409 si la Session est clôturée', async () => {
+    const { equipe, modele } = await contexte();
+    const autreModele = await creerModele('Suivi');
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+    await prisma.session.update({
+      where: { id: session.id },
+      data: { statut: 'CLOTUREE' },
+    });
+
+    await request(app.getHttpServer())
+      .patch(`/api/sessions/${session.id}/modele`)
+      .send({ modeleSessionId: autreModele.id })
+      .expect(409);
+  });
+
+  it('DELETE /api/sessions/:id — supprime une Session ouverte et non verrouillée', async () => {
+    const { equipe, modele } = await contexte();
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+
+    await request(app.getHttpServer())
+      .delete(`/api/sessions/${session.id}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get(`/api/sessions/${session.id}`)
+      .expect(404);
+  });
+
+  it('DELETE /api/sessions/:id — 404 si la Session est inconnue', async () => {
+    await request(app.getHttpServer())
+      .delete('/api/sessions/inconnue')
+      .expect(404);
+  });
+
+  it('DELETE /api/sessions/:id — 409 si la Session est verrouillée', async () => {
+    const { equipe, modele } = await contexte();
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+    await prisma.session.update({
+      where: { id: session.id },
+      data: { verrouillee: true },
+    });
+
+    await request(app.getHttpServer())
+      .delete(`/api/sessions/${session.id}`)
+      .expect(409);
+  });
+
+  it('DELETE /api/sessions/:id — 409 si la Session est clôturée', async () => {
+    const { equipe, modele } = await contexte();
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+    await prisma.session.update({
+      where: { id: session.id },
+      data: { statut: 'CLOTUREE' },
+    });
+
+    await request(app.getHttpServer())
+      .delete(`/api/sessions/${session.id}`)
+      .expect(409);
+  });
+
   it('GET /api/sessions — modeleSessionNom devient null si le Modèle source est supprimé (ADR-0009)', async () => {
     const { equipe, modele } = await contexte();
     await request(app.getHttpServer())

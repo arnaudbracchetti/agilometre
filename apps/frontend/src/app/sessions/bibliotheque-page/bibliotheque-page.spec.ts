@@ -5,6 +5,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { StatutSession } from '@agilometre/shared';
 import { BibliothequePage } from './bibliotheque-page';
 
 describe('BibliothequePage (Sessions)', () => {
@@ -37,6 +38,7 @@ describe('BibliothequePage (Sessions)', () => {
         equipeNom: 'Équipe Alpha',
         date: '2026-04-01T00:00:00.000Z',
         statut: 'OUVERTE',
+        verrouillee: false,
         nbQuestions: 3,
         modeleSessionNom: 'Diagnostic complet',
       },
@@ -57,6 +59,7 @@ describe('BibliothequePage (Sessions)', () => {
         equipeNom: 'Équipe Alpha',
         date: '2026-04-01T00:00:00.000Z',
         statut: 'CLOTUREE',
+        verrouillee: false,
         nbQuestions: 1,
         modeleSessionNom: null,
       },
@@ -64,6 +67,61 @@ describe('BibliothequePage (Sessions)', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Modèle supprimé');
+  });
+
+  it('estSupprimable — faux si verrouillée ou clôturée, vrai sinon', () => {
+    const fixture = TestBed.createComponent(BibliothequePage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/sessions').flush([]);
+    fixture.detectChanges();
+
+    const ligneOuverte = {
+      id: 's1',
+      equipeNom: 'Alpha',
+      date: '2026-04-01T00:00:00.000Z',
+      statut: StatutSession.Ouverte,
+      verrouillee: false,
+      nbQuestions: 1,
+      modeleSessionNom: 'M',
+    };
+
+    expect(fixture.componentInstance['estSupprimable'](ligneOuverte)).toBe(true);
+    expect(
+      fixture.componentInstance['estSupprimable']({ ...ligneOuverte, verrouillee: true }),
+    ).toBe(false);
+    expect(
+      fixture.componentInstance['estSupprimable']({
+        ...ligneOuverte,
+        statut: StatutSession.Cloturee,
+      }),
+    ).toBe(false);
+  });
+
+  it('supprimer — appelle le service puis rafraîchit la liste', () => {
+    const fixture = TestBed.createComponent(BibliothequePage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/sessions').flush([
+      {
+        id: 's1',
+        equipeNom: 'Alpha',
+        date: '2026-04-01T00:00:00.000Z',
+        statut: 'OUVERTE',
+        verrouillee: false,
+        nbQuestions: 1,
+        modeleSessionNom: 'M',
+      },
+    ]);
+    fixture.detectChanges();
+
+    fixture.componentInstance['supprimer']('s1');
+
+    const reqSuppression = httpMock.expectOne('/api/sessions/s1');
+    expect(reqSuppression.request.method).toBe('DELETE');
+    reqSuppression.flush(null);
+
+    httpMock.expectOne('/api/sessions').flush([]);
+
+    expect(fixture.componentInstance['lignes']()).toEqual([]);
   });
 
   it('navigue vers /sessions/:id au clic sur une ligne', () => {

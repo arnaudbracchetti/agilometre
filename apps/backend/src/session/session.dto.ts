@@ -50,3 +50,18 @@ export class ReordonnerQuestionSessionDto {
   @Min(0)
   position!: number;
 }
+
+export class ModifierInfosSessionDto {
+  @IsString()
+  @IsNotEmpty()
+  equipeId!: string;
+
+  @IsDateString()
+  date!: string;
+}
+
+export class ChangerModeleSessionDto {
+  @IsString()
+  @IsNotEmpty()
+  modeleSessionId!: string;
+}

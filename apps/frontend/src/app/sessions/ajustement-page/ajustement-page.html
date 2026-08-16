@@ -2,7 +2,6 @@
     <header class="ajustement__entete">
       <div class="ajustement__infos">
         <h2 class="ajustement__titre">{{ equipeNom() }}</h2>
-        <span class="ajustement__date">{{ date() | date: 'dd/MM/yyyy' }}</span>
         <nz-tag [nzColor]="statut() === 'OUVERTE' ? 'blue' : 'default'">
           {{ statut() === 'OUVERTE' ? 'Ouverte' : 'Clôturée' }}
         </nz-tag>
@@ -12,9 +11,77 @@
 
     @if (verrouillee()) {
       <div class="ajustement__bandeau-verrou">
-        Cette Session est verrouillée : seul le retrait de Question reste possible.
+        Cette Session est verrouillée : seul le retrait de Question reste possible. Équipe, Date
+        et Modèle ne sont plus modifiables.
+      </div>
+    } @else if (statut() === 'CLOTUREE') {
+      <div class="ajustement__bandeau-verrou">
+        Cette Session est clôturée : Équipe, Date et Modèle ne sont plus modifiables.
       </div>
     }
+
+    <section class="ajustement__champs">
+      <div class="ajustement__champ">
+        <label for="entite">Entité</label>
+        <nz-select
+          id="entite"
+          name="entite"
+          nzPlaceHolder="Choisir une Entité"
+          [nzDisabled]="!modifiable()"
+          [ngModel]="entiteId()"
+          (ngModelChange)="onEntiteChange($event)"
+        >
+          @for (entite of entites(); track entite.id) {
+            <nz-option [nzValue]="entite.id" [nzLabel]="entite.nom"></nz-option>
+          }
+        </nz-select>
+      </div>
+
+      <div class="ajustement__champ">
+        <label for="equipe">Équipe</label>
+        <nz-select
+          id="equipe"
+          name="equipe"
+          nzPlaceHolder="Choisir une Équipe"
+          [nzDisabled]="!modifiable() || !entiteId()"
+          [nzLoading]="chargementEquipesEnCours()"
+          [ngModel]="equipeId()"
+          (ngModelChange)="onEquipeChange($event)"
+        >
+          @for (equipe of equipesDeLEntite(); track equipe.id) {
+            <nz-option [nzValue]="equipe.id" [nzLabel]="equipe.nom"></nz-option>
+          }
+        </nz-select>
+      </div>
+
+      <div class="ajustement__champ">
+        <label for="date-session">Date</label>
+        <nz-date-picker
+          id="date-session"
+          name="date-session"
+          nzFormat="dd/MM/yyyy"
+          [nzDisabled]="!modifiable()"
+          [ngModel]="date()"
+          (ngModelChange)="onDateChange($event)"
+        ></nz-date-picker>
+      </div>
+
+      <div class="ajustement__champ">
+        <label for="modele">Modèle de session</label>
+        <nz-select
+          id="modele"
+          name="modele"
+          nzPlaceHolder="Choisir un Modèle"
+          [nzDisabled]="!modifiable()"
+          [ngModel]="modeleSessionId()"
+          (ngModelChange)="onModeleChange($event)"
+        >
+          @for (modele of modeles(); track modele.id) {
+            <nz-option [nzValue]="modele.id" [nzLabel]="modele.nom"></nz-option>
+          }
+        </nz-select>
+      </div>
+    </section>
 
     <app-selection-editor
       [themes]="themes()"
