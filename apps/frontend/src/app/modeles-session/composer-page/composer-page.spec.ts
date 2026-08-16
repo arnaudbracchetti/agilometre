@@ -5,7 +5,6 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ComposerPage } from './composer-page';
 
 function activatedRouteAvecId(id: string | null): Partial<ActivatedRoute> {
@@ -106,13 +105,13 @@ describe('ComposerPage — mode édition (route /:id)', () => {
     vi.useRealTimers();
   });
 
-  it('dérive le panneau gauche en excluant les Questions déjà sélectionnées', () => {
-    const panneau = fixture.componentInstance['panneauGauche']();
-    expect(panneau[0].questionsRestantes.map((q: { id: string }) => q.id)).toEqual(['q2']);
+  it('transmet le Référentiel et la Sélection chargés au SelectionEditor', () => {
+    expect(fixture.componentInstance['themes']()).toEqual(referentielFixture.themes);
+    expect(fixture.componentInstance['selection']()).toEqual(modeleFixture.selection);
   });
 
-  it('ajoute une Question via le bouton de transfert et met à jour la Sélection depuis la réponse', () => {
-    fixture.componentInstance['ajouterQuestionViaBouton']('q2');
+  it('onAjouterQuestion — appelle le service et met à jour la Sélection depuis la réponse', () => {
+    fixture.componentInstance['onAjouterQuestion']({ questionId: 'q2' });
 
     const req = httpMock.expectOne('/api/modeles-session/m1/questions');
     expect(req.request.method).toBe('POST');
@@ -128,8 +127,17 @@ describe('ComposerPage — mode édition (route /:id)', () => {
     expect(fixture.componentInstance['selection']()).toHaveLength(2);
   });
 
-  it('retire une Question et met à jour la Sélection depuis la réponse', () => {
-    fixture.componentInstance['retirerQuestion']('q1');
+  it('onAjouterTheme — appelle le service avec le thème entier', () => {
+    fixture.componentInstance['onAjouterTheme']({ questionIds: ['q2'], position: 0 });
+
+    const req = httpMock.expectOne('/api/modeles-session/m1/themes');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ questionIds: ['q2'], position: 0 });
+    req.flush(modeleFixture);
+  });
+
+  it('onRetirerQuestion — retire une Question et met à jour la Sélection depuis la réponse', () => {
+    fixture.componentInstance['onRetirerQuestion']('q1');
 
     const req = httpMock.expectOne('/api/modeles-session/m1/questions/q1');
     expect(req.request.method).toBe('DELETE');
@@ -138,55 +146,12 @@ describe('ComposerPage — mode édition (route /:id)', () => {
     expect(fixture.componentInstance['selection']()).toEqual([]);
   });
 
-  it('réordonne par drag au sein de la liste de Sélection', () => {
-    const conteneur = { id: 'selection-list' };
-    const event = {
-      previousContainer: conteneur,
-      container: conteneur,
-      previousIndex: 0,
-      currentIndex: 1,
-      item: { data: { type: 'question', questionId: 'q1' } },
-    } as unknown as CdkDragDrop<unknown, unknown, { type: 'question'; questionId: string }>;
-
-    fixture.componentInstance['onDropIntoSelection'](event);
+  it('onReordonnerQuestion — réordonne la Sélection', () => {
+    fixture.componentInstance['onReordonnerQuestion']({ questionId: 'q1', position: 1 });
 
     const req = httpMock.expectOne('/api/modeles-session/m1/questions/q1');
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({ position: 1 });
-    req.flush(modeleFixture);
-  });
-
-  it('ajoute une Question par drag depuis le Référentiel vers la Sélection', () => {
-    const event = {
-      previousContainer: { id: 'theme-questions-t1' },
-      container: { id: 'selection-list' },
-      previousIndex: 0,
-      currentIndex: 1,
-      item: { data: { type: 'question', questionId: 'q2' } },
-    } as unknown as CdkDragDrop<unknown, unknown, { type: 'question'; questionId: string }>;
-
-    fixture.componentInstance['onDropIntoSelection'](event);
-
-    const req = httpMock.expectOne('/api/modeles-session/m1/questions');
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ questionId: 'q2', position: 1 });
-    req.flush(modeleFixture);
-  });
-
-  it('ajoute un Thème entier par drag du nœud de Thème vers la Sélection', () => {
-    const event = {
-      previousContainer: { id: 'theme-bulk-t1' },
-      container: { id: 'selection-list' },
-      previousIndex: 0,
-      currentIndex: 0,
-      item: { data: { type: 'theme', questionIds: ['q2'] } },
-    } as unknown as CdkDragDrop<unknown, unknown, { type: 'theme'; questionIds: string[] }>;
-
-    fixture.componentInstance['onDropIntoSelection'](event);
-
-    const req = httpMock.expectOne('/api/modeles-session/m1/themes');
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ questionIds: ['q2'], position: 0 });
     req.flush(modeleFixture);
   });
 });

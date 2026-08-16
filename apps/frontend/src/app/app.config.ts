@@ -4,6 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideNzI18n, fr_FR } from 'ng-zorro-antd/i18n';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
+import { provideNzNativeDateAdapter } from 'ng-zorro-antd/core/time';
 import {
   ScheduleOutline,
   MailOutline,
@@ -27,6 +28,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideAnimationsAsync(),
     provideNzI18n(fr_FR),
+    provideNzNativeDateAdapter(),
     // Enregistrer ici les icônes utilisées au fur et à mesure des écrans (voir ng-zorro-antd/icons/icons).
     provideNzIcons([
       ScheduleOutline,

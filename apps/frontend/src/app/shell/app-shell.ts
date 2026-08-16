@@ -13,5 +13,6 @@ export class AppShell {
   protected readonly liensNav: AppHeaderLink[] = [
     { label: 'Organisation', routerLink: '/organisation' },
     { label: 'Modèles de session', routerLink: '/modeles-session' },
+    { label: 'Sessions', routerLink: '/sessions' },
   ];
 }

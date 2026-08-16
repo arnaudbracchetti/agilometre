@@ -27,9 +27,12 @@ référence vivante) :
 - **`ModèleSession`** (racine) : id, `nom` (non vide), `Sélection`. Bibliothèque globale, sans
   rattachement à une Équipe (ADR-0008). Librement supprimable, y compris déjà utilisé (ADR-0009).
 - **`Session`** (racine, squelette Prisma déjà existant) : id, `equipeId`, `date`, `statut`
-  (`OUVERTE`/`CLOTUREE`), `modeleSessionId: string | null` (trace informative uniquement — aucune
-  lecture croisée, aucune contrainte d'intégrité forte si le Modèle source est supprimé ensuite),
-  `Sélection`. Expose `estVerrouillee(): boolean` — implémentation initiale sur un simple
+  (`OUVERTE`/`CLOTUREE`), `modeleSessionId: string` (**obligatoire** — une Session est toujours
+  créée à partir d'une Équipe et d'un Modèle, invariant validé par `Session.creer` ; le caractère
+  « informatif » évoqué initialement porte sur l'absence d'intégrité référentielle forte — la
+  valeur elle-même n'est jamais optionnelle, aucune lecture croisée, aucune contrainte de clé
+  étrangère si le Modèle source est supprimé ensuite), `Sélection`. Expose `estVerrouillee(): boolean`
+  — implémentation initiale sur un simple
   attribut, remplaçable plus tard par un calcul dérivé des Tours de vote réels sans changer le
   contrat public. `TourDeVote` (déjà au schéma Prisma) reste hors modélisation domaine à ce
   stade (Epic #30).

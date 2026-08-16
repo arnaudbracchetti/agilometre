@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ReferentielModule } from '../referentiel/referentiel.module';
+import { OrganisationModule } from '../organisation/organisation.module';
 import { PrismaReferentielRepository } from '../referentiel/infrastructure/prisma-referentiel.repository';
+import { PrismaEquipeRepository } from '../organisation/infrastructure/prisma-equipe.repository';
 import { CreerModeleSession } from './application/creer-modele-session.usecase';
 import { RenommerModeleSession } from './application/renommer-modele-session.usecase';
 import { AjouterQuestionModeleSession } from './application/ajouter-question-modele-session.usecase';
@@ -11,16 +13,28 @@ import { DupliquerModeleSession } from './application/dupliquer-modele-session.u
 import { SupprimerModeleSession } from './application/supprimer-modele-session.usecase';
 import { ListerModelesSession } from './application/lister-modeles-session.usecase';
 import { ObtenirModeleSessionDetail } from './application/obtenir-modele-session-detail.usecase';
+import { CreerSession } from './application/creer-session.usecase';
+import { AjouterQuestionSession } from './application/ajouter-question-session.usecase';
+import { AjouterThemeSession } from './application/ajouter-theme-session.usecase';
+import { RetirerQuestionSession } from './application/retirer-question-session.usecase';
+import { ReordonnerQuestionSession } from './application/reordonner-question-session.usecase';
+import { ListerSessions } from './application/lister-sessions.usecase';
+import { ObtenirSessionDetail } from './application/obtenir-session-detail.usecase';
 import { PrismaModeleSessionRepository } from './infrastructure/prisma-modele-session.repository';
 import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-modele-session-bibliotheque.query';
+import { PrismaSessionRepository } from './infrastructure/prisma-session.repository';
+import { PrismaSessionListeQuery } from './infrastructure/prisma-session-liste.query';
 import { SessionController } from './session.controller';
+import { SessionAnimeeController } from './session-animee.controller';
 
 @Module({
-  imports: [ReferentielModule],
-  controllers: [SessionController],
+  imports: [ReferentielModule, OrganisationModule],
+  controllers: [SessionController, SessionAnimeeController],
   providers: [
     PrismaModeleSessionRepository,
     PrismaModeleSessionBibliothequeQuery,
+    PrismaSessionRepository,
+    PrismaSessionListeQuery,
     {
       provide: CreerModeleSession,
       useFactory: (repository: PrismaModeleSessionRepository) =>
@@ -88,6 +102,67 @@ import { SessionController } from './session.controller';
         referentiel: PrismaReferentielRepository,
       ) => new ObtenirModeleSessionDetail(modeles, referentiel),
       inject: [PrismaModeleSessionRepository, PrismaReferentielRepository],
+    },
+    {
+      provide: CreerSession,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        equipes: PrismaEquipeRepository,
+        modeles: PrismaModeleSessionRepository,
+      ) => new CreerSession(sessions, equipes, modeles),
+      inject: [
+        PrismaSessionRepository,
+        PrismaEquipeRepository,
+        PrismaModeleSessionRepository,
+      ],
+    },
+    {
+      provide: AjouterQuestionSession,
+      useFactory: (
+        repository: PrismaSessionRepository,
+        referentiel: PrismaReferentielRepository,
+      ) => new AjouterQuestionSession(repository, referentiel),
+      inject: [PrismaSessionRepository, PrismaReferentielRepository],
+    },
+    {
+      provide: AjouterThemeSession,
+      useFactory: (
+        repository: PrismaSessionRepository,
+        referentiel: PrismaReferentielRepository,
+      ) => new AjouterThemeSession(repository, referentiel),
+      inject: [PrismaSessionRepository, PrismaReferentielRepository],
+    },
+    {
+      provide: RetirerQuestionSession,
+      useFactory: (repository: PrismaSessionRepository) =>
+        new RetirerQuestionSession(repository),
+      inject: [PrismaSessionRepository],
+    },
+    {
+      provide: ReordonnerQuestionSession,
+      useFactory: (
+        repository: PrismaSessionRepository,
+        referentiel: PrismaReferentielRepository,
+      ) => new ReordonnerQuestionSession(repository, referentiel),
+      inject: [PrismaSessionRepository, PrismaReferentielRepository],
+    },
+    {
+      provide: ListerSessions,
+      useFactory: (query: PrismaSessionListeQuery) => new ListerSessions(query),
+      inject: [PrismaSessionListeQuery],
+    },
+    {
+      provide: ObtenirSessionDetail,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        equipes: PrismaEquipeRepository,
+        referentiel: PrismaReferentielRepository,
+      ) => new ObtenirSessionDetail(sessions, equipes, referentiel),
+      inject: [
+        PrismaSessionRepository,
+        PrismaEquipeRepository,
+        PrismaReferentielRepository,
+      ],
     },
   ],
 })

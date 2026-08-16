@@ -1,3 +1,5 @@
+import { StatutSession } from './scoring';
+
 export interface SelectionQuestionDto {
   questionId: string;
   libelle: string;
@@ -17,4 +19,24 @@ export interface LigneBibliothequeModeleSessionDto {
   nbQuestionsActives: number;
   themesCouverts: string[];
   misAJourLe: string;
+}
+
+export interface SessionDto {
+  id: string;
+  equipeId: string;
+  equipeNom: string;
+  date: string;
+  statut: StatutSession;
+  modeleSessionId: string;
+  verrouillee: boolean;
+  selection: SelectionQuestionDto[];
+}
+
+export interface LigneListeSessionDto {
+  id: string;
+  equipeNom: string;
+  date: string;
+  statut: StatutSession;
+  nbQuestions: number;
+  modeleSessionNom: string | null;
 }

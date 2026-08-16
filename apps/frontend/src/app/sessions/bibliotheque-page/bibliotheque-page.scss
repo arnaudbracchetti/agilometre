@@ -1,4 +1,4 @@
-.composer {
+.bibliotheque {
   padding: var(--space-6);
   font-family: var(--font-family-base);
   color: var(--color-ink);
@@ -12,14 +12,20 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: var(--space-5);
-    gap: var(--space-4);
   }
 
-  &__titre-input {
-    max-width: 24rem;
+  &__titre {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
     color: var(--color-primary);
-    flex: 1;
+    margin: 0;
+  }
+
+  &__ligne {
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-surface-alt);
+    }
   }
 }

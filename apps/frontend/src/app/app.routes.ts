@@ -34,6 +34,28 @@ export const routes: Routes = [
             (m) => m.ComposerPage,
           ),
       },
+      {
+        path: 'sessions',
+        data: { breadcrumb: 'Sessions' },
+        loadComponent: () =>
+          import('./sessions/bibliotheque-page/bibliotheque-page').then(
+            (m) => m.BibliothequePage,
+          ),
+      },
+      {
+        path: 'sessions/nouvelle',
+        data: { breadcrumb: 'Créer une session' },
+        loadComponent: () =>
+          import('./sessions/creer-page/creer-page').then((m) => m.CreerPage),
+      },
+      {
+        path: 'sessions/:id',
+        data: { breadcrumb: 'Ajuster la session' },
+        loadComponent: () =>
+          import('./sessions/ajustement-page/ajustement-page').then(
+            (m) => m.AjustementPage,
+          ),
+      },
     ],
   },
 ];

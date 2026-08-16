@@ -118,13 +118,32 @@ model SelectionItem {
   @@index([modeleSessionId])
 }
 
+// `modeleSessionId` est une chaîne simple obligatoire (pas de relation Prisma vers ModeleSession) :
+// la Sélection est copiée figée à la création (ADR-0009), le champ ne sert qu'à la traçabilité —
+// aucune contrainte d'intégrité forte, la suppression du Modèle source n'a aucun effet ici.
 model Session {
-  id       String        @id @default(uuid())
-  equipe   Equipe        @relation(fields: [equipeId], references: [id])
-  equipeId String
-  date     DateTime      @default(now())
-  statut   StatutSession @default(OUVERTE)
-  tours    TourDeVote[]
+  id              String                 @id @default(uuid())
+  equipe          Equipe                 @relation(fields: [equipeId], references: [id])
+  equipeId        String
+  date            DateTime               @default(now())
+  statut          StatutSession          @default(OUVERTE)
+  modeleSessionId String
+  verrouillee     Boolean                @default(false)
+  items           SessionSelectionItem[]
+  tours           TourDeVote[]
+}
+
+// Copie figée de la Sélection du Modèle au moment de la création (ADR-0009) — même pattern que
+// SelectionItem, `questionId` en chaîne simple (Référentiel et Session sont des bounded contexts
+// séparés).
+model SessionSelectionItem {
+  id         String  @id @default(uuid())
+  session    Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId  String
+  questionId String
+  ordre      Int
+
+  @@index([sessionId])
 }
 
 model TourDeVote {

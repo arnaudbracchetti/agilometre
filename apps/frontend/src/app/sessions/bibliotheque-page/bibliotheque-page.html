@@ -1,0 +1,39 @@
+<div class="bibliotheque">
+  <header class="bibliotheque__entete">
+    <h2 class="bibliotheque__titre">Sessions</h2>
+    <a nz-button nzType="primary" routerLink="/sessions/nouvelle">Créer une session</a>
+  </header>
+
+  <nz-table
+    #table
+    [nzData]="lignes()"
+    [nzLoading]="chargementEnCours()"
+    [nzShowPagination]="false"
+    nzNoResult="Aucune Session pour l’instant."
+  >
+    <thead>
+      <tr>
+        <th>Équipe</th>
+        <th>Date</th>
+        <th>Statut</th>
+        <th>Questions</th>
+        <th>Modèle utilisé</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (ligne of table.data; track ligne.id) {
+        <tr class="bibliotheque__ligne" (click)="ouvrir(ligne.id)">
+          <td>{{ ligne.equipeNom }}</td>
+          <td>{{ ligne.date | date: 'dd/MM/yyyy' }}</td>
+          <td>
+            <nz-tag [nzColor]="ligne.statut === 'OUVERTE' ? 'blue' : 'default'">
+              {{ ligne.statut === 'OUVERTE' ? 'Ouverte' : 'Clôturée' }}
+            </nz-tag>
+          </td>
+          <td>{{ ligne.nbQuestions }}</td>
+          <td>{{ ligne.modeleSessionNom ?? 'Modèle supprimé' }}</td>
+        </tr>
+      }
+    </tbody>
+  </nz-table>
+</div>
