@@ -78,6 +78,25 @@ Un cycle de vote sur une Question au sein d'une Session. Plusieurs tours peuvent
 **Code (de session)**:
 Le code court affiché à l'écran de projection permettant aux Membres de rejoindre une Session sans compte.
 
+**Jeton de session**:
+Un jeton anonyme émis à un device qui rejoint une Session via le Code, valable pour toute la Session (pas renouvelé par Tour de vote) ; authentifie le device sans jamais être lié à une identité ni à une Réponse.
+_Avoid_: Jeton (sans qualificatif, réservé au jeton de Sollicitation du Pouls - mécanisme distinct, voir section Pouls)
+
+**Sauter** (une Question):
+Marquer, une fois la Session ouverte, qu'une Question restante de la Sélection ne sera pas traitée - la Question reste visible dans l'historique de la Session mais est exclue du score. Remplace toute édition de la Sélection (ajout, retrait, réordonnancement), verrouillée dès l'ouverture.
+
+**Écran de pilotage**:
+La vue réservée au Coach pour animer une Session ouverte : progression dans la Sélection, ouverture/clôture des Tours de vote, et les seules actions encore permises sur la Sélection (Sauter une Question).
+
+**Écran de projection**:
+La vue plein écran destinée à la salle (vidéoprojecteur), qui affiche selon l'étape le Code, la Question courante, le Compteur de participation, ou le résultat d'un Tour de vote clos - jamais simultanément le contenu d'une Question et un vote en cours.
+
+**Écran participant**:
+La vue accessible sans compte depuis le device d'un Membre après obtention d'un Jeton de session ; ne montre la Question et ses Options que le temps d'un Tour de vote ouvert, un écran d'attente neutre sinon.
+
+**Compteur de participation**:
+L'indicateur affiché pendant un Tour de vote ("6 sur 8") : le nombre de Jetons de session ayant voté sur ce Tour, rapporté au nombre de Jetons émis depuis l'ouverture de la Session.
+
 ### Pouls
 
 **Campagne de pouls**:
@@ -87,7 +106,7 @@ La configuration attachée à une Équipe qui pilote l'envoi périodique de Soll
 Un envoi individuel généré par une Campagne de pouls vers un Membre, portant un Jeton à usage unique.
 
 **Jeton**:
-Un identifiant à usage unique attaché à une Sollicitation, consommé à la réception de la Réponse puis sans lien conservé vers celle-ci.
+Un identifiant à usage unique attaché à une Sollicitation, consommé à la réception de la Réponse puis sans lien conservé vers celle-ci. Distinct du Jeton de session (Session animée) : usage unique et nominatif ici, réutilisable et anonyme là-bas.
 
 **Honorer** (une Sollicitation):
 Marquer qu'une Sollicitation a reçu une réponse, en renseignant `honoreeLe`, au moment précis où le Jeton résout la Sollicitation - avant que celle-ci ne soit définitivement désolidarisée de la Réponse écrite.

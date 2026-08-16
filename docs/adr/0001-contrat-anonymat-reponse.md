@@ -26,4 +26,4 @@ au moment précis où il est sur le point d'être écarté.
 
 **Hors périmètre de cette décision.** Le comptage de participation en direct pendant une séance
 animée (PRD §7, "6 sur 8") repose sur un mécanisme distinct, jamais lié à `Reponse`, à trancher au
-démarrage de l'Epic Session animée.
+démarrage de l'Epic Session animée — tranché depuis par [ADR-0011](0011-jeton-de-session-scope-session-jamais-lie-a-reponse.md).

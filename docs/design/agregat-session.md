@@ -2,7 +2,7 @@
 
 Design issu de la session `/ddd` sur l'Epic [Session animée #29](https://github.com/arnaudbracchetti/agilometre/issues/29),
 en continuité de la réflexion `/grill-me` documentée dans
-[doc/spec/modeles-de-session.md](../../doc/spec/modeles-de-session.md). Vocabulaire : voir
+[doc/spec/annexes/modeles-de-session.md](../../doc/spec/annexes/modeles-de-session.md). Vocabulaire : voir
 `CONTEXT.md`, section Session animée.
 
 ## Contexte
@@ -32,10 +32,14 @@ référence vivante) :
   « informatif » évoqué initialement porte sur l'absence d'intégrité référentielle forte — la
   valeur elle-même n'est jamais optionnelle, aucune lecture croisée, aucune contrainte de clé
   étrangère si le Modèle source est supprimé ensuite), `Sélection`. Expose `estVerrouillee(): boolean`
-  — implémentation initiale sur un simple
-  attribut, remplaçable plus tard par un calcul dérivé des Tours de vote réels sans changer le
-  contrat public. `TourDeVote` (déjà au schéma Prisma) reste hors modélisation domaine à ce
-  stade (Epic #30).
+  — implémentation initiale sur un simple attribut.
+  **Mise à jour Epic #30** (voir [agregat-tour-de-vote.md](agregat-tour-de-vote.md)) : `statut`
+  passe à 3 valeurs `PREPAREE`/`OUVERTE`/`CLOTUREE` ; `Session` gagne `code`, `questionsSautees`
+  et `indexCourant`, et pilote désormais réellement `verrouillee` via `ouvrir()` (ADR-0010) —
+  l'implémentation "simple attribut" mentionnée ci-dessus est confirmée comme définitive, pas
+  remplacée par un calcul dérivé des Tours comme envisagé initialement. `TourDeVote` n'est **pas**
+  un enfant de `Session` (contrairement à ce que le schéma Prisma pouvait laisser penser) : c'est
+  son propre agrégat racine, détaillé dans le document ci-dessus.
 
 - **`Sélection`** (Value Object, pas d'agrégat, pas d'identité, pas de repository) : liste
   ordonnée de `QuestionId`. Réutilisée en composition par `ModèleSession` et par `Session` — deux
@@ -125,13 +129,15 @@ use case/contrôleur (jamais un `catch` aveugle).
 
 ## Notes et améliorations différées
 
-- **Tour de vote, Reponse, comptage de participation, clôture** : explicitement hors périmètre de
-  cette session `/ddd` (voir Contexte) — à traiter dans une session `/ddd` dédiée à l'Epic
-  [Vote en séance #30](https://github.com/arnaudbracchetti/agilometre/issues/30), en s'appuyant
-  sur `Session.estVerrouillee()` comme seul point de contact avec ce présent design.
+- **Tour de vote, Reponse, comptage de participation, clôture** : traité depuis dans
+  [agregat-tour-de-vote.md](agregat-tour-de-vote.md) (session `/ddd` dédiée à l'Epic
+  [Vote en séance #30](https://github.com/arnaudbracchetti/agilometre/issues/30)). Le point de
+  contact avec le présent design s'est révélé plus large que `Session.estVerrouillee()` seul :
+  `Session` gagne aussi `ouvrir()`, `sauter()`, `passerQuestionSuivante()`, `terminer()`, `code`,
+  `questionsSautees`, `indexCourant`, et un 3e statut `PREPAREE`.
 - **Historique "déjà traité avec cette Équipe"** — question ouverte listée par l'Epic #29
   lui-même, explicitement reportée hors V1 pendant la session `/grill-me` (voir
-  [doc/spec/modeles-de-session.md](../../doc/spec/modeles-de-session.md)).
+  [doc/spec/annexes/modeles-de-session.md](../../doc/spec/annexes/modeles-de-session.md)).
 - **Recherche texte dans le Référentiel** (écran double-liste) — reportée à une V2, quand le
   Référentiel dépassera le seul Axe 1 actuel.
 - **`enum Role`/guard d'autorisation Coach** sur `Session` : hors périmètre, comme déjà noté par

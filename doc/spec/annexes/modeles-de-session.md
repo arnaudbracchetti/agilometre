@@ -1,11 +1,11 @@
 # Spécification fonctionnelle — Modèles de session
 
-Complète le [PRD](PRD-maturite-agile.md) sur un point qu'il pose comme central sans le détailler :
+Complète le [PRD](../PRD-maturite-agile.md) sur un point qu'il pose comme central sans le détailler :
 « la sélection des questions au moment de créer une session est une fonction centrale, pas un
 confort » (§4). Ce document précise comment le Coach compose cette sélection en pratique, à
-travers trois écrans. Vocabulaire : voir [CONTEXT.md](../../CONTEXT.md) (Modèle de session,
-Sélection, Session). Décisions structurantes : [ADR-0008](../../docs/adr/0008-modele-session-bibliotheque-globale.md),
-[ADR-0009](../../docs/adr/0009-selection-session-copie-figee.md).
+travers trois écrans. Vocabulaire : voir [CONTEXT.md](../../../CONTEXT.md) (Modèle de session,
+Sélection, Session). Décisions structurantes : [ADR-0008](../../../docs/adr/0008-modele-session-bibliotheque-globale.md),
+[ADR-0009](../../../docs/adr/0009-selection-session-copie-figee.md).
 
 ## Vue d'ensemble du parcours
 
@@ -71,12 +71,14 @@ Deux panneaux côte à côte.
 - **Dépôt à position libre** dans la Sélection (pas systématiquement en fin de liste), avec un
   guide visuel indiquant où la Question va s'insérer.
 
-**Réemploi pour une Session existante :** avant l'ouverture du premier Tour de vote, ce même écran
-s'applique à la Sélection d'une Session (déjà créée, copiée depuis un Modèle) pour l'ajuster
-librement. Dès qu'un premier Tour a été ouvert, la Session bascule en mode **« annulation seule »**
-— le Coach peut retirer une Question restante, mais ne peut plus en ajouter. Ce mode dégradé est un
-comportement différent de l'écran double-liste complet ; à spécifier séparément, dans l'écran de
-pilotage de séance en direct (hors périmètre de ce document).
+**Réemploi pour une Session existante :** avant l'ouverture de la séance (génération du Code de
+session), ce même écran s'applique à la Sélection d'une Session (déjà créée, copiée depuis un
+Modèle) pour l'ajuster librement. Dès l'ouverture, la Session bascule en mode **« sautée
+seule »** — le Coach peut marquer une Question restante comme sautée, mais ne peut plus en
+ajouter ni en retirer. Ce mode dégradé est un comportement différent de l'écran double-liste
+complet ; spécifié dans
+[deroulement-session-animee.md](deroulement-session-animee.md) (écran de pilotage de
+séance en direct).
 
 ## Écran 3 — Créer une session
 
@@ -93,8 +95,8 @@ pilotage de séance en direct (hors périmètre de ce document).
   (à faire séparément, en concertation).
 - **Recherche texte dans le Référentiel** — reportée à une V2, quand le Référentiel dépassera le
   seul Axe 1 actuel.
-- **Écran de pilotage de séance en direct** (mode « annulation seule », Tours de vote, projection)
-  — mentionné mais non détaillé ici.
+- **Écran de pilotage de séance en direct** (mode « sautée seule », Tours de vote, projection) —
+  détaillé dans [deroulement-session-animee.md](deroulement-session-animee.md), pas ici.
 - **Modélisation formelle du domaine** (agrégats `Session`, `Modèle de session` : invariants,
   persistance, API de lecture du Référentiel) — à traiter via une session `/ddd` dédiée, en
   s'appuyant sur ce document, `CONTEXT.md` et les ADR ci-dessus.
