@@ -10,5 +10,8 @@ import { AppBreadcrumb } from './breadcrumb/app-breadcrumb';
   styleUrl: './app-shell.scss',
 })
 export class AppShell {
-  protected readonly liensNav: AppHeaderLink[] = [{ label: 'Organisation', routerLink: '/organisation' }];
+  protected readonly liensNav: AppHeaderLink[] = [
+    { label: 'Organisation', routerLink: '/organisation' },
+    { label: 'Modèles de session', routerLink: '/modeles-session' },
+  ];
 }

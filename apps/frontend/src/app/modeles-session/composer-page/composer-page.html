@@ -1,0 +1,152 @@
+  <div class="composer" cdkDropListGroup>
+    <header class="composer__entete">
+      <input
+        nz-input
+        id="nomRenomme"
+        name="nomRenomme"
+        class="composer__titre-input"
+        [ngModel]="nomRenomme()"
+        (ngModelChange)="onNomModifie($event)"
+      />
+      <a nz-button nzType="default" routerLink="/modeles-session">Retour à la bibliothèque</a>
+    </header>
+
+    <div class="composer__panneaux">
+      <section class="composer__panneau composer__panneau--gauche">
+        <h3 class="composer__sous-titre">Référentiel</h3>
+
+        @for (entree of panneauGauche(); track entree.theme.id) {
+          <div class="composer__theme" [class.composer__theme--vide]="entree.questionsRestantes.length === 0">
+            <div
+              cdkDropList
+              [id]="entree.idListeBulk"
+              class="composer__theme-entete-liste"
+              (cdkDropListDropped)="onDropIntoReferentiel($event)"
+            >
+              <div
+                cdkDrag
+                [cdkDragDisabled]="entree.questionsRestantes.length === 0"
+                [cdkDragData]="{ type: 'theme', questionIds: entree.questionsRestantes.map(q => q.id) }"
+                class="composer__theme-entete"
+              >
+                <span
+                  class="composer__pastille"
+                  [style.background]="couleurTheme(entree.theme.id)"
+                ></span>
+                <span class="composer__theme-libelle">{{ entree.theme.libelle }}</span>
+                <span class="composer__theme-compteur">
+                  {{ entree.questionsRestantes.length }}/{{ entree.theme.questions.length }}
+                </span>
+                <button
+                  nz-button
+                  nzType="link"
+                  nzSize="small"
+                  [disabled]="entree.questionsRestantes.length === 0"
+                  (click)="ajouterThemeViaBouton(entree.questionsRestantes.map(q => q.id))"
+                >
+                  Ajouter tout →
+                </button>
+              </div>
+            </div>
+
+            <div
+              cdkDropList
+              [id]="entree.idListeGauche"
+              class="composer__theme-questions"
+              (cdkDropListDropped)="onDropIntoReferentiel($event)"
+            >
+              @for (question of entree.questionsRestantes; track question.id) {
+                <div
+                  cdkDrag
+                  [cdkDragData]="{ type: 'question', questionId: question.id }"
+                  class="composer__question-gauche"
+                >
+                  <div class="composer__question-entete">
+                    <button
+                      type="button"
+                      class="composer__chevron"
+                      (click)="toggleExpansion(question.id)"
+                    >
+                      {{ expandedQuestionIds().has(question.id) ? '▾' : '▸' }}
+                    </button>
+                    <span class="composer__question-libelle">{{ question.libelle }}</span>
+                    <button
+                      nz-button
+                      nzType="text"
+                      nzSize="small"
+                      (click)="ajouterQuestionViaBouton(question.id)"
+                    >
+                      →
+                    </button>
+                  </div>
+
+                  @if (expandedQuestionIds().has(question.id)) {
+                    <ol class="composer__options">
+                      @for (option of question.options; track option.libelle) {
+                        <li>{{ option.libelle }}</li>
+                      }
+                    </ol>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </section>
+
+      <section class="composer__panneau composer__panneau--droite">
+        <h3 class="composer__sous-titre">
+          Sélection — {{ selection().length }} question{{ selection().length > 1 ? 's' : '' }}
+          sélectionnée{{ selection().length > 1 ? 's' : '' }}
+        </h3>
+
+        <div
+          cdkDropList
+          id="selection-list"
+          class="composer__selection-liste"
+          (cdkDropListDropped)="onDropIntoSelection($event)"
+        >
+          @for (question of selection(); track question.questionId) {
+            <div
+              cdkDrag
+              [cdkDragData]="{ type: 'question', questionId: question.questionId }"
+              class="composer__selection-item"
+            >
+              <div class="composer__question-entete">
+                <button
+                  type="button"
+                  class="composer__chevron"
+                  (click)="toggleExpansion(question.questionId)"
+                >
+                  {{ expandedQuestionIds().has(question.questionId) ? '▾' : '▸' }}
+                </button>
+                <span
+                  class="composer__pastille"
+                  [style.background]="couleurTheme(question.themeId)"
+                  [title]="question.themeLibelle"
+                ></span>
+                <span class="composer__question-libelle">{{ question.libelle }}</span>
+                <button
+                  nz-button
+                  nzType="text"
+                  nzSize="small"
+                  nzDanger
+                  (click)="retirerQuestion(question.questionId)"
+                >
+                  ✕
+                </button>
+              </div>
+
+              @if (expandedQuestionIds().has(question.questionId)) {
+                <ol class="composer__options">
+                  @for (option of optionsParQuestionId()[question.questionId]; track option.libelle) {
+                    <li>{{ option.libelle }}</li>
+                  }
+                </ol>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  </div>

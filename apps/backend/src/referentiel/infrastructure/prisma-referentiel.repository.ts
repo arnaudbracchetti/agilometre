@@ -18,7 +18,12 @@ export class PrismaReferentielRepository implements ReferentielRepository {
     }
 
     const themesRows = await this.prisma.theme.findMany({
-      include: { questions: { include: { options: true } } },
+      include: {
+        questions: {
+          include: { options: true },
+          orderBy: { ordre: 'asc' },
+        },
+      },
       orderBy: { ordre: 'asc' },
     });
 
@@ -72,17 +77,19 @@ export class PrismaReferentielRepository implements ReferentielRepository {
           update: { libelle: theme.libelle, ordre, retireLe: theme.retireLe },
         });
 
-        for (const question of theme.questions) {
+        for (const [ordreQuestion, question] of theme.questions.entries()) {
           await tx.question.upsert({
             where: { id: question.id },
             create: {
               id: question.id,
               libelle: question.libelle,
+              ordre: ordreQuestion,
               themeId: question.themeId,
               retireeLe: question.retireeLe,
             },
             update: {
               libelle: question.libelle,
+              ordre: ordreQuestion,
               themeId: question.themeId,
               retireeLe: question.retireeLe,
             },

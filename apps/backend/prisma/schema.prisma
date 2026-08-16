@@ -43,6 +43,7 @@ model Theme {
 model Question {
   id        String    @id
   libelle   String
+  ordre     Int
   theme     Theme     @relation(fields: [themeId], references: [id])
   themeId   String
   retireeLe DateTime?
@@ -93,6 +94,29 @@ model Membre {
 }
 
 // --- Session animée (§4, §7) ---
+
+// Bibliothèque globale de Sélections de Questions nommées et réutilisables (ADR-0008), sans
+// rattachement à une Équipe. Librement supprimable, y compris déjà utilisée par une ou plusieurs
+// Sessions (ADR-0009) — d'où l'absence de toute relation Prisma vers Session.
+model ModeleSession {
+  id        String          @id @default(uuid())
+  nom       String
+  updatedAt DateTime        @updatedAt
+  items     SelectionItem[]
+}
+
+// `questionId` reste une chaîne simple (pas de relation Prisma) : le Référentiel et Session sont
+// des bounded contexts séparés dans ce schéma, même convention que TourDeVote.questionId /
+// Sollicitation.questionId.
+model SelectionItem {
+  id              String        @id @default(uuid())
+  modeleSession   ModeleSession @relation(fields: [modeleSessionId], references: [id], onDelete: Cascade)
+  modeleSessionId String
+  questionId      String
+  ordre           Int
+
+  @@index([modeleSessionId])
+}
 
 model Session {
   id       String        @id @default(uuid())

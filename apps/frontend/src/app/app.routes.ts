@@ -18,6 +18,22 @@ export const routes: Routes = [
             (m) => m.OrganisationPage,
           ),
       },
+      {
+        path: 'modeles-session',
+        data: { breadcrumb: 'Modèles de session' },
+        loadComponent: () =>
+          import('./modeles-session/bibliotheque-page/bibliotheque-page').then(
+            (m) => m.BibliothequePage,
+          ),
+      },
+      {
+        path: 'modeles-session/:id',
+        data: { breadcrumb: 'Modifier le Modèle' },
+        loadComponent: () =>
+          import('./modeles-session/composer-page/composer-page').then(
+            (m) => m.ComposerPage,
+          ),
+      },
     ],
   },
 ];

@@ -2,6 +2,17 @@ themes:
   - id: axe-1-collaboration
     libelle: La collaboration au sein de l’équipe
     questions:
+      - id: test
+        libelle: Quand un membre de l’équipe rencontre un blocage, que se passe-t-il le plus souvent ?
+        options:
+          - libelle: Il essaie de le résoudre seul ou attend qu’on lui demande de partager son problème avec une autre personne.
+            niveau: 1
+          - libelle: Il en parle le lendemain en daily et on lui donne des conseils en séance
+            niveau: 2
+          - libelle: Il en parle le lendemain en daily l’équipe décide qu’une personne va travailler avec lui résoudre son problème
+            niveau: 3
+          - libelle: Le sujet est rapidement discuté au sein de l’équipe sans attendre le daily pour trouver une solution.
+            niveau: 4
       - id: collab-blocage
         libelle: Quand un membre de l’équipe rencontre un blocage, que se passe-t-il le plus souvent ?
         options:

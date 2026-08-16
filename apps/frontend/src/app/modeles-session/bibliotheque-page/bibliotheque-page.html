@@ -1,0 +1,83 @@
+<div class="bibliotheque">
+  <header class="bibliotheque__entete">
+    <h2 class="bibliotheque__titre">Modèles de session</h2>
+    <button
+      nz-button
+      nzType="primary"
+      [nzLoading]="creationEnCours()"
+      (click)="creerNouveauModele()"
+    >
+      Créer un nouveau Modèle
+    </button>
+  </header>
+
+  <nz-table
+    #table
+    [nzData]="lignes()"
+    [nzLoading]="chargementEnCours()"
+    [nzShowPagination]="false"
+    nzNoResult="Aucun Modèle de session pour l’instant."
+  >
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Questions</th>
+        <th>Thèmes couverts</th>
+        <th>Dernière modification</th>
+        <th class="bibliotheque__colonne-actions">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (ligne of table.data; track ligne.id) {
+        <tr class="bibliotheque__ligne" (click)="ouvrir(ligne.id)">
+          <td>{{ ligne.nom }}</td>
+          <td>{{ ligne.nbQuestionsActives }}</td>
+          <td>
+            @for (theme of ligne.themesCouverts; track theme) {
+              <nz-tag>{{ theme }}</nz-tag>
+            }
+          </td>
+          <td>{{ ligne.misAJourLe | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td class="bibliotheque__actions" (click)="$event.stopPropagation()">
+            <a
+              nz-button
+              nzType="text"
+              nzShape="circle"
+              class="bibliotheque__action"
+              nz-tooltip
+              nzTooltipTitle="Modifier"
+              [routerLink]="['/modeles-session', ligne.id]"
+            >
+              <span nz-icon nzType="edit" nzTheme="outline"></span>
+            </a>
+            <button
+              nz-button
+              nzType="text"
+              nzShape="circle"
+              class="bibliotheque__action"
+              nz-tooltip
+              nzTooltipTitle="Dupliquer"
+              (click)="dupliquer(ligne.id)"
+            >
+              <span nz-icon nzType="copy" nzTheme="outline"></span>
+            </button>
+            <button
+              nz-button
+              nzType="text"
+              nzShape="circle"
+              nzDanger
+              class="bibliotheque__action"
+              nz-tooltip
+              nzTooltipTitle="Supprimer"
+              nz-popconfirm
+              nzPopconfirmTitle="Supprimer ce Modèle de session ?"
+              (nzOnConfirm)="supprimer(ligne.id)"
+            >
+              <span nz-icon nzType="delete" nzTheme="outline"></span>
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </nz-table>
+</div>

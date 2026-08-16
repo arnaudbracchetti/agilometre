@@ -27,6 +27,28 @@
   --color-gray-100: #f5f6f8;
   --color-white: #ffffff;
 
+  /* Palette catégorielle — repère de Thème (écran "Composer un modèle de session"), 8 teintes
+     cycliques, distinctes des familles navy et rouge pour ne jamais se confondre avec le
+     primaire ou l'accent. Chaque paire base/bg est utilisée ensemble : base pour le texte et la
+     pastille, bg pour le fond du tag — attribuée par index de Thème (voir composer-page.ts),
+     partagée à l'identique entre l'arbre de gauche et les tags de droite (exigence spec). */
+  --color-cat-1: #0f766e;
+  --color-cat-1-bg: #e6f5f3;
+  --color-cat-2: #6d28d9;
+  --color-cat-2-bg: #f1eafd;
+  --color-cat-3: #b45309;
+  --color-cat-3-bg: #fdf1e3;
+  --color-cat-4: #15803d;
+  --color-cat-4-bg: #e8f5ec;
+  --color-cat-5: #be185d;
+  --color-cat-5-bg: #fbe8f0;
+  --color-cat-6: #4338ca;
+  --color-cat-6-bg: #eceafb;
+  --color-cat-7: #92400e;
+  --color-cat-7-bg: #f6ece0;
+  --color-cat-8: #0e7490;
+  --color-cat-8-bg: #e5f4f7;
+
   /* Sémantiques — couleurs */
   --color-bg: var(--color-white);
   --color-surface: var(--color-white);
@@ -42,6 +64,9 @@
   --color-accent-emphasis: var(--color-red-700);
   /* Texte/icônes posés sur un fond --color-primary ou --color-primary-emphasis. */
   --color-on-primary: var(--color-white);
+
+  /* Élévation — ombre portée pour un élément soulevé au-dessus du reste (ex. aperçu de drag). */
+  --shadow-elevated: 0 4px 12px rgba(29, 29, 29, 0.2);
 
   /* Typographie — une seule famille, échelle fixe (rem), ratio resserré (~1.125–1.2) */
   --font-family-base:
