@@ -2,7 +2,6 @@
   padding: var(--space-6);
   font-family: var(--font-family-base);
   color: var(--color-ink);
-  max-width: 32rem;
 
   @media (max-width: 640px) {
     padding: var(--space-4);
@@ -22,10 +21,28 @@
     margin: 0;
   }
 
+  &__corps {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-6);
+
+    @media (max-width: 800px) {
+      flex-direction: column;
+    }
+  }
+
   &__formulaire {
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+    flex: 0 0 24rem;
+    max-width: 24rem;
+
+    @media (max-width: 800px) {
+      flex-basis: auto;
+      max-width: none;
+      width: 100%;
+    }
   }
 
   &__champ {
@@ -50,6 +67,10 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: var(--space-4);
+    flex: 1;
+    min-width: 0;
+    max-height: 32rem;
+    overflow-y: auto;
   }
 
   &__apercu-titre {

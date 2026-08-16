@@ -4,67 +4,80 @@
     <a nz-button nzType="default" routerLink="/sessions">Retour à la liste</a>
   </header>
 
-  <form class="creer__formulaire" (ngSubmit)="creer()">
-    <div class="creer__champ">
-      <label for="entite">Entité</label>
-      <nz-select
-        id="entite"
-        name="entite"
-        nzPlaceHolder="Choisir une Entité"
-        nzAllowClear
-        [ngModel]="entiteId()"
-        (ngModelChange)="onEntiteChange($event)"
-      >
-        @for (entite of entites(); track entite.id) {
-          <nz-option [nzValue]="entite.id" [nzLabel]="entite.nom"></nz-option>
-        }
-      </nz-select>
-    </div>
+  <div class="creer__corps">
+    <form class="creer__formulaire" (ngSubmit)="creer()">
+      <div class="creer__champ">
+        <label for="entite">Entité</label>
+        <nz-select
+          id="entite"
+          name="entite"
+          nzPlaceHolder="Choisir une Entité"
+          nzAllowClear
+          [ngModel]="entiteId()"
+          (ngModelChange)="onEntiteChange($event)"
+        >
+          @for (entite of entites(); track entite.id) {
+            <nz-option [nzValue]="entite.id" [nzLabel]="entite.nom"></nz-option>
+          }
+        </nz-select>
+      </div>
 
-    <div class="creer__champ">
-      <label for="equipe">Équipe</label>
-      <nz-select
-        id="equipe"
-        name="equipe"
-        nzPlaceHolder="Choisir une Équipe"
-        [nzDisabled]="!entiteId()"
-        [nzLoading]="chargementEquipesEnCours()"
-        [ngModel]="equipeId()"
-        (ngModelChange)="equipeId.set($event)"
-      >
-        @for (equipe of equipesDeLEntite(); track equipe.id) {
-          <nz-option [nzValue]="equipe.id" [nzLabel]="equipe.nom"></nz-option>
-        }
-      </nz-select>
-    </div>
+      <div class="creer__champ">
+        <label for="equipe">Équipe</label>
+        <nz-select
+          id="equipe"
+          name="equipe"
+          nzPlaceHolder="Choisir une Équipe"
+          [nzDisabled]="!entiteId()"
+          [nzLoading]="chargementEquipesEnCours()"
+          [ngModel]="equipeId()"
+          (ngModelChange)="equipeId.set($event)"
+        >
+          @for (equipe of equipesDeLEntite(); track equipe.id) {
+            <nz-option [nzValue]="equipe.id" [nzLabel]="equipe.nom"></nz-option>
+          }
+        </nz-select>
+      </div>
 
-    <div class="creer__champ">
-      <label for="date">Date</label>
-      <nz-date-picker
-        id="date"
-        name="date"
-        [ngModel]="date()"
-        (ngModelChange)="date.set($event)"
-      ></nz-date-picker>
-    </div>
+      <div class="creer__champ">
+        <label for="date">Date</label>
+        <nz-date-picker
+          id="date"
+          name="date"
+          nzFormat="dd/MM/yyyy"
+          [ngModel]="date()"
+          (ngModelChange)="date.set($event)"
+        ></nz-date-picker>
+      </div>
 
-    <div class="creer__champ">
-      <label for="modele">Modèle de session</label>
-      <nz-select
-        id="modele"
-        name="modele"
-        nzPlaceHolder="Choisir un Modèle"
-        [ngModel]="modeleSessionId()"
-        (ngModelChange)="onModeleChange($event)"
+      <div class="creer__champ">
+        <label for="modele">Modèle de session</label>
+        <nz-select
+          id="modele"
+          name="modele"
+          nzPlaceHolder="Choisir un Modèle"
+          [ngModel]="modeleSessionId()"
+          (ngModelChange)="onModeleChange($event)"
+        >
+          @for (modele of modeles(); track modele.id) {
+            <nz-option [nzValue]="modele.id" [nzLabel]="modele.nom"></nz-option>
+          }
+        </nz-select>
+      </div>
+
+      <button
+        nz-button
+        nzType="primary"
+        type="submit"
+        [disabled]="!formulaireValide()"
+        [nzLoading]="creationEnCours()"
       >
-        @for (modele of modeles(); track modele.id) {
-          <nz-option [nzValue]="modele.id" [nzLabel]="modele.nom"></nz-option>
-        }
-      </nz-select>
-    </div>
+        Créer
+      </button>
+    </form>
 
     @if (apercuModele(); as modele) {
-      <div class="creer__apercu">
+      <aside class="creer__apercu">
         <h3 class="creer__apercu-titre">
           Aperçu — {{ modele.selection.length }} question{{ modele.selection.length > 1 ? 's' : '' }}
         </h3>
@@ -76,17 +89,7 @@
             </li>
           }
         </ul>
-      </div>
+      </aside>
     }
-
-    <button
-      nz-button
-      nzType="primary"
-      type="submit"
-      [disabled]="!formulaireValide()"
-      [nzLoading]="creationEnCours()"
-    >
-      Créer
-    </button>
-  </form>
+  </div>
 </div>
