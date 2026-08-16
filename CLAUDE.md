@@ -48,7 +48,8 @@ pnpm dev                                           # backend (Nest, :3000) + fro
 - `pnpm build` — shared → backend → frontend, in that order (shared must build first, others import its `dist`).
 - `pnpm lint` / `pnpm test` — runs across all workspaces (`pnpm -r run <script>`).
 - Single backend test: `pnpm --filter backend exec jest src/health/health.controller.spec.ts`.
-- Backend e2e: `pnpm --filter backend run test:e2e`.
+- Backend e2e: `pnpm dev:db:test` (starts an isolated test Postgres on port 5434, see below) then
+  `pnpm --filter backend run test:e2e`.
 - Single frontend test: `pnpm --filter frontend exec ng test --include='**/app.spec.ts'`.
 - Regenerate Prisma client after editing `apps/backend/prisma/schema.prisma`: `pnpm --filter backend exec prisma generate` (also runs automatically via `predev`/`prebuild`).
 - Production build: `docker compose up --build -d` (see Architecture below for what this builds).
@@ -148,6 +149,13 @@ add new required env vars here, not just to `.env.example`.
   image just to regenerate the client.
 - Postgres is published on host port `5433` by default (`POSTGRES_PORT` in `.env`), not 5432 —
   avoids clashing with other local Postgres instances.
+- Backend e2e tests (`apps/backend/test/*.e2e-spec.ts`) `deleteMany()` a fixed table list before
+  and after every test — they must never run against the same database as `pnpm dev`. `test:e2e`
+  sources `apps/backend/.env.test` explicitly (`set -a && . ./.env.test && set +a`, not the
+  app's normal `apps/backend/.env`) and points at a second Postgres container (`pnpm dev:db:test`,
+  port `5434` by default, database `agilometre_test`) so manual testing via `pnpm dev` and an e2e
+  run can happen at the same time without either one wiping the other's data. `pretest:e2e`
+  applies migrations to that database automatically before each run.
 
 ## Agent skills
 
