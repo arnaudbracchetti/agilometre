@@ -134,13 +134,59 @@ interface JetonSessionRepository {
   findById(id: string): JetonSession | null
   compterPour(sessionId: string): number
 }
+
+interface EtatToursQuery {
+  pour(sessionId: string): EtatTour[]        // { tourId, questionId, numero, clos }
+}
+
+interface RepartitionTourQuery {
+  pour(tourIds: string[]): RepartitionTour[] // { tourId, comptesParNiveau }
+}
 ```
 
 Les lectures fréquentes (progression pour le pilotage/projection, compteur de participation par
 Tour) passent par des **read models dédiés**, pas par ces repositories d'agrégats — même
 principe que `session-liste.query.ts` déjà dans le code.
 
-## 5. Inversion de dépendance
+## 5. Lectures de synchronisation des écrans
+
+Les trois écrans se synchronisent par sondage HTTP (voir
+[l'annexe](../../doc/spec/annexes/deroulement-session-animee.md), « Synchronisation des écrans »).
+Point notable de cette conception : **la synchronisation n'ajoute rien au modèle persisté** — ni
+compteur de révision, ni compteur de participation stocké.
+
+- La détection de « rien n'a changé » repose sur un **ETag calculé à partir de la réponse
+  elle-même** (mécanisme HTTP standard, largement pris en charge par Express), pas sur un champ
+  de domaine. L'écran participant reste silencieux pendant que les autres votent parce que le
+  Compteur de participation n'apparaît pas dans **sa** charge utile — la propriété découle du
+  contenu de chaque vue, elle n'est pas une règle à maintenir. Voir
+  [ADR-0013](../adr/0013-etag-plutot-que-compteur-de-revision.md).
+- Le Compteur de participation est le nombre de `Participation` du Tour ouvert, déjà porté par
+  l'agrégat `TourDeVote` — rien à stocker en plus.
+
+**`Session.progression(tours): Progression`** — méthode de lecture pure sur la racine, qui dérive
+le statut de chaque Question de la Sélection (`A_VENIR | COURANTE | TRAITEE | SAUTEE`) à partir de
+`indexCourant`, `questionsSautees` et de l'état des Tours. Elle reçoit ces derniers **en
+paramètre** (`EtatTour[]`), jamais en référence détenue : `TourDeVote` est un agrégat voisin.
+`Progression` est un Value Object (liste ordonnée `(questionId, statut)`).
+
+C'est le **seul** endroit où vit cette dérivation : `passerQuestionSuivante()` s'appuie dessus
+pour sa garde, et les lectures pilotage/projection l'appellent pour leur affichage — jamais deux
+implémentations divergentes de la même règle. Ces deux lectures sont donc des **requêtes
+hybrides** : elles chargent l'agrégat `Session` pour lui demander son verdict, sans jamais le
+sauvegarder.
+
+| Lecture | Charge | Détail |
+|---|---|---|
+| **Participant** (1 s) | `TourDeVote` seul | Le Guard résout le Jeton en `sessionId` ; `trouverOuvertPour(sessionId)` ; `TourDeVote.voteDe(jetonId)` donne la `Participation`, dont la `Reponse` pointée fournit le Niveau déjà voté (pas de dénormalisation : le Niveau n'existe qu'à un seul endroit). **Ne charge jamais `Session`** — c'est ce qui permet de tenir 1 s par device. |
+| **Projection** (2 s) | `Session` + `EtatToursQuery` | `progression(tours)` → Question courante ; compteurs ; répartition du dernier Tour clos |
+| **Pilotage** (2 s) | `Session` + `EtatToursQuery` | idem, plus la progression complète et l'historique des Tours clos (`RepartitionTourQuery`) |
+
+`EtatToursQuery` reste volontairement léger : il ne renvoie que `{ tourId, questionId, numero,
+clos }`, sans hydrater les agrégats `TourDeVote` complets (avec leurs `Participation`) à chaque
+sondage. Il ne porte **aucune règle** — il alimente celle qui vit dans `Session`.
+
+## 6. Inversion de dépendance
 
 `Session`, `TourDeVote`, `Participation`, `Reponse`, `JetonSession` ne dépendent d'aucun
 framework ni de Prisma. Les quatre interfaces de repository sont définies dans le domaine
@@ -152,8 +198,8 @@ aveugle.
 
 ## Notes et améliorations différées
 
-- **Contrat de polling exact** (endpoints, payloads des 3 écrans) : détail d'implémentation, non
-  tranché ici.
+- **Structure JSON exacte des charges utiles** des 3 écrans : détail d'implémentation. Les
+  lectures, leurs sources et leur découpage sont fixés au §5.
 - **Écran de synthèse par thème** (PRD §7 étape 8, PRD §9) : contenu hors périmètre de cette
   session.
 - **Note de séance par Question** : envisagée pendant le grilling initial, **retirée de la V1**

@@ -89,13 +89,16 @@ Marquer, une fois la Session ouverte, qu'une Question restante de la Sélection 
 La vue réservée au Coach pour animer une Session ouverte : progression dans la Sélection, ouverture/clôture des Tours de vote, et les seules actions encore permises sur la Sélection (Sauter une Question).
 
 **Écran de projection**:
-La vue plein écran destinée à la salle (vidéoprojecteur), qui affiche selon l'étape le Code, la Question courante, le Compteur de participation, ou le résultat d'un Tour de vote clos - jamais simultanément le contenu d'une Question et un vote en cours.
+La vue plein écran destinée à la salle (vidéoprojecteur), qui affiche selon l'étape le Code, la Question courante (restant affichée pendant tout le Tour de vote, Compteur de participation en plus), ou le résultat d'un Tour de vote clos - seule la répartition des votes en cours reste cachée tant que le Tour n'est pas clos.
 
 **Écran participant**:
 La vue accessible sans compte depuis le device d'un Membre après obtention d'un Jeton de session ; ne montre la Question et ses Options que le temps d'un Tour de vote ouvert, un écran d'attente neutre sinon.
 
 **Compteur de participation**:
 L'indicateur affiché pendant un Tour de vote ("6 sur 8") : le nombre de Jetons de session ayant voté sur ce Tour, rapporté au nombre de Jetons émis depuis l'ouverture de la Session.
+
+**Progression**:
+L'état d'avancement d'une Session dans sa Sélection : pour chaque Question, si elle est à venir, courante, traitée (au moins un Tour de vote clos) ou Sautée. Déduite de l'état de la Session et de ses Tours, jamais stockée telle quelle.
 
 ### Pouls
 
