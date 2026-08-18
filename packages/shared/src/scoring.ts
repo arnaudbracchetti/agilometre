@@ -7,6 +7,7 @@ export enum OrigineReponse {
 }
 
 export enum StatutSession {
+  Preparee = 'PREPAREE',
   Ouverte = 'OUVERTE',
   Cloturee = 'CLOTUREE',
 }

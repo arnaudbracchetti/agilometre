@@ -43,6 +43,11 @@ class SessionRepositoryFake implements SessionRepository {
     this.sessions = this.sessions.filter((s) => s.id !== id);
     return Promise.resolve();
   }
+  existeCodeOuvert(code: string): Promise<boolean> {
+    return Promise.resolve(
+      this.sessions.some((s) => s.code === code && s.statut === 'OUVERTE'),
+    );
+  }
 }
 
 function sessionOuverte(): Session {
@@ -113,8 +118,10 @@ describe('ModifierInfosSession', () => {
         new Date('2026-03-01'),
         'OUVERTE',
         'm1',
-        true,
         Selection.vide(),
+        null,
+        -1,
+        new Set(),
       ),
     );
     const useCase = new ModifierInfosSession(sessions, equipes);
@@ -135,8 +142,10 @@ describe('ModifierInfosSession', () => {
         new Date('2026-03-01'),
         'CLOTUREE',
         'm1',
-        false,
         Selection.vide(),
+        null,
+        -1,
+        new Set(),
       ),
     );
     const useCase = new ModifierInfosSession(sessions, equipes);

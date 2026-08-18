@@ -26,7 +26,8 @@ traduction de ces décisions en agrégats, entités et invariants.
   `PREPAREE` par défaut, `OUVERTE` n'ayant jusqu'ici jamais eu de sens différent de "pas encore
   clôturée".
 - Nouveaux champs : `code: string | null` (renseigné seulement à partir de `OUVERTE`),
-  `questionsSautees: Set<QuestionId>`, `indexCourant: number` (position dans la Sélection).
+  `questionsSautees: Set<QuestionId>`, `indexCourant: number` (position dans la Sélection,
+  démarre à **-1** : salle d'attente, aucune Question courante).
 - Nouvelles méthodes : `ouvrir(code)` (→ `OUVERTE`, `verrouillee = true` — ADR-0010),
   `sauter(questionId)`, `passerQuestionSuivante()`, `terminer()` (→ `CLOTUREE`).
 - **Ne possède pas** `TourDeVote` comme entité enfant, malgré ce que la relation Prisma
@@ -69,7 +70,7 @@ comportement propre.
 | `verrouillee` passe à `true` exactement à `ouvrir()`, jamais avant, jamais remis à `false` (ADR-0010) | `Session` |
 | `ouvrir()` refusé si `statut ≠ PREPAREE` ; `terminer()` refusé si `statut ≠ OUVERTE` | `Session` |
 | `sauter(questionId)` refusé si la Question n'est pas dans la Sélection, déjà traitée, ou déjà sautée | `Session` |
-| `passerQuestionSuivante()` refusé tant que l'item courant n'a ni Tour clos ni marquage Sautée | `Session` |
+| `passerQuestionSuivante()` refusé tant que l'item courant n'a ni Tour clos ni marquage Sautée — depuis `indexCourant = -1` (salle d'attente), ce premier appel est explicitement autorisé, il n'y a alors aucun item courant à résoudre | `Session` |
 | `indexCourant` ne recule jamais ; en avançant, saute automatiquement les items déjà Sautés | `Session` |
 | Une fois `CLOTUREE`, plus aucune mutation | `Session` |
 | `numero` strictement croissant pour une même Question au sein d'une Session (revote) | `TourDeVote` |

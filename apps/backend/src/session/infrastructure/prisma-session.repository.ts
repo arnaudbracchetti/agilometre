@@ -12,7 +12,10 @@ export class PrismaSessionRepository implements SessionRepository {
   async findById(id: string): Promise<Session | null> {
     const row = await this.prisma.session.findUnique({
       where: { id },
-      include: { items: { orderBy: { ordre: 'asc' } } },
+      include: {
+        items: { orderBy: { ordre: 'asc' } },
+        questionsSautees: true,
+      },
     });
     if (!row) {
       return null;
@@ -23,8 +26,10 @@ export class PrismaSessionRepository implements SessionRepository {
       row.date,
       row.statut,
       row.modeleSessionId,
-      row.verrouillee,
       Selection.reconstituer(row.items.map((item) => item.questionId)),
+      row.code,
+      row.indexCourant,
+      new Set(row.questionsSautees.map((item) => item.questionId)),
     );
   }
 
@@ -37,15 +42,17 @@ export class PrismaSessionRepository implements SessionRepository {
           equipeId: session.equipeId,
           date: session.date,
           statut: session.statut,
+          code: session.code,
+          indexCourant: session.indexCourant,
           modeleSessionId: session.modeleSessionId,
-          verrouillee: session.estVerrouillee(),
         },
         update: {
           equipeId: session.equipeId,
           date: session.date,
           statut: session.statut,
+          code: session.code,
+          indexCourant: session.indexCourant,
           modeleSessionId: session.modeleSessionId,
-          verrouillee: session.estVerrouillee(),
         },
       });
 
@@ -66,11 +73,34 @@ export class PrismaSessionRepository implements SessionRepository {
           })),
         });
       }
+
+      // Même raisonnement : Set non ordonné, pas de diff, supprimer/recréer en bloc.
+      await tx.sessionQuestionSautee.deleteMany({
+        where: { sessionId: session.id },
+      });
+      const questionsSautees = [...session.questionsSautees];
+      if (questionsSautees.length > 0) {
+        await tx.sessionQuestionSautee.createMany({
+          data: questionsSautees.map((questionId) => ({
+            id: randomUUID(),
+            sessionId: session.id,
+            questionId,
+          })),
+        });
+      }
     });
   }
 
-  /** SessionSelectionItem est supprimé en cascade (onDelete: Cascade, schema.prisma). */
+  /** SessionSelectionItem/SessionQuestionSautee supprimés en cascade (onDelete: Cascade). */
   async remove(id: string): Promise<void> {
     await this.prisma.session.delete({ where: { id } });
+  }
+
+  /** Invariant "code unique parmi les Sessions OUVERTE" (docs/design/agregat-tour-de-vote.md §2). */
+  async existeCodeOuvert(code: string): Promise<boolean> {
+    const count = await this.prisma.session.count({
+      where: { code, statut: 'OUVERTE' },
+    });
+    return count > 0;
   }
 }

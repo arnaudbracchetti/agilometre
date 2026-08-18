@@ -21,6 +21,7 @@ enum OrigineReponse {
 }
 
 enum StatutSession {
+  PREPAREE
   OUVERTE
   CLOTUREE
 }
@@ -121,16 +122,21 @@ model SelectionItem {
 // `modeleSessionId` est une chaîne simple obligatoire (pas de relation Prisma vers ModeleSession) :
 // la Sélection est copiée figée à la création (ADR-0009), le champ ne sert qu'à la traçabilité —
 // aucune contrainte d'intégrité forte, la suppression du Modèle source n'a aucun effet ici.
+// `code` : unique parmi les Sessions OUVERTE, via un index unique partiel ajouté à la main dans la
+// migration (non représentable ici — même limitation que Entite.nom, voir entite_nom_unique_ci).
+// Pas de colonne verrouillee : dérivée de statut (Session.estVerrouillee()), jamais son propre état.
 model Session {
-  id              String                 @id @default(uuid())
-  equipe          Equipe                 @relation(fields: [equipeId], references: [id])
-  equipeId        String
-  date            DateTime               @default(now())
-  statut          StatutSession          @default(OUVERTE)
-  modeleSessionId String
-  verrouillee     Boolean                @default(false)
-  items           SessionSelectionItem[]
-  tours           TourDeVote[]
+  id               String                  @id @default(uuid())
+  equipe           Equipe                  @relation(fields: [equipeId], references: [id])
+  equipeId         String
+  date             DateTime                @default(now())
+  statut           StatutSession           @default(PREPAREE)
+  code             String?
+  indexCourant     Int                     @default(-1)
+  modeleSessionId  String
+  items            SessionSelectionItem[]
+  questionsSautees SessionQuestionSautee[]
+  tours            TourDeVote[]
 }
 
 // Copie figée de la Sélection du Modèle au moment de la création (ADR-0009) — même pattern que
@@ -144,6 +150,16 @@ model SessionSelectionItem {
   ordre      Int
 
   @@index([sessionId])
+}
+
+// Set de Questions sautées (pas d'ordre, contrairement à SessionSelectionItem) — carte #32.
+model SessionQuestionSautee {
+  id         String  @id @default(uuid())
+  session    Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId  String
+  questionId String
+
+  @@unique([sessionId, questionId])
 }
 
 model TourDeVote {

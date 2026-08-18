@@ -33,7 +33,7 @@ export class PrismaSessionListeQuery implements SessionListeQuery {
       equipeNom: session.equipe.nom,
       date: session.date,
       statut: session.statut,
-      verrouillee: session.verrouillee,
+      verrouillee: session.statut !== 'PREPAREE',
       nbQuestions: session._count.items,
       modeleSessionNom: nomParModeleId.get(session.modeleSessionId) ?? null,
     }));

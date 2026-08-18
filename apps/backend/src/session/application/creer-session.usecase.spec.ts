@@ -58,6 +58,11 @@ class SessionRepositoryFake implements SessionRepository {
     this.sessions = this.sessions.filter((s) => s.id !== id);
     return Promise.resolve();
   }
+  existeCodeOuvert(code: string): Promise<boolean> {
+    return Promise.resolve(
+      this.sessions.some((s) => s.code === code && s.statut === 'OUVERTE'),
+    );
+  }
 }
 
 describe('CreerSession', () => {

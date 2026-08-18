@@ -44,6 +44,7 @@ import {
 
 /** Le domaine ignore délibérément `@agilometre/shared` (frontière API) — mapping explicite ici. */
 const STATUT_VERS_DTO: Record<StatutSession, StatutSessionDto> = {
+  PREPAREE: StatutSessionDto.Preparee,
   OUVERTE: StatutSessionDto.Ouverte,
   CLOTUREE: StatutSessionDto.Cloturee,
 };
@@ -238,6 +239,9 @@ export class SessionAnimeeController {
       throw new NotFoundException(
         `Question ${questionId} absente de la Sélection`,
       );
+    }
+    if (resultat.type === 'invalide') {
+      throw new ConflictException(resultat.erreur.message);
     }
     return this.rechargerDetail(id);
   }

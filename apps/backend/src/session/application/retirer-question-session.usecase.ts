@@ -1,12 +1,14 @@
-import { Session } from '../domain/session';
+import { QuestionIntrouvableDansSelectionError } from '../domain/selection';
+import { Session, SessionVerrouilleeError } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 
 export type ResultatRetirerQuestionSession =
   | { type: 'introuvable' }
   | { type: 'question_introuvable' }
+  | { type: 'invalide'; erreur: SessionVerrouilleeError }
   | { type: 'retiree'; session: Session };
 
-/** Toujours permis, même sur une Session verrouillée (docs/design/agregat-session.md §2). */
+/** Rejeté une fois verrouillée, cf. `Session.retirerQuestion` (ADR-0010). */
 export class RetirerQuestionSession {
   constructor(private readonly repository: SessionRepository) {}
 
@@ -20,7 +22,10 @@ export class RetirerQuestionSession {
     }
     const resultat = session.retirerQuestion(questionId);
     if (resultat.estEchec) {
-      return { type: 'question_introuvable' };
+      if (resultat.erreur instanceof QuestionIntrouvableDansSelectionError) {
+        return { type: 'question_introuvable' };
+      }
+      return { type: 'invalide', erreur: resultat.erreur };
     }
     await this.repository.save(session);
     return { type: 'retiree', session };

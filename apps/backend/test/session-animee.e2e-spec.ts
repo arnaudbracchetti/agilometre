@@ -41,6 +41,7 @@ describe('Session animée (e2e)', () => {
 
   async function nettoyer(): Promise<void> {
     await prisma.sessionSelectionItem.deleteMany();
+    await prisma.sessionQuestionSautee.deleteMany();
     await prisma.session.deleteMany();
     await prisma.selectionItem.deleteMany();
     await prisma.modeleSession.deleteMany();
@@ -126,7 +127,7 @@ describe('Session animée (e2e)', () => {
     return { equipe, modele: modeleAvecSelection.body as ModeleSessionDto };
   }
 
-  it('POST /api/sessions — copie la Sélection du Modèle dans une nouvelle Session ouverte', async () => {
+  it('POST /api/sessions — copie la Sélection du Modèle dans une nouvelle Session préparée', async () => {
     const { equipe, modele } = await contexte();
 
     const reponse = await request(app.getHttpServer())
@@ -142,7 +143,7 @@ describe('Session animée (e2e)', () => {
     expect(session).toMatchObject({
       equipeId: equipe.id,
       equipeNom: 'Équipe Alpha',
-      statut: 'OUVERTE',
+      statut: 'PREPAREE',
       modeleSessionId: modele.id,
       verrouillee: false,
     });
@@ -242,6 +243,27 @@ describe('Session animée (e2e)', () => {
     ).toEqual(['q3', 'q2']);
   });
 
+  it('DELETE /api/sessions/:id/questions/:questionId — 409 si la Session est verrouillée', async () => {
+    const { equipe, modele } = await contexte();
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+    await prisma.session.update({
+      where: { id: session.id },
+      data: { statut: 'OUVERTE' },
+    });
+
+    await request(app.getHttpServer())
+      .delete(`/api/sessions/${session.id}/questions/q1`)
+      .expect(409);
+  });
+
   it('GET /api/sessions — liste avec équipe, statut, nb de questions et nom du Modèle', async () => {
     const { equipe, modele } = await contexte();
     await request(app.getHttpServer())
@@ -261,7 +283,7 @@ describe('Session animée (e2e)', () => {
     expect(lignes).toHaveLength(1);
     expect(lignes[0]).toMatchObject({
       equipeNom: 'Équipe Alpha',
-      statut: 'OUVERTE',
+      statut: 'PREPAREE',
       nbQuestions: 2,
       modeleSessionNom: 'Diagnostic',
     });
@@ -328,7 +350,7 @@ describe('Session animée (e2e)', () => {
     const session = creation.body as SessionDto;
     await prisma.session.update({
       where: { id: session.id },
-      data: { verrouillee: true },
+      data: { statut: 'OUVERTE' },
     });
 
     await request(app.getHttpServer())
@@ -455,7 +477,7 @@ describe('Session animée (e2e)', () => {
     const session = creation.body as SessionDto;
     await prisma.session.update({
       where: { id: session.id },
-      data: { verrouillee: true },
+      data: { statut: 'OUVERTE' },
     });
 
     await request(app.getHttpServer())

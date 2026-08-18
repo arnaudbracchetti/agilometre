@@ -25,9 +25,27 @@ function referentielAvecDeuxThemes(): Referentiel {
   return Referentiel.reconstituer(new Date('2026-01-01'), [themeA, themeB]);
 }
 
+function sessionOuverte(
+  questionIds: string[],
+  indexCourant: number,
+  questionsSautees: string[] = [],
+): Session {
+  return Session.reconstituer(
+    's1',
+    'e1',
+    new Date('2026-03-01'),
+    'OUVERTE',
+    'm1',
+    Selection.reconstituer(questionIds),
+    'AB12',
+    indexCourant,
+    new Set(questionsSautees),
+  );
+}
+
 describe('Session', () => {
   describe('creer', () => {
-    it('crée une Session ouverte, non verrouillée, avec la Sélection fournie', () => {
+    it('crée une Session préparée, non verrouillée, avec la Sélection fournie', () => {
       const resultat = Session.creer(
         's1',
         'e1',
@@ -39,9 +57,12 @@ describe('Session', () => {
       expect(resultat.estSucces).toBe(true);
       expect(resultat.valeur.equipeId).toBe('e1');
       expect(resultat.valeur.modeleSessionId).toBe('m1');
-      expect(resultat.valeur.statut).toBe('OUVERTE');
+      expect(resultat.valeur.statut).toBe('PREPAREE');
       expect(resultat.valeur.estVerrouillee()).toBe(false);
       expect(resultat.valeur.selection.questionIds).toEqual(['q1', 'q2']);
+      expect(resultat.valeur.code).toBeNull();
+      expect(resultat.valeur.indexCourant).toBe(-1);
+      expect(resultat.valeur.questionsSautees.size).toBe(0);
     });
 
     it('rejette une Équipe manquante', () => {
@@ -94,8 +115,10 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'OUVERTE',
         'm1',
-        true,
         Selection.reconstituer(['q1']),
+        null,
+        -1,
+        new Set(),
       );
 
       const resultatAjout = session.ajouterQuestion('q2');
@@ -109,21 +132,40 @@ describe('Session', () => {
       expect(session.selection.questionIds).toEqual(['q1']);
     });
 
-    it('autorise toujours retirerQuestion, même verrouillée', () => {
+    it('permet retirerQuestion quand la Session n’est pas verrouillée', () => {
+      const session = Session.creer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'm1',
+        Selection.reconstituer(['q1']),
+      ).valeur;
+
+      const resultat = session.retirerQuestion('q1');
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.selection.questionIds).toEqual([]);
+    });
+
+    // ADR-0010 : verrouillée, retirer n'est plus permis (seul Sauter le reste).
+    it('rejette retirerQuestion quand la Session est verrouillée', () => {
       const session = Session.reconstituer(
         's1',
         'e1',
         new Date('2026-03-01'),
         'OUVERTE',
         'm1',
-        true,
         Selection.reconstituer(['q1']),
+        null,
+        -1,
+        new Set(),
       );
 
       const resultat = session.retirerQuestion('q1');
 
-      expect(resultat.estSucces).toBe(true);
-      expect(session.selection.questionIds).toEqual([]);
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('SessionVerrouilleeError');
+      expect(session.selection.questionIds).toEqual(['q1']);
     });
   });
 
@@ -153,8 +195,10 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'OUVERTE',
         'm1',
-        false,
         Selection.reconstituer(['q3', 'q1']),
+        null,
+        -1,
+        new Set(),
       );
 
       const enrichie = session.selectionEnrichie(referentielAvecDeuxThemes());
@@ -183,8 +227,10 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'OUVERTE',
         'm1',
-        true,
         Selection.vide(),
+        null,
+        -1,
+        new Set(),
       );
 
       expect(session.estModifiable()).toBe(false);
@@ -197,8 +243,10 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'CLOTUREE',
         'm1',
-        false,
         Selection.vide(),
+        null,
+        -1,
+        new Set(),
       );
 
       expect(session.estModifiable()).toBe(false);
@@ -245,8 +293,10 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'OUVERTE',
         'm1',
-        true,
         Selection.vide(),
+        null,
+        -1,
+        new Set(),
       );
 
       const resultat = session.modifierInfos('e2', new Date('2026-04-01'));
@@ -263,8 +313,10 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'CLOTUREE',
         'm1',
-        false,
         Selection.vide(),
+        null,
+        -1,
+        new Set(),
       );
 
       const resultat = session.modifierInfos('e2', new Date('2026-04-01'));
@@ -280,10 +332,12 @@ describe('Session', () => {
         's1',
         'e1',
         new Date('2026-03-01'),
-        'OUVERTE',
+        'PREPAREE',
         'm1',
-        false,
         Selection.reconstituer(['q1', 'q2']),
+        null,
+        -1,
+        new Set(),
       );
 
       const resultat = session.changerModele(
@@ -301,10 +355,12 @@ describe('Session', () => {
         's1',
         'e1',
         new Date('2026-03-01'),
-        'OUVERTE',
+        'PREPAREE',
         'm1',
-        false,
         Selection.reconstituer(['q1']),
+        null,
+        -1,
+        new Set(),
       );
 
       const resultat = session.changerModele('', Selection.vide());
@@ -322,8 +378,10 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'OUVERTE',
         'm1',
-        true,
         Selection.reconstituer(['q1']),
+        null,
+        -1,
+        new Set(),
       );
 
       const resultat = session.changerModele(
@@ -343,8 +401,10 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'CLOTUREE',
         'm1',
-        false,
         Selection.reconstituer(['q1']),
+        null,
+        -1,
+        new Set(),
       );
 
       const resultat = session.changerModele(
@@ -357,22 +417,326 @@ describe('Session', () => {
     });
   });
 
+  describe('ouvrir', () => {
+    it('passe de PREPAREE à OUVERTE, verrouille et met le Code en salle d’attente (index -1)', () => {
+      const session = Session.creer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'm1',
+        Selection.reconstituer(['q1']),
+      ).valeur;
+
+      const resultat = session.ouvrir('AB12');
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.statut).toBe('OUVERTE');
+      expect(session.estVerrouillee()).toBe(true);
+      expect(session.code).toBe('AB12');
+      expect(session.indexCourant).toBe(-1);
+    });
+
+    it('rejette si la Session n’est pas PREPAREE', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        Selection.vide(),
+        'AB12',
+        -1,
+        new Set(),
+      );
+
+      const resultat = session.ouvrir('CD34');
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('SessionNonPrepareeError');
+      expect(session.code).toBe('AB12');
+    });
+
+    it('rejette un Code vide', () => {
+      const session = Session.creer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'm1',
+        Selection.vide(),
+      ).valeur;
+
+      const resultat = session.ouvrir('   ');
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('CodeInvalideError');
+      expect(session.statut).toBe('PREPAREE');
+    });
+  });
+
+  describe('terminer', () => {
+    it('passe de OUVERTE à CLOTUREE', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        Selection.vide(),
+        'AB12',
+        -1,
+        new Set(),
+      );
+
+      const resultat = session.terminer();
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.statut).toBe('CLOTUREE');
+    });
+
+    it('rejette si la Session n’est pas OUVERTE', () => {
+      const session = Session.creer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'm1',
+        Selection.vide(),
+      ).valeur;
+
+      const resultat = session.terminer();
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('SessionNonOuverteError');
+    });
+  });
+
+  describe('sauter', () => {
+    it('marque la Question sautée sans toucher indexCourant si ce n’est pas l’item courant', () => {
+      const session = sessionOuverte(['q1', 'q2', 'q3'], 0);
+
+      const resultat = session.sauter('q3', []);
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.questionsSautees).toEqual(new Set(['q3']));
+      expect(session.indexCourant).toBe(0);
+    });
+
+    it('avance indexCourant au prochain item non sauté quand l’item courant est sauté', () => {
+      const session = sessionOuverte(['q1', 'q2', 'q3'], 0, ['q2']);
+
+      const resultat = session.sauter('q1', []);
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.indexCourant).toBe(2);
+    });
+
+    it('avance indexCourant jusqu’à la fin de la Sélection si tout le reste est sauté', () => {
+      const session = sessionOuverte(['q1', 'q2'], 0, ['q2']);
+
+      const resultat = session.sauter('q1', []);
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.indexCourant).toBe(2);
+    });
+
+    it('rejette si la Question n’est pas dans la Sélection', () => {
+      const session = sessionOuverte(['q1'], 0);
+
+      const resultat = session.sauter('inconnue', []);
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe(
+        'QuestionIntrouvableDansSelectionError',
+      );
+    });
+
+    it('rejette une Question déjà traitée (Tour clos)', () => {
+      const session = sessionOuverte(['q1', 'q2'], 0);
+
+      const resultat = session.sauter('q1', [
+        { tourId: 't1', questionId: 'q1', numero: 1, clos: true },
+      ]);
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('QuestionDejaTraiteeError');
+    });
+
+    it('rejette une Question déjà sautée', () => {
+      const session = sessionOuverte(['q1', 'q2'], 0, ['q1']);
+
+      const resultat = session.sauter('q1', []);
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('QuestionDejaSauteeError');
+    });
+
+    it('rejette si la Session n’est pas OUVERTE', () => {
+      const session = Session.creer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'm1',
+        Selection.reconstituer(['q1']),
+      ).valeur;
+
+      const resultat = session.sauter('q1', []);
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('SessionNonOuverteError');
+    });
+  });
+
+  describe('passerQuestionSuivante', () => {
+    it('depuis -1, démarre toujours la séance sur le premier item', () => {
+      const session = sessionOuverte(['q1', 'q2'], -1);
+
+      const resultat = session.passerQuestionSuivante([]);
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.indexCourant).toBe(0);
+    });
+
+    it('depuis -1, saute automatiquement les items déjà Sautés au démarrage', () => {
+      const session = sessionOuverte(['q1', 'q2'], -1, ['q1']);
+
+      const resultat = session.passerQuestionSuivante([]);
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.indexCourant).toBe(1);
+    });
+
+    it('avance quand l’item courant a un Tour clos', () => {
+      const session = sessionOuverte(['q1', 'q2'], 0);
+
+      const resultat = session.passerQuestionSuivante([
+        { tourId: 't1', questionId: 'q1', numero: 1, clos: true },
+      ]);
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.indexCourant).toBe(1);
+    });
+
+    it('avance quand l’item courant est Sauté', () => {
+      const session = sessionOuverte(['q1', 'q2'], 0, ['q1']);
+
+      const resultat = session.passerQuestionSuivante([]);
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.indexCourant).toBe(1);
+    });
+
+    it('rejette si l’item courant n’a ni Tour clos ni marquage Sauté', () => {
+      const session = sessionOuverte(['q1', 'q2'], 0);
+
+      const resultat = session.passerQuestionSuivante([]);
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('QuestionCouranteNonResolueError');
+      expect(session.indexCourant).toBe(0);
+    });
+
+    it('rejette un nouvel appel une fois la Sélection épuisée', () => {
+      const session = sessionOuverte(['q1'], 1);
+
+      const resultat = session.passerQuestionSuivante([]);
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('QuestionCouranteNonResolueError');
+    });
+
+    it('indexCourant ne recule jamais', () => {
+      const session = sessionOuverte(['q1', 'q2', 'q3'], 1, ['q2']);
+
+      const resultat = session.passerQuestionSuivante([]);
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.indexCourant).toBe(2);
+    });
+
+    it('rejette si la Session n’est pas OUVERTE', () => {
+      const session = Session.creer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'm1',
+        Selection.reconstituer(['q1']),
+      ).valeur;
+
+      const resultat = session.passerQuestionSuivante([]);
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('SessionNonOuverteError');
+    });
+  });
+
+  describe('progression', () => {
+    it('dérive A_VENIR / COURANTE / TRAITEE / SAUTEE sans muter l’agrégat', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        Selection.reconstituer(['q1', 'q2', 'q3', 'q4']),
+        'AB12',
+        1,
+        new Set(['q3']),
+      );
+      const tours = [{ tourId: 't1', questionId: 'q1', numero: 1, clos: true }];
+
+      const progression = session.progression(tours);
+
+      expect(progression).toEqual([
+        { questionId: 'q1', statut: 'TRAITEE' },
+        { questionId: 'q2', statut: 'COURANTE' },
+        { questionId: 'q3', statut: 'SAUTEE' },
+        { questionId: 'q4', statut: 'A_VENIR' },
+      ]);
+      expect(session.indexCourant).toBe(1);
+    });
+
+    it('avec indexCourant = -1, aucune Question n’est COURANTE', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        Selection.reconstituer(['q1', 'q2']),
+        'AB12',
+        -1,
+        new Set(),
+      );
+
+      const progression = session.progression([]);
+
+      expect(progression).toEqual([
+        { questionId: 'q1', statut: 'A_VENIR' },
+        { questionId: 'q2', statut: 'A_VENIR' },
+      ]);
+    });
+  });
+
   describe('reconstituer', () => {
-    it('recharge une Session avec son statut et son verrou sans revalider', () => {
+    it('recharge une Session avec son statut, son verrou et son avancement sans revalider', () => {
       const session = Session.reconstituer(
         's1',
         'e1',
         new Date('2026-03-01'),
         'CLOTUREE',
         'm1',
-        true,
-        Selection.reconstituer(['q1']),
+        Selection.reconstituer(['q1', 'q2']),
+        'ABCD',
+        1,
+        new Set(['q1']),
       );
 
       expect(session.id).toBe('s1');
       expect(session.statut).toBe('CLOTUREE');
       expect(session.estVerrouillee()).toBe(true);
-      expect(session.selection.questionIds).toEqual(['q1']);
+      expect(session.selection.questionIds).toEqual(['q1', 'q2']);
+      expect(session.code).toBe('ABCD');
+      expect(session.indexCourant).toBe(1);
+      expect(session.questionsSautees).toEqual(new Set(['q1']));
     });
   });
 });

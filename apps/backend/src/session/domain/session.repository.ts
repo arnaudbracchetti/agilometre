@@ -5,4 +5,6 @@ export interface SessionRepository {
   findById(id: string): Promise<Session | null>;
   save(session: Session): Promise<void>;
   remove(id: string): Promise<void>;
+  /** Unicité du Code parmi les Sessions OUVERTE. */
+  existeCodeOuvert(code: string): Promise<boolean>;
 }
