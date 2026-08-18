@@ -137,6 +137,7 @@ model Session {
   items            SessionSelectionItem[]
   questionsSautees SessionQuestionSautee[]
   tours            TourDeVote[]
+  jetons           JetonSession[]
 }
 
 // Copie figée de la Sélection du Modèle au moment de la création (ADR-0009) — même pattern que
@@ -162,15 +163,50 @@ model SessionQuestionSautee {
   @@unique([sessionId, questionId])
 }
 
+// Index sur (sessionId, clotureLe) : sert directement trouverOuvertPour(sessionId), le seul accès
+// chaud pour l'instant (docs/design/agregat-tour-de-vote.md §4). Pas d'@@unique sur
+// (sessionId, questionId, numero) : l'invariant "numero strictement croissant" est déjà porté par
+// l'agrégat TourDeVote lui-même (creer), et la création d'un Tour est un geste humain, séquentiel,
+// mono-coach — contrairement à Session.code où la concurrence entre coachs justifie l'index partiel.
 model TourDeVote {
-  id         String    @id @default(uuid())
-  session    Session   @relation(fields: [sessionId], references: [id])
-  sessionId  String
-  questionId String
-  numero     Int
-  ouvertLe   DateTime  @default(now())
-  clotureLe  DateTime?
-  reponses   Reponse[]
+  id             String          @id @default(uuid())
+  session        Session         @relation(fields: [sessionId], references: [id])
+  sessionId      String
+  questionId     String
+  numero         Int
+  ouvertLe       DateTime        @default(now())
+  clotureLe      DateTime?
+  reponses       Reponse[]
+  participations Participation[]
+
+  @@index([sessionId, clotureLe])
+}
+
+// Émis uniquement pour une Session OUVERTE — vérifié par JetonSessionRepository.emettre via un
+// INSERT conditionnel atomique, jamais par ce modèle (docs/design/agregat-tour-de-vote.md §2).
+// Valable toute la durée de la Session, jamais renouvelé par Tour (ADR-0011).
+model JetonSession {
+  id             String          @id @default(uuid())
+  session        Session         @relation(fields: [sessionId], references: [id])
+  sessionId      String
+  creeLe         DateTime        @default(now())
+  participations Participation[]
+}
+
+// Bookkeeping éphémère : détecte un revote au sein d'un Tour ouvert (une seule Participation par
+// Jeton et par Tour, garantie par la clé primaire composite ci-dessous, pas de colonne id
+// surnuméraire — reflète tel quel Participation(tourId, jetonId, reponseId) de l'issue #33).
+// Purgée intégralement à la clôture du Tour (docs/design/agregat-tour-de-vote.md §2) — ne survit
+// jamais à son Tour ; Reponse, elle, n'est jamais supprimée à cette occasion.
+model Participation {
+  tour      TourDeVote   @relation(fields: [tourId], references: [id])
+  tourId    String
+  jeton     JetonSession @relation(fields: [jetonId], references: [id])
+  jetonId   String
+  reponse   Reponse      @relation(fields: [reponseId], references: [id])
+  reponseId String       @unique
+
+  @@id([tourId, jetonId])
 }
 
 // --- Campagne de pouls (§4, §8) ---
@@ -201,12 +237,13 @@ model Sollicitation {
 // --- Réponse anonyme (§4, §5) : aucun lien vers l'identité du répondant ---
 
 model Reponse {
-  id         String         @id @default(uuid())
-  questionId String
-  niveau     Int // 1 à 4
-  equipeId   String
-  horodatage DateTime       @default(now())
-  origine    OrigineReponse
-  tour       TourDeVote?    @relation(fields: [tourId], references: [id])
-  tourId     String?
+  id            String         @id @default(uuid())
+  questionId    String
+  niveau        Int // 1 à 4
+  equipeId      String
+  horodatage    DateTime       @default(now())
+  origine       OrigineReponse
+  tour          TourDeVote?    @relation(fields: [tourId], references: [id])
+  tourId        String?
+  participation Participation?
 }

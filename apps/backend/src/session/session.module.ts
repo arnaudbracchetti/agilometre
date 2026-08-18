@@ -27,6 +27,9 @@ import { PrismaModeleSessionRepository } from './infrastructure/prisma-modele-se
 import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-modele-session-bibliotheque.query';
 import { PrismaSessionRepository } from './infrastructure/prisma-session.repository';
 import { PrismaSessionListeQuery } from './infrastructure/prisma-session-liste.query';
+import { PrismaTourDeVoteRepository } from './infrastructure/prisma-tour-de-vote.repository';
+import { PrismaReponseRepository } from './infrastructure/prisma-reponse.repository';
+import { PrismaJetonSessionRepository } from './infrastructure/prisma-jeton-session.repository';
 import { SessionController } from './session.controller';
 import { SessionAnimeeController } from './session-animee.controller';
 
@@ -38,6 +41,12 @@ import { SessionAnimeeController } from './session-animee.controller';
     PrismaModeleSessionBibliothequeQuery,
     PrismaSessionRepository,
     PrismaSessionListeQuery,
+    // Aucun use case ne les consomme encore (#33 est un enabler technique, "pas d'écran") — prêts
+    // pour la carte "voter" qui les injectera (même patron que SessionRepository.existeCodeOuvert
+    // ajouté par la carte #32).
+    PrismaTourDeVoteRepository,
+    PrismaReponseRepository,
+    PrismaJetonSessionRepository,
     {
       provide: CreerModeleSession,
       useFactory: (repository: PrismaModeleSessionRepository) =>
