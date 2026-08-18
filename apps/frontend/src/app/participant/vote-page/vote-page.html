@@ -1,0 +1,48 @@
+<div class="vote">
+  @if (phase() === 'saisie') {
+    <form class="vote__formulaire" (ngSubmit)="rejoindre()">
+      <h1 class="vote__titre">Rejoindre une séance</h1>
+      <label class="vote__label" for="code">Code de session</label>
+      <input
+        id="code"
+        name="code"
+        nz-input
+        inputmode="numeric"
+        autocomplete="off"
+        placeholder="Ex. 4271"
+        [ngModel]="code()"
+        (ngModelChange)="code.set($event)"
+      />
+      @if (erreur(); as message) {
+        <p class="vote__erreur">{{ message }}</p>
+      }
+      <button
+        nz-button
+        nzType="primary"
+        nzBlock
+        type="submit"
+        [disabled]="!codeValide()"
+        [nzLoading]="soumissionEnCours()"
+      >
+        Rejoindre
+      </button>
+    </form>
+  } @else {
+    <div class="vote__attente" role="status" aria-live="polite">
+      <div class="vote__attente-indicateur" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <p class="vote__attente-message">Vous êtes connecté</p>
+      <p class="vote__attente-details">Le vote va bientôt commencer — restez sur cet écran.</p>
+      <button
+        nz-button
+        nzType="link"
+        nzSize="small"
+        class="vote__attente-autre-seance"
+        (click)="rejoindreAutreSeance()"
+      >
+        Rejoindre une autre séance
+      </button>
+    </div>
+  }
+</div>

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { GenerateurDeCode } from '../domain/generateur-de-code';
 import { Selection } from '../domain/selection';
@@ -18,17 +19,33 @@ export class PrismaSessionRepository implements SessionRepository {
     private readonly generateurDeCode: GenerateurDeCode,
   ) {}
 
+  private static readonly AVEC_SELECTION = {
+    items: { orderBy: { ordre: 'asc' } },
+    questionsSautees: true,
+  } as const;
+
   async findById(id: string): Promise<Session | null> {
     const row = await this.prisma.session.findUnique({
       where: { id },
-      include: {
-        items: { orderBy: { ordre: 'asc' } },
-        questionsSautees: true,
-      },
+      include: PrismaSessionRepository.AVEC_SELECTION,
     });
-    if (!row) {
-      return null;
-    }
+    return row ? this.versDomaine(row) : null;
+  }
+
+  /** Restreint aux Sessions OUVERTE : seules elles portent un Code unique (invariant du repository). */
+  async findByCode(code: string): Promise<Session | null> {
+    const row = await this.prisma.session.findFirst({
+      where: { code, statut: 'OUVERTE' },
+      include: PrismaSessionRepository.AVEC_SELECTION,
+    });
+    return row ? this.versDomaine(row) : null;
+  }
+
+  private versDomaine(
+    row: Prisma.SessionGetPayload<{
+      include: typeof PrismaSessionRepository.AVEC_SELECTION;
+    }>,
+  ): Session {
     return Session.reconstituer(
       row.id,
       row.equipeId,

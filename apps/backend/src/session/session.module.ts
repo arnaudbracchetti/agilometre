@@ -26,6 +26,7 @@ import { SupprimerSession } from './application/supprimer-session.usecase';
 import { OuvrirSession } from './application/ouvrir-session.usecase';
 import { ObtenirProjectionSession } from './application/obtenir-projection-session.usecase';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
+import { RejoindreSession } from './application/rejoindre-session.usecase';
 import { PrismaModeleSessionRepository } from './infrastructure/prisma-modele-session.repository';
 import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-modele-session-bibliotheque.query';
 import { PrismaSessionRepository } from './infrastructure/prisma-session.repository';
@@ -37,6 +38,7 @@ import { CryptoGenerateurDeCode } from './infrastructure/crypto-generateur-de-co
 import { SessionController } from './session.controller';
 import { SessionAnimeeController } from './session-animee.controller';
 import { ProjectionController } from './projection.controller';
+import { ParticipantController } from './participant.controller';
 
 @Module({
   imports: [ReferentielModule, OrganisationModule],
@@ -44,6 +46,7 @@ import { ProjectionController } from './projection.controller';
     SessionController,
     SessionAnimeeController,
     ProjectionController,
+    ParticipantController,
   ],
   providers: [
     PrismaModeleSessionRepository,
@@ -230,6 +233,14 @@ import { ProjectionController } from './projection.controller';
       useFactory: (sessions: PrismaSessionRepository) =>
         new ObtenirPilotageSession(sessions),
       inject: [PrismaSessionRepository],
+    },
+    {
+      provide: RejoindreSession,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        jetons: PrismaJetonSessionRepository,
+      ) => new RejoindreSession(sessions, jetons),
+      inject: [PrismaSessionRepository, PrismaJetonSessionRepository],
     },
   ],
 })

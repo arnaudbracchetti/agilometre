@@ -65,3 +65,9 @@ export class ChangerModeleSessionDto {
   @IsNotEmpty()
   modeleSessionId!: string;
 }
+
+export class RejoindreSessionDto {
+  @IsString()
+  @IsNotEmpty()
+  code!: string;
+}

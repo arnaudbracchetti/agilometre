@@ -13,6 +13,12 @@ class SessionRepositoryFake implements SessionRepository {
   findById(id: string): Promise<Session | null> {
     return Promise.resolve(this.sessions.find((s) => s.id === id) ?? null);
   }
+  findByCode(code: string): Promise<Session | null> {
+    return Promise.resolve(
+      this.sessions.find((s) => s.code === code && s.statut === 'OUVERTE') ??
+        null,
+    );
+  }
   save(session: Session): Promise<void> {
     if (!this.sessions.includes(session)) {
       this.sessions.push(session);

@@ -24,7 +24,7 @@ export class ProjectionPage implements OnInit {
   protected readonly chargementEnCours = signal(true);
   /** URL à saisir par un participant pour rejoindre (doc "Écran de projection", état salle d'attente). */
   protected readonly urlDeJointure = signal(
-    typeof window !== 'undefined' ? window.location.origin : '',
+    typeof window !== 'undefined' ? `${window.location.origin}/vote` : '',
   );
 
   ngOnInit(): void {

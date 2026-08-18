@@ -54,3 +54,8 @@ export interface PilotageSessionDto {
   statut: StatutSession;
   code: string;
 }
+
+export interface JetonSessionDto {
+  sessionId: string;
+  jeton: string;
+}

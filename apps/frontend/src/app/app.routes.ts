@@ -14,6 +14,11 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'vote',
+    loadComponent: () =>
+      import('./participant/vote-page/vote-page').then((m) => m.VotePage),
+  },
+  {
     path: '',
     loadComponent: () => import('./shell/app-shell').then((m) => m.AppShell),
     children: [
