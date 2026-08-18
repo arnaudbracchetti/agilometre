@@ -1,9 +1,14 @@
+import { GenerateurDeCode } from '../domain/generateur-de-code';
 import { ModeleSession } from '../domain/modele-session';
 import { ModeleSessionRepository } from '../domain/modele-session.repository';
 import { Selection } from '../domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { ChangerModeleSession } from './changer-modele-session.usecase';
+
+const generateurDeCode: GenerateurDeCode = {
+  generer: () => Promise.resolve('AB12'),
+};
 
 class ModeleSessionRepositoryFake implements ModeleSessionRepository {
   modeles: ModeleSession[] = [];
@@ -50,6 +55,7 @@ function sessionOuverte(): Session {
     new Date('2026-03-01'),
     'm1',
     Selection.reconstituer(['q1', 'q2']),
+    generateurDeCode,
   ).valeur;
 }
 
@@ -125,6 +131,7 @@ describe('ChangerModeleSession', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       ),
     );
     const useCase = new ChangerModeleSession(sessions, modeles);
@@ -149,6 +156,7 @@ describe('ChangerModeleSession', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       ),
     );
     const useCase = new ChangerModeleSession(sessions, modeles);

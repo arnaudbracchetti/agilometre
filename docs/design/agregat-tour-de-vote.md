@@ -88,7 +88,7 @@ comportement propre.
 
 | Opération | Commande/Requête | Portée |
 |---|---|---|
-| Ouvrir (Code, verrouillage, `PREPAREE → OUVERTE`) | Commande | Racine + use case (unicité du Code via repository, retry si collision) |
+| Ouvrir (verrouillage, `PREPAREE → OUVERTE`) | Commande | Racine — le besoin de Code est porté par `Session` elle-même, réclamé à un port `GenerateurDeCode` (interface du domaine, `generer(): Promise<string>` garanti unique parmi les Sessions OUVERTE). `ouvrir()` prend `0` paramètre ; le use case ne fait que charger la Session et sauvegarder — carte #34, écart assumé vis-à-vis de la conception initiale ci-dessous |
 | Sauter une Question | Commande | Racine + use case (clôt le Tour ouvert éventuel via `TourDeVoteRepository`) |
 | Passer à la Question suivante | Commande | Racine |
 | Terminer prématurément | Commande | Use case (boucle `sauter` sur le reste via la Racine) |
@@ -116,6 +116,14 @@ interface SessionRepository {
   existeCodeOuvert(code: string): boolean
   save(session: Session): void
   remove(id: string): void
+}
+
+// Port du domaine (carte #34) : Session le détient directement (constructeur), le réclame dans
+// ouvrir(). L'unicité parmi les Sessions OUVERTE fait partie du contrat, pas de l'appelant —
+// c'est pourquoi existeCodeOuvert ci-dessus n'est plus consommé que par l'adaptateur
+// (CryptoGenerateurDeCode), jamais directement par le use case Ouvrir.
+interface GenerateurDeCode {
+  generer(): Promise<string>
 }
 
 interface TourDeVoteRepository {
@@ -196,6 +204,12 @@ framework ni de Prisma. Les quatre interfaces de repository sont définies dans 
 (Session non `OUVERTE`, Tour déjà clos, Question déjà traitée...) est une erreur de domaine
 (`Result` échec), traduite en erreur HTTP à la frontière use case/contrôleur — jamais un `catch`
 aveugle.
+
+`Session.ouvrir()` (carte #34) est la seule méthode de domaine asynchrone du projet : elle
+réclame son Code au port `GenerateurDeCode`, qui a besoin d'I/O pour garantir l'unicité. Ce port
+est injecté au constructeur de `Session` (via `creer`/`reconstituer`, symétriquement), implémenté
+par `CryptoGenerateurDeCode` (`apps/backend/src/session/infrastructure/`) — la seule technique
+(tirage aléatoire, format à 6 chiffres, vérification en base) que le domaine ne connaît jamais.
 
 ## Notes et améliorations différées
 

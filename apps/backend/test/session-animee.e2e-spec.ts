@@ -506,6 +506,60 @@ describe('Session animée (e2e)', () => {
       .expect(409);
   });
 
+  it('POST /api/sessions/:id/ouvrir — génère un Code à 6 chiffres, verrouille la Sélection', async () => {
+    const { equipe, modele } = await contexte();
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+
+    const reponse = await request(app.getHttpServer())
+      .post(`/api/sessions/${session.id}/ouvrir`)
+      .expect(201);
+    const sessionOuverte = reponse.body as SessionDto;
+
+    expect(sessionOuverte.statut).toBe('OUVERTE');
+    expect(sessionOuverte.verrouillee).toBe(true);
+    expect(sessionOuverte.code).toMatch(/^\d{6}$/);
+
+    // Sélection verrouillée dès l'ouverture (ADR-0010) : ajouter une Question est refusé.
+    await request(app.getHttpServer())
+      .post(`/api/sessions/${session.id}/questions`)
+      .send({ questionId: 'q3' })
+      .expect(409);
+  });
+
+  it('POST /api/sessions/:id/ouvrir — 404 si la Session est inconnue', async () => {
+    await request(app.getHttpServer())
+      .post('/api/sessions/inconnue/ouvrir')
+      .expect(404);
+  });
+
+  it('POST /api/sessions/:id/ouvrir — 409 si la Session n’est pas PREPAREE', async () => {
+    const { equipe, modele } = await contexte();
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+    await request(app.getHttpServer())
+      .post(`/api/sessions/${session.id}/ouvrir`)
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/api/sessions/${session.id}/ouvrir`)
+      .expect(409);
+  });
+
   it('GET /api/sessions — modeleSessionNom devient null si le Modèle source est supprimé (ADR-0009)', async () => {
     const { equipe, modele } = await contexte();
     await request(app.getHttpServer())

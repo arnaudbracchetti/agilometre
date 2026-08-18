@@ -7,6 +7,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideNzI18n, fr_FR } from 'ng-zorro-antd/i18n';
 import { provideNzNativeDateAdapter } from 'ng-zorro-antd/core/time';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { StatutSession } from '@agilometre/shared';
 import { AjustementPage } from './ajustement-page';
 
@@ -38,6 +39,7 @@ const sessionFixture = {
   statut: 'OUVERTE',
   modeleSessionId: 'm1',
   verrouillee: false,
+  code: '123456',
   selection: [{ questionId: 'q1', libelle: 'Question 1', themeId: 't1', themeLibelle: 'Thème A' }],
 };
 
@@ -217,5 +219,44 @@ describe('AjustementPage', () => {
     fixture.componentInstance['verrouillee'].set(false);
     fixture.componentInstance['statut'].set(StatutSession.Cloturee);
     expect(fixture.componentInstance['modifiable']()).toBe(false);
+  });
+
+  it('affiche le bouton « Ouvrir la séance » seulement quand la Session est PREPAREE', () => {
+    expect(fixture.nativeElement.textContent).not.toContain('Ouvrir la séance');
+
+    fixture.componentInstance['statut'].set(StatutSession.Preparee);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Ouvrir la séance');
+  });
+
+  it('onOuvrir — appelle le service et affiche le Code retourné', () => {
+    fixture.componentInstance['statut'].set(StatutSession.Preparee);
+    fixture.detectChanges();
+
+    fixture.componentInstance['onOuvrir']();
+
+    const req = httpMock.expectOne('/api/sessions/s1/ouvrir');
+    expect(req.request.method).toBe('POST');
+    req.flush({ ...sessionFixture, statut: 'OUVERTE', verrouillee: true, code: '654321' });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['code']()).toBe('654321');
+    expect(fixture.nativeElement.textContent).toContain('654321');
+    expect(fixture.nativeElement.textContent).not.toContain('Ouvrir la séance');
+  });
+
+  it('onOuvrir — affiche un message d’erreur si la Session ne peut plus être ouverte', () => {
+    fixture.componentInstance['statut'].set(StatutSession.Preparee);
+    fixture.detectChanges();
+    const messageService = fixture.debugElement.injector.get(NzMessageService);
+    const errorSpy = vi.spyOn(messageService, 'error');
+
+    fixture.componentInstance['onOuvrir']();
+
+    const req = httpMock.expectOne('/api/sessions/s1/ouvrir');
+    req.flush('Conflit', { status: 409, statusText: 'Conflict' });
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 });

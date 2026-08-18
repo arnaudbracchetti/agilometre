@@ -3,8 +3,14 @@ import { Option } from '../../referentiel/domain/option';
 import { Question } from '../../referentiel/domain/question';
 import { Referentiel } from '../../referentiel/domain/referentiel';
 import { Theme } from '../../referentiel/domain/theme';
+import { GenerateurDeCode } from './generateur-de-code';
 import { Selection } from './selection';
 import { Session } from './session';
+
+/** Fake du port : un seul Code fixe suffit, l'unicité elle-même n'est pas une préoccupation du domaine. */
+const generateurDeCode: GenerateurDeCode = {
+  generer: () => Promise.resolve('AB12'),
+};
 
 function optionsValides(): Option[] {
   return [1, 2, 3, 4].map((niveau) =>
@@ -40,6 +46,7 @@ function sessionOuverte(
     'AB12',
     indexCourant,
     new Set(questionsSautees),
+    generateurDeCode,
   );
 }
 
@@ -52,6 +59,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'm1',
         Selection.reconstituer(['q1', 'q2']),
+        generateurDeCode,
       );
 
       expect(resultat.estSucces).toBe(true);
@@ -72,6 +80,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'm1',
         Selection.vide(),
+        generateurDeCode,
       );
 
       expect(resultat.estEchec).toBe(true);
@@ -85,6 +94,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         '',
         Selection.vide(),
+        generateurDeCode,
       );
 
       expect(resultat.estEchec).toBe(true);
@@ -100,6 +110,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'm1',
         Selection.vide(),
+        generateurDeCode,
       ).valeur;
 
       expect(session.ajouterQuestion('q1').estSucces).toBe(true);
@@ -119,6 +130,7 @@ describe('Session', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       const resultatAjout = session.ajouterQuestion('q2');
@@ -139,6 +151,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'm1',
         Selection.reconstituer(['q1']),
+        generateurDeCode,
       ).valeur;
 
       const resultat = session.retirerQuestion('q1');
@@ -159,6 +172,7 @@ describe('Session', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       const resultat = session.retirerQuestion('q1');
@@ -177,6 +191,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'm1',
         Selection.vide(),
+        generateurDeCode,
       ).valeur;
       session.ajouterQuestion('q1');
 
@@ -199,6 +214,7 @@ describe('Session', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       const enrichie = session.selectionEnrichie(referentielAvecDeuxThemes());
@@ -215,6 +231,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'm1',
         Selection.vide(),
+        generateurDeCode,
       ).valeur;
 
       expect(session.estModifiable()).toBe(true);
@@ -231,6 +248,7 @@ describe('Session', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       expect(session.estModifiable()).toBe(false);
@@ -247,6 +265,7 @@ describe('Session', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       expect(session.estModifiable()).toBe(false);
@@ -261,6 +280,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'm1',
         Selection.vide(),
+        generateurDeCode,
       ).valeur;
 
       const resultat = session.modifierInfos('e2', new Date('2026-04-01'));
@@ -277,6 +297,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'm1',
         Selection.vide(),
+        generateurDeCode,
       ).valeur;
 
       const resultat = session.modifierInfos('   ', new Date('2026-04-01'));
@@ -297,6 +318,7 @@ describe('Session', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       const resultat = session.modifierInfos('e2', new Date('2026-04-01'));
@@ -317,6 +339,7 @@ describe('Session', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       const resultat = session.modifierInfos('e2', new Date('2026-04-01'));
@@ -338,6 +361,7 @@ describe('Session', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       const resultat = session.changerModele(
@@ -361,6 +385,7 @@ describe('Session', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       const resultat = session.changerModele('', Selection.vide());
@@ -382,6 +407,7 @@ describe('Session', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       const resultat = session.changerModele(
@@ -405,6 +431,7 @@ describe('Session', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       const resultat = session.changerModele(
@@ -418,16 +445,17 @@ describe('Session', () => {
   });
 
   describe('ouvrir', () => {
-    it('passe de PREPAREE à OUVERTE, verrouille et met le Code en salle d’attente (index -1)', () => {
+    it('passe de PREPAREE à OUVERTE, verrouille, réclame le Code au générateur, met en salle d’attente (index -1)', async () => {
       const session = Session.creer(
         's1',
         'e1',
         new Date('2026-03-01'),
         'm1',
         Selection.reconstituer(['q1']),
+        generateurDeCode,
       ).valeur;
 
-      const resultat = session.ouvrir('AB12');
+      const resultat = await session.ouvrir();
 
       expect(resultat.estSucces).toBe(true);
       expect(session.statut).toBe('OUVERTE');
@@ -436,7 +464,7 @@ describe('Session', () => {
       expect(session.indexCourant).toBe(-1);
     });
 
-    it('rejette si la Session n’est pas PREPAREE', () => {
+    it('rejette si la Session n’est pas PREPAREE, sans solliciter le générateur', async () => {
       const session = Session.reconstituer(
         's1',
         'e1',
@@ -447,29 +475,14 @@ describe('Session', () => {
         'AB12',
         -1,
         new Set(),
+        generateurDeCode,
       );
 
-      const resultat = session.ouvrir('CD34');
+      const resultat = await session.ouvrir();
 
       expect(resultat.estEchec).toBe(true);
       expect(resultat.erreur.name).toBe('SessionNonPrepareeError');
       expect(session.code).toBe('AB12');
-    });
-
-    it('rejette un Code vide', () => {
-      const session = Session.creer(
-        's1',
-        'e1',
-        new Date('2026-03-01'),
-        'm1',
-        Selection.vide(),
-      ).valeur;
-
-      const resultat = session.ouvrir('   ');
-
-      expect(resultat.estEchec).toBe(true);
-      expect(resultat.erreur.name).toBe('CodeInvalideError');
-      expect(session.statut).toBe('PREPAREE');
     });
   });
 
@@ -485,6 +498,7 @@ describe('Session', () => {
         'AB12',
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       const resultat = session.terminer();
@@ -500,6 +514,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'm1',
         Selection.vide(),
+        generateurDeCode,
       ).valeur;
 
       const resultat = session.terminer();
@@ -576,6 +591,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'm1',
         Selection.reconstituer(['q1']),
+        generateurDeCode,
       ).valeur;
 
       const resultat = session.sauter('q1', []);
@@ -659,6 +675,7 @@ describe('Session', () => {
         new Date('2026-03-01'),
         'm1',
         Selection.reconstituer(['q1']),
+        generateurDeCode,
       ).valeur;
 
       const resultat = session.passerQuestionSuivante([]);
@@ -680,6 +697,7 @@ describe('Session', () => {
         'AB12',
         1,
         new Set(['q3']),
+        generateurDeCode,
       );
       const tours = [{ tourId: 't1', questionId: 'q1', numero: 1, clos: true }];
 
@@ -705,6 +723,7 @@ describe('Session', () => {
         'AB12',
         -1,
         new Set(),
+        generateurDeCode,
       );
 
       const progression = session.progression([]);
@@ -728,6 +747,7 @@ describe('Session', () => {
         'ABCD',
         1,
         new Set(['q1']),
+        generateurDeCode,
       );
 
       expect(session.id).toBe('s1');

@@ -1,13 +1,22 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { GenerateurDeCode } from '../domain/generateur-de-code';
 import { Selection } from '../domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
+import { CryptoGenerateurDeCode } from './crypto-generateur-de-code';
 
 @Injectable()
 export class PrismaSessionRepository implements SessionRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  // Dépend du port du domaine, pas de l'adaptateur concret — CryptoGenerateurDeCode n'est que le
+  // jeton d'injection Nest (une interface TypeScript n'existe plus à l'exécution, @Inject explicite
+  // requis pour ce paramètre).
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CryptoGenerateurDeCode)
+    private readonly generateurDeCode: GenerateurDeCode,
+  ) {}
 
   async findById(id: string): Promise<Session | null> {
     const row = await this.prisma.session.findUnique({
@@ -30,6 +39,7 @@ export class PrismaSessionRepository implements SessionRepository {
       row.code,
       row.indexCourant,
       new Set(row.questionsSautees.map((item) => item.questionId)),
+      this.generateurDeCode,
     );
   }
 

@@ -1,10 +1,15 @@
 import { Equipe } from '../../organisation/domain/equipe';
 import { EquipeRepository } from '../../organisation/domain/equipe.repository';
+import { GenerateurDeCode } from '../domain/generateur-de-code';
 import { ModeleSession } from '../domain/modele-session';
 import { ModeleSessionRepository } from '../domain/modele-session.repository';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { CreerSession } from './creer-session.usecase';
+
+const generateurDeCode: GenerateurDeCode = {
+  generer: () => Promise.resolve('AB12'),
+};
 
 class EquipeRepositoryFake implements EquipeRepository {
   equipes: Equipe[] = [];
@@ -75,7 +80,12 @@ describe('CreerSession', () => {
     modele.ajouterQuestion('q2');
     modeles.modeles.push(modele);
     const sessions = new SessionRepositoryFake();
-    const useCase = new CreerSession(sessions, equipes, modeles);
+    const useCase = new CreerSession(
+      sessions,
+      equipes,
+      modeles,
+      generateurDeCode,
+    );
 
     const resultat = await useCase.executer('e1', new Date('2026-04-01'), 'm1');
 
@@ -95,7 +105,12 @@ describe('CreerSession', () => {
     modele.ajouterQuestion('q1');
     modeles.modeles.push(modele);
     const sessions = new SessionRepositoryFake();
-    const useCase = new CreerSession(sessions, equipes, modeles);
+    const useCase = new CreerSession(
+      sessions,
+      equipes,
+      modeles,
+      generateurDeCode,
+    );
 
     const resultat = await useCase.executer('e1', new Date('2026-04-01'), 'm1');
     if (resultat.type !== 'creee') throw new Error('unreachable');
@@ -109,7 +124,12 @@ describe('CreerSession', () => {
     const equipes = new EquipeRepositoryFake();
     const modeles = new ModeleSessionRepositoryFake();
     const sessions = new SessionRepositoryFake();
-    const useCase = new CreerSession(sessions, equipes, modeles);
+    const useCase = new CreerSession(
+      sessions,
+      equipes,
+      modeles,
+      generateurDeCode,
+    );
 
     const resultat = await useCase.executer('inconnue', new Date(), 'm1');
 
@@ -122,7 +142,12 @@ describe('CreerSession', () => {
     equipes.equipes.push(Equipe.creer('e1', 'Alpha', 'ent1').valeur);
     const modeles = new ModeleSessionRepositoryFake();
     const sessions = new SessionRepositoryFake();
-    const useCase = new CreerSession(sessions, equipes, modeles);
+    const useCase = new CreerSession(
+      sessions,
+      equipes,
+      modeles,
+      generateurDeCode,
+    );
 
     const resultat = await useCase.executer('e1', new Date(), 'inconnu');
 

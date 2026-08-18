@@ -23,6 +23,7 @@ import { ObtenirSessionDetail } from './application/obtenir-session-detail.useca
 import { ModifierInfosSession } from './application/modifier-infos-session.usecase';
 import { ChangerModeleSession } from './application/changer-modele-session.usecase';
 import { SupprimerSession } from './application/supprimer-session.usecase';
+import { OuvrirSession } from './application/ouvrir-session.usecase';
 import { PrismaModeleSessionRepository } from './infrastructure/prisma-modele-session.repository';
 import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-modele-session-bibliotheque.query';
 import { PrismaSessionRepository } from './infrastructure/prisma-session.repository';
@@ -30,6 +31,7 @@ import { PrismaSessionListeQuery } from './infrastructure/prisma-session-liste.q
 import { PrismaTourDeVoteRepository } from './infrastructure/prisma-tour-de-vote.repository';
 import { PrismaReponseRepository } from './infrastructure/prisma-reponse.repository';
 import { PrismaJetonSessionRepository } from './infrastructure/prisma-jeton-session.repository';
+import { CryptoGenerateurDeCode } from './infrastructure/crypto-generateur-de-code';
 import { SessionController } from './session.controller';
 import { SessionAnimeeController } from './session-animee.controller';
 
@@ -39,6 +41,7 @@ import { SessionAnimeeController } from './session-animee.controller';
   providers: [
     PrismaModeleSessionRepository,
     PrismaModeleSessionBibliothequeQuery,
+    CryptoGenerateurDeCode,
     PrismaSessionRepository,
     PrismaSessionListeQuery,
     // Aucun use case ne les consomme encore (#33 est un enabler technique, "pas d'écran") — prêts
@@ -121,11 +124,13 @@ import { SessionAnimeeController } from './session-animee.controller';
         sessions: PrismaSessionRepository,
         equipes: PrismaEquipeRepository,
         modeles: PrismaModeleSessionRepository,
-      ) => new CreerSession(sessions, equipes, modeles),
+        generateurDeCode: CryptoGenerateurDeCode,
+      ) => new CreerSession(sessions, equipes, modeles, generateurDeCode),
       inject: [
         PrismaSessionRepository,
         PrismaEquipeRepository,
         PrismaModeleSessionRepository,
+        CryptoGenerateurDeCode,
       ],
     },
     {
@@ -196,6 +201,12 @@ import { SessionAnimeeController } from './session-animee.controller';
       provide: SupprimerSession,
       useFactory: (sessions: PrismaSessionRepository) =>
         new SupprimerSession(sessions),
+      inject: [PrismaSessionRepository],
+    },
+    {
+      provide: OuvrirSession,
+      useFactory: (sessions: PrismaSessionRepository) =>
+        new OuvrirSession(sessions),
       inject: [PrismaSessionRepository],
     },
   ],

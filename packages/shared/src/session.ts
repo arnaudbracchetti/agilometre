@@ -30,6 +30,7 @@ export interface SessionDto {
   statut: StatutSession;
   modeleSessionId: string;
   verrouillee: boolean;
+  code: string | null;
   selection: SelectionQuestionDto[];
 }
 

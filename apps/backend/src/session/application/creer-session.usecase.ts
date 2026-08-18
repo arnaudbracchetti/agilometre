@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { EquipeRepository } from '../../organisation/domain/equipe.repository';
+import { GenerateurDeCode } from '../domain/generateur-de-code';
 import { ModeleSessionRepository } from '../domain/modele-session.repository';
 import { Selection } from '../domain/selection';
 import { ErreurInvariantSession, Session } from '../domain/session';
@@ -16,6 +17,7 @@ export class CreerSession {
     private readonly sessions: SessionRepository,
     private readonly equipes: EquipeRepository,
     private readonly modeles: ModeleSessionRepository,
+    private readonly generateurDeCode: GenerateurDeCode,
   ) {}
 
   async executer(
@@ -43,6 +45,7 @@ export class CreerSession {
       date,
       modeleSessionId,
       selectionCopiee,
+      this.generateurDeCode,
     );
     if (resultat.estEchec) {
       return { type: 'invalide', erreur: resultat.erreur };

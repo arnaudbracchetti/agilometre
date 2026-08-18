@@ -2,7 +2,7 @@ import { GenerateurDeCode } from '../domain/generateur-de-code';
 import { Selection } from '../domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
-import { SupprimerSession } from './supprimer-session.usecase';
+import { OuvrirSession } from './ouvrir-session.usecase';
 
 const generateurDeCode: GenerateurDeCode = {
   generer: () => Promise.resolve('AB12'),
@@ -30,83 +30,63 @@ class SessionRepositoryFake implements SessionRepository {
   }
 }
 
-function sessionOuverte(): Session {
+function sessionPreparee(): Session {
   return Session.creer(
     's1',
     'e1',
     new Date('2026-03-01'),
     'm1',
-    Selection.vide(),
+    Selection.reconstituer(['q1']),
     generateurDeCode,
   ).valeur;
 }
 
-describe('SupprimerSession', () => {
-  it('supprime une Session ouverte et non verrouillée', async () => {
+describe('OuvrirSession', () => {
+  it('ouvre une Session PREPAREE, le Code vient du générateur du domaine', async () => {
     const sessions = new SessionRepositoryFake();
-    sessions.sessions.push(sessionOuverte());
-    const useCase = new SupprimerSession(sessions);
+    sessions.sessions.push(sessionPreparee());
+    const useCase = new OuvrirSession(sessions);
 
     const resultat = await useCase.executer('s1');
 
-    expect(resultat.type).toBe('supprime');
-    expect(sessions.sessions).toHaveLength(0);
+    expect(resultat.type).toBe('ouverte');
+    if (resultat.type !== 'ouverte') throw new Error('unreachable');
+    expect(resultat.session.statut).toBe('OUVERTE');
+    expect(resultat.session.code).toBe('AB12');
+    expect(resultat.session.estVerrouillee()).toBe(true);
   });
 
   it('renvoie "introuvable" si la Session n’existe pas', async () => {
     const sessions = new SessionRepositoryFake();
-    const useCase = new SupprimerSession(sessions);
+    const useCase = new OuvrirSession(sessions);
 
     const resultat = await useCase.executer('inconnue');
 
     expect(resultat.type).toBe('introuvable');
   });
 
-  it('renvoie "non_supprimable" et ne supprime rien si la Session est verrouillée', async () => {
+  it('renvoie "non_preparee" si la Session est déjà OUVERTE', async () => {
     const sessions = new SessionRepositoryFake();
-    sessions.sessions.push(
-      Session.reconstituer(
-        's1',
-        'e1',
-        new Date('2026-03-01'),
-        'OUVERTE',
-        'm1',
-        Selection.vide(),
-        null,
-        -1,
-        new Set(),
-        generateurDeCode,
-      ),
-    );
-    const useCase = new SupprimerSession(sessions);
+    const session = sessionPreparee();
+    await session.ouvrir();
+    sessions.sessions.push(session);
+    const useCase = new OuvrirSession(sessions);
 
     const resultat = await useCase.executer('s1');
 
-    expect(resultat.type).toBe('non_supprimable');
-    expect(sessions.sessions).toHaveLength(1);
+    expect(resultat.type).toBe('non_preparee');
   });
 
-  it('renvoie "non_supprimable" et ne supprime rien si la Session est clôturée', async () => {
+  it('renvoie "non_preparee" si la Session est CLOTUREE', async () => {
     const sessions = new SessionRepositoryFake();
-    sessions.sessions.push(
-      Session.reconstituer(
-        's1',
-        'e1',
-        new Date('2026-03-01'),
-        'CLOTUREE',
-        'm1',
-        Selection.vide(),
-        null,
-        -1,
-        new Set(),
-        generateurDeCode,
-      ),
-    );
-    const useCase = new SupprimerSession(sessions);
+    const session = sessionPreparee();
+    await session.ouvrir();
+    session.terminer();
+    sessions.sessions.push(session);
+    const useCase = new OuvrirSession(sessions);
 
     const resultat = await useCase.executer('s1');
 
-    expect(resultat.type).toBe('non_supprimable');
-    expect(sessions.sessions).toHaveLength(1);
+    expect(resultat.type).toBe('non_preparee');
   });
 });

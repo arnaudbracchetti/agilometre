@@ -1,6 +1,7 @@
 import { Question } from '../../referentiel/domain/question';
 import { Referentiel } from '../../referentiel/domain/referentiel';
 import { Result } from '../../shared-kernel/result';
+import { GenerateurDeCode } from './generateur-de-code';
 import {
   QuestionDejaSelectionneeError,
   QuestionIntrouvableDansSelectionError,
@@ -72,13 +73,6 @@ export class SessionNonOuverteError extends Error {
   }
 }
 
-export class CodeInvalideError extends Error {
-  constructor() {
-    super('Le Code de session ne peut pas être vide');
-    this.name = 'CodeInvalideError';
-  }
-}
-
 export class QuestionDejaTraiteeError extends Error {
   constructor() {
     super('Cette Question a déjà été traitée (Tour de vote clos)');
@@ -122,6 +116,7 @@ export class Session {
     private _code: string | null,
     private _indexCourant: number,
     private _questionsSautees: Set<string>,
+    private readonly generateurDeCode: GenerateurDeCode,
   ) {}
 
   static creer(
@@ -130,6 +125,7 @@ export class Session {
     date: Date,
     modeleSessionId: string,
     selection: Selection,
+    generateurDeCode: GenerateurDeCode,
   ): Result<Session, ErreurInvariantSession> {
     const validation = Session.valider(equipeId, modeleSessionId);
     if (validation.estEchec) {
@@ -146,6 +142,7 @@ export class Session {
         null,
         Session.SANS_QUESTION_COURANTE,
         new Set(),
+        generateurDeCode,
       ),
     );
   }
@@ -165,6 +162,7 @@ export class Session {
     code: string | null,
     indexCourant: number,
     questionsSautees: Set<string>,
+    generateurDeCode: GenerateurDeCode,
   ): Session {
     return new Session(
       id,
@@ -176,6 +174,7 @@ export class Session {
       code,
       indexCourant,
       new Set(questionsSautees),
+      generateurDeCode,
     );
   }
 
@@ -327,17 +326,17 @@ export class Session {
     return this._selection.reordonner(questionId, nouvellePosition);
   }
 
-  /** PREPAREE → OUVERTE : verrouille la Sélection pour de bon (ADR-0010), salle d'attente (-1). */
-  ouvrir(
-    code: string,
-  ): Result<void, SessionNonPrepareeError | CodeInvalideError> {
+  /**
+   * PREPAREE → OUVERTE : réclame son Code au générateur (le besoin est porté par la Racine, pas
+   * par l'appelant), verrouille la Sélection pour de bon (ADR-0010), salle d'attente (-1).
+   * Seule méthode de domaine asynchrone du projet — l'unicité du Code parmi les Sessions OUVERTE
+   * fait partie du contrat du port `GenerateurDeCode`, qui a besoin d'I/O pour la garantir.
+   */
+  async ouvrir(): Promise<Result<void, SessionNonPrepareeError>> {
     if (this._statut !== 'PREPAREE') {
       return Result.echec(new SessionNonPrepareeError());
     }
-    if (code.trim().length === 0) {
-      return Result.echec(new CodeInvalideError());
-    }
-    this._code = code.trim();
+    this._code = await this.generateurDeCode.generer();
     this._statut = 'OUVERTE';
     this._indexCourant = Session.SANS_QUESTION_COURANTE;
     return Result.succes(undefined);

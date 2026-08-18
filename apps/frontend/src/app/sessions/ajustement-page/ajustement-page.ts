@@ -54,6 +54,7 @@ export class AjustementPage implements OnInit {
   protected readonly modeleSessionId = signal<string | null>(null);
   protected readonly statut = signal<SessionDto['statut'] | null>(null);
   protected readonly verrouillee = signal(false);
+  protected readonly code = signal<string | null>(null);
   protected readonly themes = signal<ThemeReferentielDto[]>([]);
   protected readonly selection = signal<SelectionQuestionDto[]>([]);
   protected readonly chargementEnCours = signal(false);
@@ -124,6 +125,7 @@ export class AjustementPage implements OnInit {
     this.modeleSessionId.set(session.modeleSessionId);
     this.statut.set(session.statut);
     this.verrouillee.set(session.verrouillee);
+    this.code.set(session.code);
     this.selection.set(session.selection);
   }
 
@@ -202,6 +204,13 @@ export class AjustementPage implements OnInit {
     this.persister(
       this.sessionsService.reordonnerQuestion(this.requireId(), evt.questionId, evt.position),
     );
+  }
+
+  protected onOuvrir(): void {
+    this.sessionsService.ouvrir(this.requireId()).subscribe({
+      next: (session) => this.appliquerSession(session),
+      error: () => this.message.error('Cette Session ne peut plus être ouverte.'),
+    });
   }
 
   private persister(appel: Observable<SessionDto>): void {

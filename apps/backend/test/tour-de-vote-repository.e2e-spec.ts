@@ -1,11 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from './../src/prisma/prisma.service';
 import { PrismaTourDeVoteRepository } from './../src/session/infrastructure/prisma-tour-de-vote.repository';
+import { GenerateurDeCode } from './../src/session/domain/generateur-de-code';
 import { Selection } from './../src/session/domain/selection';
 import { Session } from './../src/session/domain/session';
 import { PrismaSessionRepository } from './../src/session/infrastructure/prisma-session.repository';
 import { Reponse } from './../src/session/domain/reponse';
 import { TourDeVote } from './../src/session/domain/tour-de-vote';
+
+function generateurFixe(code: string): GenerateurDeCode {
+  return { generer: () => Promise.resolve(code) };
+}
 
 // CA #33 : trouverOuvertPour, contre un vrai Postgres (pnpm dev:db:test).
 describe('PrismaTourDeVoteRepository (e2e)', () => {
@@ -19,7 +24,7 @@ describe('PrismaTourDeVoteRepository (e2e)', () => {
     prisma = new PrismaService();
     await prisma.$connect();
     repository = new PrismaTourDeVoteRepository(prisma);
-    sessions = new PrismaSessionRepository(prisma);
+    sessions = new PrismaSessionRepository(prisma, generateurFixe('AB12'));
     await nettoyer();
 
     const entite = await prisma.entite.create({ data: { nom: 'DSI' } });
@@ -54,6 +59,7 @@ describe('PrismaTourDeVoteRepository (e2e)', () => {
       new Date('2026-04-01'),
       'm1',
       Selection.vide(),
+      generateurFixe('AB12'),
     ).valeur;
     await sessions.save(session);
     return session.id;

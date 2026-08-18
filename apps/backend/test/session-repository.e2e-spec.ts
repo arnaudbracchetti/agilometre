@@ -1,8 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from './../src/prisma/prisma.service';
 import { PrismaSessionRepository } from './../src/session/infrastructure/prisma-session.repository';
+import { GenerateurDeCode } from './../src/session/domain/generateur-de-code';
 import { Selection } from './../src/session/domain/selection';
 import { Session } from './../src/session/domain/session';
+
+function generateurFixe(code: string): GenerateurDeCode {
+  return { generer: () => Promise.resolve(code) };
+}
 
 // CA #32 : existeCodeOuvert, contre un vrai Postgres (pnpm dev:db:test).
 describe('PrismaSessionRepository.existeCodeOuvert (e2e)', () => {
@@ -13,7 +18,10 @@ describe('PrismaSessionRepository.existeCodeOuvert (e2e)', () => {
   beforeEach(async () => {
     prisma = new PrismaService();
     await prisma.$connect();
-    repository = new PrismaSessionRepository(prisma);
+    repository = new PrismaSessionRepository(
+      prisma,
+      generateurFixe('inutilise'),
+    );
     await nettoyer();
 
     const entite = await prisma.entite.create({ data: { nom: 'DSI' } });
@@ -43,8 +51,9 @@ describe('PrismaSessionRepository.existeCodeOuvert (e2e)', () => {
       new Date('2026-04-01'),
       'm1',
       Selection.vide(),
+      generateurFixe(code),
     ).valeur;
-    session.ouvrir(code);
+    await session.ouvrir();
     await repository.save(session);
     return session;
   }
@@ -66,6 +75,7 @@ describe('PrismaSessionRepository.existeCodeOuvert (e2e)', () => {
       new Date('2026-04-01'),
       'm1',
       Selection.vide(),
+      generateurFixe('NEVER'),
     ).valeur;
     await repository.save(preparee);
 

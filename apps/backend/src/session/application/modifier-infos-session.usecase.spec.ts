@@ -1,9 +1,14 @@
 import { Equipe } from '../../organisation/domain/equipe';
 import { EquipeRepository } from '../../organisation/domain/equipe.repository';
+import { GenerateurDeCode } from '../domain/generateur-de-code';
 import { Selection } from '../domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { ModifierInfosSession } from './modifier-infos-session.usecase';
+
+const generateurDeCode: GenerateurDeCode = {
+  generer: () => Promise.resolve('AB12'),
+};
 
 class EquipeRepositoryFake implements EquipeRepository {
   equipes: Equipe[] = [];
@@ -57,6 +62,7 @@ function sessionOuverte(): Session {
     new Date('2026-03-01'),
     'm1',
     Selection.vide(),
+    generateurDeCode,
   ).valeur;
 }
 
@@ -122,6 +128,7 @@ describe('ModifierInfosSession', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       ),
     );
     const useCase = new ModifierInfosSession(sessions, equipes);
@@ -146,6 +153,7 @@ describe('ModifierInfosSession', () => {
         null,
         -1,
         new Set(),
+        generateurDeCode,
       ),
     );
     const useCase = new ModifierInfosSession(sessions, equipes);

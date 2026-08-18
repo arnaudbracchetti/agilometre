@@ -20,6 +20,10 @@ export class SessionsService {
     return this.http.get<SessionDto>(`${this.baseUrl}/${id}`);
   }
 
+  ouvrir(id: string): Observable<SessionDto> {
+    return this.http.post<SessionDto>(`${this.baseUrl}/${id}/ouvrir`, {});
+  }
+
   modifierInfos(id: string, equipeId: string, date: string): Observable<SessionDto> {
     return this.http.patch<SessionDto>(`${this.baseUrl}/${id}`, { equipeId, date });
   }

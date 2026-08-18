@@ -2,11 +2,16 @@ import { randomUUID } from 'node:crypto';
 import { PrismaService } from './../src/prisma/prisma.service';
 import { PrismaJetonSessionRepository } from './../src/session/infrastructure/prisma-jeton-session.repository';
 import { PrismaSessionRepository } from './../src/session/infrastructure/prisma-session.repository';
+import { GenerateurDeCode } from './../src/session/domain/generateur-de-code';
 import { Selection } from './../src/session/domain/selection';
 import {
   Session,
   SessionNonOuverteError,
 } from './../src/session/domain/session';
+
+function generateurFixe(code: string): GenerateurDeCode {
+  return { generer: () => Promise.resolve(code) };
+}
 
 // CA #33 : "émis uniquement pour une Session OUVERTE", contre un vrai Postgres (pnpm dev:db:test).
 describe('PrismaJetonSessionRepository (e2e)', () => {
@@ -19,7 +24,7 @@ describe('PrismaJetonSessionRepository (e2e)', () => {
     prisma = new PrismaService();
     await prisma.$connect();
     repository = new PrismaJetonSessionRepository(prisma);
-    sessions = new PrismaSessionRepository(prisma);
+    sessions = new PrismaSessionRepository(prisma, generateurFixe('AB12'));
     await nettoyer();
 
     const entite = await prisma.entite.create({ data: { nom: 'DSI' } });
@@ -53,6 +58,7 @@ describe('PrismaJetonSessionRepository (e2e)', () => {
       new Date('2026-04-01'),
       'm1',
       Selection.vide(),
+      generateurFixe('AB12'),
     ).valeur;
     await sessions.save(session);
     return session;
@@ -60,7 +66,7 @@ describe('PrismaJetonSessionRepository (e2e)', () => {
 
   it('émet un Jeton pour une Session OUVERTE', async () => {
     const session = await creerSession();
-    session.ouvrir('AB12');
+    await session.ouvrir();
     await sessions.save(session);
 
     const jeton = await repository.emettre(session.id);
@@ -79,7 +85,7 @@ describe('PrismaJetonSessionRepository (e2e)', () => {
 
   it('refuse d’émettre pour une Session CLOTUREE', async () => {
     const session = await creerSession();
-    session.ouvrir('AB12');
+    await session.ouvrir();
     await sessions.save(session);
     session.terminer();
     await sessions.save(session);
@@ -91,7 +97,7 @@ describe('PrismaJetonSessionRepository (e2e)', () => {
 
   it('compterPour compte les Jetons émis pour une Session', async () => {
     const session = await creerSession();
-    session.ouvrir('AB12');
+    await session.ouvrir();
     await sessions.save(session);
 
     await repository.emettre(session.id);

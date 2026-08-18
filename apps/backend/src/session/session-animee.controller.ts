@@ -33,6 +33,7 @@ import {
 import { ModifierInfosSession } from './application/modifier-infos-session.usecase';
 import { ChangerModeleSession } from './application/changer-modele-session.usecase';
 import { SupprimerSession } from './application/supprimer-session.usecase';
+import { OuvrirSession } from './application/ouvrir-session.usecase';
 import {
   AjouterQuestionSessionDto,
   AjouterThemeSessionDto,
@@ -80,6 +81,7 @@ function versSessionDto(
     statut: STATUT_VERS_DTO[session.statut],
     modeleSessionId: session.modeleSessionId,
     verrouillee: session.estVerrouillee(),
+    code: session.code,
     selection,
   };
 }
@@ -97,6 +99,7 @@ export class SessionAnimeeController {
     private readonly modifierInfosSession: ModifierInfosSession,
     private readonly changerModeleSession: ChangerModeleSession,
     private readonly supprimerSession: SupprimerSession,
+    private readonly ouvrirSession: OuvrirSession,
   ) {}
 
   @Get()
@@ -138,6 +141,18 @@ export class SessionAnimeeController {
   async obtenir(@Param('id') id: string): Promise<SessionDto> {
     const resultat = await this.obtenirSessionDetail.executer(id);
     return this.versDtoOuIntrouvable(id, resultat);
+  }
+
+  @Post(':id/ouvrir')
+  async ouvrir(@Param('id') id: string): Promise<SessionDto> {
+    const resultat = await this.ouvrirSession.executer(id);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Session ${id} introuvable`);
+    }
+    if (resultat.type === 'non_preparee') {
+      throw new ConflictException(resultat.erreur.message);
+    }
+    return this.rechargerDetail(id);
   }
 
   @Patch(':id')

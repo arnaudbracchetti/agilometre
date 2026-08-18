@@ -2,11 +2,19 @@
     <header class="ajustement__entete">
       <div class="ajustement__infos">
         <h2 class="ajustement__titre">{{ equipeNom() }}</h2>
-        <nz-tag [nzColor]="statut() === 'OUVERTE' ? 'blue' : 'default'">
-          {{ statut() === 'OUVERTE' ? 'Ouverte' : 'Clôturée' }}
+        <nz-tag [nzColor]="statut() === 'OUVERTE' ? 'blue' : statut() === 'CLOTUREE' ? 'default' : 'orange'">
+          {{ statut() === 'OUVERTE' ? 'Ouverte' : statut() === 'CLOTUREE' ? 'Clôturée' : 'Préparée' }}
         </nz-tag>
+        @if (statut() === 'OUVERTE' && code()) {
+          <div class="ajustement__code">Code : {{ code() }}</div>
+        }
       </div>
-      <a nz-button nzType="default" routerLink="/sessions">Retour à la liste</a>
+      <div class="ajustement__actions">
+        @if (statut() === 'PREPAREE') {
+          <button nz-button nzType="primary" (click)="onOuvrir()">Ouvrir la séance</button>
+        }
+        <a nz-button nzType="default" routerLink="/sessions">Retour à la liste</a>
+      </div>
     </header>
 
     @if (verrouillee()) {
