@@ -47,13 +47,19 @@ describe('SessionAnimeeController.pilotage', () => {
     const session = creerSessionOuverte();
     await session.ouvrir();
     const obtenirPilotageSession = {
-      executer: jest.fn().mockResolvedValue({ type: 'ok', session }),
+      executer: jest
+        .fn()
+        .mockResolvedValue({ type: 'ok', session, nbDevicesConnectes: 3 }),
     };
     const controller = creerControleur(obtenirPilotageSession);
 
     const resultat = await controller.pilotage('s1');
 
-    expect(resultat).toEqual({ statut: 'OUVERTE', code: 'AB12' });
+    expect(resultat).toEqual({
+      statut: 'OUVERTE',
+      code: 'AB12',
+      nbDevicesConnectes: 3,
+    });
   });
 
   it('renvoie 404 quand le pilotage est introuvable', async () => {

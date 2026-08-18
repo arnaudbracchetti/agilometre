@@ -18,13 +18,24 @@ export class RejoindreSession {
     private readonly jetons: JetonSessionRepository,
   ) {}
 
-  async executer(code: string): Promise<ResultatRejoindreSession> {
+  /**
+   * `jetonPrecedentId` : Jeton de la Session quittée, si le device en tenait déjà un ("Rejoindre
+   * une autre séance") — invalidé seulement une fois la nouvelle jointure confirmée, pour ne
+   * jamais faire perdre sa place au device sur un Code invalide ou une Session close entre-temps.
+   */
+  async executer(
+    code: string,
+    jetonPrecedentId?: string,
+  ): Promise<ResultatRejoindreSession> {
     const session = await this.sessions.findByCode(code);
     if (!session) {
       return { type: 'introuvable' };
     }
     try {
       const jeton = await this.jetons.emettre(session.id);
+      if (jetonPrecedentId) {
+        await this.jetons.invalider(jetonPrecedentId);
+      }
       return { type: 'ok', sessionId: session.id, jeton };
     } catch (erreur) {
       // Fenêtre de course entre la résolution du Code et l'émission (INSERT atomique côté

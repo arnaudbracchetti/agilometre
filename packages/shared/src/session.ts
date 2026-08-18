@@ -53,6 +53,7 @@ export interface ProjectionSessionDto {
 export interface PilotageSessionDto {
   statut: StatutSession;
   code: string;
+  nbDevicesConnectes: number;
 }
 
 export interface JetonSessionDto {

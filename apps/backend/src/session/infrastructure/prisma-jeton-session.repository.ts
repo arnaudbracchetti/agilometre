@@ -44,6 +44,16 @@ export class PrismaJetonSessionRepository implements JetonSessionRepository {
   }
 
   async compterPour(sessionId: string): Promise<number> {
-    return this.prisma.jetonSession.count({ where: { sessionId } });
+    return this.prisma.jetonSession.count({
+      where: { sessionId, remplaceLe: null },
+    });
+  }
+
+  /** `updateMany` plutôt que `update` : reste un no-op silencieux pour un id inconnu ou déjà invalidé. */
+  async invalider(id: string): Promise<void> {
+    await this.prisma.jetonSession.updateMany({
+      where: { id, remplaceLe: null },
+      data: { remplaceLe: new Date() },
+    });
   }
 }

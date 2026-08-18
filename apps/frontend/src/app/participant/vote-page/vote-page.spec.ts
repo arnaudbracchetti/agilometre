@@ -105,4 +105,23 @@ describe('VotePage', () => {
       jeton: 'jeton-existant',
     });
   });
+
+  it('« Rejoindre une autre séance » transmet le Jeton quitté pour sortir ce device du compteur d’origine', () => {
+    TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+    fixture = TestBed.createComponent(VotePage);
+    fixture.detectChanges();
+    const bouton = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ).find((b) => (b as HTMLButtonElement).textContent?.includes('Rejoindre une autre séance')) as
+      | HTMLButtonElement
+      | undefined;
+    bouton?.click();
+    fixture.detectChanges();
+
+    saisirEtSoumettre('9999');
+
+    const req = httpMock.expectOne('/api/participant/rejoindre');
+    expect(req.request.body).toEqual({ code: '9999', jetonPrecedent: 'jeton-existant' });
+    req.flush({ sessionId: 's2', jeton: 'jeton-nouveau' });
+  });
 });

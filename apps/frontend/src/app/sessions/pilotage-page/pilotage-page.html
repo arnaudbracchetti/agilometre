@@ -16,6 +16,8 @@
       <span class="pilotage__code-valeur">{{ code() }}</span>
     </div>
 
+    <p class="pilotage__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
+
     @if (statut() === 'OUVERTE') {
       <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
     } @else {

@@ -105,4 +105,29 @@ describe('PrismaJetonSessionRepository (e2e)', () => {
 
     await expect(repository.compterPour(session.id)).resolves.toBe(2);
   });
+
+  it('invalider sort un Jeton du compteur de sa Session ("Rejoindre une autre séance")', async () => {
+    const session = await creerSession();
+    await session.ouvrir();
+    await sessions.save(session);
+    const jeton = await repository.emettre(session.id);
+    await repository.emettre(session.id);
+
+    await repository.invalider(jeton.id);
+
+    await expect(repository.compterPour(session.id)).resolves.toBe(1);
+  });
+
+  it('invalider est silencieux et idempotent pour un id inconnu ou déjà invalidé', async () => {
+    const session = await creerSession();
+    await session.ouvrir();
+    await sessions.save(session);
+    const jeton = await repository.emettre(session.id);
+
+    await expect(repository.invalider('id-inconnu')).resolves.toBeUndefined();
+    await repository.invalider(jeton.id);
+    await expect(repository.invalider(jeton.id)).resolves.toBeUndefined();
+
+    await expect(repository.compterPour(session.id)).resolves.toBe(0);
+  });
 });

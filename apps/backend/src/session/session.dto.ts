@@ -70,4 +70,8 @@ export class RejoindreSessionDto {
   @IsString()
   @IsNotEmpty()
   code!: string;
+
+  @IsOptional()
+  @IsString()
+  jetonPrecedent?: string;
 }

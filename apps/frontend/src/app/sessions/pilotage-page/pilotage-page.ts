@@ -25,6 +25,7 @@ export class PilotagePage implements OnInit {
   protected readonly sessionId = signal<string | null>(null);
   protected readonly statut = signal<PilotageSessionDto['statut'] | null>(null);
   protected readonly code = signal<string | null>(null);
+  protected readonly nbDevicesConnectes = signal(0);
   protected readonly inaccessible = signal(false);
   protected readonly chargementEnCours = signal(true);
 
@@ -46,6 +47,7 @@ export class PilotagePage implements OnInit {
     ).subscribe((pilotage) => {
       this.statut.set(pilotage.statut);
       this.code.set(pilotage.code);
+      this.nbDevicesConnectes.set(pilotage.nbDevicesConnectes);
       this.chargementEnCours.set(false);
     });
   }

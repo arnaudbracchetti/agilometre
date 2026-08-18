@@ -16,7 +16,10 @@ export class ParticipantController {
 
   @Post('rejoindre')
   async rejoindre(@Body() dto: RejoindreSessionDto): Promise<JetonSessionDto> {
-    const resultat = await this.rejoindreSession.executer(dto.code);
+    const resultat = await this.rejoindreSession.executer(
+      dto.code,
+      dto.jetonPrecedent,
+    );
     if (resultat.type === 'introuvable') {
       throw new NotFoundException('Code de session invalide ou expiré');
     }

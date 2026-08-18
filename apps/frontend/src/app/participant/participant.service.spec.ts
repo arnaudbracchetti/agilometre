@@ -24,7 +24,15 @@ describe('ParticipantService', () => {
 
     const req = httpMock.expectOne('/api/participant/rejoindre');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ code: '4271' });
+    expect(req.request.body).toEqual({ code: '4271', jetonPrecedent: undefined });
+    req.flush({ sessionId: 's1', jeton: 'jeton-abc' });
+  });
+
+  it('transmet le Jeton précédent quand fourni ("Rejoindre une autre séance")', () => {
+    service.rejoindre('4271', 'jeton-ancien').subscribe();
+
+    const req = httpMock.expectOne('/api/participant/rejoindre');
+    expect(req.request.body).toEqual({ code: '4271', jetonPrecedent: 'jeton-ancien' });
     req.flush({ sessionId: 's1', jeton: 'jeton-abc' });
   });
 });

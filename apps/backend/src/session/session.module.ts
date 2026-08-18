@@ -57,7 +57,8 @@ import { ParticipantController } from './participant.controller';
     // Aucun use case ne consomme encore PrismaTourDeVoteRepository/PrismaReponseRepository (#33
     // est un enabler technique, "pas d'écran") — prêts pour la carte "voter" qui les injectera
     // (même patron que SessionRepository.existeCodeOuvert ajouté par la carte #32).
-    // PrismaJetonSessionRepository, lui, est désormais consommé par ObtenirProjectionSession (#35).
+    // PrismaJetonSessionRepository, lui, est désormais consommé par ObtenirProjectionSession (#35)
+    // et ObtenirPilotageSession (#37).
     PrismaTourDeVoteRepository,
     PrismaReponseRepository,
     PrismaJetonSessionRepository,
@@ -230,9 +231,11 @@ import { ParticipantController } from './participant.controller';
     },
     {
       provide: ObtenirPilotageSession,
-      useFactory: (sessions: PrismaSessionRepository) =>
-        new ObtenirPilotageSession(sessions),
-      inject: [PrismaSessionRepository],
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        jetons: PrismaJetonSessionRepository,
+      ) => new ObtenirPilotageSession(sessions, jetons),
+      inject: [PrismaSessionRepository, PrismaJetonSessionRepository],
     },
     {
       provide: RejoindreSession,

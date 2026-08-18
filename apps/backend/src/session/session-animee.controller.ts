@@ -171,6 +171,7 @@ export class SessionAnimeeController {
     return {
       statut: STATUT_VERS_DTO[resultat.session.statut],
       code: resultat.session.code as string,
+      nbDevicesConnectes: resultat.nbDevicesConnectes,
     };
   }
 

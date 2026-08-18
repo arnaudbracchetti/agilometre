@@ -44,6 +44,7 @@ class JetonSessionRepositoryFake implements JetonSessionRepository {
   jetons: JetonSession[] = [];
   /** Rejette comme l'adaptateur Prisma si la Session n'est plus OUVERTE au moment de l'émission. */
   sessionsOuvertes = new Set<string>();
+  invalides = new Set<string>();
 
   emettre(sessionId: string): Promise<JetonSession> {
     if (!this.sessionsOuvertes.has(sessionId)) {
@@ -58,8 +59,14 @@ class JetonSessionRepositoryFake implements JetonSessionRepository {
   }
   compterPour(sessionId: string): Promise<number> {
     return Promise.resolve(
-      this.jetons.filter((j) => j.sessionId === sessionId).length,
+      this.jetons.filter(
+        (j) => j.sessionId === sessionId && !this.invalides.has(j.id),
+      ).length,
     );
+  }
+  invalider(id: string): Promise<void> {
+    this.invalides.add(id);
+    return Promise.resolve();
   }
 }
 
@@ -153,5 +160,55 @@ describe('RejoindreSession', () => {
     const resultat = await useCase.executer('4271');
 
     expect(resultat.type).toBe('introuvable');
+  });
+
+  it('invalide le Jeton précédent une fois la nouvelle jointure réussie ("Rejoindre une autre séance")', async () => {
+    const {
+      useCase,
+      sessions,
+      jetons,
+      session: sessionOrigine,
+    } = await contexteOuvert();
+    const jetonPrecedent = await jetons.emettre(sessionOrigine.id);
+    // Code distinct de celui de sessionOrigine ('4271', fixé par generateurDeCode) : sinon
+    // findByCode résoudrait sur la mauvaise Session, faussant le test.
+    const generateurCible: GenerateurDeCode = {
+      generer: () => Promise.resolve('9999'),
+    };
+    const sessionCible = Session.creer(
+      's2',
+      'e1',
+      new Date('2026-03-01'),
+      'm1',
+      Selection.reconstituer(['q1']),
+      generateurCible,
+    ).valeur;
+    await sessionCible.ouvrir();
+    sessions.sessions.push(sessionCible);
+    jetons.sessionsOuvertes.add(sessionCible.id);
+
+    const resultat = await useCase.executer('9999', jetonPrecedent.id);
+
+    expect(resultat.type).toBe('ok');
+    await expect(jetons.compterPour(sessionOrigine.id)).resolves.toBe(0);
+  });
+
+  it('n’invalide rien quand aucun jetonPrecedentId n’est fourni (première jointure)', async () => {
+    const { useCase, jetons, session } = await contexteOuvert();
+
+    await useCase.executer('4271');
+
+    await expect(jetons.compterPour(session.id)).resolves.toBe(1);
+    expect(jetons.invalides.size).toBe(0);
+  });
+
+  it('n’invalide pas le Jeton précédent si la nouvelle jointure échoue (Code inconnu)', async () => {
+    const { useCase, jetons, session } = await contexteOuvert();
+    const jetonPrecedent = await jetons.emettre(session.id);
+
+    const resultat = await useCase.executer('0000', jetonPrecedent.id);
+
+    expect(resultat.type).toBe('introuvable');
+    expect(jetons.invalides.has(jetonPrecedent.id)).toBe(false);
   });
 });

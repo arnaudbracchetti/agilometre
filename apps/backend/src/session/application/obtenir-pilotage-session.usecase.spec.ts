@@ -1,4 +1,6 @@
 import { GenerateurDeCode } from '../domain/generateur-de-code';
+import { JetonSessionRepository } from '../domain/jeton-session.repository';
+import { JetonSession } from '../domain/jeton-session';
 import { Selection } from '../domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
@@ -31,6 +33,22 @@ class SessionRepositoryFake implements SessionRepository {
   }
 }
 
+class JetonSessionRepositoryFake implements JetonSessionRepository {
+  compte = 0;
+  emettre(sessionId: string): Promise<JetonSession> {
+    return Promise.resolve(JetonSession.creer('j1', sessionId, new Date()));
+  }
+  findById(): Promise<JetonSession | null> {
+    return Promise.resolve(null);
+  }
+  compterPour(): Promise<number> {
+    return Promise.resolve(this.compte);
+  }
+  invalider(): Promise<void> {
+    return Promise.resolve();
+  }
+}
+
 function creerSessionPreparee(id: string): Session {
   return Session.creer(
     id,
@@ -45,7 +63,8 @@ function creerSessionPreparee(id: string): Session {
 describe('ObtenirPilotageSession', () => {
   it('renvoie "introuvable" si la Session n’existe pas', async () => {
     const sessions = new SessionRepositoryFake();
-    const useCase = new ObtenirPilotageSession(sessions);
+    const jetons = new JetonSessionRepositoryFake();
+    const useCase = new ObtenirPilotageSession(sessions, jetons);
 
     const resultat = await useCase.executer('inconnue');
 
@@ -55,25 +74,29 @@ describe('ObtenirPilotageSession', () => {
   it('renvoie "introuvable" tant que la Session est encore PREPAREE', async () => {
     const sessions = new SessionRepositoryFake();
     sessions.sessions.push(creerSessionPreparee('s1'));
-    const useCase = new ObtenirPilotageSession(sessions);
+    const jetons = new JetonSessionRepositoryFake();
+    const useCase = new ObtenirPilotageSession(sessions, jetons);
 
     const resultat = await useCase.executer('s1');
 
     expect(resultat.type).toBe('introuvable');
   });
 
-  it('renvoie le détail une fois OUVERTE', async () => {
+  it('renvoie le détail et le nombre de devices connectés une fois OUVERTE', async () => {
     const sessions = new SessionRepositoryFake();
     const session = creerSessionPreparee('s1');
     await session.ouvrir();
     sessions.sessions.push(session);
-    const useCase = new ObtenirPilotageSession(sessions);
+    const jetons = new JetonSessionRepositoryFake();
+    jetons.compte = 3;
+    const useCase = new ObtenirPilotageSession(sessions, jetons);
 
     const resultat = await useCase.executer('s1');
 
     expect(resultat.type).toBe('ok');
     if (resultat.type !== 'ok') throw new Error('unreachable');
     expect(resultat.session.code).toBe('AB12');
+    expect(resultat.nbDevicesConnectes).toBe(3);
   });
 
   it('reste accessible en lecture seule une fois CLOTUREE', async () => {
@@ -82,7 +105,8 @@ describe('ObtenirPilotageSession', () => {
     await session.ouvrir();
     session.terminer();
     sessions.sessions.push(session);
-    const useCase = new ObtenirPilotageSession(sessions);
+    const jetons = new JetonSessionRepositoryFake();
+    const useCase = new ObtenirPilotageSession(sessions, jetons);
 
     const resultat = await useCase.executer('s1');
 

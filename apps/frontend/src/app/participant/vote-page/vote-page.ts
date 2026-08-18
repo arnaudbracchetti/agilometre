@@ -43,7 +43,10 @@ export class VotePage implements OnInit {
     }
     this.soumissionEnCours.set(true);
     this.erreur.set(null);
-    this.participantService.rejoindre(code).subscribe({
+    // Jeton de la Session quittée, encore en storage tant que enregistrer() ne l'a pas écrasé —
+    // permet à RejoindreSession de l'invalider et de sortir ce device du compteur d'origine.
+    const jetonPrecedent = this.storage.obtenir()?.jeton;
+    this.participantService.rejoindre(code, jetonPrecedent).subscribe({
       next: (resultat) => {
         this.storage.enregistrer(resultat.sessionId, resultat.jeton);
         this.soumissionEnCours.set(false);

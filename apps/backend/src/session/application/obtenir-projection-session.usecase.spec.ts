@@ -44,6 +44,9 @@ class JetonSessionRepositoryFake implements JetonSessionRepository {
   compterPour(): Promise<number> {
     return Promise.resolve(this.compte);
   }
+  invalider(): Promise<void> {
+    return Promise.resolve();
+  }
 }
 
 function creerSessionPreparee(id: string): Session {

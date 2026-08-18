@@ -147,7 +147,9 @@ séparé.
 - Code invalide, faute de frappe, ou Session pas encore `OUVERTE`/déjà `CLOTUREE` : message
   d'erreur inline sous le champ de saisie, sans changer d'écran — nouvelle saisie immédiate.
 - Un device déjà rejoint (Jeton en stockage local) peut saisir un **nouveau** Code pour rejoindre
-  une autre Session : le nouveau Jeton remplace l'ancien, qui devient orphelin sans effet.
+  une autre Session : le nouveau Jeton remplace l'ancien, qui est invalidé et sort du Compteur de
+  participation de la Session quittée (ADR-0011, addendum carte #37) — mais reste sans effet sur
+  la Session cible tant que la nouvelle jointure n'a pas explicitement réussi.
 - **Reconnexion après déconnexion sauvage** : un device qui revient (réseau rétabli) avec un
   Jeton toujours en stockage local, alors que sa Session s'est entretemps clôturée, se voit
   rejeté par le serveur dès la requête suivante — traité exactement comme un Code invalide, avec
@@ -183,8 +185,11 @@ séparé.
   l'ouverture de la Session (devices ayant rejoint), pas l'effectif `Equipe.membres`. Compromis
   assumé : un Membre présent sur deux devices est compté deux fois ; deux Membres partageant un
   device n'en comptent qu'un.
-- **Monotone croissant** : jamais décrémenté, même si un device devient inactif ou ferme son
-  onglet — pas de détection de présence, cohérent avec le choix de polling simple (PRD §10).
+- **Monotone croissant** : jamais décrémenté pour une déconnexion passive (device inactif, onglet
+  fermé) — pas de détection de présence, cohérent avec le choix de polling simple (PRD §10).
+  Exception : un changement **explicite** de Session (« Rejoindre une autre séance ») décrémente
+  le compteur de la Session quittée, puisque le device signale lui-même son départ (ADR-0011,
+  addendum carte #37) — ce n'est pas une inférence de présence.
 - Sur un Tour donné, le numérateur est le nombre de Jetons distincts ayant soumis un vote sur ce
   Tour (un revote ne compte pas deux fois).
 

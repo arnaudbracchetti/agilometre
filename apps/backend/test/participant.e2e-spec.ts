@@ -7,6 +7,7 @@ import {
   EquipeDto,
   JetonSessionDto,
   ModeleSessionDto,
+  ProjectionSessionDto,
   SessionDto,
 } from '@agilometre/shared';
 import { AppModule } from './../src/app.module';
@@ -110,15 +111,20 @@ describe('Participant — jointure par Code (e2e)', () => {
     return reponse.body as ModeleSessionDto;
   }
 
-  /** Crée une Session PREPAREE avec une Sélection non vide (Session.creer valide equipe+modèle). */
-  async function sessionPreparee(): Promise<SessionDto> {
-    await importer(['q1']);
-    const entite = await creerEntite('DSI');
-    const equipe = await creerEquipe('Équipe Alpha', entite.id);
-    const modele = await creerModele('Diagnostic');
+  /**
+   * Crée une Session PREPAREE avec une Sélection non vide (Session.creer valide equipe+modèle).
+   * `suffixe` distingue les entités quand un test a besoin de plusieurs Sessions indépendantes —
+   * l'API rejette un nom d'Équipe/Entité/Modèle déjà pris.
+   */
+  async function sessionPreparee(suffixe = ''): Promise<SessionDto> {
+    const questionId = `q1${suffixe}`;
+    await importer([questionId]);
+    const entite = await creerEntite(`DSI${suffixe}`);
+    const equipe = await creerEquipe(`Équipe Alpha${suffixe}`, entite.id);
+    const modele = await creerModele(`Diagnostic${suffixe}`);
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/themes`)
-      .send({ questionIds: ['q1'] })
+      .send({ questionIds: [questionId] })
       .expect(201);
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
@@ -131,8 +137,8 @@ describe('Participant — jointure par Code (e2e)', () => {
     return creation.body as SessionDto;
   }
 
-  async function sessionOuverte(): Promise<SessionDto> {
-    const session = await sessionPreparee();
+  async function sessionOuverte(suffixe = ''): Promise<SessionDto> {
+    const session = await sessionPreparee(suffixe);
     const reponse = await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/ouvrir`)
       .expect(201);
@@ -195,5 +201,34 @@ describe('Participant — jointure par Code (e2e)', () => {
       .post('/api/participant/rejoindre')
       .send({})
       .expect(400);
+  });
+
+  it('POST /api/participant/rejoindre — jetonPrecedent invalide le Jeton de la Session quittée ("Rejoindre une autre séance")', async () => {
+    const sessionA = await sessionOuverte('A');
+    const sessionB = await sessionOuverte('B');
+
+    const premier = await request(app.getHttpServer())
+      .post('/api/participant/rejoindre')
+      .send({ code: sessionA.code })
+      .expect(201);
+    const jetonA = (premier.body as JetonSessionDto).jeton;
+
+    await request(app.getHttpServer())
+      .post('/api/participant/rejoindre')
+      .send({ code: sessionB.code, jetonPrecedent: jetonA })
+      .expect(201);
+
+    const projectionA = await request(app.getHttpServer())
+      .get(`/api/projection/${sessionA.id}`)
+      .expect(200);
+    const projectionB = await request(app.getHttpServer())
+      .get(`/api/projection/${sessionB.id}`)
+      .expect(200);
+    expect((projectionA.body as ProjectionSessionDto).nbDevicesConnectes).toBe(
+      0,
+    );
+    expect((projectionB.body as ProjectionSessionDto).nbDevicesConnectes).toBe(
+      1,
+    );
   });
 });

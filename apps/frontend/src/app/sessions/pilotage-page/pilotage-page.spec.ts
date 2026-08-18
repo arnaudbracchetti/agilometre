@@ -35,27 +35,37 @@ describe('PilotagePage', () => {
     vi.useRealTimers();
   });
 
-  it('affiche le Code et le lien vers la projection une fois le pilotage chargé', () => {
+  it('affiche le Code, le compteur de devices connectés et le lien vers la projection une fois le pilotage chargé', () => {
     fixture = TestBed.createComponent(PilotagePage);
     fixture.detectChanges();
 
-    httpMock.expectOne('/api/sessions/s1/pilotage').flush({ statut: 'OUVERTE', code: '654321' });
+    httpMock
+      .expectOne('/api/sessions/s1/pilotage')
+      .flush({ statut: 'OUVERTE', code: '654321', nbDevicesConnectes: 3 });
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('654321');
+    expect(fixture.nativeElement.textContent).toContain('3');
     const lien = fixture.nativeElement.querySelector('a[href="/projection/s1"]');
     expect(lien).toBeTruthy();
   });
 
-  it('sonde /api/sessions/:id/pilotage toutes les 2 secondes', () => {
+  it('sonde /api/sessions/:id/pilotage toutes les 2 secondes et met à jour le compteur', () => {
     vi.useFakeTimers();
     fixture = TestBed.createComponent(PilotagePage);
     fixture.detectChanges();
-    httpMock.expectOne('/api/sessions/s1/pilotage').flush({ statut: 'OUVERTE', code: '654321' });
+    httpMock
+      .expectOne('/api/sessions/s1/pilotage')
+      .flush({ statut: 'OUVERTE', code: '654321', nbDevicesConnectes: 0 });
 
     vi.advanceTimersByTime(2000);
 
-    httpMock.expectOne('/api/sessions/s1/pilotage').flush({ statut: 'OUVERTE', code: '654321' });
+    httpMock
+      .expectOne('/api/sessions/s1/pilotage')
+      .flush({ statut: 'OUVERTE', code: '654321', nbDevicesConnectes: 1 });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('1');
   });
 
   it('affiche un message d’erreur si le pilotage n’est plus accessible', () => {

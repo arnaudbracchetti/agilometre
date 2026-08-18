@@ -185,11 +185,16 @@ model TourDeVote {
 // Émis uniquement pour une Session OUVERTE — vérifié par JetonSessionRepository.emettre via un
 // INSERT conditionnel atomique, jamais par ce modèle (docs/design/agregat-tour-de-vote.md §2).
 // Valable toute la durée de la Session, jamais renouvelé par Tour (ADR-0011).
+// remplaceLe : renseigné quand le device rejoint explicitement une autre Session ("Rejoindre une
+// autre séance") — seul cas qui sort ce Jeton du compteur de sa Session d'origine (addendum
+// ADR-0011) ; jamais renseigné pour une déconnexion passive (onglet fermé, inactivité), qui reste
+// sans effet sur le compteur.
 model JetonSession {
   id             String          @id @default(uuid())
   session        Session         @relation(fields: [sessionId], references: [id])
   sessionId      String
   creeLe         DateTime        @default(now())
+  remplaceLe     DateTime?
   participations Participation[]
 }
 

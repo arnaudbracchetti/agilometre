@@ -29,3 +29,24 @@ cours, jamais persisté au-delà de sa clôture.
 
 **Hors périmètre de cette décision.** Le support de stockage exact du Compteur de participation
 (table éphémère, mémoire process) est laissé à la session `/ddd` dédiée à cet Epic.
+
+## Addendum — carte #37 : décrément explicite lors d'un changement de Session
+
+La monotonie ci-dessus visait la **déconnexion passive** (onglet fermé, inactivité) : sans
+détection de présence, rien ne permet de distinguer un device réellement parti d'un device
+temporairement silencieux, donc rien ne doit décrémenter. Un **changement explicite de Session**
+("Rejoindre une autre séance", `doc/spec/annexes/deroulement-session-animee.md`, "Jointure d'un
+participant") est un cas différent : le device signale lui-même, de façon certaine, qu'il quitte
+la Session d'origine — ce n'est plus une inférence de présence, c'est une action du client.
+
+Décision : ce cas précis **sort le Jeton quitté du compteur de sa Session d'origine**. Le
+mécanisme reste minimal et n'introduit aucune détection de présence :
+- `JetonSession` gagne un champ `remplaceLe: Date | null`, renseigné uniquement par ce cas ;
+  `compterPour` ne compte que les Jetons où `remplaceLe IS NULL`.
+- Le client transmet le Jeton qu'il quitte (`jetonPrecedent`, lu depuis son storage local) à
+  `POST /api/participant/rejoindre` ; le serveur invalide ce Jeton **seulement après confirmation**
+  de la nouvelle jointure — un Code invalide ou une Session close entre-temps ne doit jamais faire
+  perdre sa place au device dans la Session qu'il quittait.
+- Toute autre voie de sortie (onglet fermé, inactivité, timeout) reste **sans effet** sur le
+  compteur, exactement comme décidé ci-dessus — la monotonie n'est donc pas abandonnée, seulement
+  précisée : elle protège contre l'absence de signal, pas contre un signal explicite du client.
