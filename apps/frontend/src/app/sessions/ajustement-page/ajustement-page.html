@@ -12,6 +12,10 @@
       <div class="ajustement__actions">
         @if (statut() === 'PREPAREE') {
           <button nz-button nzType="primary" (click)="onOuvrir()">Ouvrir la séance</button>
+        } @else if (statut() === 'OUVERTE') {
+          <a nz-button nzType="primary" [routerLink]="['/sessions', sessionId(), 'pilotage']">
+            Piloter la séance
+          </a>
         }
         <a nz-button nzType="default" routerLink="/sessions">Retour à la liste</a>
       </div>

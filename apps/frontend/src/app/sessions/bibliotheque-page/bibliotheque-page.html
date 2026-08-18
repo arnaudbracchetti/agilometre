@@ -23,17 +23,48 @@
     </thead>
     <tbody>
       @for (ligne of table.data; track ligne.id) {
-        <tr class="bibliotheque__ligne" (click)="ouvrir(ligne.id)">
+        <tr class="bibliotheque__ligne" (click)="voirDetail(ligne.id)">
           <td>{{ ligne.equipeNom }}</td>
           <td>{{ ligne.date | date: 'dd/MM/yyyy' }}</td>
           <td>
-            <nz-tag [nzColor]="ligne.statut === 'OUVERTE' ? 'blue' : 'default'">
-              {{ ligne.statut === 'OUVERTE' ? 'Ouverte' : 'Clôturée' }}
+            <nz-tag
+              [nzColor]="
+                ligne.statut === 'OUVERTE' ? 'blue' : ligne.statut === 'CLOTUREE' ? 'default' : 'orange'
+              "
+            >
+              {{
+                ligne.statut === 'OUVERTE' ? 'Ouverte' : ligne.statut === 'CLOTUREE' ? 'Clôturée' : 'Préparée'
+              }}
             </nz-tag>
           </td>
           <td>{{ ligne.nbQuestions }}</td>
           <td>{{ ligne.modeleSessionNom ?? 'Modèle supprimé' }}</td>
           <td class="bibliotheque__actions" (click)="$event.stopPropagation()">
+            @if (ligne.statut === 'PREPAREE') {
+              <button
+                nz-button
+                nzType="text"
+                nzShape="circle"
+                class="bibliotheque__action"
+                nz-tooltip
+                nzTooltipTitle="Ouvrir la séance"
+                (click)="lancer(ligne.id)"
+              >
+                <span nz-icon nzType="play-circle" nzTheme="outline"></span>
+              </button>
+            } @else if (ligne.statut === 'OUVERTE') {
+              <a
+                nz-button
+                nzType="text"
+                nzShape="circle"
+                class="bibliotheque__action"
+                nz-tooltip
+                nzTooltipTitle="Piloter la séance"
+                [routerLink]="['/sessions', ligne.id, 'pilotage']"
+              >
+                <span nz-icon nzType="desktop" nzTheme="outline"></span>
+              </a>
+            }
             <button
               nz-button
               nzType="text"

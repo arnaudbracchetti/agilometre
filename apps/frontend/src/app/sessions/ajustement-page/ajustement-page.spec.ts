@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { convertToParamMap, ActivatedRoute, provideRouter } from '@angular/router';
+import { Router, convertToParamMap, ActivatedRoute, provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -230,20 +230,28 @@ describe('AjustementPage', () => {
     expect(fixture.nativeElement.textContent).toContain('Ouvrir la séance');
   });
 
-  it('onOuvrir — appelle le service et affiche le Code retourné', () => {
+  it('affiche un lien « Piloter la séance » vers le pilotage quand la Session est OUVERTE', () => {
+    fixture.componentInstance['statut'].set(StatutSession.Ouverte);
+    fixture.detectChanges();
+
+    const lien = fixture.nativeElement.querySelector('a[href="/sessions/s1/pilotage"]');
+    expect(lien).toBeTruthy();
+    expect(lien.textContent).toContain('Piloter la séance');
+  });
+
+  it('onOuvrir — appelle le service puis navigue vers le pilotage de la séance', async () => {
     fixture.componentInstance['statut'].set(StatutSession.Preparee);
     fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     fixture.componentInstance['onOuvrir']();
 
     const req = httpMock.expectOne('/api/sessions/s1/ouvrir');
     expect(req.request.method).toBe('POST');
     req.flush({ ...sessionFixture, statut: 'OUVERTE', verrouillee: true, code: '654321' });
-    fixture.detectChanges();
 
-    expect(fixture.componentInstance['code']()).toBe('654321');
-    expect(fixture.nativeElement.textContent).toContain('654321');
-    expect(fixture.nativeElement.textContent).not.toContain('Ouvrir la séance');
+    expect(navigateSpy).toHaveBeenCalledWith(['/sessions', 's1', 'pilotage']);
   });
 
   it('onOuvrir — affiche un message d’erreur si la Session ne peut plus être ouverte', () => {

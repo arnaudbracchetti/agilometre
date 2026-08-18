@@ -209,7 +209,7 @@ aveugle.
 réclame son Code au port `GenerateurDeCode`, qui a besoin d'I/O pour garantir l'unicité. Ce port
 est injecté au constructeur de `Session` (via `creer`/`reconstituer`, symétriquement), implémenté
 par `CryptoGenerateurDeCode` (`apps/backend/src/session/infrastructure/`) — la seule technique
-(tirage aléatoire, format à 6 chiffres, vérification en base) que le domaine ne connaît jamais.
+(tirage aléatoire, format à 4 chiffres, vérification en base) que le domaine ne connaît jamais.
 
 ## Notes et améliorations différées
 

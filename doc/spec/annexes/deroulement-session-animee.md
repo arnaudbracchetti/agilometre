@@ -126,9 +126,10 @@ séparé.
   poste éventuellement distinct de celui du Coach.
 - Devient **inaccessible dès que la Session passe à `CLOTUREE`** — même règle de validité que le
   Code et le Jeton participant.
-- Contenu par état :
-  - **Salle d'attente** (avant la première Question) : Code de session, nombre de devices déjà
-    connectés.
+- Le Code de session reste affiché **en permanence**, quel que soit l'état — y compris une fois
+  les Questions lancées — pour qu'un retardataire puisse toujours rejoindre. Contenu par état,
+  en plus du Code :
+  - **Salle d'attente** (avant la première Question) : nombre de devices déjà connectés.
   - **Discussion** : Question courante + 4 Options (avec leur lettre A/B/C/D), aucun Tour ouvert.
   - **Vote** : **même contenu que la Discussion** (Question + 4 Options) **plus** le Compteur de
     participation (« 6 sur 8 ») à côté. Ce qui reste caché pendant le vote, ce n'est **pas** la

@@ -1,0 +1,43 @@
+.projection {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  background: var(--color-primary-emphasis);
+  color: var(--color-on-primary);
+  font-family: var(--font-family-base);
+  text-align: center;
+  padding: var(--space-6);
+
+  &__message {
+    font-size: var(--font-size-xl);
+    margin: 0;
+  }
+
+  &__libelle {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    margin: 0;
+    opacity: 0.85;
+  }
+
+  &__url {
+    font-size: var(--font-size-md);
+    margin: 0;
+    opacity: 0.85;
+  }
+
+  &__code {
+    font-size: clamp(4rem, 12vw, 9rem);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: 0.15em;
+    margin: 0;
+  }
+
+  &__compteur {
+    font-size: var(--font-size-xl);
+    margin: 0;
+  }
+}

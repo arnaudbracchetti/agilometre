@@ -10,8 +10,10 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import {
   LigneListeSessionDto,
+  PilotageSessionDto,
   SelectionQuestionDto,
   SessionDto,
   StatutSession as StatutSessionDto,
@@ -34,6 +36,7 @@ import { ModifierInfosSession } from './application/modifier-infos-session.useca
 import { ChangerModeleSession } from './application/changer-modele-session.usecase';
 import { SupprimerSession } from './application/supprimer-session.usecase';
 import { OuvrirSession } from './application/ouvrir-session.usecase';
+import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
 import {
   AjouterQuestionSessionDto,
   AjouterThemeSessionDto,
@@ -100,6 +103,7 @@ export class SessionAnimeeController {
     private readonly changerModeleSession: ChangerModeleSession,
     private readonly supprimerSession: SupprimerSession,
     private readonly ouvrirSession: OuvrirSession,
+    private readonly obtenirPilotageSession: ObtenirPilotageSession,
   ) {}
 
   @Get()
@@ -153,6 +157,21 @@ export class SessionAnimeeController {
       throw new ConflictException(resultat.erreur.message);
     }
     return this.rechargerDetail(id);
+  }
+
+  @Get(':id/pilotage')
+  @SkipThrottle()
+  async pilotage(@Param('id') id: string): Promise<PilotageSessionDto> {
+    const resultat = await this.obtenirPilotageSession.executer(id);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(
+        `Aucun pilotage accessible pour la Session ${id}`,
+      );
+    }
+    return {
+      statut: STATUT_VERS_DTO[resultat.session.statut],
+      code: resultat.session.code as string,
+    };
   }
 
   @Patch(':id')

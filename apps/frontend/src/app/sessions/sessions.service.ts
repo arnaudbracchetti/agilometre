@@ -1,7 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { LigneListeSessionDto, SessionDto } from '@agilometre/shared';
+import {
+  LigneListeSessionDto,
+  PilotageSessionDto,
+  SessionDto,
+} from '@agilometre/shared';
 
 @Injectable({ providedIn: 'root' })
 export class SessionsService {
@@ -22,6 +26,10 @@ export class SessionsService {
 
   ouvrir(id: string): Observable<SessionDto> {
     return this.http.post<SessionDto>(`${this.baseUrl}/${id}/ouvrir`, {});
+  }
+
+  obtenirPilotage(id: string): Observable<PilotageSessionDto> {
+    return this.http.get<PilotageSessionDto>(`${this.baseUrl}/${id}/pilotage`);
   }
 
   modifierInfos(id: string, equipeId: string, date: string): Observable<SessionDto> {

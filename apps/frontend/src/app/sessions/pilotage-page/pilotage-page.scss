@@ -1,0 +1,55 @@
+.pilotage {
+  padding: var(--space-6);
+  font-family: var(--font-family-base);
+  color: var(--color-ink);
+
+  @media (max-width: 640px) {
+    padding: var(--space-4);
+  }
+
+  &__entete {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+  }
+
+  &__titre {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    margin: 0;
+  }
+
+  &__code {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-4);
+    margin-bottom: var(--space-5);
+  }
+
+  &__code-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-ink-muted);
+  }
+
+  &__code-valeur {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    letter-spacing: 0.1em;
+  }
+
+  &__statut {
+    color: var(--color-ink-muted);
+  }
+
+  &__erreur {
+    color: var(--color-accent-emphasis);
+  }
+}

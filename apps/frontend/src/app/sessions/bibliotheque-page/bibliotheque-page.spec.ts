@@ -5,6 +5,8 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { provideNzIcons } from 'ng-zorro-antd/icon';
+import { DeleteOutline, DesktopOutline, PlayCircleOutline } from '@ant-design/icons-angular/icons';
 import { StatutSession } from '@agilometre/shared';
 import { BibliothequePage } from './bibliotheque-page';
 
@@ -19,6 +21,9 @@ describe('BibliothequePage (Sessions)', () => {
         provideHttpClientTesting(),
         provideNoopAnimations(),
         provideRouter([]),
+        // Sans ça, nz-icon tente de récupérer les SVG via HTTP (assets/outline/*.svg), ce que
+        // HttpTestingController rejette comme requête non attendue — mêmes icônes qu'app.config.ts.
+        provideNzIcons([DeleteOutline, PlayCircleOutline, DesktopOutline]),
       ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
@@ -133,9 +138,71 @@ describe('BibliothequePage (Sessions)', () => {
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    fixture.componentInstance['ouvrir']('s1');
+    fixture.componentInstance['voirDetail']('s1');
 
     expect(navigateSpy).toHaveBeenCalledWith(['/sessions', 's1']);
+  });
+
+  it('affiche le bouton « Ouvrir la séance » pour une ligne PREPAREE et lance la Session au clic', () => {
+    const fixture = TestBed.createComponent(BibliothequePage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/sessions').flush([
+      {
+        id: 's1',
+        equipeNom: 'Alpha',
+        date: '2026-04-01T00:00:00.000Z',
+        statut: 'PREPAREE',
+        verrouillee: false,
+        nbQuestions: 1,
+        modeleSessionNom: 'M',
+      },
+    ]);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const boutonLancer = fixture.nativeElement.querySelector(
+      'button[nztooltiptitle="Ouvrir la séance"]',
+    ) as HTMLButtonElement;
+    expect(boutonLancer).toBeTruthy();
+    boutonLancer.click();
+
+    const reqOuvrir = httpMock.expectOne('/api/sessions/s1/ouvrir');
+    expect(reqOuvrir.request.method).toBe('POST');
+    reqOuvrir.flush({
+      id: 's1',
+      equipeId: 'e1',
+      equipeNom: 'Alpha',
+      entiteId: 'ent1',
+      date: '2026-04-01T00:00:00.000Z',
+      statut: 'OUVERTE',
+      modeleSessionId: 'm1',
+      verrouillee: true,
+      code: '1234',
+      selection: [],
+    });
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/sessions', 's1', 'pilotage']);
+  });
+
+  it('affiche un lien « Piloter la séance » pour une ligne OUVERTE', () => {
+    const fixture = TestBed.createComponent(BibliothequePage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/sessions').flush([
+      {
+        id: 's1',
+        equipeNom: 'Alpha',
+        date: '2026-04-01T00:00:00.000Z',
+        statut: 'OUVERTE',
+        verrouillee: true,
+        nbQuestions: 1,
+        modeleSessionNom: 'M',
+      },
+    ]);
+    fixture.detectChanges();
+
+    const lien = fixture.nativeElement.querySelector('a[href="/sessions/s1/pilotage"]');
+    expect(lien).toBeTruthy();
   });
 
   it('affiche un message d’erreur si le chargement échoue', () => {

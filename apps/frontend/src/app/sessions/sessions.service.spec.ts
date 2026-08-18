@@ -64,6 +64,14 @@ describe('SessionsService', () => {
     });
   });
 
+  it('obtient le pilotage via GET /api/sessions/:id/pilotage', () => {
+    service.obtenirPilotage('s1').subscribe();
+
+    const req = httpMock.expectOne('/api/sessions/s1/pilotage');
+    expect(req.request.method).toBe('GET');
+    req.flush({ statut: 'OUVERTE', code: '654321' });
+  });
+
   it('modifie Équipe et Date via PATCH /api/sessions/:id', () => {
     service.modifierInfos('s1', 'e2', '2026-05-01').subscribe();
 

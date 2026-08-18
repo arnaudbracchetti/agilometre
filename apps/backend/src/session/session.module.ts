@@ -24,6 +24,8 @@ import { ModifierInfosSession } from './application/modifier-infos-session.useca
 import { ChangerModeleSession } from './application/changer-modele-session.usecase';
 import { SupprimerSession } from './application/supprimer-session.usecase';
 import { OuvrirSession } from './application/ouvrir-session.usecase';
+import { ObtenirProjectionSession } from './application/obtenir-projection-session.usecase';
+import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
 import { PrismaModeleSessionRepository } from './infrastructure/prisma-modele-session.repository';
 import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-modele-session-bibliotheque.query';
 import { PrismaSessionRepository } from './infrastructure/prisma-session.repository';
@@ -34,19 +36,25 @@ import { PrismaJetonSessionRepository } from './infrastructure/prisma-jeton-sess
 import { CryptoGenerateurDeCode } from './infrastructure/crypto-generateur-de-code';
 import { SessionController } from './session.controller';
 import { SessionAnimeeController } from './session-animee.controller';
+import { ProjectionController } from './projection.controller';
 
 @Module({
   imports: [ReferentielModule, OrganisationModule],
-  controllers: [SessionController, SessionAnimeeController],
+  controllers: [
+    SessionController,
+    SessionAnimeeController,
+    ProjectionController,
+  ],
   providers: [
     PrismaModeleSessionRepository,
     PrismaModeleSessionBibliothequeQuery,
     CryptoGenerateurDeCode,
     PrismaSessionRepository,
     PrismaSessionListeQuery,
-    // Aucun use case ne les consomme encore (#33 est un enabler technique, "pas d'écran") — prêts
-    // pour la carte "voter" qui les injectera (même patron que SessionRepository.existeCodeOuvert
-    // ajouté par la carte #32).
+    // Aucun use case ne consomme encore PrismaTourDeVoteRepository/PrismaReponseRepository (#33
+    // est un enabler technique, "pas d'écran") — prêts pour la carte "voter" qui les injectera
+    // (même patron que SessionRepository.existeCodeOuvert ajouté par la carte #32).
+    // PrismaJetonSessionRepository, lui, est désormais consommé par ObtenirProjectionSession (#35).
     PrismaTourDeVoteRepository,
     PrismaReponseRepository,
     PrismaJetonSessionRepository,
@@ -207,6 +215,20 @@ import { SessionAnimeeController } from './session-animee.controller';
       provide: OuvrirSession,
       useFactory: (sessions: PrismaSessionRepository) =>
         new OuvrirSession(sessions),
+      inject: [PrismaSessionRepository],
+    },
+    {
+      provide: ObtenirProjectionSession,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        jetons: PrismaJetonSessionRepository,
+      ) => new ObtenirProjectionSession(sessions, jetons),
+      inject: [PrismaSessionRepository, PrismaJetonSessionRepository],
+    },
+    {
+      provide: ObtenirPilotageSession,
+      useFactory: (sessions: PrismaSessionRepository) =>
+        new ObtenirPilotageSession(sessions),
       inject: [PrismaSessionRepository],
     },
   ],

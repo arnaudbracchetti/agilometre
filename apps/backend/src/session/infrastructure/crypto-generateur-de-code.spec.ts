@@ -11,13 +11,13 @@ function prismaFake(comptes: number[]): {
 }
 
 describe('CryptoGenerateurDeCode', () => {
-  it('génère un Code numérique à 6 chiffres', async () => {
+  it('génère un Code numérique à 4 chiffres', async () => {
     const { prisma } = prismaFake([0]);
     const generateur = new CryptoGenerateurDeCode(prisma);
 
     const code = await generateur.generer();
 
-    expect(code).toMatch(/^\d{6}$/);
+    expect(code).toMatch(/^\d{4}$/);
   });
 
   it('retire un nouveau Code tant que le précédent est déjà pris', async () => {
@@ -26,7 +26,7 @@ describe('CryptoGenerateurDeCode', () => {
 
     const code = await generateur.generer();
 
-    expect(code).toMatch(/^\d{6}$/);
+    expect(code).toMatch(/^\d{4}$/);
     expect(count).toHaveBeenCalledTimes(2);
   });
 });

@@ -52,8 +52,16 @@ export class BibliothequePage implements OnInit {
     });
   }
 
-  protected ouvrir(id: string): void {
+  protected voirDetail(id: string): void {
     this.router.navigate(['/sessions', id]);
+  }
+
+  /** Même action que le bouton « Ouvrir la séance » de l'écran de détail (ajustement-page). */
+  protected lancer(id: string): void {
+    this.sessionsService.ouvrir(id).subscribe({
+      next: () => this.router.navigate(['/sessions', id, 'pilotage']),
+      error: () => this.message.error('Cette Session ne peut plus être ouverte.'),
+    });
   }
 
   /** Même garde que Session.estModifiable() côté domaine (docs/design/agregat-session.md). */

@@ -525,7 +525,7 @@ describe('Session animée (e2e)', () => {
 
     expect(sessionOuverte.statut).toBe('OUVERTE');
     expect(sessionOuverte.verrouillee).toBe(true);
-    expect(sessionOuverte.code).toMatch(/^\d{6}$/);
+    expect(sessionOuverte.code).toMatch(/^\d{4}$/);
 
     // Sélection verrouillée dès l'ouverture (ADR-0010) : ajouter une Question est refusé.
     await request(app.getHttpServer())

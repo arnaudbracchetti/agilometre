@@ -7,6 +7,13 @@ export const routes: Routes = [
     loadComponent: () => import('./home/home').then((m) => m.Home),
   },
   {
+    path: 'projection/:sessionId',
+    loadComponent: () =>
+      import('./sessions/projection-page/projection-page').then(
+        (m) => m.ProjectionPage,
+      ),
+  },
+  {
     path: '',
     loadComponent: () => import('./shell/app-shell').then((m) => m.AppShell),
     children: [
@@ -54,6 +61,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./sessions/ajustement-page/ajustement-page').then(
             (m) => m.AjustementPage,
+          ),
+      },
+      {
+        path: 'sessions/:id/pilotage',
+        data: { breadcrumb: 'Piloter la séance' },
+        loadComponent: () =>
+          import('./sessions/pilotage-page/pilotage-page').then(
+            (m) => m.PilotagePage,
           ),
       },
     ],

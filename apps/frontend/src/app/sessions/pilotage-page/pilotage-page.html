@@ -1,0 +1,25 @@
+<div class="pilotage">
+  @if (chargementEnCours()) {
+    <p>Chargement…</p>
+  } @else if (inaccessible()) {
+    <p class="pilotage__erreur">Cet écran de pilotage n’est plus accessible.</p>
+  } @else {
+    <header class="pilotage__entete">
+      <h2 class="pilotage__titre">Pilotage de la séance</h2>
+      <a nz-button nzType="default" [href]="urlProjection()" target="_blank" rel="noopener">
+        Ouvrir l’écran de projection
+      </a>
+    </header>
+
+    <div class="pilotage__code">
+      <span class="pilotage__code-label">Code de session</span>
+      <span class="pilotage__code-valeur">{{ code() }}</span>
+    </div>
+
+    @if (statut() === 'OUVERTE') {
+      <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
+    } @else {
+      <p class="pilotage__statut">Séance clôturée.</p>
+    }
+  }
+</div>

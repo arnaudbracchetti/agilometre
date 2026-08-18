@@ -4,7 +4,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { GenerateurDeCode } from '../domain/generateur-de-code';
 
 /**
- * Code numérique à 6 chiffres (100000–999999) : jamais de zéro en tête, lisible à l'oral.
+ * Code numérique à 4 chiffres (1000–9999) : jamais de zéro en tête, lisible à l'oral, assez court
+ * pour être saisi vite en salle.
  *
  * Interroge la base directement plutôt que `SessionRepository` : `PrismaSessionRepository` a
  * besoin de ce port pour hydrater ses agrégats (`reconstituer`), passer par lui ici créerait un
@@ -25,7 +26,7 @@ export class CryptoGenerateurDeCode implements GenerateurDeCode {
   async generer(): Promise<string> {
     let code: string;
     do {
-      code = String(randomInt(100_000, 1_000_000));
+      code = String(randomInt(1_000, 10_000));
     } while (await this.estPris(code));
     return code;
   }

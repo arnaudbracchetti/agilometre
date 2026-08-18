@@ -43,3 +43,14 @@ export interface LigneListeSessionDto {
   nbQuestions: number;
   modeleSessionNom: string | null;
 }
+
+export interface ProjectionSessionDto {
+  statut: StatutSession;
+  code: string;
+  nbDevicesConnectes: number;
+}
+
+export interface PilotageSessionDto {
+  statut: StatutSession;
+  code: string;
+}

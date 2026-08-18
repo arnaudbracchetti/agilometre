@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
@@ -39,6 +39,7 @@ import { SessionsService } from '../sessions.service';
 })
 export class AjustementPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly sessionsService = inject(SessionsService);
   private readonly organisationService = inject(OrganisationService);
   private readonly modelesSessionService = inject(ModelesSessionService);
@@ -207,8 +208,9 @@ export class AjustementPage implements OnInit {
   }
 
   protected onOuvrir(): void {
-    this.sessionsService.ouvrir(this.requireId()).subscribe({
-      next: (session) => this.appliquerSession(session),
+    const id = this.requireId();
+    this.sessionsService.ouvrir(id).subscribe({
+      next: () => this.router.navigate(['/sessions', id, 'pilotage']),
       error: () => this.message.error('Cette Session ne peut plus être ouverte.'),
     });
   }

@@ -1,0 +1,12 @@
+<div class="projection">
+  @if (chargementEnCours()) {
+    <p class="projection__message">Chargement…</p>
+  } @else if (inaccessible()) {
+    <p class="projection__message">Cette séance n’est pas accessible.</p>
+  } @else {
+    <p class="projection__libelle">Salle d’attente</p>
+    <p class="projection__url">Rejoindre : {{ urlDeJointure() }}</p>
+    <p class="projection__code">{{ code() }}</p>
+    <p class="projection__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
+  }
+</div>
