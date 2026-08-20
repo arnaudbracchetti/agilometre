@@ -12,7 +12,7 @@ function generateurFixe(code: string): GenerateurDeCode {
   return { generer: () => Promise.resolve(code) };
 }
 
-// CA #33 : trouverOuvertPour, contre un vrai Postgres (pnpm dev:db:test).
+// CA #33 : trouverTourOuvertDeLaSession, contre un vrai Postgres (pnpm dev:db:test).
 describe('PrismaTourDeVoteRepository (e2e)', () => {
   let prisma: PrismaService;
   let repository: PrismaTourDeVoteRepository;
@@ -95,19 +95,21 @@ describe('PrismaTourDeVoteRepository (e2e)', () => {
     });
   }
 
-  describe('trouverOuvertPour', () => {
+  describe('trouverTourOuvertDeLaSession', () => {
     it('renvoie le Tour ouvert d’une Session', async () => {
       const tour = nouveauTour(randomUUID(), sessionId);
       await repository.save(tour);
 
-      const trouve = await repository.trouverOuvertPour(sessionId);
+      const trouve = await repository.trouverTourOuvertDeLaSession(sessionId);
 
       expect(trouve?.id).toBe(tour.id);
       expect(trouve?.estClos).toBe(false);
     });
 
     it('renvoie null si aucun Tour n’est ouvert', async () => {
-      await expect(repository.trouverOuvertPour(sessionId)).resolves.toBeNull();
+      await expect(
+        repository.trouverTourOuvertDeLaSession(sessionId),
+      ).resolves.toBeNull();
     });
 
     it('renvoie null une fois le Tour clos', async () => {
@@ -115,14 +117,18 @@ describe('PrismaTourDeVoteRepository (e2e)', () => {
       tour.clore(new Date('2026-04-01T10:05:00Z'));
       await repository.save(tour);
 
-      await expect(repository.trouverOuvertPour(sessionId)).resolves.toBeNull();
+      await expect(
+        repository.trouverTourOuvertDeLaSession(sessionId),
+      ).resolves.toBeNull();
     });
 
     it('ignore les Tours ouverts d’une autre Session', async () => {
       const tour = nouveauTour(randomUUID(), sessionAutreId);
       await repository.save(tour);
 
-      await expect(repository.trouverOuvertPour(sessionId)).resolves.toBeNull();
+      await expect(
+        repository.trouverTourOuvertDeLaSession(sessionId),
+      ).resolves.toBeNull();
     });
   });
 

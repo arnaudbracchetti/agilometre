@@ -39,9 +39,12 @@ describe('PilotagePage', () => {
     fixture = TestBed.createComponent(PilotagePage);
     fixture.detectChanges();
 
-    httpMock
-      .expectOne('/api/sessions/s1/pilotage')
-      .flush({ statut: 'OUVERTE', code: '654321', nbDevicesConnectes: 3 });
+    httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 3,
+      questionCourante: null,
+    });
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('654321');
@@ -54,18 +57,87 @@ describe('PilotagePage', () => {
     vi.useFakeTimers();
     fixture = TestBed.createComponent(PilotagePage);
     fixture.detectChanges();
-    httpMock
-      .expectOne('/api/sessions/s1/pilotage')
-      .flush({ statut: 'OUVERTE', code: '654321', nbDevicesConnectes: 0 });
+    httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 0,
+      questionCourante: null,
+    });
 
     vi.advanceTimersByTime(2000);
 
-    httpMock
-      .expectOne('/api/sessions/s1/pilotage')
-      .flush({ statut: 'OUVERTE', code: '654321', nbDevicesConnectes: 1 });
+    httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 1,
+      questionCourante: null,
+    });
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('1');
+  });
+
+  it('affiche « Commencer » en salle d’attente, envoie la requête au clic et affiche la Question retournée', () => {
+    fixture = TestBed.createComponent(PilotagePage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 0,
+      questionCourante: null,
+    });
+    fixture.detectChanges();
+
+    const bouton = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(bouton.textContent).toContain('Commencer');
+    bouton.click();
+
+    httpMock.expectOne('/api/sessions/s1/passer-question-suivante').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 0,
+      questionCourante: {
+        questionId: 'q1',
+        libelle: 'Les rétrospectives sont-elles régulières ?',
+        options: [
+          { libelle: 'Jamais' },
+          { libelle: 'Parfois' },
+          { libelle: 'Souvent' },
+          { libelle: 'Toujours' },
+        ],
+      },
+    });
+    fixture.detectChanges();
+
+    const texte = fixture.nativeElement.textContent as string;
+    expect(texte).toContain('Les rétrospectives sont-elles régulières ?');
+    expect(texte).toContain('A — Jamais');
+    expect(bouton.textContent).toContain('Question suivante');
+  });
+
+  it('affiche un message d’erreur si « Question suivante » est refusé, sans changer l’écran', () => {
+    fixture = TestBed.createComponent(PilotagePage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 0,
+      questionCourante: null,
+    });
+    fixture.detectChanges();
+    const messageService = fixture.debugElement.injector.get(NzMessageService);
+    const errorSpy = vi.spyOn(messageService, 'error');
+
+    const bouton = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    bouton.click();
+
+    httpMock
+      .expectOne('/api/sessions/s1/passer-question-suivante')
+      .flush('Refusé', { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(fixture.componentInstance['questionCourante']()).toBeNull();
   });
 
   it('affiche un message d’erreur si le pilotage n’est plus accessible', () => {

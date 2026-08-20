@@ -36,9 +36,12 @@ describe('ProjectionPage', () => {
     fixture = TestBed.createComponent(ProjectionPage);
     fixture.detectChanges();
 
-    httpMock
-      .expectOne('/api/projection/s1')
-      .flush({ statut: 'OUVERTE', code: '654321', nbDevicesConnectes: 3 });
+    httpMock.expectOne('/api/projection/s1').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 3,
+      questionCourante: null,
+    });
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('654321');
@@ -46,19 +49,54 @@ describe('ProjectionPage', () => {
     expect(fixture.nativeElement.textContent).toContain(window.location.origin);
   });
 
+  it('affiche la Question courante et ses Options lettrées en Discussion, sans salle d’attente', () => {
+    fixture = TestBed.createComponent(ProjectionPage);
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/projection/s1').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 3,
+      questionCourante: {
+        questionId: 'q1',
+        libelle: 'Les rétrospectives sont-elles régulières ?',
+        options: [
+          { libelle: 'Jamais' },
+          { libelle: 'Parfois' },
+          { libelle: 'Souvent' },
+          { libelle: 'Toujours' },
+        ],
+      },
+    });
+    fixture.detectChanges();
+
+    const texte = fixture.nativeElement.textContent as string;
+    expect(texte).toContain('Les rétrospectives sont-elles régulières ?');
+    expect(texte).toContain('A — Jamais');
+    expect(texte).toContain('D — Toujours');
+    expect(texte).not.toContain('Salle d’attente');
+    expect(texte).toContain('654321');
+  });
+
   it('sonde /api/projection/:sessionId toutes les 2 secondes', () => {
     vi.useFakeTimers();
     fixture = TestBed.createComponent(ProjectionPage);
     fixture.detectChanges();
-    httpMock
-      .expectOne('/api/projection/s1')
-      .flush({ statut: 'OUVERTE', code: '654321', nbDevicesConnectes: 0 });
+    httpMock.expectOne('/api/projection/s1').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 0,
+      questionCourante: null,
+    });
 
     vi.advanceTimersByTime(2000);
 
-    httpMock
-      .expectOne('/api/projection/s1')
-      .flush({ statut: 'OUVERTE', code: '654321', nbDevicesConnectes: 1 });
+    httpMock.expectOne('/api/projection/s1').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 1,
+      questionCourante: null,
+    });
   });
 
   it('affiche un écran d’erreur si la Session n’est pas accessible', () => {

@@ -1,10 +1,10 @@
 .projection {
+  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-5);
   background: var(--color-primary-emphasis);
   color: var(--color-on-primary);
   font-family: var(--font-family-base);
@@ -16,17 +16,18 @@
     margin: 0;
   }
 
-  &__libelle {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-medium);
-    margin: 0;
-    opacity: 0.85;
+  /* État salle d'attente — le Code et l'URL sont ce dont la salle a besoin, mis en avant à parité. */
+  &__connexion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-5);
   }
 
-  &__url {
-    font-size: var(--font-size-md);
+  &__invite {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-medium);
     margin: 0;
-    opacity: 0.85;
   }
 
   &__code {
@@ -36,8 +37,70 @@
     margin: 0;
   }
 
-  &__compteur {
-    font-size: var(--font-size-xl);
+  &__url {
+    font-size: clamp(var(--font-size-xl), 4vw, var(--font-size-display));
+    font-weight: var(--font-weight-bold);
     margin: 0;
+    padding: var(--space-2) var(--space-5);
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+  }
+
+  &__compteur {
+    font-size: var(--font-size-md);
+    margin: 0;
+    opacity: 0.7;
+  }
+
+  /* État question — la question et ses options dominent l'écran. */
+  &__question {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-6);
+  }
+
+  &__libelle {
+    font-size: clamp(var(--font-size-2xl), 5vw, var(--font-size-display));
+    font-weight: var(--font-weight-bold);
+    margin: 0;
+    max-width: 60ch;
+  }
+
+  &__options {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    font-size: var(--font-size-xl);
+  }
+
+  &__lettre {
+    font-weight: var(--font-weight-bold);
+    margin-right: var(--space-2);
+  }
+
+  /* Infos de connexion discrètes pendant l'affichage d'une question — toujours présentes, jamais dominantes. */
+  &__badge {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    text-align: right;
+    opacity: 0.65;
+    font-size: var(--font-size-sm);
+    padding: var(--space-2) var(--space-3);
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
+    z-index: var(--z-sticky);
+
+    p {
+      margin: 0;
+    }
   }
 }

@@ -37,6 +37,8 @@ import { ChangerModeleSession } from './application/changer-modele-session.useca
 import { SupprimerSession } from './application/supprimer-session.usecase';
 import { OuvrirSession } from './application/ouvrir-session.usecase';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
+import { PasserQuestionSuivanteSession } from './application/passer-question-suivante-session.usecase';
+import { versQuestionCouranteDto } from './question-courante.mapper';
 import {
   AjouterQuestionSessionDto,
   AjouterThemeSessionDto,
@@ -104,6 +106,7 @@ export class SessionAnimeeController {
     private readonly supprimerSession: SupprimerSession,
     private readonly ouvrirSession: OuvrirSession,
     private readonly obtenirPilotageSession: ObtenirPilotageSession,
+    private readonly passerQuestionSuivanteSession: PasserQuestionSuivanteSession,
   ) {}
 
   @Get()
@@ -162,6 +165,30 @@ export class SessionAnimeeController {
   @Get(':id/pilotage')
   @SkipThrottle()
   async pilotage(@Param('id') id: string): Promise<PilotageSessionDto> {
+    return this.rechargerPilotage(id);
+  }
+
+  @Post(':id/passer-question-suivante')
+  async passerQuestionSuivante(
+    @Param('id') id: string,
+  ): Promise<PilotageSessionDto> {
+    const resultat = await this.passerQuestionSuivanteSession.executer(id);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Session ${id} introuvable`);
+    }
+    if (resultat.type === 'non_ouverte') {
+      throw new ConflictException('La Session doit être ouverte pour avancer');
+    }
+    if (resultat.type === 'question_courante_non_resolue') {
+      throw new ConflictException(
+        'La Question courante doit être clôturée ou sautée avant de passer à la suivante',
+      );
+    }
+    return this.rechargerPilotage(id);
+  }
+
+  /** Réutilisé par GET :id/pilotage et POST :id/passer-question-suivante — un seul mapping. */
+  private async rechargerPilotage(id: string): Promise<PilotageSessionDto> {
     const resultat = await this.obtenirPilotageSession.executer(id);
     if (resultat.type === 'introuvable') {
       throw new NotFoundException(
@@ -172,6 +199,7 @@ export class SessionAnimeeController {
       statut: STATUT_VERS_DTO[resultat.session.statut],
       code: resultat.session.code as string,
       nbDevicesConnectes: resultat.nbDevicesConnectes,
+      questionCourante: versQuestionCouranteDto(resultat.questionCourante),
     };
   }
 

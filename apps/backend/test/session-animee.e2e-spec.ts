@@ -7,6 +7,8 @@ import {
   EquipeDto,
   LigneListeSessionDto,
   ModeleSessionDto,
+  PilotageSessionDto,
+  ProjectionSessionDto,
   SessionDto,
 } from '@agilometre/shared';
 import { AppModule } from './../src/app.module';
@@ -557,6 +559,83 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/ouvrir`)
+      .expect(409);
+  });
+
+  it('POST /api/sessions/:id/passer-question-suivante — fait afficher la première Question en Discussion, refusé une fois non résolue', async () => {
+    const { equipe, modele } = await contexte();
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+    await request(app.getHttpServer())
+      .post(`/api/sessions/${session.id}/ouvrir`)
+      .expect(201);
+
+    const pilotageSalleAttente = await request(app.getHttpServer())
+      .get(`/api/sessions/${session.id}/pilotage`)
+      .expect(200);
+    expect(
+      (pilotageSalleAttente.body as PilotageSessionDto).questionCourante,
+    ).toBeNull();
+    const projectionSalleAttente = await request(app.getHttpServer())
+      .get(`/api/projection/${session.id}`)
+      .expect(200);
+    expect(
+      (projectionSalleAttente.body as ProjectionSessionDto).questionCourante,
+    ).toBeNull();
+
+    const avance = await request(app.getHttpServer())
+      .post(`/api/sessions/${session.id}/passer-question-suivante`)
+      .expect(201);
+    expect((avance.body as PilotageSessionDto).questionCourante).toMatchObject({
+      questionId: 'q1',
+      libelle: 'Libellé q1',
+      options: [
+        { libelle: 'Jamais' },
+        { libelle: 'Parfois' },
+        { libelle: 'Souvent' },
+        { libelle: 'Toujours' },
+      ],
+    });
+
+    const projectionApresAvance = await request(app.getHttpServer())
+      .get(`/api/projection/${session.id}`)
+      .expect(200);
+    expect(
+      (projectionApresAvance.body as ProjectionSessionDto).questionCourante
+        ?.questionId,
+    ).toBe('q1');
+
+    // Aucun mécanisme de Tour dans cette carte : q1 n'a ni Tour clos ni marquage Sautée.
+    await request(app.getHttpServer())
+      .post(`/api/sessions/${session.id}/passer-question-suivante`)
+      .expect(409);
+  });
+
+  it('POST /api/sessions/:id/passer-question-suivante — 404 si la Session est inconnue, 409 si non OUVERTE', async () => {
+    await request(app.getHttpServer())
+      .post('/api/sessions/inconnue/passer-question-suivante')
+      .expect(404);
+
+    const { equipe, modele } = await contexte();
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    const session = creation.body as SessionDto;
+
+    await request(app.getHttpServer())
+      .post(`/api/sessions/${session.id}/passer-question-suivante`)
       .expect(409);
   });
 

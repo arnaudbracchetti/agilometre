@@ -1,15 +1,14 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { finalize } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { PilotageSessionDto } from '@agilometre/shared';
+import { PilotageSessionDto, QuestionCouranteDto } from '@agilometre/shared';
+import { LETTRES_OPTIONS } from '../../shared/lettres-options';
 import { sonder } from '../../shared/sondage-2s';
 import { SessionsService } from '../sessions.service';
 
-/**
- * Écran de pilotage (Coach) — sondage 2s, contenu réduit à la salle d'attente pour ce ticket
- * (#35) : le déroulé des Questions (#38 et suivants) enrichira ce même écran, jamais un autre.
- */
+/** Écran de pilotage (Coach) — sondage 2s (doc/spec/annexes/deroulement-session-animee.md). */
 @Component({
   selector: 'app-pilotage-page',
   imports: [NzButtonModule],
@@ -22,12 +21,15 @@ export class PilotagePage implements OnInit {
   private readonly message = inject(NzMessageService);
   private readonly destroyRef = inject(DestroyRef);
 
+  protected readonly lettres = LETTRES_OPTIONS;
   protected readonly sessionId = signal<string | null>(null);
   protected readonly statut = signal<PilotageSessionDto['statut'] | null>(null);
   protected readonly code = signal<string | null>(null);
   protected readonly nbDevicesConnectes = signal(0);
+  protected readonly questionCourante = signal<QuestionCouranteDto | null>(null);
   protected readonly inaccessible = signal(false);
   protected readonly chargementEnCours = signal(true);
+  protected readonly avancerEnCours = signal(false);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -45,9 +47,7 @@ export class PilotagePage implements OnInit {
       },
       this.destroyRef,
     ).subscribe((pilotage) => {
-      this.statut.set(pilotage.statut);
-      this.code.set(pilotage.code);
-      this.nbDevicesConnectes.set(pilotage.nbDevicesConnectes);
+      this.appliquer(pilotage);
       this.chargementEnCours.set(false);
     });
   }
@@ -55,5 +55,34 @@ export class PilotagePage implements OnInit {
   protected urlProjection(): string {
     const id = this.sessionId();
     return id ? `/projection/${id}` : '';
+  }
+
+  protected libelleBouton(): string {
+    return this.questionCourante() ? 'Question suivante' : 'Commencer';
+  }
+
+  protected avancer(): void {
+    const id = this.sessionId();
+    if (!id) {
+      return;
+    }
+    this.avancerEnCours.set(true);
+    this.sessionsService
+      .passerQuestionSuivante(id)
+      .pipe(finalize(() => this.avancerEnCours.set(false)))
+      .subscribe({
+        next: (pilotage) => this.appliquer(pilotage),
+        error: () =>
+          this.message.error(
+            'Impossible d’avancer : la Question en cours doit être clôturée ou sautée.',
+          ),
+      });
+  }
+
+  private appliquer(pilotage: PilotageSessionDto): void {
+    this.statut.set(pilotage.statut);
+    this.code.set(pilotage.code);
+    this.nbDevicesConnectes.set(pilotage.nbDevicesConnectes);
+    this.questionCourante.set(pilotage.questionCourante);
   }
 }

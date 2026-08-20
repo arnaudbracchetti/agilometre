@@ -14,6 +14,19 @@ Always ask for confirmation before creating a git commit — even at the end of 
 `/implement`) whose written instructions say to commit. Never commit silently as an implicit last
 step.
 
+## Database safety
+
+Port 5433 (`pnpm dev:db`) is the developer's **own working database** — real, hand-entered data
+(referentiels, teams, sessions), not a scratch space. **Never run manual smoke tests, curl calls,
+or referentiel imports against port 5433** to verify a change — always use the isolated test
+database instead (port 5434, `pnpm dev:db:test`, database `agilometre_test`; see "pnpm/Docker
+quirks" below for how `test:e2e` already does this). This is not a minor convenience: a
+referentiel import **replaces state wholesale** — `Referentiel.calculerChangements` archives every
+Theme/Question not present in the imported payload — so a single throwaway test import against
+the dev database once silently archived a real, previously-imported referentiel. If manual
+end-to-end verification against a running server is genuinely needed, start it against the test
+database's connection (`apps/backend/.env.test`), never the app's default `.env`.
+
 ## What this is
 
 Agilomètre — an agile maturity diagnostic tool. Coaches run live voting sessions with teams

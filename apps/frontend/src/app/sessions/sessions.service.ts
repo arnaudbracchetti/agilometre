@@ -32,6 +32,13 @@ export class SessionsService {
     return this.http.get<PilotageSessionDto>(`${this.baseUrl}/${id}/pilotage`);
   }
 
+  passerQuestionSuivante(id: string): Observable<PilotageSessionDto> {
+    return this.http.post<PilotageSessionDto>(
+      `${this.baseUrl}/${id}/passer-question-suivante`,
+      {},
+    );
+  }
+
   modifierInfos(id: string, equipeId: string, date: string): Observable<SessionDto> {
     return this.http.patch<SessionDto>(`${this.baseUrl}/${id}`, { equipeId, date });
   }

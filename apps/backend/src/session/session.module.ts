@@ -26,6 +26,7 @@ import { SupprimerSession } from './application/supprimer-session.usecase';
 import { OuvrirSession } from './application/ouvrir-session.usecase';
 import { ObtenirProjectionSession } from './application/obtenir-projection-session.usecase';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
+import { PasserQuestionSuivanteSession } from './application/passer-question-suivante-session.usecase';
 import { RejoindreSession } from './application/rejoindre-session.usecase';
 import { PrismaModeleSessionRepository } from './infrastructure/prisma-modele-session.repository';
 import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-modele-session-bibliotheque.query';
@@ -34,6 +35,7 @@ import { PrismaSessionListeQuery } from './infrastructure/prisma-session-liste.q
 import { PrismaTourDeVoteRepository } from './infrastructure/prisma-tour-de-vote.repository';
 import { PrismaReponseRepository } from './infrastructure/prisma-reponse.repository';
 import { PrismaJetonSessionRepository } from './infrastructure/prisma-jeton-session.repository';
+import { PrismaEtatToursQuery } from './infrastructure/prisma-etat-tours.query';
 import { CryptoGenerateurDeCode } from './infrastructure/crypto-generateur-de-code';
 import { SessionController } from './session.controller';
 import { SessionAnimeeController } from './session-animee.controller';
@@ -62,6 +64,7 @@ import { ParticipantController } from './participant.controller';
     PrismaTourDeVoteRepository,
     PrismaReponseRepository,
     PrismaJetonSessionRepository,
+    PrismaEtatToursQuery,
     {
       provide: CreerModeleSession,
       useFactory: (repository: PrismaModeleSessionRepository) =>
@@ -226,16 +229,34 @@ import { ParticipantController } from './participant.controller';
       useFactory: (
         sessions: PrismaSessionRepository,
         jetons: PrismaJetonSessionRepository,
-      ) => new ObtenirProjectionSession(sessions, jetons),
-      inject: [PrismaSessionRepository, PrismaJetonSessionRepository],
+        referentiel: PrismaReferentielRepository,
+      ) => new ObtenirProjectionSession(sessions, jetons, referentiel),
+      inject: [
+        PrismaSessionRepository,
+        PrismaJetonSessionRepository,
+        PrismaReferentielRepository,
+      ],
     },
     {
       provide: ObtenirPilotageSession,
       useFactory: (
         sessions: PrismaSessionRepository,
         jetons: PrismaJetonSessionRepository,
-      ) => new ObtenirPilotageSession(sessions, jetons),
-      inject: [PrismaSessionRepository, PrismaJetonSessionRepository],
+        referentiel: PrismaReferentielRepository,
+      ) => new ObtenirPilotageSession(sessions, jetons, referentiel),
+      inject: [
+        PrismaSessionRepository,
+        PrismaJetonSessionRepository,
+        PrismaReferentielRepository,
+      ],
+    },
+    {
+      provide: PasserQuestionSuivanteSession,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        etatTours: PrismaEtatToursQuery,
+      ) => new PasserQuestionSuivanteSession(sessions, etatTours),
+      inject: [PrismaSessionRepository, PrismaEtatToursQuery],
     },
     {
       provide: RejoindreSession,

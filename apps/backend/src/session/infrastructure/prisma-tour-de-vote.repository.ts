@@ -16,7 +16,9 @@ export class PrismaTourDeVoteRepository implements TourDeVoteRepository {
     return row ? this.versDomaine(row) : null;
   }
 
-  async trouverOuvertPour(sessionId: string): Promise<TourDeVote | null> {
+  async trouverTourOuvertDeLaSession(
+    sessionId: string,
+  ): Promise<TourDeVote | null> {
     const row = await this.prisma.tourDeVote.findFirst({
       where: { sessionId, clotureLe: null },
       include: { participations: true },

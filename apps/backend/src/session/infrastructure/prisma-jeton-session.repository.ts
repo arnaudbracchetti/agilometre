@@ -43,7 +43,7 @@ export class PrismaJetonSessionRepository implements JetonSessionRepository {
     return row ? JetonSession.creer(row.id, row.sessionId, row.creeLe) : null;
   }
 
-  async compterPour(sessionId: string): Promise<number> {
+  async compterJetonsDeLaSession(sessionId: string): Promise<number> {
     return this.prisma.jetonSession.count({
       where: { sessionId, remplaceLe: null },
     });

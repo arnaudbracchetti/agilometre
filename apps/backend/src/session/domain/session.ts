@@ -14,7 +14,7 @@ export type StatutSession = 'PREPAREE' | 'OUVERTE' | 'CLOTUREE';
 export interface EtatTour {
   tourId: string;
   questionId: string;
-  numero: number;
+  numero: number;  // rang du vote pour une question
   clos: boolean;
 }
 
@@ -420,6 +420,13 @@ export class Session {
       }
       return { questionId, statut };
     });
+  }
+
+  /** Encapsule le sentinel SANS_QUESTION_COURANTE — jamais -1 exposé hors de l'agrégat. */
+  questionCouranteId(): string | null {
+    return this._indexCourant === Session.SANS_QUESTION_COURANTE
+      ? null
+      : (this._selection.questionIds[this._indexCourant] ?? null);
   }
 
   private estResolue(index: number, tours: readonly EtatTour[]): boolean {

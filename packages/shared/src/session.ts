@@ -44,16 +44,28 @@ export interface LigneListeSessionDto {
   modeleSessionNom: string | null;
 }
 
+export interface OptionAffichageDto {
+  libelle: string;
+}
+
+export interface QuestionCouranteDto {
+  questionId: string;
+  libelle: string;
+  options: OptionAffichageDto[];
+}
+
 export interface ProjectionSessionDto {
   statut: StatutSession;
   code: string;
   nbDevicesConnectes: number;
+  questionCourante: QuestionCouranteDto | null;
 }
 
 export interface PilotageSessionDto {
   statut: StatutSession;
   code: string;
   nbDevicesConnectes: number;
+  questionCourante: QuestionCouranteDto | null;
 }
 
 export interface JetonSessionDto {

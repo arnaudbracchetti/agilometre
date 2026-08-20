@@ -57,7 +57,7 @@ class JetonSessionRepositoryFake implements JetonSessionRepository {
   findById(id: string): Promise<JetonSession | null> {
     return Promise.resolve(this.jetons.find((j) => j.id === id) ?? null);
   }
-  compterPour(sessionId: string): Promise<number> {
+  compterJetonsDeLaSession(sessionId: string): Promise<number> {
     return Promise.resolve(
       this.jetons.filter(
         (j) => j.sessionId === sessionId && !this.invalides.has(j.id),
@@ -190,7 +190,9 @@ describe('RejoindreSession', () => {
     const resultat = await useCase.executer('9999', jetonPrecedent.id);
 
     expect(resultat.type).toBe('ok');
-    await expect(jetons.compterPour(sessionOrigine.id)).resolves.toBe(0);
+    await expect(
+      jetons.compterJetonsDeLaSession(sessionOrigine.id),
+    ).resolves.toBe(0);
   });
 
   it('n’invalide rien quand aucun jetonPrecedentId n’est fourni (première jointure)', async () => {
@@ -198,7 +200,7 @@ describe('RejoindreSession', () => {
 
     await useCase.executer('4271');
 
-    await expect(jetons.compterPour(session.id)).resolves.toBe(1);
+    await expect(jetons.compterJetonsDeLaSession(session.id)).resolves.toBe(1);
     expect(jetons.invalides.size).toBe(0);
   });
 

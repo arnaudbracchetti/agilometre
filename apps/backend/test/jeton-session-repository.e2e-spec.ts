@@ -95,7 +95,7 @@ describe('PrismaJetonSessionRepository (e2e)', () => {
     );
   });
 
-  it('compterPour compte les Jetons émis pour une Session', async () => {
+  it('compterJetonsDeLaSession compte les Jetons émis pour une Session', async () => {
     const session = await creerSession();
     await session.ouvrir();
     await sessions.save(session);
@@ -103,7 +103,9 @@ describe('PrismaJetonSessionRepository (e2e)', () => {
     await repository.emettre(session.id);
     await repository.emettre(session.id);
 
-    await expect(repository.compterPour(session.id)).resolves.toBe(2);
+    await expect(repository.compterJetonsDeLaSession(session.id)).resolves.toBe(
+      2,
+    );
   });
 
   it('invalider sort un Jeton du compteur de sa Session ("Rejoindre une autre séance")', async () => {
@@ -115,7 +117,9 @@ describe('PrismaJetonSessionRepository (e2e)', () => {
 
     await repository.invalider(jeton.id);
 
-    await expect(repository.compterPour(session.id)).resolves.toBe(1);
+    await expect(repository.compterJetonsDeLaSession(session.id)).resolves.toBe(
+      1,
+    );
   });
 
   it('invalider est silencieux et idempotent pour un id inconnu ou déjà invalidé', async () => {
@@ -128,6 +132,8 @@ describe('PrismaJetonSessionRepository (e2e)', () => {
     await repository.invalider(jeton.id);
     await expect(repository.invalider(jeton.id)).resolves.toBeUndefined();
 
-    await expect(repository.compterPour(session.id)).resolves.toBe(0);
+    await expect(repository.compterJetonsDeLaSession(session.id)).resolves.toBe(
+      0,
+    );
   });
 });

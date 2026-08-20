@@ -735,6 +735,42 @@ describe('Session', () => {
     });
   });
 
+  describe('questionCouranteId', () => {
+    it('retourne null en salle d’attente (indexCourant = -1)', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        Selection.reconstituer(['q1', 'q2']),
+        'AB12',
+        -1,
+        new Set(),
+        generateurDeCode,
+      );
+
+      expect(session.questionCouranteId()).toBeNull();
+    });
+
+    it('retourne l’id de la Question à indexCourant une fois avancée', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        Selection.reconstituer(['q1', 'q2', 'q3']),
+        'AB12',
+        1,
+        new Set(),
+        generateurDeCode,
+      );
+
+      expect(session.questionCouranteId()).toBe('q2');
+    });
+  });
+
   describe('reconstituer', () => {
     it('recharge une Session avec son statut, son verrou et son avancement sans revalider', () => {
       const session = Session.reconstituer(

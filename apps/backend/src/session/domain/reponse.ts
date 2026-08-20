@@ -20,8 +20,17 @@ export class TourIdInvalidePourOrigineError extends Error {
   }
 }
 
+export class TourIdManquantPourSessionError extends Error {
+  constructor() {
+    super("Le tourId d'une Réponse est obligatoire pour l'origine SESSION");
+    this.name = 'TourIdManquantPourSessionError';
+  }
+}
+
 export type ErreurInvariantReponse =
-  NiveauInvalideError | TourIdInvalidePourOrigineError;
+  | NiveauInvalideError
+  | TourIdInvalidePourOrigineError
+  | TourIdManquantPourSessionError;
 
 /**
  * Agrégat racine minimal et strictement immuable (docs/design/agregat-tour-de-vote.md §1) : un
@@ -52,10 +61,12 @@ export class Reponse {
     if (!Number.isInteger(niveau) || niveau < 1 || niveau > 4) {
       return Result.echec(new NiveauInvalideError(niveau));
     }
-    // ADR-0002 : tourId n'est renseignable qu'à la création et seulement si origine = SESSION —
-    // vérification volontairement à sens unique (une Réponse SESSION sans tourId reste valide).
+    // ADR-0002 : tourId renseigné si et seulement si origine = SESSION.
     if (tourId !== null && origine !== 'SESSION') {
       return Result.echec(new TourIdInvalidePourOrigineError());
+    }
+    if (origine === 'SESSION' && tourId === null) {
+      return Result.echec(new TourIdManquantPourSessionError());
     }
     return Result.succes(
       new Reponse(
@@ -72,7 +83,7 @@ export class Reponse {
 
   /**
    * Recharge une Reponse depuis une source déjà validée (le repository Prisma) — ne revalide pas
-   * l'invariant, contrairement à `creer` (cf. CLAUDE.md sur la vigilance requise pour toute
+   * les invariants, contrairement à `creer` (cf. CLAUDE.md sur la vigilance requise pour toute
    * factory additionnelle d'une entité déjà validée ailleurs).
    */
   static reconstituer(

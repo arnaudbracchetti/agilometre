@@ -1,12 +1,11 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { QuestionCouranteDto } from '@agilometre/shared';
+import { LETTRES_OPTIONS } from '../../shared/lettres-options';
 import { sonder } from '../../shared/sondage-2s';
 import { ProjectionService } from '../projection.service';
 
-/**
- * Écran de projection — public, sans compte, sondage 2s. Contenu réduit à la salle d'attente pour
- * ce ticket (#35) : Discussion/Vote/Clôture (#38 et suivants) enrichiront ce même écran.
- */
+/** Écran de projection — public, sans compte, sondage 2s (doc/spec/annexes/deroulement-session-animee.md). */
 @Component({
   selector: 'app-projection-page',
   imports: [],
@@ -18,8 +17,10 @@ export class ProjectionPage implements OnInit {
   private readonly projectionService = inject(ProjectionService);
   private readonly destroyRef = inject(DestroyRef);
 
+  protected readonly lettres = LETTRES_OPTIONS;
   protected readonly code = signal<string | null>(null);
   protected readonly nbDevicesConnectes = signal(0);
+  protected readonly questionCourante = signal<QuestionCouranteDto | null>(null);
   protected readonly inaccessible = signal(false);
   protected readonly chargementEnCours = signal(true);
   /** URL à saisir par un participant pour rejoindre (doc "Écran de projection", état salle d'attente). */
@@ -45,6 +46,7 @@ export class ProjectionPage implements OnInit {
     ).subscribe((projection) => {
       this.code.set(projection.code);
       this.nbDevicesConnectes.set(projection.nbDevicesConnectes);
+      this.questionCourante.set(projection.questionCourante);
       this.chargementEnCours.set(false);
     });
   }

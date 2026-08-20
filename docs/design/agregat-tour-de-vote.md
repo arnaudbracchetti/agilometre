@@ -75,10 +75,10 @@ comportement propre.
 | Une fois `CLOTUREE`, plus aucune mutation | `Session` |
 | `numero` strictement croissant pour une même Question au sein d'une Session (revote) | `TourDeVote` |
 | `clore()` refusé si déjà clos | `TourDeVote` |
-| Un seul `TourDeVote` non clos par Session à la fois — vérifié par `trouverOuvertPour(sessionId)` avant d'en ouvrir un nouveau, jamais par l'agrégat lui-même (il ne voit pas ses "frères") | Repository `TourDeVote` |
+| Un seul `TourDeVote` non clos par Session à la fois — vérifié par `trouverTourOuvertDeLaSession(sessionId)` avant d'en ouvrir un nouveau, jamais par l'agrégat lui-même (il ne voit pas ses "frères") | Repository `TourDeVote` |
 | Une seule `Participation` par Jeton au sein d'un Tour ; un revote supprime l'ancienne `Reponse` pointée, en crée une nouvelle, et repointe `Participation.reponseId` | `TourDeVote` |
 | Les `Participation` d'un Tour sont purgées à sa clôture, sans exception | `TourDeVote` |
-| `Reponse` est immuable : jamais de mise à jour, seulement création/suppression ; `niveau` entre 1 et 4 ; jamais de référence au Jeton ni au Membre (ADR-0001/0011) ; `tourId` renseigné seulement si `origine = SESSION` (ADR-0002) | `Reponse` |
+| `Reponse` est immuable : jamais de mise à jour, seulement création/suppression ; `niveau` entre 1 et 4 ; jamais de référence au Jeton ni au Membre (ADR-0001/0011) ; `tourId` renseigné si et seulement si `origine = SESSION` (ADR-0002) | `Reponse` |
 | Un `JetonSession` n'est émis que pour une Session `OUVERTE` | `JetonSession` |
 | `code` unique parmi les Sessions actuellement `OUVERTE` — vérifié par le repository, pas par l'agrégat ; recommandé de le doubler d'un index unique partiel en base (`WHERE statut = 'OUVERTE'`) | Repository `Session` |
 
@@ -101,7 +101,7 @@ comportement propre.
 |---|---|---|
 | Ouvrir un Tour (`numero` = dernier + 1 pour cette Question) | Commande | Use case (lit `Session` pour la Question courante ; vérifie via repository qu'aucun Tour n'est déjà ouvert ; crée le `TourDeVote`) |
 | Clore | Commande | Racine |
-| Voter (créer/repointer une `Participation`, créer/supprimer la `Reponse` associée) | Commande | Racine → `Participation` ; use case résout le Tour via `trouverOuvertPour(sessionId)` à partir du Jeton — jamais un `tourId` fourni par le client |
+| Voter (créer/repointer une `Participation`, créer/supprimer la `Reponse` associée) | Commande | Racine → `Participation` ; use case résout le Tour via `trouverTourOuvertDeLaSession(sessionId)` à partir du Jeton — jamais un `tourId` fourni par le client |
 | Compteur de participation (Participations du Tour / Jetons émis pour la Session) | Requête | Read model dédié |
 
 **`Reponse`** et **`JetonSession`** : couvertes ci-dessus (créer/supprimer via voter ; émettre à
@@ -128,7 +128,7 @@ interface GenerateurDeCode {
 
 interface TourDeVoteRepository {
   findById(id: string): TourDeVote | null
-  trouverOuvertPour(sessionId: string): TourDeVote | null
+  trouverTourOuvertDeLaSession(sessionId: string): TourDeVote | null
   save(tourDeVote: TourDeVote): void
 }
 
@@ -141,15 +141,15 @@ interface ReponseRepository {
 interface JetonSessionRepository {
   emettre(sessionId: string): JetonSession
   findById(id: string): JetonSession | null
-  compterPour(sessionId: string): number
+  compterJetonsDeLaSession(sessionId: string): number
 }
 
 interface EtatToursQuery {
-  pour(sessionId: string): EtatTour[]        // { tourId, questionId, numero, clos }
+  listerEtatsDesToursDeLaSession(sessionId: string): EtatTour[] // { tourId, questionId, numero, clos }
 }
 
 interface RepartitionTourQuery {
-  pour(tourIds: string[]): RepartitionTour[] // { tourId, comptesParNiveau }
+  listerRepartitionsDesTours(tourIds: string[]): RepartitionTour[] // { tourId, comptesParNiveau }
 }
 ```
 
@@ -187,7 +187,7 @@ sauvegarder.
 
 | Lecture | Charge | Détail |
 |---|---|---|
-| **Participant** (1 s) | `TourDeVote` seul | Le Guard résout le Jeton en `sessionId` ; `trouverOuvertPour(sessionId)` ; `TourDeVote.voteDe(jetonId)` donne la `Participation`, dont la `Reponse` pointée fournit le Niveau déjà voté (pas de dénormalisation : le Niveau n'existe qu'à un seul endroit). **Ne charge jamais `Session`** — c'est ce qui permet de tenir 1 s par device. |
+| **Participant** (1 s) | `TourDeVote` seul | Le Guard résout le Jeton en `sessionId` ; `trouverTourOuvertDeLaSession(sessionId)` ; `TourDeVote.voteDe(jetonId)` donne la `Participation`, dont la `Reponse` pointée fournit le Niveau déjà voté (pas de dénormalisation : le Niveau n'existe qu'à un seul endroit). **Ne charge jamais `Session`** — c'est ce qui permet de tenir 1 s par device. |
 | **Projection** (2 s) | `Session` + `EtatToursQuery` | `progression(tours)` → Question courante ; compteurs ; répartition du dernier Tour clos |
 | **Pilotage** (2 s) | `Session` + `EtatToursQuery` | idem, plus la progression complète et l'historique des Tours clos (`RepartitionTourQuery`) |
 

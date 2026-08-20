@@ -13,13 +13,14 @@ côté pouls ne porte aucun champ supplémentaire (conformément à [ADR 0001](0
 "vue consolidée d'une équipe : les deux sources réunies" (PRD §6) par un simple scan de table,
 sans UNION.
 
-**Champ conditionnel à l'origine.** `tour`/`tourId` (`TourDeVote?`) n'est renseigné que pour
-`origine = SESSION`. Le schéma ne porte aucune contrainte empêchant une ligne `POULS` d'avoir
+**Champ conditionnel à l'origine.** `tour`/`tourId` (`TourDeVote?`) est renseigné si et seulement
+si `origine = SESSION`. Le schéma ne porte aucune contrainte empêchant une ligne `POULS` d'avoir
 `tourId` renseigné, ou une ligne `SESSION` de l'avoir à null : cet invariant est délibérément
-laissé au niveau du domaine (agrégat riche `Reponse`, validé à la construction/persistance), pas
-imposé par une contrainte `CHECK` en base — cohérent avec l'approche DDD du projet (CLAUDE.md).
-Sa conception précise (validation, éventuelle modélisation en sous-types côté domaine malgré une
-table unique) est différée à la session `/ddd` de l'Epic qui implémentera `Reponse`.
+laissé au niveau du domaine plutôt qu'imposé par une contrainte `CHECK` en base — cohérent avec
+l'approche DDD du projet (CLAUDE.md). Il est validé dans les deux sens à la construction par
+l'agrégat riche `Reponse.creer` (`apps/backend/src/session/domain/reponse.ts`), qui rejette aussi
+bien un `tourId` renseigné hors `SESSION` (`TourIdInvalidePourOrigineError`) qu'un `tourId`
+manquant pour `SESSION` (`TourIdManquantPourSessionError`).
 
 **Hors périmètre de cette décision.** L'ajout d'un type TS `Reponse` dans `packages/shared` est
 différé au même Epic — `packages/shared` existe pour éviter la dérive du calcul de scoring entre

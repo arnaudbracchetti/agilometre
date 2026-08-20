@@ -1,5 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
 import { GenerateurDeCode } from './domain/generateur-de-code';
+import { Niveau } from '../referentiel/domain/niveau';
+import { Option } from '../referentiel/domain/option';
+import { Question } from '../referentiel/domain/question';
 import { Selection } from './domain/selection';
 import { Session } from './domain/session';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
@@ -21,6 +24,13 @@ function creerSessionOuverte(): Session {
   return session;
 }
 
+function creerQuestion(id: string): Question {
+  const options = [1, 2, 3, 4].map((niveau) =>
+    Option.creer(`Option ${niveau}`, Niveau.creer(niveau).valeur),
+  );
+  return Question.creer(id, 'Libellé', 't1', options).valeur;
+}
+
 /** Contrôleur plain-class : on ne fournit un stub réel que pour la dépendance testée ici. */
 function creerControleur(obtenirPilotageSession: {
   executer: jest.Mock;
@@ -39,17 +49,21 @@ function creerControleur(obtenirPilotageSession: {
     nonUtilise,
     nonUtilise,
     obtenirPilotageSession as unknown as ObtenirPilotageSession,
+    nonUtilise,
   );
 }
 
 describe('SessionAnimeeController.pilotage', () => {
-  it('renvoie le Code et le statut quand le pilotage est accessible', async () => {
+  it('renvoie le Code, le statut et questionCourante=null quand le pilotage est accessible en salle d’attente', async () => {
     const session = creerSessionOuverte();
     await session.ouvrir();
     const obtenirPilotageSession = {
-      executer: jest
-        .fn()
-        .mockResolvedValue({ type: 'ok', session, nbDevicesConnectes: 3 }),
+      executer: jest.fn().mockResolvedValue({
+        type: 'ok',
+        session,
+        nbDevicesConnectes: 3,
+        questionCourante: null,
+      }),
     };
     const controller = creerControleur(obtenirPilotageSession);
 
@@ -59,6 +73,34 @@ describe('SessionAnimeeController.pilotage', () => {
       statut: 'OUVERTE',
       code: 'AB12',
       nbDevicesConnectes: 3,
+      questionCourante: null,
+    });
+  });
+
+  it('mappe questionCourante en QuestionCouranteDto quand une Question est en cours', async () => {
+    const session = creerSessionOuverte();
+    await session.ouvrir();
+    const obtenirPilotageSession = {
+      executer: jest.fn().mockResolvedValue({
+        type: 'ok',
+        session,
+        nbDevicesConnectes: 3,
+        questionCourante: creerQuestion('q1'),
+      }),
+    };
+    const controller = creerControleur(obtenirPilotageSession);
+
+    const resultat = await controller.pilotage('s1');
+
+    expect(resultat.questionCourante).toEqual({
+      questionId: 'q1',
+      libelle: 'Libellé',
+      options: [
+        { libelle: 'Option 1' },
+        { libelle: 'Option 2' },
+        { libelle: 'Option 3' },
+        { libelle: 'Option 4' },
+      ],
     });
   });
 

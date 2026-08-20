@@ -19,7 +19,27 @@
     <p class="pilotage__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
 
     @if (statut() === 'OUVERTE') {
-      <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
+      @if (questionCourante(); as question) {
+        <div class="pilotage__question">
+          <p class="pilotage__question-libelle">{{ question.libelle }}</p>
+          <ul class="pilotage__options">
+            @for (option of question.options; track $index) {
+              <li>{{ lettres[$index] }} — {{ option.libelle }}</li>
+            }
+          </ul>
+        </div>
+      } @else {
+        <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
+      }
+      <button
+        class="pilotage__bouton"
+        nz-button
+        nzType="primary"
+        [disabled]="avancerEnCours()"
+        (click)="avancer()"
+      >
+        {{ libelleBouton() }}
+      </button>
     } @else {
       <p class="pilotage__statut">Séance clôturée.</p>
     }

@@ -17,7 +17,7 @@ describe('Reponse', () => {
     expect(resultat.valeur.tourId).toBe('tour-1');
   });
 
-  it('accepte une origine SESSION sans tourId (pas encore repointée)', () => {
+  it('rejette une origine SESSION sans tourId (ADR-0002)', () => {
     const resultat = Reponse.creer(
       'r1',
       'q1',
@@ -28,7 +28,8 @@ describe('Reponse', () => {
       null,
     );
 
-    expect(resultat.estSucces).toBe(true);
+    expect(resultat.estEchec).toBe(true);
+    expect(resultat.erreur.name).toBe('TourIdManquantPourSessionError');
   });
 
   it('accepte une origine POULS sans tourId', () => {

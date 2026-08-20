@@ -3,10 +3,26 @@
     <p class="projection__message">Chargement…</p>
   } @else if (inaccessible()) {
     <p class="projection__message">Cette séance n’est pas accessible.</p>
+  } @else if (questionCourante(); as question) {
+    <div class="projection__question">
+      <p class="projection__libelle">{{ question.libelle }}</p>
+      <ul class="projection__options">
+        @for (option of question.options; track $index) {
+          <li><span class="projection__lettre">{{ lettres[$index] }}</span> — {{ option.libelle }}</li>
+        }
+      </ul>
+    </div>
+    <aside class="projection__badge">
+      <p class="projection__badge-code">Code {{ code() }}</p>
+      <p class="projection__badge-url">{{ urlDeJointure() }}</p>
+      <p class="projection__badge-compteur">{{ nbDevicesConnectes() }} connecté(s)</p>
+    </aside>
   } @else {
-    <p class="projection__libelle">Salle d’attente</p>
-    <p class="projection__url">Rejoindre : {{ urlDeJointure() }}</p>
-    <p class="projection__code">{{ code() }}</p>
-    <p class="projection__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
+    <div class="projection__connexion">
+      <p class="projection__invite">Rejoignez la séance</p>
+      <p class="projection__code">{{ code() }}</p>
+      <p class="projection__url">{{ urlDeJointure() }}</p>
+      <p class="projection__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
+    </div>
   }
 </div>
