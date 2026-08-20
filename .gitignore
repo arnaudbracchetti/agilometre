@@ -11,3 +11,6 @@ coverage/
 .claude/settings.local.json
 .claude/worktrees/
 .claude/review/
+
+# Self-managed plugin install, not project content
+.agents/skills/impeccable/
