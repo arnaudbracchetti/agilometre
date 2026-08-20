@@ -4,6 +4,8 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { JetonParticipantStorage } from '../jeton-participant.storage';
 import { ParticipantService } from '../participant.service';
+import { StickyNote } from '../../shared/sticky-note/sticky-note';
+import { ErrorMessage } from '../../shared/error-message/error-message';
 
 type Phase = 'saisie' | 'attente';
 
@@ -16,7 +18,7 @@ type Phase = 'saisie' | 'attente';
  */
 @Component({
   selector: 'app-vote-page',
-  imports: [FormsModule, NzButtonModule, NzInputModule],
+  imports: [FormsModule, NzButtonModule, NzInputModule, StickyNote, ErrorMessage],
   templateUrl: './vote-page.html',
   styleUrl: './vote-page.scss',
 })

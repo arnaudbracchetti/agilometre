@@ -6,12 +6,14 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { PilotageSessionDto, QuestionCouranteDto } from '@agilometre/shared';
 import { LETTRES_OPTIONS } from '../../shared/lettres-options';
 import { sonder } from '../../shared/sondage-2s';
+import { StickyNote } from '../../shared/sticky-note/sticky-note';
+import { ErrorMessage } from '../../shared/error-message/error-message';
 import { SessionsService } from '../sessions.service';
 
 /** Écran de pilotage (Coach) — sondage 2s (doc/spec/annexes/deroulement-session-animee.md). */
 @Component({
   selector: 'app-pilotage-page',
-  imports: [NzButtonModule],
+  imports: [NzButtonModule, StickyNote, ErrorMessage],
   templateUrl: './pilotage-page.html',
   styleUrl: './pilotage-page.scss',
 })

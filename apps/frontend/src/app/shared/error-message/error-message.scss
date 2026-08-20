@@ -1,0 +1,30 @@
+// Volontairement distinct du matériau « note autocollante » (shared/sticky-note) : une erreur
+// n'est pas un artefact d'atelier, elle doit se reconnaître d'un coup d'œil comme autre chose.
+// Pas de coin plié, pas de ruban, pas d'inclinaison.
+:host {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+}
+
+.error-message__icone {
+  flex: 0 0 auto;
+  font-size: 1.1em;
+}
+
+:host(.error-message--page) {
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+}
+
+:host(.error-message--page) .error-message__icone {
+  font-size: 1.5em;
+}

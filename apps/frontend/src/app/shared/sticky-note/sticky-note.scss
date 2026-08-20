@@ -1,0 +1,51 @@
+:host {
+  position: relative;
+  isolation: isolate; // fonde un contexte d'empilement local pour le fond ::before (z-index: -1)
+  display: block;
+  padding: var(--sticky-note-padding, var(--space-5));
+  color: var(--color-sticky-blue-ink);
+  --note-icon-color: var(--color-primary);
+}
+
+// Fond « papier » séparé de l'hôte : le coin plié se découpe ici, jamais sur l'hôte lui-même,
+// pour que le ruban adhésif (élément projeté en absolu, qui déborde au-dessus de la note) ne
+// soit jamais rogné par le même clip-path.
+:host::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--color-sticky-blue);
+  border-radius: var(--radius-note);
+  box-shadow: var(--shadow-note);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 1.1rem 100%, 0 calc(100% - 1.1rem));
+}
+
+:host(.sticky-note--violet) {
+  color: var(--color-sticky-violet-ink);
+  --note-icon-color: var(--color-sticky-violet-ink);
+}
+
+:host(.sticky-note--violet)::before {
+  background: var(--color-sticky-violet);
+}
+
+:host(.sticky-note--magenta) {
+  color: var(--color-sticky-magenta-ink);
+  // Icône graphique (pas du texte fin) : le magenta brut d'insee.fr passe le seuil de contraste
+  // non textuel (≥3:1) sur ce fond clair — le texte, lui, reste sur l'encre assombrie ci-dessus.
+  --note-icon-color: var(--color-magenta-real);
+}
+
+:host(.sticky-note--magenta)::before {
+  background: var(--color-sticky-magenta);
+}
+
+.sticky-note__scotch {
+  position: absolute;
+  top: -0.6rem;
+  width: 2.75rem;
+  height: 1rem;
+  background: rgba(255, 196, 0, 0.6);
+  border: 1px solid rgba(255, 196, 0, 0.75);
+}

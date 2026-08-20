@@ -1,11 +1,17 @@
 /*
  * Charte graphique Agilomètre — design tokens globaux.
  *
- * Validée à partir de la variante A du prototype de page d'accueil (inspiration insee.fr).
- * Tous les écrans consomment ces custom properties (var(--color-primary), etc.) plutôt que
- * des couleurs/tailles codées en dur, pour rester homogènes avec ce modèle.
+ * Palette calée sur le pictogramme réel du logo Insee (histogramme à 3 barres en dégradé
+ * bleu → violet → magenta, mot-symbole noir) et sur les couleurs effectivement utilisées par
+ * insee.fr (extraites de son application.css : bleu #3467ae/#0f417a dominant, jaune/or #ffc400
+ * pour les actions, magenta #e61778 pour les tags de catégorie) — pas une évocation
+ * institutionnelle générique. Tous les écrans consomment ces custom properties
+ * (var(--color-primary), etc.) plutôt que des couleurs/tailles codées en dur.
  *
- * - Primitives (--color-navy-*, --color-red-*, --color-gray-*) : la palette brute.
+ * - Primitives (--color-blue-*, --color-violet-*, --color-magenta-*, --color-gold-*,
+ *   --color-gray-*) : la palette brute, une famille par barre du pictogramme plus l'or, seule
+ *   couleur du site insee.fr sans équivalent dans le pictogramme (le violet, lui, vient du
+ *   pictogramme mais n'apparaît pas dans le site : teinte de liaison entre bleu et magenta).
  * - Sémantiques (--color-primary, --color-ink, --color-surface, ...) : ce que les composants
  *   utilisent réellement. Un composant ne référence jamais une primitive directement.
  * - theme.less (variables Less ng-zorro-antd) garde les mêmes valeurs de couleur primaire —
@@ -14,12 +20,26 @@
  */
 :root {
   /* Primitives — couleurs */
-  --color-navy-900: #081b38;
-  --color-navy-700: #0f2f5f;
-  --color-navy-500: #24507f;
-  --color-navy-100: #e8edf4;
-  --color-red-700: #b8000c;
-  --color-red-600: #e1000f;
+  --color-blue-900: #0f417a; // insee.fr application.css, bleu foncé (54 occurrences)
+  --color-blue-700: #3467ae; // insee.fr application.css, bleu principal (73 occurrences)
+  --color-blue-500: #2958a7; // insee.fr application.css, bleu intermédiaire (survol)
+  --color-blue-300: #8ab6f5; // vif — pastilles sur fond sombre (écran de projection)
+  --color-blue-100: #ebf5ff; // insee.fr application.css, fond bleu très clair
+  --color-violet-600: #5b32b8; // teinte de liaison bleu → magenta, propre au pictogramme
+  --color-violet-300: #b98ef2; // vif — pastilles sur fond sombre
+  --color-violet-100: #ede6fa;
+  --color-gold-600: #ffc400; // insee.fr application.css, or/jaune d'action (51 occurrences)
+  --color-gold-ink: #3d2f00; // encre sombre pour texte posé sur un fond --color-gold-600
+  --color-magenta-real: #e61778; // insee.fr application.css, magenta réel (tags de catégorie)
+  --color-magenta-700: #6e0f3d; // magenta-real assombri, sûr comme texte sur fond clair
+  --color-magenta-600: #a01464; // magenta-real assombri, sûr comme texte sur blanc (≥4.5:1)
+  --color-magenta-300: #f27ab8; // vif — pastilles sur fond sombre
+  --color-magenta-100: #fbe6f0;
+  // Rouge dédié aux messages d'erreur — --color-accent (magenta de marque) ne lit pas comme un
+  // signal d'erreur universel. Valeurs Ant Design (red-7 / red-1) : cohérence avec le rouge déjà
+  // utilisé par ng-zorro pour ses propres états de validation/danger.
+  --color-danger: #cf1322;
+  --color-danger-subtle: #fff1f0;
   --color-gray-900: #1d1d1d;
   --color-gray-700: #444444;
   --color-gray-500: #6b6b6b;
@@ -28,10 +48,12 @@
   --color-white: #ffffff;
 
   /* Palette catégorielle — repère de Thème (écran "Composer un modèle de session"), 8 teintes
-     cycliques, distinctes des familles navy et rouge pour ne jamais se confondre avec le
-     primaire ou l'accent. Chaque paire base/bg est utilisée ensemble : base pour le texte et la
-     pastille, bg pour le fond du tag — attribuée par index de Thème (voir composer-page.ts),
-     partagée à l'identique entre l'arbre de gauche et les tags de droite (exigence spec). */
+     cycliques, distinctes des familles blue/violet/magenta pour ne jamais se confondre avec le
+     primaire ou l'accent. --color-cat-2 et --color-cat-6 se rapprochent du nouveau
+     --color-violet-600 (charte v2) ; à revoir séparément si une confusion apparaît à l'usage.
+     Chaque paire base/bg est utilisée ensemble : base pour le texte et la pastille, bg pour le
+     fond du tag — attribuée par index de Thème (voir composer-page.ts), partagée à l'identique
+     entre l'arbre de gauche et les tags de droite (exigence spec). */
   --color-cat-1: #0f766e;
   --color-cat-1-bg: #e6f5f3;
   --color-cat-2: #6d28d9;
@@ -56,21 +78,43 @@
   --color-border: var(--color-gray-300);
   --color-ink: var(--color-gray-900);
   --color-ink-muted: var(--color-gray-700);
-  --color-primary: var(--color-navy-700);
-  --color-primary-emphasis: var(--color-navy-900);
-  --color-primary-hover: var(--color-navy-500);
-  --color-primary-subtle: var(--color-navy-100);
-  --color-accent: var(--color-red-600);
-  --color-accent-emphasis: var(--color-red-700);
+  --color-primary: var(--color-blue-700);
+  --color-primary-emphasis: var(--color-blue-900);
+  --color-primary-hover: var(--color-blue-500);
+  --color-primary-subtle: var(--color-blue-100);
+  --color-accent: var(--color-magenta-600);
+  --color-accent-emphasis: var(--color-magenta-700);
   /* Texte/icônes posés sur un fond --color-primary ou --color-primary-emphasis. */
   --color-on-primary: var(--color-white);
 
   /* Élévation — ombre portée pour un élément soulevé au-dessus du reste (ex. aperçu de drag). */
   --shadow-elevated: 0 4px 12px rgba(29, 29, 29, 0.2);
 
-  /* Typographie — une seule famille, échelle fixe (rem), ratio resserré (~1.125–1.2) */
+  /* Direction « Salle d'atelier » (charte v2, cf. home.scss) — matériau note autocollante :
+     ombre teintée bleue (jamais noir pur), légèrement inclinée, coin plié. Les 3 teintes
+     reprennent dans l'ordre les 3 barres du pictogramme Insee (bleu, violet, magenta), pas un
+     choix décoratif arbitraire. Réservé aux notes/tags de l'univers atelier ; les tableaux
+     denses (organisation, composeur) restent sobres. */
+  --shadow-note: 0 6px 14px rgba(30, 58, 143, 0.16), 0 2px 4px rgba(30, 58, 143, 0.1);
+  --color-sticky-blue: var(--color-blue-100);
+  --color-sticky-blue-ink: var(--color-blue-900);
+  --color-sticky-violet: var(--color-violet-100);
+  --color-sticky-violet-ink: var(--color-violet-600);
+  --color-sticky-magenta: var(--color-magenta-100);
+  --color-sticky-magenta-ink: var(--color-magenta-700);
+  /* Ruban adhésif des notes — or insee.fr, jamais porteur de texte (pas de contrainte de
+     contraste), donc la valeur brute --color-gold-600 est utilisable telle quelle. */
+  --color-tape: var(--color-gold-600);
+  --radius-note: 3px;
+
+  /* Typographie — IBM Plex Sans (UI/titres) + IBM Plex Mono (chiffres tabulaires : paliers,
+     taux d'approche, compteurs) partagent une même famille dessinée pour la mesure technique —
+     porte la précision « instrument calibré » de la charte jusque dans le chiffre, sans recourir
+     à une police d'affichage décorative. Chargée via Google Fonts, voir index.html. */
   --font-family-base:
-    'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+    'IBM Plex Sans', 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, Helvetica, Arial,
+    sans-serif;
+  --font-family-mono: 'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
@@ -108,4 +152,16 @@ body {
   font-family: var(--font-family-base);
   color: var(--color-ink);
   background: var(--color-bg);
+}
+
+/* Surfaces navigateur non dessinées — sélection et focus visible tirés de la charte plutôt que
+   laissées aux valeurs par défaut du navigateur. */
+::selection {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }

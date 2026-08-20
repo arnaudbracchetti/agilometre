@@ -16,12 +16,26 @@
     margin: 0;
   }
 
-  /* État salle d'attente — le Code et l'URL sont ce dont la salle a besoin, mis en avant à parité. */
+  /* État salle d'attente — le Code/URL et le compteur sont chacun un grand post-it
+     (<app-sticky-note>, voir shared/sticky-note), posés côte à côte comme deux repères de
+     salle à parité, plutôt que deux lignes de texte empilées sur le fond navy. Rotation légère
+     héritée du composant (1°-2.5°) : à cette échelle de lecture (across-the-room mais fixe,
+     jamais recopié caractère par caractère comme un formulaire), elle reste sans risque. */
   &__connexion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+  }
+
+  &__connexion-note {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-5);
+    text-align: center;
+    gap: var(--space-3);
+    --sticky-note-padding: var(--space-7) var(--space-8);
   }
 
   &__invite {
@@ -31,25 +45,31 @@
   }
 
   &__code {
-    font-size: clamp(4rem, 12vw, 9rem);
-    font-weight: var(--font-weight-bold);
-    letter-spacing: 0.15em;
+    font-family: var(--font-family-mono);
+    font-size: clamp(3.5rem, 9vw, 7rem);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0.1em;
+    line-height: 1;
     margin: 0;
   }
 
   &__url {
-    font-size: clamp(var(--font-size-xl), 4vw, var(--font-size-display));
-    font-weight: var(--font-weight-bold);
+    font-size: clamp(var(--font-size-lg), 2.5vw, var(--font-size-xl));
+    font-weight: var(--font-weight-medium);
     margin: 0;
-    padding: var(--space-2) var(--space-5);
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-sm);
   }
 
-  &__compteur {
-    font-size: var(--font-size-md);
+  &__compteur-valeur {
+    font-family: var(--font-family-mono);
+    font-size: clamp(3.5rem, 9vw, 7rem);
+    font-weight: var(--font-weight-medium);
+    line-height: 1;
     margin: 0;
-    opacity: 0.7;
+  }
+
+  &__compteur-label {
+    font-size: var(--font-size-lg);
+    margin: 0;
   }
 
   /* État question — la question et ses options dominent l'écran. */
@@ -71,33 +91,65 @@
     list-style: none;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-3);
     margin: 0;
     padding: 0;
     font-size: var(--font-size-xl);
+    text-align: left;
   }
 
+  /* Pastille par option — reprend les 4 teintes de la charte (les 3 barres du logo Insee plus
+     l'or du site) au lieu d'une lettre grasse nue ; lisible à distance, jamais tournée (la
+     rotation reste réservée aux surfaces lues de près). Paliers « vifs » (pas les teintes
+     pâles utilisées sur fond clair ailleurs dans la charte) + liseré clair : sur ce fond navy
+     très foncé, un ton pâle ne se détache pas assez. */
   &__lettre {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9em;
+    height: 1.9em;
+    margin-right: var(--space-3);
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.5);
     font-weight: var(--font-weight-bold);
-    margin-right: var(--space-2);
+    color: var(--color-blue-900);
   }
 
-  /* Infos de connexion discrètes pendant l'affichage d'une question — toujours présentes, jamais dominantes. */
+  &__options li:nth-child(4n + 1) &__lettre {
+    background: var(--color-blue-300);
+  }
+
+  &__options li:nth-child(4n + 2) &__lettre {
+    background: var(--color-violet-300);
+  }
+
+  &__options li:nth-child(4n + 3) &__lettre {
+    background: var(--color-magenta-300);
+  }
+
+  &__options li:nth-child(4n + 4) &__lettre {
+    background: var(--color-gold-600);
+  }
+
+  /* Infos de connexion pendant l'affichage d'une question — toujours présentes, jamais
+     dominantes : une vraie note punaisée (<app-sticky-note>, voir shared/sticky-note), petite
+     et posée dans le coin, jamais tournée sur le texte qu'on doit recopier. Le positionnement
+     absolu reste sur .projection__badge (wrapper), jamais sur la note elle-même, qui gère déjà
+     son propre `position: relative`. */
   &__badge {
     position: absolute;
     top: var(--space-4);
     right: var(--space-4);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    text-align: right;
-    opacity: 0.65;
-    font-size: var(--font-size-sm);
-    padding: var(--space-2) var(--space-3);
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-sm);
     z-index: var(--z-sticky);
+  }
+
+  &__badge-note {
+    display: block;
+    text-align: right;
+    font-size: var(--font-size-sm);
+    --sticky-note-padding: var(--space-3) var(--space-3) var(--space-2);
 
     p {
       margin: 0;

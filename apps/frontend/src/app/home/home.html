@@ -1,25 +1,58 @@
 <div class="home">
+  <!--
+    THESIS: Agilomètre ressemble à la salle où la conversation a vraiment lieu — pas à un
+    tableau de bord SaaS qui ne l'a jamais vue.
+    OWN-WORLD: mur d'atelier clair, navy/rouge insee hérités, notes autocollantes légèrement
+    inclinées à coin plié pour les trois dispositifs, un seul trait tracé à la main en accent
+    signature, IBM Plex Sans/Mono pour les chiffres.
+    STORY: un coach reconnaît en un regard son propre rituel d'équipe — séance, pouls,
+    restitutions — dans un outil qui prend la mesure au sérieux sans jouer le tableau de bord
+    froid.
+    FIRST VIEWPORT: bandeau navy uni (pas de dégradé), accroche + note autocollante rouge
+    portant la preuve d'anonymat, CTA ancré à gauche.
+    FORM: Salle d'atelier — choix utilisateur (pick), seed key fceddcb2, index assigné 6 écarté.
+    FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review,
+    the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+  -->
   <app-header [liens]="liensNav">
     <button nz-button nzType="primary">Se connecter</button>
   </app-header>
 
   <section class="home__hero">
-    <h1>Mesurer la maturité agile de vos équipes, sans jamais rompre l’anonymat.</h1>
-    <p>
-      Agilomètre combine des séances de vote animées et des campagnes de pouls par email pour suivre la
-      progression de vos équipes dans la durée — avec un score jamais reliable à un individu.
-    </p>
-    <div class="home__cta">
-      <button nz-button nzType="primary" nzSize="large">Se connecter</button>
-      <button nz-button nzType="default" nzGhost nzSize="large" class="home__cta-ghost">
-        Voir comment ça marche
-      </button>
+    <div class="home__hero-inner">
+      <div class="home__hero-text">
+        <h1>
+          Mesurer la
+          <span class="home__mark">
+            maturité agile
+            <svg class="home__mark-stroke" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+              <path pathLength="1" d="M1,7 C 30,2 70,10 99,4" />
+            </svg>
+          </span>
+          de vos équipes, sans jamais rompre l’anonymat.
+        </h1>
+        <p>
+          Agilomètre combine des séances de vote animées et des campagnes de pouls par email pour
+          suivre la progression de vos équipes dans la durée.
+        </p>
+        <div class="home__cta">
+          <button nz-button nzType="primary" nzSize="large">Se connecter</button>
+          <button nz-button nzType="default" nzGhost nzSize="large" class="home__cta-ghost">
+            Voir comment ça marche
+          </button>
+        </div>
+      </div>
+
+      <app-sticky-note couleur="magenta" class="home__hero-note" role="note">
+        <strong>0</strong>
+        <span>lien conservé entre une réponse et son auteur — jamais, même pour un administrateur.</span>
+      </app-sticky-note>
     </div>
   </section>
 
-  <section class="home__chiffres">
+  <section class="home__pinboard" aria-label="Repères chiffrés">
     @for (chiffre of chiffresCles; track chiffre.libelle) {
-      <div class="home__chiffre">
+      <div class="home__pin">
         <strong>{{ chiffre.valeur }}</strong>
         <span>{{ chiffre.libelle }}</span>
       </div>
@@ -27,25 +60,37 @@
   </section>
 
   <section class="home__dispositifs">
-    @for (dispositif of dispositifs; track dispositif.titre) {
-      <nz-card>
-        <span nz-icon [nzType]="dispositif.icone" nzTheme="outline" class="home__dispositif-icone"></span>
-        <h3>{{ dispositif.titre }}</h3>
-        <p>{{ dispositif.texte }}</p>
-      </nz-card>
-    }
-    <nz-card>
-      <span nz-icon nzType="apartment" nzTheme="outline" class="home__dispositif-icone"></span>
-      <h3>Gérer l’organisation</h3>
-      <p>Créez et renommez les Entités de votre organisation avant d’y rattacher des Équipes.</p>
-      <a routerLink="/organisation" nz-button nzType="primary" class="home__dispositif-action">Accéder</a>
-    </nz-card>
-    <nz-card>
-      <span nz-icon nzType="unordered-list" nzTheme="outline" class="home__dispositif-icone"></span>
-      <h3>Modèles de session</h3>
-      <p>Composez et réutilisez des sélections de Questions pour vos séances animées.</p>
-      <a routerLink="/modeles-session" nz-button nzType="primary" class="home__dispositif-action">Accéder</a>
-    </nz-card>
+    <h2>Deux dispositifs, un seul score.</h2>
+
+    <div class="home__notes">
+      @for (dispositif of dispositifs; track dispositif.titre) {
+        <app-sticky-note [couleur]="dispositif.couleur" class="home__note">
+          <span nz-icon [nzType]="dispositif.icone" nzTheme="outline" class="home__note-icone"></span>
+          <h3>{{ dispositif.titre }}</h3>
+          <p>{{ dispositif.texte }}</p>
+        </app-sticky-note>
+      }
+    </div>
+
+    <div class="home__index-card">
+      <h3>Avant la première séance</h3>
+      <ul>
+        <li>
+          <a routerLink="/organisation">
+            <span nz-icon nzType="apartment" nzTheme="outline"></span>
+            Gérer l’organisation
+          </a>
+          <p>Créez et renommez les Entités de votre organisation avant d’y rattacher des Équipes.</p>
+        </li>
+        <li>
+          <a routerLink="/modeles-session">
+            <span nz-icon nzType="unordered-list" nzTheme="outline"></span>
+            Modèles de session
+          </a>
+          <p>Composez et réutilisez des sélections de Questions pour vos séances animées.</p>
+        </li>
+      </ul>
+    </div>
   </section>
 
   <footer class="home__footer">

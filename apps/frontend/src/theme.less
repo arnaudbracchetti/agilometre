@@ -7,6 +7,15 @@
 // changement de teinte, mettre à jour les deux fichiers.
 @import 'ng-zorro-antd/ng-zorro-antd.less';
 
-@primary-color: #0f2f5f; // --color-primary
-@link-color: #0f2f5f; // --color-primary
+@primary-color: #3467ae; // --color-primary (bleu réel insee.fr)
+@link-color: #3467ae; // --color-primary
 @border-radius-base: 4px; // --radius-sm
+
+// Composants globaux rendus hors de l'arbre de vue Angular (NzMessageService, notifications,
+// tooltips...) : ng-zorro les théorise via ces variables Less plutôt que via nos custom
+// properties CSS (voir styles.scss), donc ils ont besoin de leur propre alignement ici.
+@error-color: #cf1322; // --color-danger — pas @red-5 par défaut, sans lien avec notre charte
+@font-family:
+  'IBM Plex Sans', 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, Helvetica, Arial,
+  sans-serif; // --font-family-base
+@shadow-color: rgba(15, 65, 122, 0.16); // teinté bleu comme --shadow-note, jamais noir pur

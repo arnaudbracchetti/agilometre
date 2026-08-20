@@ -1,0 +1,9 @@
+@if (scotch()) {
+  <span
+    class="sticky-note__scotch"
+    aria-hidden="true"
+    [style.left.%]="scotchGauchePct"
+    [style.transform]="'translateX(-50%) rotate(' + scotchRotationDeg + 'deg)'"
+  ></span>
+}
+<ng-content></ng-content>

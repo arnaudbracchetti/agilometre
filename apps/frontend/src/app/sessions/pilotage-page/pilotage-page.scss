@@ -22,15 +22,15 @@
     margin: 0;
   }
 
+  // Même matériau « note autocollante » que l'accueil/vote/projection, porté par
+  // <app-sticky-note> (voir shared/sticky-note) — la copie du coach du même repère que celui
+  // affiché en salle.
   &__code {
     display: flex;
     align-items: baseline;
     gap: var(--space-3);
-    background: var(--color-surface-alt);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: var(--space-4);
-    margin-bottom: var(--space-5);
+    width: fit-content;
+    margin-bottom: var(--space-6);
   }
 
   &__code-label {
@@ -55,37 +55,63 @@
   }
 
   &__question {
-    margin-bottom: var(--space-5);
+    display: block;
+    max-width: 34rem;
+    margin-bottom: var(--space-6);
   }
 
   &__question-libelle {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-medium);
-    color: var(--color-ink);
-    margin: 0 0 var(--space-3);
+    margin: 0 0 var(--space-4);
   }
 
   &__options {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
+    gap: var(--space-3);
     margin: 0;
     padding: 0;
+    font-size: var(--font-size-md);
+  }
 
-    li {
-      background: var(--color-surface-alt);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-sm);
-      padding: var(--space-3) var(--space-4);
-    }
+  // Mêmes 4 teintes « vives » que l'écran de projection (voir projection-page.scss) — le coach
+  // retrouve les mêmes repères de couleur que ce que la salle voit sur grand écran. Le palier
+  // vif (pas la teinte pâle -100 utilisée pour le fond de la note) est nécessaire ici aussi :
+  // l'option B (violette) siège sur une note elle-même violet pâle, un pâle sur pâle
+  // disparaîtrait.
+  &__lettre {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7em;
+    height: 1.7em;
+    margin-right: var(--space-2);
+    border-radius: 50%;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-blue-900);
+  }
+
+  &__options li:nth-child(4n + 1) &__lettre {
+    background: var(--color-blue-300);
+  }
+
+  &__options li:nth-child(4n + 2) &__lettre {
+    background: var(--color-violet-300);
+  }
+
+  &__options li:nth-child(4n + 3) &__lettre {
+    background: var(--color-magenta-300);
+  }
+
+  &__options li:nth-child(4n + 4) &__lettre {
+    background: var(--color-gold-600);
   }
 
   &__bouton {
     margin-top: var(--space-5);
   }
 
-  &__erreur {
-    color: var(--color-accent-emphasis);
-  }
+  // Apparence portée par <app-error-message> (voir shared/error-message).
 }

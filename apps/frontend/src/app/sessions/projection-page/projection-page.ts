@@ -3,12 +3,14 @@ import { ActivatedRoute } from '@angular/router';
 import { QuestionCouranteDto } from '@agilometre/shared';
 import { LETTRES_OPTIONS } from '../../shared/lettres-options';
 import { sonder } from '../../shared/sondage-2s';
+import { StickyNote } from '../../shared/sticky-note/sticky-note';
+import { ErrorMessage } from '../../shared/error-message/error-message';
 import { ProjectionService } from '../projection.service';
 
 /** Écran de projection — public, sans compte, sondage 2s (doc/spec/annexes/deroulement-session-animee.md). */
 @Component({
   selector: 'app-projection-page',
-  imports: [],
+  imports: [StickyNote, ErrorMessage],
   templateUrl: './projection-page.html',
   styleUrl: './projection-page.scss',
 })

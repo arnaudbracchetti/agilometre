@@ -2,7 +2,7 @@
   @if (chargementEnCours()) {
     <p class="projection__message">Chargement…</p>
   } @else if (inaccessible()) {
-    <p class="projection__message">Cette séance n’est pas accessible.</p>
+    <app-error-message message="Cette séance n’est pas accessible." taille="page" />
   } @else if (questionCourante(); as question) {
     <div class="projection__question">
       <p class="projection__libelle">{{ question.libelle }}</p>
@@ -13,16 +13,28 @@
       </ul>
     </div>
     <aside class="projection__badge">
-      <p class="projection__badge-code">Code {{ code() }}</p>
-      <p class="projection__badge-url">{{ urlDeJointure() }}</p>
-      <p class="projection__badge-compteur">{{ nbDevicesConnectes() }} connecté(s)</p>
+      <app-sticky-note couleur="blue" class="projection__badge-note">
+        <p class="projection__badge-code">Code {{ code() }}</p>
+        <p class="projection__badge-url">{{ urlDeJointure() }}</p>
+        <p class="projection__badge-compteur">{{ nbDevicesConnectes() }} connecté(s)</p>
+      </app-sticky-note>
     </aside>
   } @else {
     <div class="projection__connexion">
-      <p class="projection__invite">Rejoignez la séance</p>
-      <p class="projection__code">{{ code() }}</p>
-      <p class="projection__url">{{ urlDeJointure() }}</p>
-      <p class="projection__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
+      <app-sticky-note couleur="blue" class="projection__connexion-note" role="note">
+        <p class="projection__invite">Rejoignez la séance</p>
+        <p class="projection__code">{{ code() }}</p>
+        <p class="projection__url">{{ urlDeJointure() }}</p>
+      </app-sticky-note>
+      <app-sticky-note
+        couleur="magenta"
+        class="projection__connexion-note projection__connexion-note--compteur"
+        role="status"
+        aria-live="polite"
+      >
+        <p class="projection__compteur-valeur">{{ nbDevicesConnectes() }}</p>
+        <p class="projection__compteur-label">participant(s) connecté(s)</p>
+      </app-sticky-note>
     </div>
   }
 </div>

@@ -15,23 +15,32 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-5);
+  padding: var(--space-6) var(--space-5);
   font-family: var(--font-family-base);
-  color: var(--color-ink);
-  background: var(--color-bg);
+  color: var(--color-on-primary);
+  // Même bleu profond que l'écran de projection (--color-primary-emphasis) : le participant
+  // et la salle arrivent visuellement dans la même pièce. La note claire ressort dessus, comme
+  // la note d'anonymat sur le hero de l'accueil.
+  background: var(--color-primary-emphasis);
+
+  // Même matériau « note autocollante » que l'accueil, porté par <app-sticky-note> (voir
+  // shared/sticky-note) : la carte de séance en direct est elle aussi un moment d'atelier.
+  &__card {
+    width: 100%;
+    max-width: 22rem;
+    --sticky-note-padding: var(--space-6) var(--space-5) var(--space-5);
+  }
 
   &__formulaire {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
     width: 100%;
-    max-width: 22rem;
   }
 
   &__titre {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
-    color: var(--color-primary);
     margin: 0 0 var(--space-2);
     text-align: center;
   }
@@ -41,10 +50,10 @@
     color: var(--color-ink-muted);
   }
 
+  // Apparence portée par <app-error-message> (voir shared/error-message) ; ici seulement la
+  // largeur, pour occuper toute la colonne du formulaire au lieu du inline-flex par défaut.
   &__erreur {
-    color: var(--color-accent-emphasis);
-    font-size: var(--font-size-sm);
-    margin: 0;
+    align-self: stretch;
   }
 
   &__attente {
@@ -80,7 +89,6 @@
   &__attente-message {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-medium);
-    color: var(--color-primary);
     margin: 0;
   }
 

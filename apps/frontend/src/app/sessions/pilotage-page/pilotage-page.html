@@ -2,7 +2,11 @@
   @if (chargementEnCours()) {
     <p>Chargement…</p>
   } @else if (inaccessible()) {
-    <p class="pilotage__erreur">Cet écran de pilotage n’est plus accessible.</p>
+    <app-error-message
+      message="Cet écran de pilotage n’est plus accessible."
+      taille="page"
+      class="pilotage__erreur"
+    />
   } @else {
     <header class="pilotage__entete">
       <h2 class="pilotage__titre">Pilotage de la séance</h2>
@@ -11,23 +15,23 @@
       </a>
     </header>
 
-    <div class="pilotage__code">
+    <app-sticky-note couleur="blue" class="pilotage__code">
       <span class="pilotage__code-label">Code de session</span>
       <span class="pilotage__code-valeur">{{ code() }}</span>
-    </div>
+    </app-sticky-note>
 
     <p class="pilotage__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
 
     @if (statut() === 'OUVERTE') {
       @if (questionCourante(); as question) {
-        <div class="pilotage__question">
+        <app-sticky-note couleur="violet" class="pilotage__question">
           <p class="pilotage__question-libelle">{{ question.libelle }}</p>
           <ul class="pilotage__options">
             @for (option of question.options; track $index) {
-              <li>{{ lettres[$index] }} — {{ option.libelle }}</li>
+              <li><span class="pilotage__lettre">{{ lettres[$index] }}</span> — {{ option.libelle }}</li>
             }
           </ul>
-        </div>
+        </app-sticky-note>
       } @else {
         <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
       }
