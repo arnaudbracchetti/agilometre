@@ -5,6 +5,7 @@ import { Option } from '../referentiel/domain/option';
 import { Question } from '../referentiel/domain/question';
 import { Selection } from './domain/selection';
 import { Session } from './domain/session';
+import { TourDeVote } from './domain/tour-de-vote';
 import { ProjectionController } from './projection.controller';
 
 const generateurDeCode: GenerateurDeCode = {
@@ -39,6 +40,7 @@ describe('ProjectionController', () => {
         session,
         nbDevicesConnectes: 3,
         questionCourante: null,
+        tourOuvert: null,
       }),
     };
     const controller = new ProjectionController(
@@ -52,6 +54,7 @@ describe('ProjectionController', () => {
       code: 'AB12',
       nbDevicesConnectes: 3,
       questionCourante: null,
+      tourOuvert: null,
     });
   });
 
@@ -64,6 +67,7 @@ describe('ProjectionController', () => {
         session,
         nbDevicesConnectes: 3,
         questionCourante: creerQuestion('q1'),
+        tourOuvert: null,
       }),
     };
     const controller = new ProjectionController(
@@ -82,6 +86,42 @@ describe('ProjectionController', () => {
         { libelle: 'Option 4' },
       ],
     });
+  });
+
+  it('mappe tourOuvert en TourOuvertDto (numero + nombre de votants), jamais la répartition', async () => {
+    const session = creerSession();
+    await session.ouvrir();
+    const tourOuvert = TourDeVote.creer(
+      't1',
+      's1',
+      'q1',
+      1,
+      new Date('2026-04-01T10:00:00Z'),
+      null,
+    ).valeur;
+    tourOuvert.voter(
+      'jeton-1',
+      'r1',
+      2,
+      'e1',
+      new Date('2026-04-01T10:01:00Z'),
+    );
+    const obtenirProjectionSession = {
+      executer: jest.fn().mockResolvedValue({
+        type: 'ok',
+        session,
+        nbDevicesConnectes: 3,
+        questionCourante: creerQuestion('q1'),
+        tourOuvert,
+      }),
+    };
+    const controller = new ProjectionController(
+      obtenirProjectionSession as never,
+    );
+
+    const resultat = await controller.obtenir('s1');
+
+    expect(resultat.tourOuvert).toEqual({ numero: 1, nbVotants: 1 });
   });
 
   it('renvoie 404 quand la projection est introuvable', async () => {

@@ -103,6 +103,111 @@
     padding: 0;
     height: auto;
   }
+
+  &__vote {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    width: 100%;
+  }
+
+  &__vote-libelle {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    margin: 0;
+    text-align: center;
+    color: var(--color-ink);
+  }
+
+  &__vote-confirmation {
+    margin: 0;
+    text-align: center;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-primary);
+  }
+
+  // Grille 2x2 — chaque bouton est une grosse cible tactile (priorité mobile, PRD annexe
+  // « Écran participant »). Les 4 boutons restent tous dans le DOM aux deux gabarits ; seul le
+  // libellé texte est masqué en mobile, cf. media query ci-dessous.
+  &__options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    width: 100%;
+  }
+
+  &__option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 5.5rem;
+    padding: var(--space-3);
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--radius-sm);
+    background: var(--color-white);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+
+    &--choisi {
+      border-color: var(--color-primary);
+      background: var(--color-primary-subtle);
+    }
+  }
+
+  &__option-lettre {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-blue-900);
+  }
+
+  &__options &__option:nth-child(4n + 1) &__option-lettre {
+    background: var(--color-blue-300);
+  }
+
+  &__options &__option:nth-child(4n + 2) &__option-lettre {
+    background: var(--color-violet-300);
+  }
+
+  &__options &__option:nth-child(4n + 3) &__option-lettre {
+    background: var(--color-magenta-300);
+  }
+
+  &__options &__option:nth-child(4n + 4) &__option-lettre {
+    background: var(--color-gold-600);
+  }
+
+  &__option-libelle {
+    font-size: var(--font-size-sm);
+    color: var(--color-ink);
+    text-align: center;
+  }
+
+  // Mobile : priorité à la taille de la cible tactile sur le libellé texte (PRD annexe, « Voter —
+  // responsive »). Le libellé complet reste consultable sur l'écran de projection.
+  @media (max-width: 640px) {
+    &__option-libelle {
+      display: none;
+    }
+
+    &__option-lettre {
+      width: 2.75rem;
+      height: 2.75rem;
+      font-size: var(--font-size-lg);
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,9 +1,14 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { JetonSessionDto } from '@agilometre/shared';
+import { JetonSessionDto, MoiParticipantDto } from '@agilometre/shared';
 
-/** Service séparé de SessionsService : route publique, sans compte, consommée par l'écran participant. */
+/**
+ * Service séparé de SessionsService : routes publiques, sans compte, consommées par l'écran
+ * participant. `obtenirMoi`/`voter` portent le Jeton en `Authorization: Bearer` (résolu par
+ * `JetonParticipantGuard` côté backend) — pas d'intercepteur HTTP global pour deux routes
+ * seulement, l'en-tête est construit ici à partir du Jeton fourni par l'appelant.
+ */
 @Injectable({ providedIn: 'root' })
 export class ParticipantService {
   private readonly http = inject(HttpClient);
@@ -13,5 +18,23 @@ export class ParticipantService {
       code,
       jetonPrecedent,
     });
+  }
+
+  obtenirMoi(jeton: string): Observable<MoiParticipantDto> {
+    return this.http.get<MoiParticipantDto>('/api/participant/moi', {
+      headers: this.enteteAuth(jeton),
+    });
+  }
+
+  voter(jeton: string, optionIndex: number): Observable<MoiParticipantDto> {
+    return this.http.post<MoiParticipantDto>(
+      '/api/participant/voter',
+      { optionIndex },
+      { headers: this.enteteAuth(jeton) },
+    );
+  }
+
+  private enteteAuth(jeton: string): HttpHeaders {
+    return new HttpHeaders({ Authorization: `Bearer ${jeton}` });
   }
 }

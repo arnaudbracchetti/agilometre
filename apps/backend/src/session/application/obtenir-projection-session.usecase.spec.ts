@@ -10,6 +10,8 @@ import { Theme } from '../../referentiel/domain/theme';
 import { Selection } from '../domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
+import { TourDeVote } from '../domain/tour-de-vote';
+import { TourDeVoteRepository } from '../domain/tour-de-vote.repository';
 import { ObtenirProjectionSession } from './obtenir-projection-session.usecase';
 
 const generateurDeCode: GenerateurDeCode = {
@@ -53,6 +55,9 @@ class JetonSessionRepositoryFake implements JetonSessionRepository {
   invalider(): Promise<void> {
     return Promise.resolve();
   }
+  resoudreSessionActive(): Promise<string | null> {
+    return Promise.resolve(null);
+  }
 }
 
 class ReferentielRepositoryFake implements ReferentielRepository {
@@ -62,6 +67,21 @@ class ReferentielRepositoryFake implements ReferentielRepository {
   }
   sauvegarder(referentiel: Referentiel): Promise<void> {
     this.referentiel = referentiel;
+    return Promise.resolve();
+  }
+}
+
+class TourDeVoteRepositoryFake implements TourDeVoteRepository {
+  tours: TourDeVote[] = [];
+  findById(id: string): Promise<TourDeVote | null> {
+    return Promise.resolve(this.tours.find((t) => t.id === id) ?? null);
+  }
+  trouverTourOuvertDeLaSession(sessionId: string): Promise<TourDeVote | null> {
+    return Promise.resolve(
+      this.tours.find((t) => t.sessionId === sessionId && !t.estClos) ?? null,
+    );
+  }
+  save(): Promise<void> {
     return Promise.resolve();
   }
 }
@@ -94,6 +114,7 @@ describe('ObtenirProjectionSession', () => {
       sessions,
       jetons,
       new ReferentielRepositoryFake(),
+      new TourDeVoteRepositoryFake(),
     );
 
     const resultat = await useCase.executer('inconnue');
@@ -110,6 +131,7 @@ describe('ObtenirProjectionSession', () => {
       sessions,
       jetons,
       new ReferentielRepositoryFake(),
+      new TourDeVoteRepositoryFake(),
     );
 
     const resultat = await useCase.executer('s1');
@@ -128,6 +150,7 @@ describe('ObtenirProjectionSession', () => {
       sessions,
       jetons,
       new ReferentielRepositoryFake(),
+      new TourDeVoteRepositoryFake(),
     );
 
     const resultat = await useCase.executer('s1');
@@ -135,7 +158,7 @@ describe('ObtenirProjectionSession', () => {
     expect(resultat.type).toBe('introuvable');
   });
 
-  it('renvoie le Code, le nombre de devices connectés et questionCourante=null en salle d’attente', async () => {
+  it('renvoie le Code, le nombre de devices connectés, questionCourante=null et tourOuvert=null en salle d’attente', async () => {
     const sessions = new SessionRepositoryFake();
     const session = creerSessionPreparee('s1');
     await session.ouvrir();
@@ -146,6 +169,7 @@ describe('ObtenirProjectionSession', () => {
       sessions,
       jetons,
       new ReferentielRepositoryFake(),
+      new TourDeVoteRepositoryFake(),
     );
 
     const resultat = await useCase.executer('s1');
@@ -155,6 +179,7 @@ describe('ObtenirProjectionSession', () => {
     expect(resultat.session.code).toBe('AB12');
     expect(resultat.nbDevicesConnectes).toBe(3);
     expect(resultat.questionCourante).toBeNull();
+    expect(resultat.tourOuvert).toBeNull();
   });
 
   it('renvoie questionCourante une fois indexCourant avancé', async () => {
@@ -166,12 +191,52 @@ describe('ObtenirProjectionSession', () => {
     const jetons = new JetonSessionRepositoryFake();
     const referentiel = new ReferentielRepositoryFake();
     referentiel.referentiel = referentielAvecQuestion('q1');
-    const useCase = new ObtenirProjectionSession(sessions, jetons, referentiel);
+    const useCase = new ObtenirProjectionSession(
+      sessions,
+      jetons,
+      referentiel,
+      new TourDeVoteRepositoryFake(),
+    );
 
     const resultat = await useCase.executer('s1');
 
     expect(resultat.type).toBe('ok');
     if (resultat.type !== 'ok') throw new Error('unreachable');
     expect(resultat.questionCourante?.id).toBe('q1');
+  });
+
+  it('renvoie le Tour ouvert de la Session avec son nombre de votants', async () => {
+    const sessions = new SessionRepositoryFake();
+    const session = creerSessionPreparee('s1');
+    await session.ouvrir();
+    session.passerQuestionSuivante([]);
+    sessions.sessions.push(session);
+    const jetons = new JetonSessionRepositoryFake();
+    const referentiel = new ReferentielRepositoryFake();
+    referentiel.referentiel = referentielAvecQuestion('q1');
+    const tours = new TourDeVoteRepositoryFake();
+    const tour = TourDeVote.creer(
+      't1',
+      's1',
+      'q1',
+      1,
+      new Date('2026-04-01T10:00:00Z'),
+      null,
+    ).valeur;
+    tour.voter('jeton-1', 'r1', 2, 'e1', new Date('2026-04-01T10:01:00Z'));
+    tours.tours.push(tour);
+    const useCase = new ObtenirProjectionSession(
+      sessions,
+      jetons,
+      referentiel,
+      tours,
+    );
+
+    const resultat = await useCase.executer('s1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') throw new Error('unreachable');
+    expect(resultat.tourOuvert?.numero).toBe(1);
+    expect(resultat.tourOuvert?.participations).toHaveLength(1);
   });
 });

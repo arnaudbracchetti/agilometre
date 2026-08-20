@@ -68,6 +68,13 @@ class JetonSessionRepositoryFake implements JetonSessionRepository {
     this.invalides.add(id);
     return Promise.resolve();
   }
+  resoudreSessionActive(jetonId: string): Promise<string | null> {
+    const jeton = this.jetons.find((j) => j.id === jetonId);
+    if (!jeton || this.invalides.has(jetonId)) {
+      return Promise.resolve(null);
+    }
+    return Promise.resolve(jeton.sessionId);
+  }
 }
 
 function sessionPreparee(id = 's1'): Session {

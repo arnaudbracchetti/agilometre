@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Max,
   Min,
 } from 'class-validator';
 
@@ -74,4 +75,14 @@ export class RejoindreSessionDto {
   @IsOptional()
   @IsString()
   jetonPrecedent?: string;
+}
+
+export class VoterParticipantDto {
+  @IsInt()
+  @Min(0)
+  // Question.NOMBRE_OPTIONS_REQUIS - 1 : une Question porte toujours exactement 4 Options
+  // (apps/backend/src/referentiel/domain/question.ts) — valeur dupliquée ici plutôt qu'importée
+  // (frontière HTTP, pas de dépendance du DTO vers le domaine Référentiel), à garder synchrone.
+  @Max(3)
+  optionIndex!: number;
 }

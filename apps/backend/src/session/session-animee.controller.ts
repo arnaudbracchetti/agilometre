@@ -38,7 +38,12 @@ import { SupprimerSession } from './application/supprimer-session.usecase';
 import { OuvrirSession } from './application/ouvrir-session.usecase';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
 import { PasserQuestionSuivanteSession } from './application/passer-question-suivante-session.usecase';
-import { versQuestionCouranteDto } from './question-courante.mapper';
+import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
+import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
+import {
+  versQuestionCouranteDto,
+  versTourOuvertDto,
+} from './question-courante.mapper';
 import {
   AjouterQuestionSessionDto,
   AjouterThemeSessionDto,
@@ -107,6 +112,8 @@ export class SessionAnimeeController {
     private readonly ouvrirSession: OuvrirSession,
     private readonly obtenirPilotageSession: ObtenirPilotageSession,
     private readonly passerQuestionSuivanteSession: PasserQuestionSuivanteSession,
+    private readonly ouvrirTourDeVote: OuvrirTourDeVote,
+    private readonly cloreTourDeVote: CloreTourDeVote,
   ) {}
 
   @Get()
@@ -187,7 +194,42 @@ export class SessionAnimeeController {
     return this.rechargerPilotage(id);
   }
 
-  /** Réutilisé par GET :id/pilotage et POST :id/passer-question-suivante — un seul mapping. */
+  @Post(':id/ouvrir-tour')
+  async ouvrirTour(@Param('id') id: string): Promise<PilotageSessionDto> {
+    const resultat = await this.ouvrirTourDeVote.executer(id);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Session ${id} introuvable`);
+    }
+    if (resultat.type === 'non_ouverte') {
+      throw new ConflictException(
+        'La Session doit être ouverte pour ouvrir un Tour',
+      );
+    }
+    if (resultat.type === 'aucune_question_courante') {
+      throw new ConflictException(
+        'Aucune Question courante : lancez la Question avant d’ouvrir le vote',
+      );
+    }
+    if (resultat.type === 'tour_deja_ouvert') {
+      throw new ConflictException(
+        'Un Tour de vote est déjà ouvert sur cette Session',
+      );
+    }
+    return this.rechargerPilotage(id);
+  }
+
+  @Post(':id/clore-tour')
+  async clorerTour(@Param('id') id: string): Promise<PilotageSessionDto> {
+    const resultat = await this.cloreTourDeVote.executer(id);
+    if (resultat.type === 'aucun_tour_ouvert') {
+      throw new ConflictException(
+        'Aucun Tour de vote ouvert sur cette Session',
+      );
+    }
+    return this.rechargerPilotage(id);
+  }
+
+  /** Réutilisé par GET :id/pilotage et les routes qui font évoluer la séance — un seul mapping. */
   private async rechargerPilotage(id: string): Promise<PilotageSessionDto> {
     const resultat = await this.obtenirPilotageSession.executer(id);
     if (resultat.type === 'introuvable') {
@@ -200,6 +242,7 @@ export class SessionAnimeeController {
       code: resultat.session.code as string,
       nbDevicesConnectes: resultat.nbDevicesConnectes,
       questionCourante: versQuestionCouranteDto(resultat.questionCourante),
+      tourOuvert: versTourOuvertDto(resultat.tourOuvert),
     };
   }
 

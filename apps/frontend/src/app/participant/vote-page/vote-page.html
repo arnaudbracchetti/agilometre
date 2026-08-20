@@ -28,13 +28,43 @@
           Rejoindre
         </button>
       </form>
+    } @else if (phase() === 'vote' && question(); as question) {
+      <div class="vote__vote">
+        <p class="vote__vote-libelle">{{ question.libelle }}</p>
+        <div class="vote__options" role="group" aria-label="Options de réponse">
+          @for (option of question.options; track $index) {
+            <button
+              type="button"
+              class="vote__option"
+              [class.vote__option--choisi]="optionChoisieIndex() === $index"
+              [attr.aria-pressed]="optionChoisieIndex() === $index"
+              [disabled]="voteEnCours()"
+              (click)="voter($index)"
+            >
+              <span class="vote__option-lettre">{{ lettres[$index] }}</span>
+              <span class="vote__option-libelle">{{ option.libelle }}</span>
+            </button>
+          }
+        </div>
+        @if (optionChoisieIndex() !== null) {
+          <p class="vote__vote-confirmation" role="status" aria-live="polite">Vote pris en compte</p>
+        }
+        @if (connexionPerdue()) {
+          <app-error-message message="Connexion perdue — nouvelle tentative en cours…" class="vote__erreur" />
+        }
+      </div>
     } @else {
       <div class="vote__attente" role="status" aria-live="polite">
         <div class="vote__attente-indicateur" aria-hidden="true">
           <span></span><span></span><span></span>
         </div>
-        <p class="vote__attente-message">Vous êtes connecté</p>
-        <p class="vote__attente-details">Le vote va bientôt commencer — restez sur cet écran.</p>
+        <p class="vote__attente-message">
+          {{ voteEnregistreSurDernierTour() ? 'Vote enregistré, résultats à l’écran' : 'Le coach anime la discussion' }}
+        </p>
+        <p class="vote__attente-details">Restez sur cet écran — le vote s’ouvrira automatiquement.</p>
+        @if (connexionPerdue()) {
+          <app-error-message message="Connexion perdue — nouvelle tentative en cours…" class="vote__erreur" />
+        }
         <button
           nz-button
           nzType="link"

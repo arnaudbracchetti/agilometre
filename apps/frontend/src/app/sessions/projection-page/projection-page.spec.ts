@@ -41,6 +41,7 @@ describe('ProjectionPage', () => {
       code: '654321',
       nbDevicesConnectes: 3,
       questionCourante: null,
+      tourOuvert: null,
     });
     fixture.detectChanges();
 
@@ -67,6 +68,7 @@ describe('ProjectionPage', () => {
           { libelle: 'Toujours' },
         ],
       },
+      tourOuvert: null,
     });
     fixture.detectChanges();
 
@@ -76,6 +78,34 @@ describe('ProjectionPage', () => {
     expect(texte).toContain('D — Toujours');
     expect(texte).not.toContain('Salle d’attente');
     expect(texte).toContain('654321');
+    expect(texte).not.toContain('ont voté');
+  });
+
+  it('affiche le Compteur de participation pendant le Vote, sans jamais révéler la répartition', () => {
+    fixture = TestBed.createComponent(ProjectionPage);
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/projection/s1').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 5,
+      questionCourante: {
+        questionId: 'q1',
+        libelle: 'Les rétrospectives sont-elles régulières ?',
+        options: [
+          { libelle: 'Jamais' },
+          { libelle: 'Parfois' },
+          { libelle: 'Souvent' },
+          { libelle: 'Toujours' },
+        ],
+      },
+      tourOuvert: { numero: 1, nbVotants: 2 },
+    });
+    fixture.detectChanges();
+
+    const texte = fixture.nativeElement.textContent as string;
+    expect(texte).toContain('Les rétrospectives sont-elles régulières ?');
+    expect(texte).toContain('2 / 5 ont voté');
   });
 
   it('sonde /api/projection/:sessionId toutes les 2 secondes', () => {
@@ -87,6 +117,7 @@ describe('ProjectionPage', () => {
       code: '654321',
       nbDevicesConnectes: 0,
       questionCourante: null,
+      tourOuvert: null,
     });
 
     vi.advanceTimersByTime(2000);
@@ -96,6 +127,7 @@ describe('ProjectionPage', () => {
       code: '654321',
       nbDevicesConnectes: 1,
       questionCourante: null,
+      tourOuvert: null,
     });
   });
 

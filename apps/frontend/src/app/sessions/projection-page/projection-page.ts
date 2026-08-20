@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { QuestionCouranteDto } from '@agilometre/shared';
+import { QuestionCouranteDto, TourOuvertDto } from '@agilometre/shared';
 import { LETTRES_OPTIONS } from '../../shared/lettres-options';
 import { sonder } from '../../shared/sondage-2s';
 import { StickyNote } from '../../shared/sticky-note/sticky-note';
@@ -23,6 +23,7 @@ export class ProjectionPage implements OnInit {
   protected readonly code = signal<string | null>(null);
   protected readonly nbDevicesConnectes = signal(0);
   protected readonly questionCourante = signal<QuestionCouranteDto | null>(null);
+  protected readonly tourOuvert = signal<TourOuvertDto | null>(null);
   protected readonly inaccessible = signal(false);
   protected readonly chargementEnCours = signal(true);
   /** URL à saisir par un participant pour rejoindre (doc "Écran de projection", état salle d'attente). */
@@ -49,6 +50,7 @@ export class ProjectionPage implements OnInit {
       this.code.set(projection.code);
       this.nbDevicesConnectes.set(projection.nbDevicesConnectes);
       this.questionCourante.set(projection.questionCourante);
+      this.tourOuvert.set(projection.tourOuvert);
       this.chargementEnCours.set(false);
     });
   }

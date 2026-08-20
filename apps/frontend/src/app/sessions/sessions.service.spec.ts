@@ -72,6 +72,22 @@ describe('SessionsService', () => {
     req.flush({ statut: 'OUVERTE', code: '654321' });
   });
 
+  it('ouvre un Tour via POST /api/sessions/:id/ouvrir-tour', () => {
+    service.ouvrirTour('s1').subscribe();
+
+    const req = httpMock.expectOne('/api/sessions/s1/ouvrir-tour');
+    expect(req.request.method).toBe('POST');
+    req.flush({ statut: 'OUVERTE', code: '654321', tourOuvert: { numero: 1, nbVotants: 0 } });
+  });
+
+  it('clôt le Tour ouvert via POST /api/sessions/:id/clore-tour', () => {
+    service.clorerTour('s1').subscribe();
+
+    const req = httpMock.expectOne('/api/sessions/s1/clore-tour');
+    expect(req.request.method).toBe('POST');
+    req.flush({ statut: 'OUVERTE', code: '654321', tourOuvert: null });
+  });
+
   it('modifie Équipe et Date via PATCH /api/sessions/:id', () => {
     service.modifierInfos('s1', 'e2', '2026-05-01').subscribe();
 

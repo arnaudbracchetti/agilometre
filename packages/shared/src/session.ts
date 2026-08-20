@@ -54,11 +54,17 @@ export interface QuestionCouranteDto {
   options: OptionAffichageDto[];
 }
 
+export interface TourOuvertDto {
+  numero: number;
+  nbVotants: number;
+}
+
 export interface ProjectionSessionDto {
   statut: StatutSession;
   code: string;
   nbDevicesConnectes: number;
   questionCourante: QuestionCouranteDto | null;
+  tourOuvert: TourOuvertDto | null;
 }
 
 export interface PilotageSessionDto {
@@ -66,9 +72,16 @@ export interface PilotageSessionDto {
   code: string;
   nbDevicesConnectes: number;
   questionCourante: QuestionCouranteDto | null;
+  tourOuvert: TourOuvertDto | null;
 }
 
 export interface JetonSessionDto {
   sessionId: string;
   jeton: string;
+}
+
+export interface MoiParticipantDto {
+  voteOuvert: boolean;
+  question: QuestionCouranteDto | null;
+  optionChoisieIndex: number | null;
 }

@@ -3,6 +3,8 @@ import { Question } from '../../referentiel/domain/question';
 import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
+import { TourDeVote } from '../domain/tour-de-vote';
+import { TourDeVoteRepository } from '../domain/tour-de-vote.repository';
 import { resoudreQuestionCourante } from './resoudre-question-courante';
 
 export type ResultatObtenirProjectionSession =
@@ -12,6 +14,7 @@ export type ResultatObtenirProjectionSession =
       session: Session;
       nbDevicesConnectes: number;
       questionCourante: Question | null;
+      tourOuvert: TourDeVote | null;
     };
 
 /**
@@ -24,6 +27,7 @@ export class ObtenirProjectionSession {
     private readonly sessions: SessionRepository,
     private readonly jetons: JetonSessionRepository,
     private readonly referentiel: ReferentielRepository,
+    private readonly tours: TourDeVoteRepository,
   ) {}
 
   async executer(id: string): Promise<ResultatObtenirProjectionSession> {
@@ -36,6 +40,13 @@ export class ObtenirProjectionSession {
       session,
       this.referentiel,
     );
-    return { type: 'ok', session, nbDevicesConnectes, questionCourante };
+    const tourOuvert = await this.tours.trouverTourOuvertDeLaSession(id);
+    return {
+      type: 'ok',
+      session,
+      nbDevicesConnectes,
+      questionCourante,
+      tourOuvert,
+    };
   }
 }

@@ -14,7 +14,7 @@ export type StatutSession = 'PREPAREE' | 'OUVERTE' | 'CLOTUREE';
 export interface EtatTour {
   tourId: string;
   questionId: string;
-  numero: number;  // rang du vote pour une question
+  numero: number; // rang du vote pour une question
   clos: boolean;
 }
 

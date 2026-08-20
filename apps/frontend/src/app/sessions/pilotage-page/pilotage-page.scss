@@ -113,5 +113,24 @@
     margin-top: var(--space-5);
   }
 
+  &__compteur-tour {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-md);
+    color: var(--color-ink);
+    margin: var(--space-3) 0 0;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    margin-top: var(--space-5);
+  }
+
+  &__actions &__bouton {
+    margin-top: 0;
+  }
+
   // Apparence portée par <app-error-message> (voir shared/error-message).
 }

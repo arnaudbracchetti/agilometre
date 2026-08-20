@@ -43,6 +43,8 @@ function creerControleur(
     nonUtilise,
     obtenirPilotageSession as unknown as ObtenirPilotageSession,
     passerQuestionSuivanteSession as unknown as PasserQuestionSuivanteSession,
+    nonUtilise,
+    nonUtilise,
   );
 }
 
@@ -58,6 +60,7 @@ describe('SessionAnimeeController.passerQuestionSuivante', () => {
         session,
         nbDevicesConnectes: 2,
         questionCourante: null,
+        tourOuvert: null,
       }),
     };
     const controller = creerControleur(
@@ -73,6 +76,7 @@ describe('SessionAnimeeController.passerQuestionSuivante', () => {
       code: 'AB12',
       nbDevicesConnectes: 2,
       questionCourante: null,
+      tourOuvert: null,
     });
   });
 

@@ -28,6 +28,10 @@ import { ObtenirProjectionSession } from './application/obtenir-projection-sessi
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
 import { PasserQuestionSuivanteSession } from './application/passer-question-suivante-session.usecase';
 import { RejoindreSession } from './application/rejoindre-session.usecase';
+import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
+import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
+import { VoterParticipant } from './application/voter-participant.usecase';
+import { ObtenirEtatParticipant } from './application/obtenir-etat-participant.usecase';
 import { PrismaModeleSessionRepository } from './infrastructure/prisma-modele-session.repository';
 import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-modele-session-bibliotheque.query';
 import { PrismaSessionRepository } from './infrastructure/prisma-session.repository';
@@ -41,6 +45,7 @@ import { SessionController } from './session.controller';
 import { SessionAnimeeController } from './session-animee.controller';
 import { ProjectionController } from './projection.controller';
 import { ParticipantController } from './participant.controller';
+import { JetonParticipantGuard } from './jeton-participant.guard';
 
 @Module({
   imports: [ReferentielModule, OrganisationModule],
@@ -56,15 +61,11 @@ import { ParticipantController } from './participant.controller';
     CryptoGenerateurDeCode,
     PrismaSessionRepository,
     PrismaSessionListeQuery,
-    // Aucun use case ne consomme encore PrismaTourDeVoteRepository/PrismaReponseRepository (#33
-    // est un enabler technique, "pas d'écran") — prêts pour la carte "voter" qui les injectera
-    // (même patron que SessionRepository.existeCodeOuvert ajouté par la carte #32).
-    // PrismaJetonSessionRepository, lui, est désormais consommé par ObtenirProjectionSession (#35)
-    // et ObtenirPilotageSession (#37).
     PrismaTourDeVoteRepository,
     PrismaReponseRepository,
     PrismaJetonSessionRepository,
     PrismaEtatToursQuery,
+    JetonParticipantGuard,
     {
       provide: CreerModeleSession,
       useFactory: (repository: PrismaModeleSessionRepository) =>
@@ -230,11 +231,13 @@ import { ParticipantController } from './participant.controller';
         sessions: PrismaSessionRepository,
         jetons: PrismaJetonSessionRepository,
         referentiel: PrismaReferentielRepository,
-      ) => new ObtenirProjectionSession(sessions, jetons, referentiel),
+        tours: PrismaTourDeVoteRepository,
+      ) => new ObtenirProjectionSession(sessions, jetons, referentiel, tours),
       inject: [
         PrismaSessionRepository,
         PrismaJetonSessionRepository,
         PrismaReferentielRepository,
+        PrismaTourDeVoteRepository,
       ],
     },
     {
@@ -243,10 +246,59 @@ import { ParticipantController } from './participant.controller';
         sessions: PrismaSessionRepository,
         jetons: PrismaJetonSessionRepository,
         referentiel: PrismaReferentielRepository,
-      ) => new ObtenirPilotageSession(sessions, jetons, referentiel),
+        tours: PrismaTourDeVoteRepository,
+      ) => new ObtenirPilotageSession(sessions, jetons, referentiel, tours),
       inject: [
         PrismaSessionRepository,
         PrismaJetonSessionRepository,
+        PrismaReferentielRepository,
+        PrismaTourDeVoteRepository,
+      ],
+    },
+    {
+      provide: OuvrirTourDeVote,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        tours: PrismaTourDeVoteRepository,
+        etatTours: PrismaEtatToursQuery,
+      ) => new OuvrirTourDeVote(sessions, tours, etatTours),
+      inject: [
+        PrismaSessionRepository,
+        PrismaTourDeVoteRepository,
+        PrismaEtatToursQuery,
+      ],
+    },
+    {
+      provide: CloreTourDeVote,
+      useFactory: (tours: PrismaTourDeVoteRepository) =>
+        new CloreTourDeVote(tours),
+      inject: [PrismaTourDeVoteRepository],
+    },
+    {
+      provide: VoterParticipant,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        tours: PrismaTourDeVoteRepository,
+        reponses: PrismaReponseRepository,
+        referentiel: PrismaReferentielRepository,
+      ) => new VoterParticipant(sessions, tours, reponses, referentiel),
+      inject: [
+        PrismaSessionRepository,
+        PrismaTourDeVoteRepository,
+        PrismaReponseRepository,
+        PrismaReferentielRepository,
+      ],
+    },
+    {
+      provide: ObtenirEtatParticipant,
+      useFactory: (
+        tours: PrismaTourDeVoteRepository,
+        reponses: PrismaReponseRepository,
+        referentiel: PrismaReferentielRepository,
+      ) => new ObtenirEtatParticipant(tours, reponses, referentiel),
+      inject: [
+        PrismaTourDeVoteRepository,
+        PrismaReponseRepository,
         PrismaReferentielRepository,
       ],
     },

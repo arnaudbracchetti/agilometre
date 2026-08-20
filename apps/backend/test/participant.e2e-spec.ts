@@ -7,6 +7,8 @@ import {
   EquipeDto,
   JetonSessionDto,
   ModeleSessionDto,
+  MoiParticipantDto,
+  PilotageSessionDto,
   ProjectionSessionDto,
   SessionDto,
 } from '@agilometre/shared';
@@ -41,7 +43,10 @@ describe('Participant — jointure par Code (e2e)', () => {
   });
 
   async function nettoyer(): Promise<void> {
+    await prisma.participation.deleteMany();
     await prisma.jetonSession.deleteMany();
+    await prisma.reponse.deleteMany();
+    await prisma.tourDeVote.deleteMany();
     await prisma.sessionSelectionItem.deleteMany();
     await prisma.sessionQuestionSautee.deleteMany();
     await prisma.session.deleteMany();
@@ -230,5 +235,212 @@ describe('Participant — jointure par Code (e2e)', () => {
     expect((projectionB.body as ProjectionSessionDto).nbDevicesConnectes).toBe(
       1,
     );
+  });
+
+  /** Fait avancer une Session OUVERTE vers sa première Question et ouvre un Tour dessus. */
+  async function sessionEnVote(suffixe = ''): Promise<SessionDto> {
+    const session = await sessionOuverte(suffixe);
+    await request(app.getHttpServer())
+      .post(`/api/sessions/${session.id}/passer-question-suivante`)
+      .expect(201);
+    await request(app.getHttpServer())
+      .post(`/api/sessions/${session.id}/ouvrir-tour`)
+      .expect(201);
+    return session;
+  }
+
+  async function rejoindre(code: string): Promise<string> {
+    const reponse = await request(app.getHttpServer())
+      .post('/api/participant/rejoindre')
+      .send({ code })
+      .expect(201);
+    return (reponse.body as JetonSessionDto).jeton;
+  }
+
+  describe('parcours D2 — ouvrir un Tour, voter, revoter, clore', () => {
+    it('POST /api/sessions/:id/ouvrir-tour — 409 en salle d’attente (aucune Question courante)', async () => {
+      const session = await sessionOuverte();
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(409);
+    });
+
+    it('GET /api/participant/moi — voteOuvert=false et 4 Options masquées hors vote', async () => {
+      const session = await sessionOuverte();
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201);
+      const jeton = await rejoindre(session.code as string);
+
+      const reponse = await request(app.getHttpServer())
+        .get('/api/participant/moi')
+        .set('Authorization', `Bearer ${jeton}`)
+        .expect(200);
+
+      const etat = reponse.body as MoiParticipantDto;
+      expect(etat.voteOuvert).toBe(false);
+      expect(etat.question).toBeNull();
+    });
+
+    it('GET /api/participant/moi — 401 pour un Jeton absent ou invalide', async () => {
+      await request(app.getHttpServer())
+        .get('/api/participant/moi')
+        .expect(401);
+      await request(app.getHttpServer())
+        .get('/api/participant/moi')
+        .set('Authorization', 'Bearer inconnu')
+        .expect(401);
+    });
+
+    it('ouvrir un Tour révèle les 4 Options côté participant et le numéro/compteur côté pilotage', async () => {
+      const session = await sessionOuverte();
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201);
+      const jeton = await rejoindre(session.code as string);
+
+      const pilotageAvant = await request(app.getHttpServer())
+        .get(`/api/sessions/${session.id}/pilotage`)
+        .expect(200);
+      expect((pilotageAvant.body as PilotageSessionDto).tourOuvert).toBeNull();
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+
+      const moi = await request(app.getHttpServer())
+        .get('/api/participant/moi')
+        .set('Authorization', `Bearer ${jeton}`)
+        .expect(200);
+      const etat = moi.body as MoiParticipantDto;
+      expect(etat.voteOuvert).toBe(true);
+      expect(etat.question?.options).toHaveLength(4);
+      expect(etat.optionChoisieIndex).toBeNull();
+
+      const pilotage = await request(app.getHttpServer())
+        .get(`/api/sessions/${session.id}/pilotage`)
+        .expect(200);
+      expect((pilotage.body as PilotageSessionDto).tourOuvert).toEqual({
+        numero: 1,
+        nbVotants: 0,
+      });
+    });
+
+    it('POST /api/sessions/:id/ouvrir-tour — 409 si un Tour est déjà ouvert', async () => {
+      const session = await sessionEnVote();
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(409);
+    });
+
+    it('POST /api/participant/voter puis revote — un seul votant, dernier choix retenu', async () => {
+      const session = await sessionEnVote();
+      const jeton = await rejoindre(session.code as string);
+
+      const premierVote = await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jeton}`)
+        .send({ optionIndex: 0 })
+        .expect(201);
+      expect((premierVote.body as MoiParticipantDto).optionChoisieIndex).toBe(
+        0,
+      );
+
+      const pilotageApresVote = await request(app.getHttpServer())
+        .get(`/api/sessions/${session.id}/pilotage`)
+        .expect(200);
+      expect(
+        (pilotageApresVote.body as PilotageSessionDto).tourOuvert?.nbVotants,
+      ).toBe(1);
+
+      const revote = await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jeton}`)
+        .send({ optionIndex: 3 })
+        .expect(201);
+      expect((revote.body as MoiParticipantDto).optionChoisieIndex).toBe(3);
+
+      const pilotageApresRevote = await request(app.getHttpServer())
+        .get(`/api/sessions/${session.id}/pilotage`)
+        .expect(200);
+      expect(
+        (pilotageApresRevote.body as PilotageSessionDto).tourOuvert?.nbVotants,
+      ).toBe(1); // revote : toujours un seul votant
+    });
+
+    it('POST /api/participant/voter — 400 pour un optionIndex hors bornes', async () => {
+      const session = await sessionEnVote();
+      const jeton = await rejoindre(session.code as string);
+
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jeton}`)
+        .send({ optionIndex: 4 })
+        .expect(400);
+    });
+
+    it('POST /api/participant/voter — 401 pour un Jeton invalide', async () => {
+      await sessionEnVote();
+
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', 'Bearer inconnu')
+        .send({ optionIndex: 0 })
+        .expect(401);
+    });
+
+    it('POST /api/sessions/:id/clore-tour — le compteur de participation redevient invisible côté participant et le Tour disparaît du pilotage', async () => {
+      const session = await sessionEnVote();
+      const jeton = await rejoindre(session.code as string);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jeton}`)
+        .send({ optionIndex: 1 })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+
+      const moi = await request(app.getHttpServer())
+        .get('/api/participant/moi')
+        .set('Authorization', `Bearer ${jeton}`)
+        .expect(200);
+      expect((moi.body as MoiParticipantDto).voteOuvert).toBe(false);
+
+      const pilotage = await request(app.getHttpServer())
+        .get(`/api/sessions/${session.id}/pilotage`)
+        .expect(200);
+      expect((pilotage.body as PilotageSessionDto).tourOuvert).toBeNull();
+    });
+
+    it('POST /api/sessions/:id/clore-tour — 409 si aucun Tour n’est ouvert', async () => {
+      const session = await sessionOuverte();
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(409);
+    });
+
+    it('après clôture, un nouveau Tour (revote sur la même Question) démarre à numero=2', async () => {
+      const session = await sessionEnVote();
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+
+      const reouverture = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+
+      expect((reouverture.body as PilotageSessionDto).tourOuvert).toEqual({
+        numero: 2,
+        nbVotants: 0,
+      });
+    });
   });
 });

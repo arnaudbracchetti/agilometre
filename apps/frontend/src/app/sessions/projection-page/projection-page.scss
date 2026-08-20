@@ -143,6 +143,10 @@
     top: var(--space-4);
     right: var(--space-4);
     z-index: var(--z-sticky);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-3);
   }
 
   &__badge-note {
@@ -154,5 +158,12 @@
     p {
       margin: 0;
     }
+  }
+
+  // Compteur de participation (état Vote) : même petit gabarit que le reste du badge, jamais la
+  // répartition des votes — seul le rapport votants/devices est affiché ici.
+  &__badge-compteur-vote {
+    font-family: var(--font-family-mono);
+    font-weight: var(--font-weight-medium);
   }
 }

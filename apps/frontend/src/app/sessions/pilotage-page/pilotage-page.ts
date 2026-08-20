@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { PilotageSessionDto, QuestionCouranteDto } from '@agilometre/shared';
+import { PilotageSessionDto, QuestionCouranteDto, TourOuvertDto } from '@agilometre/shared';
 import { LETTRES_OPTIONS } from '../../shared/lettres-options';
 import { sonder } from '../../shared/sondage-2s';
 import { StickyNote } from '../../shared/sticky-note/sticky-note';
@@ -29,9 +29,11 @@ export class PilotagePage implements OnInit {
   protected readonly code = signal<string | null>(null);
   protected readonly nbDevicesConnectes = signal(0);
   protected readonly questionCourante = signal<QuestionCouranteDto | null>(null);
+  protected readonly tourOuvert = signal<TourOuvertDto | null>(null);
   protected readonly inaccessible = signal(false);
   protected readonly chargementEnCours = signal(true);
   protected readonly avancerEnCours = signal(false);
+  protected readonly tourEnCours = signal(false);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -63,6 +65,10 @@ export class PilotagePage implements OnInit {
     return this.questionCourante() ? 'Question suivante' : 'Commencer';
   }
 
+  protected libelleBoutonTour(): string {
+    return this.tourOuvert() ? 'Clore le vote' : 'Ouvrir le vote';
+  }
+
   protected avancer(): void {
     const id = this.sessionId();
     if (!id) {
@@ -81,10 +87,26 @@ export class PilotagePage implements OnInit {
       });
   }
 
+  protected basculerTour(): void {
+    const id = this.sessionId();
+    if (!id) {
+      return;
+    }
+    this.tourEnCours.set(true);
+    const appel = this.tourOuvert()
+      ? this.sessionsService.clorerTour(id)
+      : this.sessionsService.ouvrirTour(id);
+    appel.pipe(finalize(() => this.tourEnCours.set(false))).subscribe({
+      next: (pilotage) => this.appliquer(pilotage),
+      error: () => this.message.error('Impossible de basculer l’état du vote.'),
+    });
+  }
+
   private appliquer(pilotage: PilotageSessionDto): void {
     this.statut.set(pilotage.statut);
     this.code.set(pilotage.code);
     this.nbDevicesConnectes.set(pilotage.nbDevicesConnectes);
     this.questionCourante.set(pilotage.questionCourante);
+    this.tourOuvert.set(pilotage.tourOuvert);
   }
 }

@@ -35,4 +35,23 @@ describe('ParticipantService', () => {
     expect(req.request.body).toEqual({ code: '4271', jetonPrecedent: 'jeton-ancien' });
     req.flush({ sessionId: 's1', jeton: 'jeton-abc' });
   });
+
+  it('lit l’état participant via GET /api/participant/moi avec le Jeton en Authorization', () => {
+    service.obtenirMoi('jeton-abc').subscribe();
+
+    const req = httpMock.expectOne('/api/participant/moi');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer jeton-abc');
+    req.flush({ voteOuvert: false, question: null, optionChoisieIndex: null });
+  });
+
+  it('vote via POST /api/participant/voter avec le Jeton en Authorization', () => {
+    service.voter('jeton-abc', 2).subscribe();
+
+    const req = httpMock.expectOne('/api/participant/voter');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer jeton-abc');
+    expect(req.request.body).toEqual({ optionIndex: 2 });
+    req.flush({ voteOuvert: true, question: null, optionChoisieIndex: 2 });
+  });
 });

@@ -1,20 +1,27 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { QuestionCouranteDto } from '@agilometre/shared';
 import { JetonParticipantStorage } from '../jeton-participant.storage';
 import { ParticipantService } from '../participant.service';
+import { LETTRES_OPTIONS } from '../../shared/lettres-options';
+import { sonder } from '../../shared/sondage-2s';
 import { StickyNote } from '../../shared/sticky-note/sticky-note';
 import { ErrorMessage } from '../../shared/error-message/error-message';
 
-type Phase = 'saisie' | 'attente';
+type Phase = 'saisie' | 'attente' | 'vote';
+
+const INTERVALLE_SONDAGE_PARTICIPANT_MS = 1000;
 
 /**
- * Écran participant (carte #36) : saisie du Code puis attente du lancement du vote. Un seul
- * composant pour les deux phases — pas de route dédiée à l'attente, le rechargement retombe sur
- * la même URL et relit le Jeton en storage (doc/spec/annexes/deroulement-session-animee.md,
- * "Jointure d'un participant"). Le sondage de l'état de la Session (détection du vote lancé)
- * arrive avec la carte #37, qui ajoutera `GET /api/participant/moi`.
+ * Écran participant (carte D2, #39) : saisie du Code, attente, puis vote quand le Coach ouvre un
+ * Tour. Un seul composant pour les trois phases — pas de route dédiée, le rechargement retombe
+ * sur la même URL et relit le Jeton en storage (doc/spec/annexes/deroulement-session-animee.md,
+ * "Jointure d'un participant"). Sondage 1s de `GET /api/participant/moi` dès qu'un Jeton est
+ * connu — rythme volontairement plus rapide que les écrans Coach ("Synchronisation des écrans").
  */
 @Component({
   selector: 'app-vote-page',
@@ -25,16 +32,33 @@ type Phase = 'saisie' | 'attente';
 export class VotePage implements OnInit {
   private readonly participantService = inject(ParticipantService);
   private readonly storage = inject(JetonParticipantStorage);
+  private readonly message = inject(NzMessageService);
+  private readonly destroyRef = inject(DestroyRef);
 
+  protected readonly lettres = LETTRES_OPTIONS;
   protected readonly phase = signal<Phase>('saisie');
   protected readonly code = signal('');
   protected readonly erreur = signal<string | null>(null);
   protected readonly soumissionEnCours = signal(false);
   protected readonly codeValide = computed(() => this.code().trim().length > 0);
+  protected readonly question = signal<QuestionCouranteDto | null>(null);
+  protected readonly optionChoisieIndex = signal<number | null>(null);
+  protected readonly voteEnCours = signal(false);
+  protected readonly connexionPerdue = signal(false);
+  /** Reflète « ai-je voté sur le Tour actuellement ouvert » — volontairement non mis à jour tant
+   * que `voteOuvert` est false, donc reste figé sur le dernier Tour une fois clos : c'est ce qui
+   * permet de distinguer, en phase 'attente', « jamais encore voté » de « Vote enregistré,
+   * résultats à l'écran » (doc/spec/annexes/deroulement-session-animee.md, « Écran participant »). */
+  protected readonly voteEnregistreSurDernierTour = signal(false);
+  /** Ré-abonné à chaque jointure — coupe le sondage précédent, sinon un vieux Jeton continuerait
+   * de dicter phase/question par-dessus l'écran courant après « Rejoindre une autre séance ». */
+  private sondageAbonnement: Subscription | null = null;
 
   ngOnInit(): void {
-    if (this.storage.obtenir()) {
+    const jeton = this.storage.obtenir();
+    if (jeton) {
       this.phase.set('attente');
+      this.demarrerSondage(jeton.jeton);
     }
   }
 
@@ -53,6 +77,7 @@ export class VotePage implements OnInit {
         this.storage.enregistrer(resultat.sessionId, resultat.jeton);
         this.soumissionEnCours.set(false);
         this.phase.set('attente');
+        this.demarrerSondage(resultat.jeton);
       },
       error: () => {
         this.soumissionEnCours.set(false);
@@ -64,8 +89,54 @@ export class VotePage implements OnInit {
   }
 
   protected rejoindreAutreSeance(): void {
+    this.sondageAbonnement?.unsubscribe();
     this.code.set('');
     this.erreur.set(null);
+    this.question.set(null);
+    this.optionChoisieIndex.set(null);
+    this.voteEnregistreSurDernierTour.set(false);
     this.phase.set('saisie');
+  }
+
+  protected voter(index: number): void {
+    const jeton = this.storage.obtenir()?.jeton;
+    if (!jeton || this.voteEnCours()) {
+      return;
+    }
+    const choixPrecedent = this.optionChoisieIndex();
+    this.optionChoisieIndex.set(index); // optimiste : surbrillance immédiate
+    this.voteEnCours.set(true);
+    this.participantService
+      .voter(jeton, index)
+      .subscribe({
+        next: (etat) => {
+          this.voteEnCours.set(false);
+          this.optionChoisieIndex.set(etat.optionChoisieIndex);
+          this.voteEnregistreSurDernierTour.set(etat.optionChoisieIndex !== null);
+        },
+        error: () => {
+          this.voteEnCours.set(false);
+          this.optionChoisieIndex.set(choixPrecedent);
+          this.message.error('Vote impossible — vérifiez votre connexion et réessayez.');
+        },
+      });
+  }
+
+  private demarrerSondage(jeton: string): void {
+    this.sondageAbonnement?.unsubscribe();
+    this.sondageAbonnement = sonder(
+      () => this.participantService.obtenirMoi(jeton),
+      () => this.connexionPerdue.set(true),
+      this.destroyRef,
+      INTERVALLE_SONDAGE_PARTICIPANT_MS,
+    ).subscribe((etat) => {
+      this.connexionPerdue.set(false);
+      this.question.set(etat.question);
+      this.optionChoisieIndex.set(etat.optionChoisieIndex);
+      if (etat.voteOuvert) {
+        this.voteEnregistreSurDernierTour.set(etat.optionChoisieIndex !== null);
+      }
+      this.phase.set(etat.voteOuvert ? 'vote' : 'attente');
+    });
   }
 }

@@ -37,7 +37,7 @@ export class TourDeVote {
     readonly id: string,
     readonly sessionId: string,
     readonly questionId: string,
-    readonly numero: number,  // Rang du tour de vote au sein d'un question
+    readonly numero: number, // Rang du tour de vote au sein d'un question
     readonly ouvertLe: Date,
     private _clotureLe: Date | null,
     private _participations: Participation[],

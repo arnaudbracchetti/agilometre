@@ -5,7 +5,10 @@ import {
   StatutSession as StatutSessionDto,
 } from '@agilometre/shared';
 import { ObtenirProjectionSession } from './application/obtenir-projection-session.usecase';
-import { versQuestionCouranteDto } from './question-courante.mapper';
+import {
+  versQuestionCouranteDto,
+  versTourOuvertDto,
+} from './question-courante.mapper';
 
 /**
  * Contrôleur séparé de SessionAnimeeController : route publique, sans compte, accessible tant que
@@ -35,6 +38,7 @@ export class ProjectionController {
       code: resultat.session.code as string,
       nbDevicesConnectes: resultat.nbDevicesConnectes,
       questionCourante: versQuestionCouranteDto(resultat.questionCourante),
+      tourOuvert: versTourOuvertDto(resultat.tourOuvert),
     };
   }
 }
