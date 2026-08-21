@@ -6,7 +6,9 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import {
   PilotageSessionDto,
+  ProgressionQuestionDto,
   QuestionCouranteDto,
+  StatutQuestionProgressionDto,
   TourHistoriqueDto,
   TourOuvertDto,
 } from '@agilometre/shared';
@@ -16,9 +18,10 @@ import { CouleurStickyNote, StickyNote } from '../../shared/sticky-note/sticky-n
 import { ErrorMessage } from '../../shared/error-message/error-message';
 import { SessionsService } from '../sessions.service';
 
-interface GroupeHistorique {
+interface GroupeProgression {
   questionId: string;
   libelle: string;
+  statut: StatutQuestionProgressionDto;
   tours: TourHistoriqueDto[];
 }
 
@@ -27,6 +30,13 @@ interface GroupeHistorique {
  * Question, pas par contenu, pour varier visuellement une liste de plusieurs notes empilées.
  */
 const COULEURS_NOTES_HISTORIQUE: readonly CouleurStickyNote[] = ['blue', 'violet', 'magenta'];
+
+const LIBELLES_STATUT: Record<StatutQuestionProgressionDto, string> = {
+  A_VENIR: 'À venir',
+  COURANTE: 'En cours',
+  TRAITEE: 'Traitée',
+  SAUTEE: 'Sautée',
+};
 
 /** Écran de pilotage (Coach) — sondage 2s (doc/spec/annexes/deroulement-session-animee.md). */
 @Component({
@@ -49,6 +59,7 @@ export class PilotagePage implements OnInit {
   protected readonly questionCourante = signal<QuestionCouranteDto | null>(null);
   protected readonly tourOuvert = signal<TourOuvertDto | null>(null);
   protected readonly historique = signal<TourHistoriqueDto[]>([]);
+  protected readonly progression = signal<ProgressionQuestionDto[]>([]);
   /** Repliées par défaut — consultation à la demande, jamais imposée au premier affichage. */
   protected readonly groupesHistoriqueOuverts = signal<ReadonlySet<string>>(new Set());
   protected readonly inaccessible = signal(false);
@@ -57,21 +68,27 @@ export class PilotagePage implements OnInit {
   protected readonly tourEnCours = signal(false);
 
   /**
-   * Regroupe les entrées consécutives d'une même Question (dont plusieurs Tours en cas de
-   * revote, carte E1) — le backend garantit déjà cet ordre (Sélection puis numéro croissant,
-   * voir `resoudreHistoriqueToursClos`), il n'y a donc qu'à agréger, jamais à re-trier ici.
+   * Vue d'ensemble de la Sélection entière (carte F1), qu'une Question ait déjà des Tours clos ou
+   * non — fusionne la progression (ordre + statut de chaque Question, toujours complet) avec
+   * l'historique des Tours clos (carte E2, potentiellement plusieurs par Question en cas de
+   * revote, carte E1). L'ordre vient uniquement de `progression`, déjà celui de la Sélection.
    */
-  protected readonly historiqueParQuestion = computed<GroupeHistorique[]>(() => {
-    const groupes: GroupeHistorique[] = [];
+  protected readonly vueDensemble = computed<GroupeProgression[]>(() => {
+    const toursParQuestion = new Map<string, TourHistoriqueDto[]>();
     for (const tour of this.historique()) {
-      const dernierGroupe = groupes.at(-1);
-      if (dernierGroupe && dernierGroupe.questionId === tour.questionId) {
-        dernierGroupe.tours.push(tour);
+      const liste = toursParQuestion.get(tour.questionId);
+      if (liste) {
+        liste.push(tour);
       } else {
-        groupes.push({ questionId: tour.questionId, libelle: tour.libelle, tours: [tour] });
+        toursParQuestion.set(tour.questionId, [tour]);
       }
     }
-    return groupes;
+    return this.progression().map((entree) => ({
+      questionId: entree.questionId,
+      libelle: entree.libelle,
+      statut: entree.statut,
+      tours: toursParQuestion.get(entree.questionId) ?? [],
+    }));
   });
 
   ngOnInit(): void {
@@ -145,6 +162,10 @@ export class PilotagePage implements OnInit {
     return COULEURS_NOTES_HISTORIQUE[index % COULEURS_NOTES_HISTORIQUE.length];
   }
 
+  protected libelleStatut(statut: StatutQuestionProgressionDto): string {
+    return LIBELLES_STATUT[statut];
+  }
+
   protected estGroupeHistoriqueOuvert(questionId: string): boolean {
     return this.groupesHistoriqueOuverts().has(questionId);
   }
@@ -182,5 +203,6 @@ export class PilotagePage implements OnInit {
     this.questionCourante.set(pilotage.questionCourante);
     this.tourOuvert.set(pilotage.tourOuvert);
     this.historique.set(pilotage.historique ?? []);
+    this.progression.set(pilotage.progression ?? []);
   }
 }

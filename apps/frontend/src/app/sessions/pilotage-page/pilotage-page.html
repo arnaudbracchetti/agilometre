@@ -8,92 +8,133 @@
       class="pilotage__erreur"
     />
   } @else {
-    <header class="pilotage__entete">
-      <h2 class="pilotage__titre">Pilotage de la séance</h2>
-      <a nz-button nzType="default" [href]="urlProjection()" target="_blank" rel="noopener">
-        Ouvrir l’écran de projection
-      </a>
-    </header>
+    <div class="pilotage__mise-en-page">
+      <div class="pilotage__colonne-principale">
+        <header class="pilotage__entete">
+          <h2 class="pilotage__titre">Pilotage de la séance</h2>
+          <a nz-button nzType="default" [href]="urlProjection()" target="_blank" rel="noopener">
+            Ouvrir l’écran de projection
+          </a>
+        </header>
 
-    <app-sticky-note couleur="blue" class="pilotage__code">
-      <span class="pilotage__code-label">Code de session</span>
-      <span class="pilotage__code-valeur">{{ code() }}</span>
-    </app-sticky-note>
+        <app-sticky-note couleur="blue" class="pilotage__code">
+          <span class="pilotage__code-label">Code de session</span>
+          <span class="pilotage__code-valeur">{{ code() }}</span>
+        </app-sticky-note>
 
-    <p class="pilotage__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
+        <p class="pilotage__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
 
-    <div class="pilotage__corps">
-      <div class="pilotage__principal">
-        @if (statut() === 'OUVERTE') {
-          @if (questionCourante(); as question) {
-            <app-sticky-note couleur="violet" class="pilotage__question">
-              <p class="pilotage__question-libelle">{{ question.libelle }}</p>
-              <ul class="pilotage__options">
-                @for (option of question.options; track $index) {
-                  <li><span class="pilotage__lettre">{{ lettres[$index] }}</span> — {{ option.libelle }}</li>
-                }
-              </ul>
-            </app-sticky-note>
-            @if (tourOuvert(); as tour) {
-              <p class="pilotage__compteur-tour">{{ tour.nbVotants }} / {{ nbDevicesConnectes() }} ont voté</p>
+        <div class="pilotage__principal">
+          @if (statut() === 'OUVERTE') {
+            @if (questionCourante(); as question) {
+              <app-sticky-note couleur="violet" class="pilotage__question">
+                <p class="pilotage__question-libelle">{{ question.libelle }}</p>
+                <ul class="pilotage__options">
+                  @for (option of question.options; track $index) {
+                    <li><span class="pilotage__lettre">{{ lettres[$index] }}</span> — {{ option.libelle }}</li>
+                  }
+                </ul>
+              </app-sticky-note>
+              @if (tourOuvert(); as tour) {
+                <p class="pilotage__compteur-tour">{{ tour.nbVotants }} / {{ nbDevicesConnectes() }} ont voté</p>
+              }
+            } @else {
+              <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
             }
-          } @else {
-            <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
-          }
-          <div class="pilotage__actions">
-            @if (questionCourante()) {
+            <div class="pilotage__actions">
+              @if (questionCourante()) {
+                <button
+                  class="pilotage__bouton"
+                  nz-button
+                  nzType="primary"
+                  [disabled]="tourEnCours()"
+                  (click)="basculerTour()"
+                >
+                  {{ libelleBoutonTour() }}
+                </button>
+              }
               <button
                 class="pilotage__bouton"
                 nz-button
-                nzType="primary"
-                [disabled]="tourEnCours()"
-                (click)="basculerTour()"
+                [nzType]="questionCourante() ? 'default' : 'primary'"
+                [disabled]="avancerEnCours() || tourOuvert() !== null"
+                (click)="avancer()"
               >
-                {{ libelleBoutonTour() }}
+                {{ libelleBouton() }}
               </button>
-            }
-            <button
-              class="pilotage__bouton"
-              nz-button
-              [nzType]="questionCourante() ? 'default' : 'primary'"
-              [disabled]="avancerEnCours() || tourOuvert() !== null"
-              (click)="avancer()"
-            >
-              {{ libelleBouton() }}
-            </button>
-          </div>
-        } @else {
-          <p class="pilotage__statut">Séance clôturée.</p>
-        }
+            </div>
+          } @else {
+            <p class="pilotage__statut">Séance clôturée.</p>
+          }
+        </div>
       </div>
 
-      @if (historiqueParQuestion().length > 0) {
+      @if (vueDensemble().length > 0) {
         <section class="pilotage__historique">
-          <h3 class="pilotage__historique-titre">Historique en direct</h3>
+          <h3 class="pilotage__historique-titre">Vue d’ensemble de la Sélection</h3>
           <div class="pilotage__historique-liste">
-            @for (groupe of historiqueParQuestion(); track groupe.questionId; let i = $index) {
+            @for (groupe of vueDensemble(); track groupe.questionId; let i = $index) {
               @let ouvert = estGroupeHistoriqueOuvert(groupe.questionId);
+              @let aDesTours = groupe.tours.length > 0;
               <app-sticky-note [couleur]="couleurNoteHistorique(i)" class="pilotage__historique-note">
-                <button
-                  type="button"
-                  class="pilotage__historique-entete"
-                  [attr.aria-expanded]="ouvert"
-                  (click)="basculerGroupeHistorique(groupe.questionId)"
-                >
-                  <span class="pilotage__historique-libelle">{{ groupe.libelle }}</span>
-                  <span class="pilotage__historique-nb-tours">
-                    {{ groupe.tours.length }} {{ groupe.tours.length > 1 ? 'tours' : 'tour' }}
-                  </span>
-                  <span
-                    nz-icon
-                    nzType="down"
-                    nzTheme="outline"
-                    class="pilotage__historique-chevron"
-                    [class.pilotage__historique-chevron--ouvert]="ouvert"
-                    aria-hidden="true"
-                  ></span>
-                </button>
-                @if (ouvert) {
+                @if (aDesTours) {
+                  <button
+                    type="button"
+                    class="pilotage__historique-entete"
+                    [attr.aria-expanded]="ouvert"
+                    (click)="basculerGroupeHistorique(groupe.questionId)"
+                  >
+                    @if (groupe.statut === 'COURANTE') {
+                      <span
+                        nz-icon
+                        nzType="caret-right"
+                        nzTheme="fill"
+                        class="pilotage__historique-indicateur"
+                        aria-hidden="true"
+                      ></span>
+                    }
+                    <span class="pilotage__historique-libelle">{{ groupe.libelle }}</span>
+                    <span class="pilotage__historique-meta">
+                      <span
+                        class="pilotage__historique-statut"
+                        [class.pilotage__historique-statut--a-venir]="groupe.statut === 'A_VENIR'"
+                        [class.pilotage__historique-statut--courante]="groupe.statut === 'COURANTE'"
+                        [class.pilotage__historique-statut--sautee]="groupe.statut === 'SAUTEE'"
+                      >{{ libelleStatut(groupe.statut) }}</span>
+                      <span class="pilotage__historique-nb-tours">
+                        {{ groupe.tours.length }} {{ groupe.tours.length > 1 ? 'tours' : 'tour' }}
+                      </span>
+                    </span>
+                    <span
+                      nz-icon
+                      nzType="down"
+                      nzTheme="outline"
+                      class="pilotage__historique-chevron"
+                      [class.pilotage__historique-chevron--ouvert]="ouvert"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                } @else {
+                  <div class="pilotage__historique-entete pilotage__historique-entete--statique">
+                    @if (groupe.statut === 'COURANTE') {
+                      <span
+                        nz-icon
+                        nzType="caret-right"
+                        nzTheme="fill"
+                        class="pilotage__historique-indicateur"
+                        aria-hidden="true"
+                      ></span>
+                    }
+                    <span class="pilotage__historique-libelle">{{ groupe.libelle }}</span>
+                    <span
+                      class="pilotage__historique-statut"
+                      [class.pilotage__historique-statut--a-venir]="groupe.statut === 'A_VENIR'"
+                      [class.pilotage__historique-statut--courante]="groupe.statut === 'COURANTE'"
+                      [class.pilotage__historique-statut--sautee]="groupe.statut === 'SAUTEE'"
+                    >{{ libelleStatut(groupe.statut) }}</span>
+                  </div>
+                }
+                @if (ouvert && aDesTours) {
                   <div class="pilotage__historique-tours">
                     @for (tour of groupe.tours; track tour.numero; let dernier = $last) {
                       <div class="pilotage__historique-tour">

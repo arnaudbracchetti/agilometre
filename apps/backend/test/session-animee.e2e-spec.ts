@@ -603,6 +603,11 @@ describe('Session animée (e2e)', () => {
         { libelle: 'Toujours' },
       ],
     });
+    // Vue d'ensemble de la progression (carte F1) : q1 devient COURANTE, q2 reste À_VENIR.
+    expect((avance.body as PilotageSessionDto).progression).toMatchObject([
+      { questionId: 'q1', statut: 'COURANTE' },
+      { questionId: 'q2', statut: 'A_VENIR' },
+    ]);
 
     const projectionApresAvance = await request(app.getHttpServer())
       .get(`/api/projection/${session.id}`)

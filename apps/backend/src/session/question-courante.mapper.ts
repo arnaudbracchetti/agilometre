@@ -1,4 +1,5 @@
 import {
+  ProgressionQuestionDto,
   QuestionCouranteDto,
   RepartitionVotesDto,
   TourClosDto,
@@ -8,6 +9,7 @@ import {
 import { Question } from '../referentiel/domain/question';
 import { DernierTourClos } from './application/resoudre-dernier-tour-clos';
 import { HistoriqueTourClos } from './application/resoudre-historique-tours-clos';
+import { ProgressionQuestion } from './application/resoudre-progression';
 import { TourDeVote } from './domain/tour-de-vote';
 
 /** Le domaine ignore délibérément `@agilometre/shared` (frontière API) — mapping explicite ici. */
@@ -69,5 +71,16 @@ export function versHistoriqueDto(
     libelle: tour.libelle,
     numero: tour.numero,
     repartition: versRepartitionDto(tour.comptesParNiveau),
+  }));
+}
+
+/** Progression de toute la Sélection (carte F1) — statut dérivé, jamais recalculé côté mapping. */
+export function versProgressionDto(
+  progression: ProgressionQuestion[],
+): ProgressionQuestionDto[] {
+  return progression.map((entree) => ({
+    questionId: entree.questionId,
+    libelle: entree.libelle,
+    statut: entree.statut,
   }));
 }

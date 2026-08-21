@@ -109,11 +109,20 @@ class RepartitionTourQueryFake implements RepartitionTourQuery {
 }
 
 function referentielAvecQuestion(questionId: string): Referentiel {
+  return referentielAvecQuestions([[questionId, 'Libellé']]);
+}
+
+function referentielAvecQuestions(
+  questions: ReadonlyArray<readonly [id: string, libelle: string]>,
+): Referentiel {
   const options = [1, 2, 3, 4].map((niveau) =>
     Option.creer(`Option ${niveau}`, Niveau.creer(niveau).valeur),
   );
-  const question = Question.creer(questionId, 'Libellé', 't1', options).valeur;
-  const theme = Theme.creer('t1', 'Thème 1', [question]);
+  const theme = Theme.creer(
+    't1',
+    'Thème 1',
+    questions.map(([id, libelle]) => Question.creer(id, libelle, 't1', options).valeur),
+  );
   return Referentiel.reconstituer(new Date('2026-01-01'), [theme]);
 }
 
@@ -387,6 +396,80 @@ describe('ObtenirPilotageSession', () => {
         numero: 2,
         comptesParNiveau: { 1: 0, 2: 1, 3: 2, 4: 1 },
       },
+    ]);
+  });
+
+  it('renvoie la progression de toute la Sélection (carte F1), y compris les Questions à venir', async () => {
+    const sessions = new SessionRepositoryFake();
+    const session = Session.creer(
+      's1',
+      'e1',
+      new Date('2026-04-01'),
+      'm1',
+      Selection.reconstituer(['q1', 'q2']),
+      generateurDeCode,
+    ).valeur;
+    await session.ouvrir();
+    const etatTours = new EtatToursQueryFake();
+    etatTours.etats = [{ tourId: 't1', questionId: 'q1', numero: 1, clos: true }];
+    session.passerQuestionSuivante([]);
+    session.passerQuestionSuivante(etatTours.etats);
+    sessions.sessions.push(session);
+    const jetons = new JetonSessionRepositoryFake();
+    const referentiel = new ReferentielRepositoryFake();
+    referentiel.referentiel = referentielAvecQuestions([
+      ['q1', 'Question 1'],
+      ['q2', 'Question 2'],
+    ]);
+    const useCase = new ObtenirPilotageSession(
+      sessions,
+      jetons,
+      referentiel,
+      new TourDeVoteRepositoryFake(),
+      etatTours,
+      new RepartitionTourQueryFake(),
+    );
+
+    const resultat = await useCase.executer('s1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') throw new Error('unreachable');
+    expect(resultat.progression).toEqual([
+      { questionId: 'q1', libelle: 'Question 1', statut: 'TRAITEE' },
+      { questionId: 'q2', libelle: 'Question 2', statut: 'COURANTE' },
+    ]);
+  });
+
+  it('exclut de la progression les Questions retirées du Référentiel actif', async () => {
+    const sessions = new SessionRepositoryFake();
+    const session = Session.creer(
+      's1',
+      'e1',
+      new Date('2026-04-01'),
+      'm1',
+      Selection.reconstituer(['q1', 'q2']),
+      generateurDeCode,
+    ).valeur;
+    await session.ouvrir();
+    sessions.sessions.push(session);
+    const jetons = new JetonSessionRepositoryFake();
+    const referentiel = new ReferentielRepositoryFake();
+    referentiel.referentiel = referentielAvecQuestions([['q1', 'Question 1']]);
+    const useCase = new ObtenirPilotageSession(
+      sessions,
+      jetons,
+      referentiel,
+      new TourDeVoteRepositoryFake(),
+      new EtatToursQueryFake(),
+      new RepartitionTourQueryFake(),
+    );
+
+    const resultat = await useCase.executer('s1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') throw new Error('unreachable');
+    expect(resultat.progression).toEqual([
+      { questionId: 'q1', libelle: 'Question 1', statut: 'A_VENIR' },
     ]);
   });
 });

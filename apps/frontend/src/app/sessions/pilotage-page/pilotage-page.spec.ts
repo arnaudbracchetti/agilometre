@@ -5,6 +5,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { provideNzIcons } from 'ng-zorro-antd/icon';
+import { CaretRightFill, DownOutline } from '@ant-design/icons-angular/icons';
 import { PilotagePage } from './pilotage-page';
 
 function activatedRouteAvecId(id: string): Partial<ActivatedRoute> {
@@ -36,6 +38,10 @@ describe('PilotagePage', () => {
         provideHttpClientTesting(),
         provideNoopAnimations(),
         { provide: ActivatedRoute, useValue: activatedRouteAvecId('s1') },
+        // Sans ça, nz-icon tente de récupérer les SVG via HTTP (assets/outline|fill/*.svg), ce
+        // que HttpTestingController rejette comme requête non attendue (même pattern que
+        // bibliotheque-page.spec.ts).
+        provideNzIcons([DownOutline, CaretRightFill]),
       ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
@@ -243,8 +249,8 @@ describe('PilotagePage', () => {
     });
   });
 
-  describe('Historique en direct (carte E2)', () => {
-    it('n’affiche aucune section « Historique en direct » tant qu’aucun Tour n’est clos', () => {
+  describe('Vue d’ensemble de la Sélection (cartes E2 + F1)', () => {
+    it('n’affiche aucune section tant que la progression n’est pas connue', () => {
       fixture = TestBed.createComponent(PilotagePage);
       fixture.detectChanges();
       httpMock.expectOne('/api/sessions/s1/pilotage').flush({
@@ -254,10 +260,58 @@ describe('PilotagePage', () => {
         questionCourante: null,
         tourOuvert: null,
         historique: [],
+        progression: [],
       });
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.textContent).not.toContain('Historique en direct');
+      expect(fixture.nativeElement.textContent).not.toContain('Vue d’ensemble de la Sélection');
+    });
+
+    it('affiche toute la Sélection dès que la progression est connue, y compris les Questions sans Tour clos (carte F1)', () => {
+      fixture = TestBed.createComponent(PilotagePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+        statut: 'OUVERTE',
+        code: '654321',
+        nbDevicesConnectes: 0,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [
+          { questionId: 'q1', libelle: 'Question en cours', statut: 'COURANTE' },
+          { questionId: 'q2', libelle: 'Question à venir', statut: 'A_VENIR' },
+        ],
+      });
+      fixture.detectChanges();
+
+      const texte = fixture.nativeElement.textContent as string;
+      expect(texte).toContain('Vue d’ensemble de la Sélection');
+      expect(texte).toContain('Question en cours');
+      expect(texte).toContain('En cours');
+      expect(texte).toContain('Question à venir');
+      expect(texte).toContain('À venir');
+      // Aucun Tour à dérouler pour ces deux Questions : pas d'en-tête cliquable ni de chevron.
+      expect(fixture.nativeElement.querySelector('button.pilotage__historique-entete')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.pilotage__historique-chevron')).toBeNull();
+    });
+
+    it('affiche le statut « Sautée » d’une Question sans Tour (carte F1, préparation de la carte F2)', () => {
+      fixture = TestBed.createComponent(PilotagePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+        statut: 'OUVERTE',
+        code: '654321',
+        nbDevicesConnectes: 0,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [{ questionId: 'q1', libelle: 'Question sautée', statut: 'SAUTEE' }],
+      });
+      fixture.detectChanges();
+
+      const texte = fixture.nativeElement.textContent as string;
+      expect(texte).toContain('Question sautée');
+      expect(texte).toContain('Sautée');
     });
 
     it('groupe les Tours d’une même Question revotée sous une seule note, repliée par défaut, avec le badge « pris en compte » sur le bon numéro', () => {
@@ -269,6 +323,10 @@ describe('PilotagePage', () => {
         nbDevicesConnectes: 2,
         questionCourante: null,
         tourOuvert: null,
+        progression: [
+          { questionId: 'q1', libelle: 'Les rétrospectives sont-elles régulières ?', statut: 'TRAITEE' },
+          { questionId: 'q2', libelle: 'Autre question', statut: 'TRAITEE' },
+        ],
         historique: [
           {
             questionId: 'q1',
@@ -293,7 +351,7 @@ describe('PilotagePage', () => {
       fixture.detectChanges();
 
       const texte = fixture.nativeElement.textContent as string;
-      expect(texte).toContain('Historique en direct');
+      expect(texte).toContain('Vue d’ensemble de la Sélection');
       expect(texte).toContain('Les rétrospectives sont-elles régulières ?');
       expect(texte).toContain('2 tours');
       expect(texte).toContain('Autre question');

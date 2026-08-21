@@ -136,46 +136,59 @@
     margin-top: 0;
   }
 
-  // Deux colonnes côte à côte plutôt qu'empilées : la Question courante (boucle principale) et
-  // l'Historique (référence secondaire) doivent rester visibles ensemble sans scroll — un Coach
-  // qui discute d'un résultat passé veut garder la Question en cours à l'œil. `flex-wrap` repasse
-  // les deux colonnes en pile dès que la largeur ne suffit plus pour les deux `flex-basis`.
-  &__corps {
+  // Deux colonnes côte à côte plutôt qu'empilées : la Vue d'ensemble démarre en haut de l'écran,
+  // au même niveau que l'en-tête — pas seulement à côté de la Question courante — pour rester
+  // visible sans scroll pendant qu'un Coach discute d'un résultat passé. `flex-wrap` repasse les
+  // deux colonnes en pile dès que la largeur ne suffit plus pour les deux `flex-basis`.
+  &__mise-en-page {
     display: flex;
     align-items: flex-start;
     gap: var(--space-8);
     flex-wrap: wrap;
   }
 
-  &__principal {
+  &__colonne-principale {
     flex: 1 1 28rem;
     min-width: 0;
   }
 
   // Consultation secondaire (référence ponctuelle pendant la discussion, pas une action répétée
   // comme les contrôles de Tour) : toujours à côté du flux principal, jamais mêlée à sa boucle.
+  // `flex-basis`/`max-width` élargis pour laisser respirer les deux colonnes de la liste ci-dessous.
   &__historique {
-    flex: 1 1 24rem;
+    flex: 2 1 40rem;
     min-width: 0;
-    max-width: 34rem;
+    max-width: 48rem;
   }
 
   &__historique-titre {
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-bold);
     color: var(--color-ink-muted);
-    margin: 0 0 var(--space-3);
+    margin: 0 0 var(--space-4);
   }
 
   // Une note par Question (cf. `couleurNoteHistorique`, 3 teintes cyclées) plutôt qu'un composant
   // de bibliothèque générique : même matériau que les notes Code/Question ci-dessus, pour que
-  // l'écran reste un seul registre visuel. Écart généreux : chaque note a sa propre inclinaison
-  // aléatoire (<app-sticky-note>), il faut de la marge pour que deux coins pliés voisins ne se
-  // touchent jamais.
+  // l'écran reste un seul registre visuel. Écart resserré (liste potentiellement longue, toute la
+  // Sélection dès la carte F1) : juste assez pour que deux coins pliés voisins ne se touchent
+  // jamais malgré l'inclinaison aléatoire (<app-sticky-note>), pas plus.
+  // Essai deux colonnes : `grid-auto-flow: row` remplit ligne par ligne (pas de tassement type
+  // masonry), un simple grid suffit tant que les notes repliées gardent une hauteur homogène.
   &__historique-liste {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Padding resserré (cf. --sticky-note-padding, même mécanisme que projection-page/vote-page) :
+  // plusieurs notes empilées, contrairement à la note « Question courante » seule à gauche.
+  &__historique-note {
+    --sticky-note-padding: var(--space-3) var(--space-4);
   }
 
   &__historique-entete {
@@ -190,11 +203,56 @@
     font: inherit;
     text-align: left;
     cursor: pointer;
+
+    // Question sans Tour clos (à venir / sautée / courante pas encore votée, carte F1) : rien à
+    // déplier, jamais interactive comme les autres notes.
+    &--statique {
+      cursor: default;
+    }
+  }
+
+  // Repère visuel de la Question courante (carte F1) — le texte « En cours » seul se perd dans
+  // une liste dense sur deux colonnes, l'icône permet de repérer la position d'un coup d'œil.
+  &__historique-indicateur {
+    flex-shrink: 0;
+    color: var(--color-primary);
+    font-size: var(--font-size-md);
   }
 
   &__historique-libelle {
     flex: 1 1 auto;
     font-weight: var(--font-weight-medium);
+  }
+
+  // Statut et nombre de Tours empilés (plutôt que côte à côte) : économise la largeur de la ligne,
+  // utile dès que la liste passe sur deux colonnes.
+  &__historique-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-1);
+    flex-shrink: 0;
+  }
+
+  // Statut de la Question (carte F1) — Traitée n'a pas de teinte propre : le badge « Pris en
+  // compte » au niveau du Tour porte déjà cette information, pas la peine de la répéter ici.
+  &__historique-statut {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+
+    &--a-venir {
+      color: var(--color-ink-muted);
+    }
+
+    &--courante {
+      color: var(--color-primary);
+    }
+
+    &--sautee {
+      color: var(--color-ink-muted);
+      text-decoration: line-through;
+    }
   }
 
   // Un compte est une mesure, jamais de la prose — même police que le compteur de participation

@@ -79,6 +79,14 @@ export interface TourHistoriqueDto {
   repartition: RepartitionVotesDto;
 }
 
+export type StatutQuestionProgressionDto = 'A_VENIR' | 'COURANTE' | 'TRAITEE' | 'SAUTEE';
+
+export interface ProgressionQuestionDto {
+  questionId: string;
+  libelle: string;
+  statut: StatutQuestionProgressionDto;
+}
+
 export interface ProjectionSessionDto {
   statut: StatutSession;
   code: string;
@@ -96,6 +104,7 @@ export interface PilotageSessionDto {
   tourOuvert: TourOuvertDto | null;
   dernierTourClos: TourClosDto | null;
   historique: TourHistoriqueDto[];
+  progression: ProgressionQuestionDto[];
 }
 
 export interface JetonSessionDto {

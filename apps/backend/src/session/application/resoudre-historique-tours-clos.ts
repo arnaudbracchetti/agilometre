@@ -1,7 +1,6 @@
-import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
-import { EtatToursQuery } from '../domain/etat-tours.query';
+import { Referentiel } from '../../referentiel/domain/referentiel';
 import { RepartitionTourQuery } from '../domain/repartition-tour.query';
-import { Session } from '../domain/session';
+import { EtatTour, Session } from '../domain/session';
 
 export interface HistoriqueTourClos {
   questionId: string;
@@ -15,21 +14,22 @@ export interface HistoriqueTourClos {
  * `resoudreDernierTourClos`, aucun filtre "dernier seulement" : un revote (#41) garde ses Tours
  * précédents visibles ici. Triés par ordre de Sélection puis par numéro croissant, pour que le
  * frontend reçoive déjà les Tours d'une même Question groupés et consécutifs.
+ *
+ * `etatsDesTours`/`referentielCharge` sont déjà résolus par l'appelant (`ObtenirPilotageSession`,
+ * partagés avec `resoudreProgression`) — jamais une deuxième lecture ici, ce read model reste
+ * volontairement léger sur un écran sondé toutes les 2s (docs/design/agregat-tour-de-vote.md §5).
  */
 export async function resoudreHistoriqueToursClos(
   session: Session,
-  etatTours: EtatToursQuery,
+  etatsDesTours: readonly EtatTour[],
   repartitions: RepartitionTourQuery,
-  referentiel: ReferentielRepository,
+  referentielCharge: Referentiel,
 ): Promise<HistoriqueTourClos[]> {
-  const tours = (await etatTours.listerEtatsDesToursDeLaSession(session.id)).filter(
-    (tour) => tour.clos,
-  );
+  const tours = etatsDesTours.filter((tour) => tour.clos);
   if (tours.length === 0) {
     return [];
   }
 
-  const referentielCharge = await referentiel.charger();
   const questions = session.selectionEnrichie(referentielCharge);
   const indexQuestion = new Map(questions.map((q, index) => [q.id, index]));
   const libelleQuestion = new Map(questions.map((q) => [q.id, q.libelle]));

@@ -29,15 +29,15 @@ describe('StickyNote', () => {
     expect(fixture.nativeElement.textContent).toContain('contenu');
   });
 
-  it('incline la note dans une amplitude mesurée (1° à 2.5°, signe aléatoire)', () => {
+  it('incline la note dans une amplitude mesurée (0.5° à 1.5°, signe aléatoire)', () => {
     // Beaucoup d'instances pour couvrir les deux signes malgré le tirage aléatoire.
     for (let i = 0; i < 30; i++) {
       const fixture = creer();
       const hote = fixture.debugElement.query(By.directive(StickyNote))
         .nativeElement as HTMLElement;
       const angle = transformDeg(hote);
-      expect(Math.abs(angle)).toBeGreaterThanOrEqual(1);
-      expect(Math.abs(angle)).toBeLessThanOrEqual(2.5);
+      expect(Math.abs(angle)).toBeGreaterThanOrEqual(0.5);
+      expect(Math.abs(angle)).toBeLessThanOrEqual(1.5);
       fixture.destroy();
     }
   });

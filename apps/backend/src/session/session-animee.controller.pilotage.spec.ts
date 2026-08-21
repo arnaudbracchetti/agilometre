@@ -71,6 +71,7 @@ describe('SessionAnimeeController.pilotage', () => {
         questionCourante: null,
         tourOuvert: null,
         historique: [],
+        progression: [],
       }),
     };
     const controller = creerControleur(obtenirPilotageSession);
@@ -85,6 +86,7 @@ describe('SessionAnimeeController.pilotage', () => {
       tourOuvert: null,
       dernierTourClos: null,
       historique: [],
+      progression: [],
     });
   });
 
@@ -99,6 +101,7 @@ describe('SessionAnimeeController.pilotage', () => {
         questionCourante: creerQuestion('q1'),
         tourOuvert: null,
         historique: [],
+        progression: [],
       }),
     };
     const controller = creerControleur(obtenirPilotageSession);
@@ -127,6 +130,33 @@ describe('SessionAnimeeController.pilotage', () => {
       NotFoundException,
     );
   });
+
+  it('mappe la progression de la Sélection (carte F1)', async () => {
+    const session = creerSessionOuverte();
+    await session.ouvrir();
+    const obtenirPilotageSession = {
+      executer: jest.fn().mockResolvedValue({
+        type: 'ok',
+        session,
+        nbDevicesConnectes: 3,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [
+          { questionId: 'q1', libelle: 'Libellé', statut: 'COURANTE' },
+          { questionId: 'q2', libelle: 'Autre', statut: 'A_VENIR' },
+        ],
+      }),
+    };
+    const controller = creerControleur(obtenirPilotageSession);
+
+    const resultat = await controller.pilotage('s1');
+
+    expect(resultat.progression).toEqual([
+      { questionId: 'q1', libelle: 'Libellé', statut: 'COURANTE' },
+      { questionId: 'q2', libelle: 'Autre', statut: 'A_VENIR' },
+    ]);
+  });
 });
 
 describe('SessionAnimeeController.ouvrirTour', () => {
@@ -144,6 +174,7 @@ describe('SessionAnimeeController.ouvrirTour', () => {
         questionCourante: null,
         tourOuvert: null,
         historique: [],
+        progression: [],
       }),
     };
     const controller = creerControleur(
@@ -217,6 +248,7 @@ describe('SessionAnimeeController.clorerTour', () => {
         questionCourante: null,
         tourOuvert: null,
         historique: [],
+        progression: [],
       }),
     };
     const controller = creerControleur(

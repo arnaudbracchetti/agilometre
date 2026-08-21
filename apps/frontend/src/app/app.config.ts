@@ -19,6 +19,7 @@ import {
   ExclamationCircleOutline,
   QuestionCircleOutline,
   DownOutline,
+  CaretRightFill,
 } from '@ant-design/icons-angular/icons';
 import { registerLocaleData } from '@angular/common';
 import fr from '@angular/common/locales/fr';
@@ -50,6 +51,7 @@ export const appConfig: ApplicationConfig = {
       ExclamationCircleOutline,
       QuestionCircleOutline,
       DownOutline,
+      CaretRightFill,
     ]),
   ],
 };

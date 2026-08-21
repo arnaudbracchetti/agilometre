@@ -2,8 +2,8 @@ import { Component, input } from '@angular/core';
 
 export type CouleurStickyNote = 'blue' | 'violet' | 'magenta';
 
-const ROTATION_MIN_DEG = 1;
-const ROTATION_MAX_DEG = 2.5;
+const ROTATION_MIN_DEG = 0.5;
+const ROTATION_MAX_DEG = 1.5;
 const SCOTCH_GAUCHE_MIN_PCT = 30;
 const SCOTCH_GAUCHE_MAX_PCT = 70;
 const SCOTCH_ROTATION_MAX_DEG = 6;
