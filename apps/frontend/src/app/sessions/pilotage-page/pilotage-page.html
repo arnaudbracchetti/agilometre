@@ -22,46 +22,112 @@
 
     <p class="pilotage__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
 
-    @if (statut() === 'OUVERTE') {
-      @if (questionCourante(); as question) {
-        <app-sticky-note couleur="violet" class="pilotage__question">
-          <p class="pilotage__question-libelle">{{ question.libelle }}</p>
-          <ul class="pilotage__options">
-            @for (option of question.options; track $index) {
-              <li><span class="pilotage__lettre">{{ lettres[$index] }}</span> — {{ option.libelle }}</li>
+    <div class="pilotage__corps">
+      <div class="pilotage__principal">
+        @if (statut() === 'OUVERTE') {
+          @if (questionCourante(); as question) {
+            <app-sticky-note couleur="violet" class="pilotage__question">
+              <p class="pilotage__question-libelle">{{ question.libelle }}</p>
+              <ul class="pilotage__options">
+                @for (option of question.options; track $index) {
+                  <li><span class="pilotage__lettre">{{ lettres[$index] }}</span> — {{ option.libelle }}</li>
+                }
+              </ul>
+            </app-sticky-note>
+            @if (tourOuvert(); as tour) {
+              <p class="pilotage__compteur-tour">{{ tour.nbVotants }} / {{ nbDevicesConnectes() }} ont voté</p>
             }
-          </ul>
-        </app-sticky-note>
-        @if (tourOuvert(); as tour) {
-          <p class="pilotage__compteur-tour">{{ tour.nbVotants }} / {{ nbDevicesConnectes() }} ont voté</p>
+          } @else {
+            <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
+          }
+          <div class="pilotage__actions">
+            @if (questionCourante()) {
+              <button
+                class="pilotage__bouton"
+                nz-button
+                nzType="primary"
+                [disabled]="tourEnCours()"
+                (click)="basculerTour()"
+              >
+                {{ libelleBoutonTour() }}
+              </button>
+            }
+            <button
+              class="pilotage__bouton"
+              nz-button
+              [nzType]="questionCourante() ? 'default' : 'primary'"
+              [disabled]="avancerEnCours() || tourOuvert() !== null"
+              (click)="avancer()"
+            >
+              {{ libelleBouton() }}
+            </button>
+          </div>
+        } @else {
+          <p class="pilotage__statut">Séance clôturée.</p>
         }
-      } @else {
-        <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
-      }
-      <div class="pilotage__actions">
-        @if (questionCourante()) {
-          <button
-            class="pilotage__bouton"
-            nz-button
-            nzType="primary"
-            [disabled]="tourEnCours()"
-            (click)="basculerTour()"
-          >
-            {{ libelleBoutonTour() }}
-          </button>
-        }
-        <button
-          class="pilotage__bouton"
-          nz-button
-          [nzType]="questionCourante() ? 'default' : 'primary'"
-          [disabled]="avancerEnCours() || tourOuvert() !== null"
-          (click)="avancer()"
-        >
-          {{ libelleBouton() }}
-        </button>
       </div>
-    } @else {
-      <p class="pilotage__statut">Séance clôturée.</p>
-    }
+
+      @if (historiqueParQuestion().length > 0) {
+        <section class="pilotage__historique">
+          <h3 class="pilotage__historique-titre">Historique en direct</h3>
+          <div class="pilotage__historique-liste">
+            @for (groupe of historiqueParQuestion(); track groupe.questionId; let i = $index) {
+              @let ouvert = estGroupeHistoriqueOuvert(groupe.questionId);
+              <app-sticky-note [couleur]="couleurNoteHistorique(i)" class="pilotage__historique-note">
+                <button
+                  type="button"
+                  class="pilotage__historique-entete"
+                  [attr.aria-expanded]="ouvert"
+                  (click)="basculerGroupeHistorique(groupe.questionId)"
+                >
+                  <span class="pilotage__historique-libelle">{{ groupe.libelle }}</span>
+                  <span class="pilotage__historique-nb-tours">
+                    {{ groupe.tours.length }} {{ groupe.tours.length > 1 ? 'tours' : 'tour' }}
+                  </span>
+                  <span
+                    nz-icon
+                    nzType="down"
+                    nzTheme="outline"
+                    class="pilotage__historique-chevron"
+                    [class.pilotage__historique-chevron--ouvert]="ouvert"
+                    aria-hidden="true"
+                  ></span>
+                </button>
+                @if (ouvert) {
+                  <div class="pilotage__historique-tours">
+                    @for (tour of groupe.tours; track tour.numero; let dernier = $last) {
+                      <div class="pilotage__historique-tour">
+                        <p class="pilotage__historique-tour-titre">
+                          <span class="pilotage__historique-tour-numero">Tour {{ tour.numero }}</span>
+                          @if (dernier) {
+                            <span class="pilotage__historique-badge">Pris en compte</span>
+                          }
+                        </p>
+                        <ul class="pilotage__historique-barres">
+                          @for (lettre of lettres; track $index) {
+                            <li>
+                              <span class="pilotage__lettre">{{ lettre }}</span>
+                              <span class="pilotage__historique-barre-piste">
+                                <span
+                                  class="pilotage__historique-barre"
+                                  [style.transform]="'scaleX(' + fractionHistorique(tour, $index) + ')'"
+                                ></span>
+                              </span>
+                              <span class="pilotage__historique-compte">{{
+                                compteHistorique(tour, $index)
+                              }}</span>
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+                }
+              </app-sticky-note>
+            }
+          </div>
+        </section>
+      }
+    </div>
   }
 </div>

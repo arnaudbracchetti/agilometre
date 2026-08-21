@@ -242,4 +242,84 @@ describe('PilotagePage', () => {
       expect(boutonSuivante.disabled).toBe(false);
     });
   });
+
+  describe('Historique en direct (carte E2)', () => {
+    it('n’affiche aucune section « Historique en direct » tant qu’aucun Tour n’est clos', () => {
+      fixture = TestBed.createComponent(PilotagePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+        statut: 'OUVERTE',
+        code: '654321',
+        nbDevicesConnectes: 0,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+      });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).not.toContain('Historique en direct');
+    });
+
+    it('groupe les Tours d’une même Question revotée sous une seule note, repliée par défaut, avec le badge « pris en compte » sur le bon numéro', () => {
+      fixture = TestBed.createComponent(PilotagePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+        statut: 'OUVERTE',
+        code: '654321',
+        nbDevicesConnectes: 2,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [
+          {
+            questionId: 'q1',
+            libelle: 'Les rétrospectives sont-elles régulières ?',
+            numero: 1,
+            repartition: { 1: 2, 2: 0, 3: 0, 4: 0 },
+          },
+          {
+            questionId: 'q1',
+            libelle: 'Les rétrospectives sont-elles régulières ?',
+            numero: 2,
+            repartition: { 1: 0, 2: 0, 3: 0, 4: 2 },
+          },
+          {
+            questionId: 'q2',
+            libelle: 'Autre question',
+            numero: 1,
+            repartition: { 1: 0, 2: 1, 3: 0, 4: 0 },
+          },
+        ],
+      });
+      fixture.detectChanges();
+
+      const texte = fixture.nativeElement.textContent as string;
+      expect(texte).toContain('Historique en direct');
+      expect(texte).toContain('Les rétrospectives sont-elles régulières ?');
+      expect(texte).toContain('2 tours');
+      expect(texte).toContain('Autre question');
+      expect(texte).toContain('1 tour');
+      // Repliée par défaut : le détail des Tours n'est pas encore dans le DOM.
+      expect(fixture.nativeElement.querySelector('.pilotage__historique-tour-titre')).toBeNull();
+
+      const entetes = Array.from(
+        fixture.nativeElement.querySelectorAll('.pilotage__historique-entete'),
+      ) as HTMLButtonElement[];
+      expect(entetes).toHaveLength(2);
+      entetes.forEach((entete) => entete.click());
+      fixture.detectChanges();
+
+      const badges = Array.from(
+        fixture.nativeElement.querySelectorAll('.pilotage__historique-badge'),
+      ) as HTMLElement[];
+      expect(badges).toHaveLength(2);
+
+      const titresDeTours = Array.from(
+        fixture.nativeElement.querySelectorAll('.pilotage__historique-tour-titre'),
+      ) as HTMLElement[];
+      const titreTour2 = titresDeTours.find((el) => el.textContent?.includes('Tour 2'))!;
+      expect(titreTour2.textContent).toContain('Pris en compte');
+      const titreTour1 = titresDeTours.find((el) => el.textContent?.trim().startsWith('Tour 1'))!;
+      expect(titreTour1.textContent).not.toContain('Pris en compte');
+    });
+  });
 });

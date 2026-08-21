@@ -70,6 +70,7 @@ describe('SessionAnimeeController.pilotage', () => {
         nbDevicesConnectes: 3,
         questionCourante: null,
         tourOuvert: null,
+        historique: [],
       }),
     };
     const controller = creerControleur(obtenirPilotageSession);
@@ -83,6 +84,7 @@ describe('SessionAnimeeController.pilotage', () => {
       questionCourante: null,
       tourOuvert: null,
       dernierTourClos: null,
+      historique: [],
     });
   });
 
@@ -96,6 +98,7 @@ describe('SessionAnimeeController.pilotage', () => {
         nbDevicesConnectes: 3,
         questionCourante: creerQuestion('q1'),
         tourOuvert: null,
+        historique: [],
       }),
     };
     const controller = creerControleur(obtenirPilotageSession);
@@ -140,6 +143,7 @@ describe('SessionAnimeeController.ouvrirTour', () => {
         nbDevicesConnectes: 2,
         questionCourante: null,
         tourOuvert: null,
+        historique: [],
       }),
     };
     const controller = creerControleur(
@@ -212,6 +216,7 @@ describe('SessionAnimeeController.clorerTour', () => {
         nbDevicesConnectes: 2,
         questionCourante: null,
         tourOuvert: null,
+        historique: [],
       }),
     };
     const controller = creerControleur(

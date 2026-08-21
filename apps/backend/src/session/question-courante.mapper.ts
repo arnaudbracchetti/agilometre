@@ -1,10 +1,13 @@
 import {
   QuestionCouranteDto,
+  RepartitionVotesDto,
   TourClosDto,
+  TourHistoriqueDto,
   TourOuvertDto,
 } from '@agilometre/shared';
 import { Question } from '../referentiel/domain/question';
 import { DernierTourClos } from './application/resoudre-dernier-tour-clos';
+import { HistoriqueTourClos } from './application/resoudre-historique-tours-clos';
 import { TourDeVote } from './domain/tour-de-vote';
 
 /** Le domaine ignore délibérément `@agilometre/shared` (frontière API) — mapping explicite ici. */
@@ -34,6 +37,16 @@ export function versTourOuvertDto(
   };
 }
 
+/** Zero-fill 1-4 partagé par tout mapping d'un `comptesParNiveau` partiel vers le DTO. */
+function versRepartitionDto(comptes: Record<number, number>): RepartitionVotesDto {
+  return {
+    1: comptes[1] ?? 0,
+    2: comptes[2] ?? 0,
+    3: comptes[3] ?? 0,
+    4: comptes[4] ?? 0,
+  };
+}
+
 /** Le Palier de la Question reste hors périmètre — pas de moteur de scoring encore. */
 export function versTourClosDto(
   dernierTourClos: DernierTourClos | null,
@@ -41,14 +54,20 @@ export function versTourClosDto(
   if (!dernierTourClos) {
     return null;
   }
-  const comptes = dernierTourClos.comptesParNiveau;
   return {
     numero: dernierTourClos.numero,
-    repartition: {
-      1: comptes[1] ?? 0,
-      2: comptes[2] ?? 0,
-      3: comptes[3] ?? 0,
-      4: comptes[4] ?? 0,
-    },
+    repartition: versRepartitionDto(dernierTourClos.comptesParNiveau),
   };
+}
+
+/** Tous les Tours clos de la Session (carte E2) — jamais seulement le dernier par Question. */
+export function versHistoriqueDto(
+  historique: HistoriqueTourClos[],
+): TourHistoriqueDto[] {
+  return historique.map((tour) => ({
+    questionId: tour.questionId,
+    libelle: tour.libelle,
+    numero: tour.numero,
+    repartition: versRepartitionDto(tour.comptesParNiveau),
+  }));
 }

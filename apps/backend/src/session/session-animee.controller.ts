@@ -41,6 +41,7 @@ import { PasserQuestionSuivanteSession } from './application/passer-question-sui
 import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
 import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
 import {
+  versHistoriqueDto,
   versQuestionCouranteDto,
   versTourClosDto,
   versTourOuvertDto,
@@ -245,6 +246,7 @@ export class SessionAnimeeController {
       questionCourante: versQuestionCouranteDto(resultat.questionCourante),
       tourOuvert: versTourOuvertDto(resultat.tourOuvert),
       dernierTourClos: versTourClosDto(resultat.dernierTourClos),
+      historique: versHistoriqueDto(resultat.historique),
     };
   }
 

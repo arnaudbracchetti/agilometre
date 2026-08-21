@@ -61,6 +61,7 @@ describe('SessionAnimeeController.passerQuestionSuivante', () => {
         nbDevicesConnectes: 2,
         questionCourante: null,
         tourOuvert: null,
+        historique: [],
       }),
     };
     const controller = creerControleur(
@@ -78,6 +79,7 @@ describe('SessionAnimeeController.passerQuestionSuivante', () => {
       questionCourante: null,
       tourOuvert: null,
       dernierTourClos: null,
+      historique: [],
     });
   });
 

@@ -11,6 +11,10 @@ import {
   DernierTourClos,
   resoudreDernierTourClos,
 } from './resoudre-dernier-tour-clos';
+import {
+  HistoriqueTourClos,
+  resoudreHistoriqueToursClos,
+} from './resoudre-historique-tours-clos';
 import { resoudreQuestionCourante } from './resoudre-question-courante';
 
 export type ResultatObtenirPilotageSession =
@@ -22,6 +26,7 @@ export type ResultatObtenirPilotageSession =
       questionCourante: Question | null;
       tourOuvert: TourDeVote | null;
       dernierTourClos: DernierTourClos | null;
+      historique: HistoriqueTourClos[];
     };
 
 /**
@@ -56,6 +61,12 @@ export class ObtenirPilotageSession {
       this.etatTours,
       this.repartitions,
     );
+    const historique = await resoudreHistoriqueToursClos(
+      session,
+      this.etatTours,
+      this.repartitions,
+      this.referentiel,
+    );
     return {
       type: 'ok',
       session,
@@ -63,6 +74,7 @@ export class ObtenirPilotageSession {
       questionCourante,
       tourOuvert,
       dernierTourClos,
+      historique,
     };
   }
 }

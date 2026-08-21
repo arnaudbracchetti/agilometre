@@ -340,4 +340,53 @@ describe('ObtenirPilotageSession', () => {
       comptesParNiveau: { 1: 0, 2: 1, 3: 2, 4: 1 },
     });
   });
+
+  it('renvoie l’historique de tous les Tours clos, y compris les deux Tours d’une Question revotée (carte E2)', async () => {
+    const sessions = new SessionRepositoryFake();
+    const session = creerSessionPreparee('s1');
+    await session.ouvrir();
+    session.passerQuestionSuivante([]);
+    sessions.sessions.push(session);
+    const jetons = new JetonSessionRepositoryFake();
+    const referentiel = new ReferentielRepositoryFake();
+    referentiel.referentiel = referentielAvecQuestion('q1');
+    const etatTours = new EtatToursQueryFake();
+    etatTours.etats = [
+      { tourId: 't1', questionId: 'q1', numero: 1, clos: true },
+      { tourId: 't2', questionId: 'q1', numero: 2, clos: true },
+      { tourId: 't3', questionId: 'q1', numero: 3, clos: false },
+    ];
+    const repartitions = new RepartitionTourQueryFake();
+    repartitions.repartitions = [
+      { tourId: 't1', comptesParNiveau: { 1: 9, 2: 0, 3: 0, 4: 0 } },
+      { tourId: 't2', comptesParNiveau: { 1: 0, 2: 1, 3: 2, 4: 1 } },
+    ];
+    const useCase = new ObtenirPilotageSession(
+      sessions,
+      jetons,
+      referentiel,
+      new TourDeVoteRepositoryFake(),
+      etatTours,
+      repartitions,
+    );
+
+    const resultat = await useCase.executer('s1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') throw new Error('unreachable');
+    expect(resultat.historique).toEqual([
+      {
+        questionId: 'q1',
+        libelle: 'Libellé',
+        numero: 1,
+        comptesParNiveau: { 1: 9, 2: 0, 3: 0, 4: 0 },
+      },
+      {
+        questionId: 'q1',
+        libelle: 'Libellé',
+        numero: 2,
+        comptesParNiveau: { 1: 0, 2: 1, 3: 2, 4: 1 },
+      },
+    ]);
+  });
 });

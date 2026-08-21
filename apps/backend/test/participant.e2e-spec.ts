@@ -740,4 +740,124 @@ describe('Participant — jointure par Code (e2e)', () => {
       expect(toursQa).toHaveLength(1);
     });
   });
+
+  describe('carte E2 — le Coach consulte l’historique en direct (#42)', () => {
+    it('GET /api/sessions/:id/pilotage — historique reste vide tant qu’aucun Tour n’est clos', async () => {
+      const session = await sessionEnVote();
+
+      const pilotage = await request(app.getHttpServer())
+        .get(`/api/sessions/${session.id}/pilotage`)
+        .expect(200);
+
+      expect((pilotage.body as PilotageSessionDto).historique).toEqual([]);
+    });
+
+    it('historique liste tous les Tours clos de la Session, groupés par Question, avec les deux Tours d’une Question revotée', async () => {
+      await importer(['qa', 'qb']);
+      const entite = await creerEntite('DSI-E2');
+      const equipe = await creerEquipe('Équipe E2', entite.id);
+      const modele = await creerModele('Diagnostic E2');
+      await request(app.getHttpServer())
+        .post(`/api/modeles-session/${modele.id}/themes`)
+        .send({ questionIds: ['qa', 'qb'] })
+        .expect(201);
+      const creation = await request(app.getHttpServer())
+        .post('/api/sessions')
+        .send({
+          equipeId: equipe.id,
+          date: '2026-04-01',
+          modeleSessionId: modele.id,
+        })
+        .expect(201);
+      const session = creation.body as SessionDto;
+      const ouverture = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir`)
+        .expect(201);
+      const code = (ouverture.body as SessionDto).code as string;
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201); // salle d'attente -> qa courante
+
+      const jetonA = await rejoindre(code);
+      const jetonB = await rejoindre(code);
+
+      // qa, Tour 1 : 2 votes Niveau 1 ({ 1: 2, 2: 0, 3: 0, 4: 0 }).
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonA}`)
+        .send({ optionIndex: 0 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonB}`)
+        .send({ optionIndex: 0 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+
+      // qa, Tour 2 (revote) : 2 votes Niveau 4 ({ 1: 0, 2: 0, 3: 0, 4: 2 }).
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonA}`)
+        .send({ optionIndex: 3 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonB}`)
+        .send({ optionIndex: 3 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201); // qa résolue -> qb courante
+
+      // qb, Tour 1 : 1 vote Niveau 2 ({ 1: 0, 2: 1, 3: 0, 4: 0 }).
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonA}`)
+        .send({ optionIndex: 1 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+
+      const pilotage = await request(app.getHttpServer())
+        .get(`/api/sessions/${session.id}/pilotage`)
+        .expect(200);
+
+      expect((pilotage.body as PilotageSessionDto).historique).toEqual([
+        {
+          questionId: 'qa',
+          libelle: 'Libellé qa',
+          numero: 1,
+          repartition: { 1: 2, 2: 0, 3: 0, 4: 0 },
+        },
+        {
+          questionId: 'qa',
+          libelle: 'Libellé qa',
+          numero: 2,
+          repartition: { 1: 0, 2: 0, 3: 0, 4: 2 },
+        },
+        {
+          questionId: 'qb',
+          libelle: 'Libellé qb',
+          numero: 1,
+          repartition: { 1: 0, 2: 1, 3: 0, 4: 0 },
+        },
+      ]);
+    });
+  });
 });

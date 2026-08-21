@@ -136,5 +136,195 @@
     margin-top: 0;
   }
 
+  // Deux colonnes côte à côte plutôt qu'empilées : la Question courante (boucle principale) et
+  // l'Historique (référence secondaire) doivent rester visibles ensemble sans scroll — un Coach
+  // qui discute d'un résultat passé veut garder la Question en cours à l'œil. `flex-wrap` repasse
+  // les deux colonnes en pile dès que la largeur ne suffit plus pour les deux `flex-basis`.
+  &__corps {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-8);
+    flex-wrap: wrap;
+  }
+
+  &__principal {
+    flex: 1 1 28rem;
+    min-width: 0;
+  }
+
+  // Consultation secondaire (référence ponctuelle pendant la discussion, pas une action répétée
+  // comme les contrôles de Tour) : toujours à côté du flux principal, jamais mêlée à sa boucle.
+  &__historique {
+    flex: 1 1 24rem;
+    min-width: 0;
+    max-width: 34rem;
+  }
+
+  &__historique-titre {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-ink-muted);
+    margin: 0 0 var(--space-3);
+  }
+
+  // Une note par Question (cf. `couleurNoteHistorique`, 3 teintes cyclées) plutôt qu'un composant
+  // de bibliothèque générique : même matériau que les notes Code/Question ci-dessus, pour que
+  // l'écran reste un seul registre visuel. Écart généreux : chaque note a sa propre inclinaison
+  // aléatoire (<app-sticky-note>), il faut de la marge pour que deux coins pliés voisins ne se
+  // touchent jamais.
+  &__historique-liste {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  &__historique-entete {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    padding: 0;
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  &__historique-libelle {
+    flex: 1 1 auto;
+    font-weight: var(--font-weight-medium);
+  }
+
+  // Un compte est une mesure, jamais de la prose — même police que le compteur de participation
+  // (voir &__compteur-tour) et le code de session.
+  &__historique-nb-tours {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+
+  &__historique-chevron {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+
+    &--ouvert {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__historique-tours {
+    margin-top: var(--space-4);
+  }
+
+  &__historique-tour {
+    padding: var(--space-3) 0;
+
+    & + & {
+      border-top: 1px solid var(--color-border);
+    }
+  }
+
+  &__historique-tour-titre {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-2);
+  }
+
+  &__historique-tour-numero {
+    font-family: var(--font-family-mono);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__historique-badge {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    // Encre de la note courante (bleu/violet/magenta selon l'instance) plutôt qu'une couleur
+    // fixe : le badge reste lisible sur les 3 teintes de fond sans jamais utiliser --color-accent
+    // (réservé aux signaux d'erreur, jamais à une information neutre — voir DESIGN.md).
+    color: inherit;
+    opacity: 0.85;
+  }
+
+  &__historique-barres {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+  }
+
+  // Mêmes 4 teintes vives que &__options, dans le même ordre — le repère de couleur d'une
+  // Option doit rester reconnaissable qu'on le lise sur la Question courante ou sur son
+  // historique (voir DESIGN.md, pastilles d'option).
+  &__historique-barres li:nth-child(4n + 1) &__lettre {
+    background: var(--color-blue-300);
+  }
+
+  &__historique-barres li:nth-child(4n + 2) &__lettre {
+    background: var(--color-violet-300);
+    color: var(--color-pastille-ink-violet);
+  }
+
+  &__historique-barres li:nth-child(4n + 3) &__lettre {
+    background: var(--color-magenta-300);
+    color: var(--color-pastille-ink-magenta);
+  }
+
+  &__historique-barres li:nth-child(4n + 4) &__lettre {
+    background: var(--color-gold-600);
+  }
+
+  &__historique-barres &__lettre {
+    // Plus compact que la pastille de la Question courante (liste condensée, plusieurs Tours
+    // peuvent être visibles en même temps).
+    width: 1.4em;
+    height: 1.4em;
+    font-size: var(--font-size-sm);
+    margin-right: 0;
+  }
+
+  &__historique-barre-piste {
+    display: block;
+    flex: 1 1 auto;
+    height: 0.6em;
+    background: var(--color-border);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+  }
+
+  // width fixe + transform: scaleX() plutôt qu'animer width (layout thrash) — même choix que
+  // l'écran de projection (voir projection-page.scss).
+  &__historique-barre {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: currentColor;
+    border-radius: var(--radius-pill);
+    transform-origin: left;
+    transition: transform 1s ease;
+  }
+
+  &__historique-compte {
+    font-family: var(--font-family-mono);
+    min-width: 1.5em;
+    text-align: right;
+  }
+
   // Apparence portée par <app-error-message> (voir shared/error-message).
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pilotage__historique-barre {
+    transition: none;
+  }
 }

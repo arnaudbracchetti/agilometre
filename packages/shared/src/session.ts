@@ -72,6 +72,13 @@ export interface TourClosDto {
   repartition: RepartitionVotesDto;
 }
 
+export interface TourHistoriqueDto {
+  questionId: string;
+  libelle: string;
+  numero: number;
+  repartition: RepartitionVotesDto;
+}
+
 export interface ProjectionSessionDto {
   statut: StatutSession;
   code: string;
@@ -88,6 +95,7 @@ export interface PilotageSessionDto {
   questionCourante: QuestionCouranteDto | null;
   tourOuvert: TourOuvertDto | null;
   dernierTourClos: TourClosDto | null;
+  historique: TourHistoriqueDto[];
 }
 
 export interface JetonSessionDto {
