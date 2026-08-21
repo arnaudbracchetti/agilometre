@@ -530,4 +530,214 @@ describe('Participant — jointure par Code (e2e)', () => {
       expect(moi.body).not.toHaveProperty('repartition');
     });
   });
+
+  describe('carte E1 — le Coach relance un vote sur la même Question (revote)', () => {
+    it('un revote conserve le Tour et les Réponses précédents en base', async () => {
+      const session = await sessionEnVote();
+      const jetonA = await rejoindre(session.code as string);
+      const jetonB = await rejoindre(session.code as string);
+
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonA}`)
+        .send({ optionIndex: 0 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonB}`)
+        .send({ optionIndex: 1 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+
+      const toursApresPremiereCloture = await prisma.tourDeVote.findMany({
+        where: { questionId: 'q1' },
+      });
+      expect(toursApresPremiereCloture).toHaveLength(1);
+      const premierTour = toursApresPremiereCloture[0];
+      const reponsesDuPremierTour = await prisma.reponse.findMany({
+        where: { tourId: premierTour.id },
+      });
+      expect(reponsesDuPremierTour).toHaveLength(2);
+      const idsReponsesPremierTour = reponsesDuPremierTour
+        .map((r) => r.id)
+        .sort();
+
+      const reouverture = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+      expect((reouverture.body as PilotageSessionDto).tourOuvert).toEqual({
+        numero: 2,
+        nbVotants: 0,
+      });
+
+      // Revote des mêmes Jetons avec des choix différents sur le nouveau Tour.
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonA}`)
+        .send({ optionIndex: 2 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonB}`)
+        .send({ optionIndex: 3 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+
+      const toursApresRevote = await prisma.tourDeVote.findMany({
+        where: { questionId: 'q1' },
+        orderBy: { numero: 'asc' },
+      });
+      expect(toursApresRevote).toHaveLength(2);
+      expect(toursApresRevote[0]).toMatchObject({
+        id: premierTour.id,
+        numero: 1,
+        clotureLe: premierTour.clotureLe,
+      });
+      expect(toursApresRevote[1]).toMatchObject({ numero: 2 });
+
+      // Les Réponses du 1er Tour n'ont pas été supprimées par le revote sur le 2e Tour.
+      const reponsesDuPremierTourApresRevote = await prisma.reponse.findMany({
+        where: { tourId: premierTour.id },
+      });
+      expect(reponsesDuPremierTourApresRevote.map((r) => r.id).sort()).toEqual(
+        idsReponsesPremierTour,
+      );
+
+      const reponsesDuSecondTour = await prisma.reponse.findMany({
+        where: { tourId: toursApresRevote[1].id },
+      });
+      expect(reponsesDuSecondTour).toHaveLength(2);
+    });
+
+    it('le nouvel histogramme remplace le précédent sur la projection à la clôture du 2e Tour', async () => {
+      const session = await sessionEnVote();
+      const jetonA = await rejoindre(session.code as string);
+      const jetonB = await rejoindre(session.code as string);
+      const jetonC = await rejoindre(session.code as string);
+
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonA}`)
+        .send({ optionIndex: 1 }) // Niveau 2
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonB}`)
+        .send({ optionIndex: 2 }) // Niveau 3
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonC}`)
+        .send({ optionIndex: 2 }) // Niveau 3
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+
+      const projectionApresPremierTour = await request(app.getHttpServer())
+        .get(`/api/projection/${session.id}`)
+        .expect(200);
+      expect(
+        (projectionApresPremierTour.body as ProjectionSessionDto)
+          .dernierTourClos,
+      ).toEqual({
+        numero: 1,
+        repartition: { 1: 0, 2: 1, 3: 2, 4: 0 },
+      });
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+      // Revote avec une répartition différente du 1er Tour (tous sur le Niveau 4).
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonA}`)
+        .send({ optionIndex: 3 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonB}`)
+        .send({ optionIndex: 3 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonC}`)
+        .send({ optionIndex: 3 })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+
+      const projectionApresRevote = await request(app.getHttpServer())
+        .get(`/api/projection/${session.id}`)
+        .expect(200);
+      const dernierTourClosProjection = (
+        projectionApresRevote.body as ProjectionSessionDto
+      ).dernierTourClos;
+      expect(dernierTourClosProjection).toEqual({
+        numero: 2,
+        repartition: { 1: 0, 2: 0, 3: 0, 4: 3 },
+      });
+
+      const pilotageApresRevote = await request(app.getHttpServer())
+        .get(`/api/sessions/${session.id}/pilotage`)
+        .expect(200);
+      expect(
+        (pilotageApresRevote.body as PilotageSessionDto).dernierTourClos,
+      ).toEqual(dernierTourClosProjection);
+    });
+
+    it('une fois passé à la Question suivante, ouvrir un Tour cible la nouvelle Question — plus de revote possible sur l’ancienne', async () => {
+      await importer(['qa', 'qb']);
+      const entite = await creerEntite('DSI-E1');
+      const equipe = await creerEquipe('Équipe E1', entite.id);
+      const modele = await creerModele('Diagnostic E1');
+      await request(app.getHttpServer())
+        .post(`/api/modeles-session/${modele.id}/themes`)
+        .send({ questionIds: ['qa', 'qb'] })
+        .expect(201);
+      const creation = await request(app.getHttpServer())
+        .post('/api/sessions')
+        .send({
+          equipeId: equipe.id,
+          date: '2026-04-01',
+          modeleSessionId: modele.id,
+        })
+        .expect(201);
+      const session = creation.body as SessionDto;
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201); // salle d'attente -> qa courante
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201); // qa résolue -> qb courante
+
+      const reouverture = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+      const pilotage = reouverture.body as PilotageSessionDto;
+      expect(pilotage.questionCourante?.questionId).toBe('qb');
+      expect(pilotage.tourOuvert).toEqual({ numero: 1, nbVotants: 0 });
+
+      // Aucun revote possible sur qa une fois qu'on est passé à la Question suivante.
+      const toursQa = await prisma.tourDeVote.findMany({
+        where: { questionId: 'qa' },
+      });
+      expect(toursQa).toHaveLength(1);
+    });
+  });
 });
