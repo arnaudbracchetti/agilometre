@@ -151,6 +151,28 @@ describe('Participant — jointure par Code (e2e)', () => {
     return reponse.body as SessionDto;
   }
 
+  /** Comme sessionPreparee, mais avec deux Questions — nécessaire pour tester Sauter/Réactiver
+   *  sur une Question autre que la seule courante. */
+  async function sessionADeuxQuestions(suffixe: string): Promise<SessionDto> {
+    await importer([`qa${suffixe}`, `qb${suffixe}`]);
+    const entite = await creerEntite(`DSI-${suffixe}`);
+    const equipe = await creerEquipe(`Équipe ${suffixe}`, entite.id);
+    const modele = await creerModele(`Diagnostic ${suffixe}`);
+    await request(app.getHttpServer())
+      .post(`/api/modeles-session/${modele.id}/themes`)
+      .send({ questionIds: [`qa${suffixe}`, `qb${suffixe}`] })
+      .expect(201);
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    return creation.body as SessionDto;
+  }
+
   it('POST /api/participant/rejoindre — émet un Jeton pour le Code d’une Session OUVERTE', async () => {
     const session = await sessionOuverte();
 
@@ -862,26 +884,6 @@ describe('Participant — jointure par Code (e2e)', () => {
   });
 
   describe('carte F2 — le Coach saute une Question (#44)', () => {
-    async function sessionADeuxQuestions(suffixe: string): Promise<SessionDto> {
-      await importer([`qa${suffixe}`, `qb${suffixe}`]);
-      const entite = await creerEntite(`DSI-${suffixe}`);
-      const equipe = await creerEquipe(`Équipe ${suffixe}`, entite.id);
-      const modele = await creerModele(`Diagnostic ${suffixe}`);
-      await request(app.getHttpServer())
-        .post(`/api/modeles-session/${modele.id}/themes`)
-        .send({ questionIds: [`qa${suffixe}`, `qb${suffixe}`] })
-        .expect(201);
-      const creation = await request(app.getHttpServer())
-        .post('/api/sessions')
-        .send({
-          equipeId: equipe.id,
-          date: '2026-04-01',
-          modeleSessionId: modele.id,
-        })
-        .expect(201);
-      return creation.body as SessionDto;
-    }
-
     it('saute la Question courante alors qu’un Tour est ouvert avec des votes : le Tour est clos sans résultat, indexCourant avance', async () => {
       const session = await sessionADeuxQuestions('F2a');
       const ouverture = await request(app.getHttpServer())
@@ -907,8 +909,20 @@ describe('Participant — jointure par Code (e2e)', () => {
         .expect(201);
       const pilotageApresSaut = saut.body as PilotageSessionDto;
       expect(pilotageApresSaut.progression).toEqual([
-        { questionId: 'qaF2a', libelle: 'Libellé qaF2a', statut: 'SAUTEE' },
-        { questionId: 'qbF2a', libelle: 'Libellé qbF2a', statut: 'COURANTE' },
+        // Sautée en tant que courante : indexCourant l'a dépassée dans la même opération ->
+        // jamais réactivable (addendum "Réactiver").
+        {
+          questionId: 'qaF2a',
+          libelle: 'Libellé qaF2a',
+          statut: 'SAUTEE',
+          reactivable: false,
+        },
+        {
+          questionId: 'qbF2a',
+          libelle: 'Libellé qbF2a',
+          statut: 'COURANTE',
+          reactivable: false,
+        },
       ]);
       expect(pilotageApresSaut.questionCourante?.questionId).toBe('qbF2a');
       expect(pilotageApresSaut.tourOuvert).toBeNull();
@@ -935,8 +949,19 @@ describe('Participant — jointure par Code (e2e)', () => {
         .expect(201);
       const pilotage = saut.body as PilotageSessionDto;
       expect(pilotage.progression).toEqual([
-        { questionId: 'qaF2b', libelle: 'Libellé qaF2b', statut: 'COURANTE' },
-        { questionId: 'qbF2b', libelle: 'Libellé qbF2b', statut: 'SAUTEE' },
+        {
+          questionId: 'qaF2b',
+          libelle: 'Libellé qaF2b',
+          statut: 'COURANTE',
+          reactivable: false,
+        },
+        // Sautée par anticipation, toujours devant indexCourant : réactivable.
+        {
+          questionId: 'qbF2b',
+          libelle: 'Libellé qbF2b',
+          statut: 'SAUTEE',
+          reactivable: true,
+        },
       ]);
       expect(pilotage.questionCourante?.questionId).toBe('qaF2b');
     });
@@ -971,6 +996,87 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/q1F2e/sauter`)
+        .expect(409);
+    });
+  });
+
+  describe('carte #44 addendum — le Coach réactive une Question sautée', () => {
+    it('réactive une Question sautée par anticipation : elle redevient à venir', async () => {
+      const session = await sessionADeuxQuestions('Ra');
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201); // salle d'attente -> qaRa courante
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/qbRa/sauter`)
+        .expect(201); // qbRa sautée par anticipation, toujours devant indexCourant
+
+      const reactivation = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/qbRa/reactiver`)
+        .expect(201);
+      const pilotage = reactivation.body as PilotageSessionDto;
+      expect(pilotage.progression).toEqual([
+        {
+          questionId: 'qaRa',
+          libelle: 'Libellé qaRa',
+          statut: 'COURANTE',
+          reactivable: false,
+        },
+        {
+          questionId: 'qbRa',
+          libelle: 'Libellé qbRa',
+          statut: 'A_VENIR',
+          reactivable: false,
+        },
+      ]);
+    });
+
+    it('409 si on tente de réactiver la Question qu’on vient de sauter en tant que courante', async () => {
+      const session = await sessionADeuxQuestions('Rb');
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201); // salle d'attente -> qaRb courante
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/qaRb/sauter`)
+        .expect(201); // qaRb sautée en tant que courante -> indexCourant avance à qbRb
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/qaRb/reactiver`)
+        .expect(409);
+    });
+
+    it('POST /api/sessions/:id/questions/:questionId/reactiver — 409 si la Question n’est pas sautée', async () => {
+      const session = await sessionOuverte('Rc');
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/q1Rc/reactiver`)
+        .expect(409);
+    });
+
+    it('POST /api/sessions/:id/questions/:questionId/reactiver — 404 si la Session est inconnue', async () => {
+      await request(app.getHttpServer())
+        .post('/api/sessions/inconnue/questions/qa/reactiver')
+        .expect(404);
+    });
+
+    it('POST /api/sessions/:id/questions/:questionId/reactiver — 404 si la Question n’appartient pas à la Sélection', async () => {
+      const session = await sessionOuverte('Rd');
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/inconnue/reactiver`)
+        .expect(404);
+    });
+
+    it('POST /api/sessions/:id/questions/:questionId/reactiver — 409 si la Session n’est pas OUVERTE', async () => {
+      const session = await sessionPreparee('Re');
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/q1Re/reactiver`)
         .expect(409);
     });
   });

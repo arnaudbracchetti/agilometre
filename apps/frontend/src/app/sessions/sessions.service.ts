@@ -54,6 +54,13 @@ export class SessionsService {
     );
   }
 
+  reactiverQuestion(id: string, questionId: string): Observable<PilotageSessionDto> {
+    return this.http.post<PilotageSessionDto>(
+      `${this.baseUrl}/${id}/questions/${questionId}/reactiver`,
+      {},
+    );
+  }
+
   modifierInfos(id: string, equipeId: string, date: string): Observable<SessionDto> {
     return this.http.patch<SessionDto>(`${this.baseUrl}/${id}`, { equipeId, date });
   }

@@ -9,6 +9,7 @@ export interface ProgressionQuestion {
   questionId: string;
   libelle: string;
   statut: StatutQuestionProgression;
+  reactivable: boolean;
 }
 
 /**
@@ -34,5 +35,6 @@ export function resoudreProgression(
       questionId: entree.questionId,
       libelle: libelleQuestion.get(entree.questionId)!,
       statut: entree.statut,
+      reactivable: entree.reactivable,
     }));
 }

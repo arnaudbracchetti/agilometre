@@ -475,8 +475,18 @@ describe('ObtenirPilotageSession', () => {
     expect(resultat.type).toBe('ok');
     if (resultat.type !== 'ok') throw new Error('unreachable');
     expect(resultat.progression).toEqual([
-      { questionId: 'q1', libelle: 'Question 1', statut: 'TRAITEE' },
-      { questionId: 'q2', libelle: 'Question 2', statut: 'COURANTE' },
+      {
+        questionId: 'q1',
+        libelle: 'Question 1',
+        statut: 'TRAITEE',
+        reactivable: false,
+      },
+      {
+        questionId: 'q2',
+        libelle: 'Question 2',
+        statut: 'COURANTE',
+        reactivable: false,
+      },
     ]);
   });
 
@@ -509,7 +519,12 @@ describe('ObtenirPilotageSession', () => {
     expect(resultat.type).toBe('ok');
     if (resultat.type !== 'ok') throw new Error('unreachable');
     expect(resultat.progression).toEqual([
-      { questionId: 'q1', libelle: 'Question 1', statut: 'A_VENIR' },
+      {
+        questionId: 'q1',
+        libelle: 'Question 1',
+        statut: 'A_VENIR',
+        reactivable: false,
+      },
     ]);
   });
 });

@@ -604,6 +604,74 @@ describe('Session', () => {
     });
   });
 
+  describe('reactiverQuestion', () => {
+    it('retire la Question de questionsSautees si son index est encore devant indexCourant', () => {
+      const session = sessionOuverte(['q1', 'q2', 'q3'], 0, ['q2']);
+
+      const resultat = session.reactiverQuestion('q2');
+
+      expect(resultat.estSucces).toBe(true);
+      expect(session.questionsSautees).toEqual(new Set());
+      expect(session.indexCourant).toBe(0);
+    });
+
+    it('rejette si l’index de la Question n’est plus strictement supérieur à indexCourant', () => {
+      const session = sessionOuverte(['q1', 'q2', 'q3'], 1, ['q1']);
+
+      const resultat = session.reactiverQuestion('q1');
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('QuestionDejaDepasseeError');
+      expect(session.questionsSautees).toEqual(new Set(['q1']));
+    });
+
+    it('rejette si la Question courante vient d’être sautée (index devenu inférieur au nouvel indexCourant)', () => {
+      const session = sessionOuverte(['q1', 'q2', 'q3'], 0);
+      session.sauter('q1', []); // q1 sautée en tant que courante -> indexCourant avance à 1
+
+      const resultat = session.reactiverQuestion('q1');
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('QuestionDejaDepasseeError');
+    });
+
+    it('rejette si la Question n’est pas Sautée', () => {
+      const session = sessionOuverte(['q1', 'q2'], 0);
+
+      const resultat = session.reactiverQuestion('q2');
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('QuestionNonSauteeError');
+    });
+
+    it('rejette si la Question n’est pas dans la Sélection', () => {
+      const session = sessionOuverte(['q1'], 0);
+
+      const resultat = session.reactiverQuestion('inconnue');
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe(
+        'QuestionIntrouvableDansSelectionError',
+      );
+    });
+
+    it('rejette si la Session n’est pas OUVERTE', () => {
+      const session = Session.creer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'm1',
+        Selection.reconstituer(['q1']),
+        generateurDeCode,
+      ).valeur;
+
+      const resultat = session.reactiverQuestion('q1');
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('SessionNonOuverteError');
+    });
+  });
+
   describe('passerQuestionSuivante', () => {
     it('depuis -1, démarre toujours la séance sur le premier item', () => {
       const session = sessionOuverte(['q1', 'q2'], -1);
@@ -707,12 +775,36 @@ describe('Session', () => {
       const progression = session.progression(tours);
 
       expect(progression).toEqual([
-        { questionId: 'q1', statut: 'TRAITEE' },
-        { questionId: 'q2', statut: 'COURANTE' },
-        { questionId: 'q3', statut: 'SAUTEE' },
-        { questionId: 'q4', statut: 'A_VENIR' },
+        { questionId: 'q1', statut: 'TRAITEE', reactivable: false },
+        { questionId: 'q2', statut: 'COURANTE', reactivable: false },
+        // q3 (index 2) est sautée alors qu'indexCourant vaut 1 : encore devant le curseur.
+        { questionId: 'q3', statut: 'SAUTEE', reactivable: true },
+        { questionId: 'q4', statut: 'A_VENIR', reactivable: false },
       ]);
       expect(session.indexCourant).toBe(1);
+    });
+
+    it('reactivable=false pour une Question sautée déjà dépassée par indexCourant', () => {
+      const session = Session.reconstituer(
+        's1',
+        'e1',
+        new Date('2026-03-01'),
+        'OUVERTE',
+        'm1',
+        Selection.reconstituer(['q1', 'q2', 'q3']),
+        'AB12',
+        2,
+        new Set(['q1']),
+        generateurDeCode,
+      );
+
+      const progression = session.progression([]);
+
+      expect(progression).toEqual([
+        { questionId: 'q1', statut: 'SAUTEE', reactivable: false },
+        { questionId: 'q2', statut: 'A_VENIR', reactivable: false },
+        { questionId: 'q3', statut: 'COURANTE', reactivable: false },
+      ]);
     });
 
     it('avec indexCourant = -1, aucune Question n’est COURANTE', () => {
@@ -732,8 +824,8 @@ describe('Session', () => {
       const progression = session.progression([]);
 
       expect(progression).toEqual([
-        { questionId: 'q1', statut: 'A_VENIR' },
-        { questionId: 'q2', statut: 'A_VENIR' },
+        { questionId: 'q1', statut: 'A_VENIR', reactivable: false },
+        { questionId: 'q2', statut: 'A_VENIR', reactivable: false },
       ]);
     });
   });

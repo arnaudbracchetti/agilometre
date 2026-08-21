@@ -475,5 +475,114 @@ describe('PilotagePage', () => {
         expect(texte).toContain('À venir');
       });
     });
+
+    describe('Réactiver une Question sautée (carte #44 addendum)', () => {
+      function boutonsReactiver(): HTMLButtonElement[] {
+        return Array.from(
+          fixture.nativeElement.querySelectorAll('.pilotage__historique-reactiver'),
+        ) as HTMLButtonElement[];
+      }
+
+      it('affiche le bouton Réactiver seulement pour une Question Sautée encore réactivable', () => {
+        fixture = TestBed.createComponent(PilotagePage);
+        fixture.detectChanges();
+        httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [
+            { questionId: 'q1', libelle: 'À venir', statut: 'A_VENIR', reactivable: false },
+            {
+              questionId: 'q2',
+              libelle: 'Sautée réactivable',
+              statut: 'SAUTEE',
+              reactivable: true,
+            },
+            {
+              questionId: 'q3',
+              libelle: 'Sautée dépassée',
+              statut: 'SAUTEE',
+              reactivable: false,
+            },
+          ],
+        });
+        fixture.detectChanges();
+
+        expect(boutonsReactiver()).toHaveLength(1);
+        expect(fixture.nativeElement.textContent).toContain('Sautée réactivable');
+      });
+
+      it('confirme la popconfirm : appelle reactiverQuestion puis applique le pilotage renvoyé', () => {
+        fixture = TestBed.createComponent(PilotagePage);
+        fixture.detectChanges();
+        httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [
+            { questionId: 'q1', libelle: 'Sautée', statut: 'SAUTEE', reactivable: true },
+          ],
+        });
+        fixture.detectChanges();
+
+        const bouton = fixture.debugElement.query(By.css('.pilotage__historique-reactiver'));
+        bouton.triggerEventHandler('nzOnConfirm', undefined);
+
+        const req = httpMock.expectOne('/api/sessions/s1/questions/q1/reactiver');
+        expect(req.request.method).toBe('POST');
+        req.flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [
+            { questionId: 'q1', libelle: 'Sautée', statut: 'A_VENIR', reactivable: false },
+          ],
+        });
+        fixture.detectChanges();
+
+        const texte = fixture.nativeElement.textContent as string;
+        expect(texte).toContain('À venir');
+        expect(boutonsReactiver()).toHaveLength(0);
+      });
+
+      it('affiche un message d’erreur si Réactiver est refusé, sans changer l’écran', () => {
+        fixture = TestBed.createComponent(PilotagePage);
+        fixture.detectChanges();
+        httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [
+            { questionId: 'q1', libelle: 'Sautée', statut: 'SAUTEE', reactivable: true },
+          ],
+        });
+        fixture.detectChanges();
+        const messageService = fixture.debugElement.injector.get(NzMessageService);
+        const errorSpy = vi.spyOn(messageService, 'error');
+
+        const bouton = fixture.debugElement.query(By.css('.pilotage__historique-reactiver'));
+        bouton.triggerEventHandler('nzOnConfirm', undefined);
+
+        httpMock
+          .expectOne('/api/sessions/s1/questions/q1/reactiver')
+          .flush('Refusé', { status: 409, statusText: 'Conflict' });
+        fixture.detectChanges();
+
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(boutonsReactiver()).toHaveLength(1);
+      });
+    });
   });
 });

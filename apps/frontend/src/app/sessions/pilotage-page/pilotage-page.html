@@ -149,6 +149,20 @@
                     Sauter
                   </button>
                 }
+                @if (groupe.statut === 'SAUTEE' && groupe.reactivable) {
+                  <button
+                    type="button"
+                    nz-button
+                    nzSize="small"
+                    nz-popconfirm
+                    nzPopconfirmTitle="Réactiver cette Question ? Elle redevient à venir."
+                    (nzOnConfirm)="reactiverQuestion(groupe.questionId)"
+                    [disabled]="reactiverEnCours() === groupe.questionId"
+                    class="pilotage__historique-reactiver"
+                  >
+                    Réactiver
+                  </button>
+                }
                 @if (ouvert && aDesTours) {
                   <div class="pilotage__historique-tours">
                     @for (tour of groupe.tours; track tour.numero; let dernier = $last) {

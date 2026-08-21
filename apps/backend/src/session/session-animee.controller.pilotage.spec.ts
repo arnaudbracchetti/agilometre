@@ -9,6 +9,7 @@ import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.u
 import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
 import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
 import { SauterQuestionSession } from './application/sauter-question-session.usecase';
+import { ReactiverQuestionSession } from './application/reactiver-question-session.usecase';
 import { SessionAnimeeController } from './session-animee.controller';
 
 const generateurDeCode: GenerateurDeCode = {
@@ -40,6 +41,7 @@ function creerControleur(
   ouvrirTourDeVote: { executer: jest.Mock } = { executer: jest.fn() },
   cloreTourDeVote: { executer: jest.Mock } = { executer: jest.fn() },
   sauterQuestionSession: { executer: jest.Mock } = { executer: jest.fn() },
+  reactiverQuestionSession: { executer: jest.Mock } = { executer: jest.fn() },
 ): SessionAnimeeController {
   const nonUtilise = {} as never;
   return new SessionAnimeeController(
@@ -59,6 +61,7 @@ function creerControleur(
     ouvrirTourDeVote as unknown as OuvrirTourDeVote,
     cloreTourDeVote as unknown as CloreTourDeVote,
     sauterQuestionSession as unknown as SauterQuestionSession,
+    reactiverQuestionSession as unknown as ReactiverQuestionSession,
   );
 }
 
@@ -359,6 +362,92 @@ describe('SessionAnimeeController.sauterQuestion', () => {
     );
 
     await expect(controller.sauterQuestion('s1', 'q1')).rejects.toThrow(
+      ConflictException,
+    );
+  });
+});
+
+describe('SessionAnimeeController.reactiverQuestion', () => {
+  it('réactive la Question puis renvoie le pilotage rechargé', async () => {
+    const session = creerSessionOuverte();
+    await session.ouvrir();
+    const reactiverQuestionSession = {
+      executer: jest.fn().mockResolvedValue({ type: 'ok', session }),
+    };
+    const obtenirPilotageSession = {
+      executer: jest.fn().mockResolvedValue({
+        type: 'ok',
+        session,
+        nbDevicesConnectes: 2,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [],
+      }),
+    };
+    const controller = creerControleur(
+      obtenirPilotageSession,
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      reactiverQuestionSession,
+    );
+
+    const resultat = await controller.reactiverQuestion('s1', 'q1');
+
+    expect(reactiverQuestionSession.executer).toHaveBeenCalledWith('s1', 'q1');
+    expect(resultat.statut).toBe('OUVERTE');
+  });
+
+  it('renvoie 404 si la Session est introuvable', async () => {
+    const reactiverQuestionSession = {
+      executer: jest.fn().mockResolvedValue({ type: 'introuvable' }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      reactiverQuestionSession,
+    );
+
+    await expect(
+      controller.reactiverQuestion('inconnue', 'q1'),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('renvoie 404 si la Question n’est pas dans la Sélection', async () => {
+    const reactiverQuestionSession = {
+      executer: jest.fn().mockResolvedValue({ type: 'question_introuvable' }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      reactiverQuestionSession,
+    );
+
+    await expect(
+      controller.reactiverQuestion('s1', 'q-inconnue'),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('renvoie 409 si la Question n’est pas sautée ou déjà dépassée', async () => {
+    const reactiverQuestionSession = {
+      executer: jest
+        .fn()
+        .mockResolvedValue({ type: 'invalide', erreur: new Error('refusé') }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      reactiverQuestionSession,
+    );
+
+    await expect(controller.reactiverQuestion('s1', 'q1')).rejects.toThrow(
       ConflictException,
     );
   });

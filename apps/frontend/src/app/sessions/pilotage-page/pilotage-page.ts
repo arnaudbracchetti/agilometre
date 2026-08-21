@@ -23,6 +23,7 @@ interface GroupeProgression {
   questionId: string;
   libelle: string;
   statut: StatutQuestionProgressionDto;
+  reactivable: boolean;
   tours: TourHistoriqueDto[];
 }
 
@@ -69,6 +70,8 @@ export class PilotagePage implements OnInit {
   protected readonly tourEnCours = signal(false);
   /** questionId en cours de traitement, pour ne désactiver que le bon bouton Sauter. */
   protected readonly sauterEnCours = signal<string | null>(null);
+  /** questionId en cours de traitement, pour ne désactiver que le bon bouton Réactiver. */
+  protected readonly reactiverEnCours = signal<string | null>(null);
 
   /**
    * Vue d'ensemble de la Sélection entière (carte F1), qu'une Question ait déjà des Tours clos ou
@@ -90,6 +93,7 @@ export class PilotagePage implements OnInit {
       questionId: entree.questionId,
       libelle: entree.libelle,
       statut: entree.statut,
+      reactivable: entree.reactivable,
       tours: toursParQuestion.get(entree.questionId) ?? [],
     }));
   });
@@ -178,6 +182,21 @@ export class PilotagePage implements OnInit {
       .subscribe({
         next: (pilotage) => this.appliquer(pilotage),
         error: () => this.message.error('Impossible de sauter cette Question.'),
+      });
+  }
+
+  protected reactiverQuestion(questionId: string): void {
+    const id = this.sessionId();
+    if (!id) {
+      return;
+    }
+    this.reactiverEnCours.set(questionId);
+    this.sessionsService
+      .reactiverQuestion(id, questionId)
+      .pipe(finalize(() => this.reactiverEnCours.set(null)))
+      .subscribe({
+        next: (pilotage) => this.appliquer(pilotage),
+        error: () => this.message.error('Impossible de réactiver cette Question.'),
       });
   }
 

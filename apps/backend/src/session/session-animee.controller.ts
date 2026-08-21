@@ -41,6 +41,7 @@ import { PasserQuestionSuivanteSession } from './application/passer-question-sui
 import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
 import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
 import { SauterQuestionSession } from './application/sauter-question-session.usecase';
+import { ReactiverQuestionSession } from './application/reactiver-question-session.usecase';
 import {
   versHistoriqueDto,
   versProgressionDto,
@@ -119,6 +120,7 @@ export class SessionAnimeeController {
     private readonly ouvrirTourDeVote: OuvrirTourDeVote,
     private readonly cloreTourDeVote: CloreTourDeVote,
     private readonly sauterQuestionSession: SauterQuestionSession,
+    private readonly reactiverQuestionSession: ReactiverQuestionSession,
   ) {}
 
   @Get()
@@ -240,6 +242,29 @@ export class SessionAnimeeController {
     @Param('questionId') questionId: string,
   ): Promise<PilotageSessionDto> {
     const resultat = await this.sauterQuestionSession.executer(id, questionId);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Session ${id} introuvable`);
+    }
+    if (resultat.type === 'question_introuvable') {
+      throw new NotFoundException(
+        `Question ${questionId} absente de la Sélection`,
+      );
+    }
+    if (resultat.type === 'invalide') {
+      throw new ConflictException(resultat.erreur.message);
+    }
+    return this.rechargerPilotage(id);
+  }
+
+  @Post(':id/questions/:questionId/reactiver')
+  async reactiverQuestion(
+    @Param('id') id: string,
+    @Param('questionId') questionId: string,
+  ): Promise<PilotageSessionDto> {
+    const resultat = await this.reactiverQuestionSession.executer(
+      id,
+      questionId,
+    );
     if (resultat.type === 'introuvable') {
       throw new NotFoundException(`Session ${id} introuvable`);
     }

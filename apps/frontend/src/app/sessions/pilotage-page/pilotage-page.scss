@@ -270,6 +270,12 @@
     margin-top: var(--space-2);
   }
 
+  // Inverse de Sauter (addendum #44) — même emplacement, jamais de couleur danger puisque
+  // réactiver n'est pas destructif.
+  &__historique-reactiver {
+    margin-top: var(--space-2);
+  }
+
   &__historique-chevron {
     flex-shrink: 0;
     transition: transform 0.2s ease;

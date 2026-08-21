@@ -29,7 +29,8 @@ traduction de ces décisions en agrégats, entités et invariants.
   `questionsSautees: Set<QuestionId>`, `indexCourant: number` (position dans la Sélection,
   démarre à **-1** : salle d'attente, aucune Question courante).
 - Nouvelles méthodes : `ouvrir(code)` (→ `OUVERTE`, `verrouillee = true` — ADR-0010),
-  `sauter(questionId)`, `passerQuestionSuivante()`, `terminer()` (→ `CLOTUREE`).
+  `sauter(questionId)`, `reactiverQuestion(questionId)` (inverse de `sauter`, carte #44 addendum —
+  voir plus bas), `passerQuestionSuivante()`, `terminer()` (→ `CLOTUREE`).
 - **Ne possède pas** `TourDeVote` comme entité enfant, malgré ce que la relation Prisma
   `Session.tours` pouvait suggérer — voir plus bas pourquoi.
 - Le statut de chaque Question du déroulement (à venir / courante / traitée / sautée) n'est pas
@@ -70,6 +71,7 @@ comportement propre.
 | `verrouillee` passe à `true` exactement à `ouvrir()`, jamais avant, jamais remis à `false` (ADR-0010) | `Session` |
 | `ouvrir()` refusé si `statut ≠ PREPAREE` ; `terminer()` refusé si `statut ≠ OUVERTE` | `Session` |
 | `sauter(questionId)` refusé si la Question n'est pas dans la Sélection, déjà traitée, ou déjà sautée | `Session` |
+| `reactiverQuestion(questionId)` refusé si la Question n'est pas Sautée, ou si son index n'est plus strictement supérieur à `indexCourant` (addendum "Réactiver" ci-dessous — jamais de recul de `indexCourant`) | `Session` |
 | `passerQuestionSuivante()` refusé tant que l'item courant n'a ni Tour clos ni marquage Sautée — depuis `indexCourant = -1` (salle d'attente), ce premier appel est explicitement autorisé, il n'y a alors aucun item courant à résoudre | `Session` |
 | `indexCourant` ne recule jamais ; en avançant, saute automatiquement les items déjà Sautés | `Session` |
 | Une fois `CLOTUREE`, plus aucune mutation | `Session` |
@@ -90,6 +92,7 @@ comportement propre.
 |---|---|---|
 | Ouvrir (verrouillage, `PREPAREE → OUVERTE`) | Commande | Racine — le besoin de Code est porté par `Session` elle-même, réclamé à un port `GenerateurDeCode` (interface du domaine, `generer(): Promise<string>` garanti unique parmi les Sessions OUVERTE). `ouvrir()` prend `0` paramètre ; le use case ne fait que charger la Session et sauvegarder — carte #34, écart assumé vis-à-vis de la conception initiale ci-dessous |
 | Sauter une Question | Commande | Racine + use case (clôt le Tour ouvert éventuel via `TourDeVoteRepository`) |
+| Réactiver une Question sautée | Commande | Racine seule — aucune dépendance à l'état des Tours (addendum "Réactiver" ci-dessous) |
 | Passer à la Question suivante | Commande | Racine |
 | Terminer prématurément | Commande | Use case (boucle `sauter` sur le reste via la Racine) |
 | Terminer la séance (`OUVERTE → CLOTUREE`) | Commande | Racine |
@@ -210,6 +213,42 @@ réclame son Code au port `GenerateurDeCode`, qui a besoin d'I/O pour garantir l
 est injecté au constructeur de `Session` (via `creer`/`reconstituer`, symétriquement), implémenté
 par `CryptoGenerateurDeCode` (`apps/backend/src/session/infrastructure/`) — la seule technique
 (tirage aléatoire, format à 4 chiffres, vérification en base) que le domaine ne connaît jamais.
+
+## Addendum — Réactiver une Question sautée (carte #44 suite, `/ddd` post-implémentation)
+
+Besoin apparu après l'implémentation de la carte F2 (#44, "Le Coach saute une Question") : le
+droit à l'erreur — le Coach a sauté une Question par erreur (ou a changé d'avis) et veut la
+remettre dans le circuit normal.
+
+**Le nœud rencontré.** `sauter()` peut cibler aussi bien la Question courante (auquel cas
+`indexCourant` avance dans la même opération) qu'une Question encore à venir (auquel cas
+`indexCourant` ne bouge pas). Un "annuler" naïf qui retirerait simplement l'entrée de
+`questionsSautees` laisserait, dans le premier cas, une Question "à venir" **derrière** le
+curseur — inatteignable, puisqu'un Tour ne s'ouvre que sur `questionCouranteId()` et que
+`passerQuestionSuivante()` n'avance que vers l'avant. La réparer aurait exigé soit de faire
+reculer `indexCourant` (contredit l'invariant "ne recule jamais" du §2), soit de construire une
+toute nouvelle capacité "ouvrir un Tour sur une Question arbitraire" — hors de proportion avec le
+besoin exprimé.
+
+**Décision retenue** (tranchée en `/ddd`, pas en ad-hoc) : `reactiverQuestion(questionId)` n'est
+autorisée que si l'index de la Question dans la Sélection est **strictement supérieur** à
+`indexCourant`. Cette borne évite complètement le nœud : une Question réactivable n'a, par
+construction, jamais pu être courante — elle n'a donc jamais pu avoir de Tour associé, ouvert ou
+clos (les Tours ne s'ouvrent que sur la Question courante). `indexCourant` n'a donc **jamais**
+besoin de bouger pour cette opération, dans un sens ou dans l'autre.
+
+**Conséquence assumée** : la Question qu'on vient de sauter *pendant qu'elle était courante* n'est
+**pas** réactivable — `sauter()` avance `indexCourant` au-delà d'elle dans la même opération, donc
+son index devient immédiatement inférieur au nouvel `indexCourant`. Seules les Questions sautées
+**par anticipation**, alors qu'elles étaient encore à venir, et que le curseur n'a pas encore
+rejointes, restent réactivables. Ce choix a été confirmé explicitement (le besoin visé est
+"j'ai sauté une Question à venir par erreur", pas "j'ai sauté la Question courante par erreur").
+
+**Progression** : `Session.progression()` n'a pas besoin d'être modifiée pour dériver le statut
+(une Question retirée de `questionsSautees` redevient `A_VENIR` par la logique déjà en place) mais
+gagne un second champ dérivé par item, `reactivable: boolean` (`index > indexCourant`), pour que
+les écrans (pilotage) n'aient jamais à dupliquer cette règle côté client — même principe que la
+dérivation `statut` elle-même (§5 : "seul endroit où vit cette dérivation").
 
 ## Notes et améliorations différées
 

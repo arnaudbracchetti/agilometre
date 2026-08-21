@@ -84,5 +84,6 @@ export function versProgressionDto(
     questionId: entree.questionId,
     libelle: entree.libelle,
     statut: entree.statut,
+    reactivable: entree.reactivable,
   }));
 }

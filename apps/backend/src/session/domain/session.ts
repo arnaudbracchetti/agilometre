@@ -24,6 +24,8 @@ export type StatutQuestionProgression =
 export type Progression = ReadonlyArray<{
   questionId: string;
   statut: StatutQuestionProgression;
+  /** Pertinent seulement si statut === 'SAUTEE' — index > indexCourant (addendum "Réactiver"). */
+  reactivable: boolean;
 }>;
 
 export class EquipeManquanteError extends Error {
@@ -84,6 +86,23 @@ export class QuestionDejaSauteeError extends Error {
   constructor() {
     super('Cette Question a déjà été sautée');
     this.name = 'QuestionDejaSauteeError';
+  }
+}
+
+export class QuestionNonSauteeError extends Error {
+  constructor() {
+    super('Cette Question n’est pas Sautée : rien à réactiver');
+    this.name = 'QuestionNonSauteeError';
+  }
+}
+
+/** Garde de reactiverQuestion : jamais de recul d'indexCourant (addendum "Réactiver"). */
+export class QuestionDejaDepasseeError extends Error {
+  constructor() {
+    super(
+      'Cette Question a déjà été dépassée par la progression de la Session',
+    );
+    this.name = 'QuestionDejaDepasseeError';
   }
 }
 
@@ -392,6 +411,38 @@ export class Session {
     return Result.succes(undefined);
   }
 
+  /**
+   * Inverse de `sauter` (addendum "Réactiver", docs/design/agregat-tour-de-vote.md) : remet une
+   * Question Sautée dans le circuit normal. Restreint aux Questions dont l'index reste
+   * strictement devant indexCourant — jamais de recul d'indexCourant, donc pas de paramètre
+   * `tours` : une Question réactivable n'a par construction jamais pu avoir de Tour associé.
+   */
+  reactiverQuestion(
+    questionId: string,
+  ): Result<
+    void,
+    | SessionNonOuverteError
+    | QuestionIntrouvableDansSelectionError
+    | QuestionNonSauteeError
+    | QuestionDejaDepasseeError
+  > {
+    if (this._statut !== 'OUVERTE') {
+      return Result.echec(new SessionNonOuverteError());
+    }
+    const index = this._selection.questionIds.indexOf(questionId);
+    if (index === -1) {
+      return Result.echec(new QuestionIntrouvableDansSelectionError());
+    }
+    if (!this._questionsSautees.has(questionId)) {
+      return Result.echec(new QuestionNonSauteeError());
+    }
+    if (index <= this._indexCourant) {
+      return Result.echec(new QuestionDejaDepasseeError());
+    }
+    this._questionsSautees.delete(questionId);
+    return Result.succes(undefined);
+  }
+
   /** Depuis la salle d'attente, démarre toujours la séance ; sinon refusé tant que l'item courant n'est pas résolu (docs/design/agregat-tour-de-vote.md §2). */
   passerQuestionSuivante(
     tours: readonly EtatTour[],
@@ -428,7 +479,8 @@ export class Session {
       } else {
         statut = 'A_VENIR';
       }
-      return { questionId, statut };
+      const reactivable = statut === 'SAUTEE' && index > this._indexCourant;
+      return { questionId, statut, reactivable };
     });
   }
 

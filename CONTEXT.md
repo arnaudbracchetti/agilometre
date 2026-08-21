@@ -85,8 +85,11 @@ _Avoid_: Jeton (sans qualificatif, réservé au jeton de Sollicitation du Pouls 
 **Sauter** (une Question):
 Marquer, une fois la Session ouverte, qu'une Question restante de la Sélection ne sera pas traitée - la Question reste visible dans l'historique de la Session mais est exclue du score. Remplace toute édition de la Sélection (ajout, retrait, réordonnancement), verrouillée dès l'ouverture.
 
+**Réactiver** (une Question sautée):
+Annuler le marquage Sautée d'une Question, qui redevient à venir - seulement si son index dans la Sélection n'a pas encore été dépassé par la progression de la Session. La Question sautée pendant qu'elle était courante n'est pas réactivable (le curseur de progression ne recule jamais) ; seule une Question sautée par anticipation, alors qu'elle était encore à venir, reste réactivable tant qu'on ne l'a pas atteinte.
+
 **Écran de pilotage**:
-La vue réservée au Coach pour animer une Session ouverte : progression dans la Sélection, ouverture/clôture des Tours de vote, et les seules actions encore permises sur la Sélection (Sauter une Question).
+La vue réservée au Coach pour animer une Session ouverte : progression dans la Sélection, ouverture/clôture des Tours de vote, et les seules actions encore permises sur la Sélection (Sauter une Question, Réactiver une Question sautée).
 
 **Écran de projection**:
 La vue plein écran destinée à la salle (vidéoprojecteur), qui affiche selon l'étape le Code, la Question courante (restant affichée pendant tout le Tour de vote, Compteur de participation en plus), ou le résultat d'un Tour de vote clos - seule la répartition des votes en cours reste cachée tant que le Tour n'est pas clos.
