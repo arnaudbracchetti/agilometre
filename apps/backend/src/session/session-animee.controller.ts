@@ -43,6 +43,7 @@ import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
 import { SauterQuestionSession } from './application/sauter-question-session.usecase';
 import { ReactiverQuestionSession } from './application/reactiver-question-session.usecase';
 import { TerminerPrematurementSession } from './application/terminer-prematurement-session.usecase';
+import { TerminerSession } from './application/terminer-session.usecase';
 import {
   versHistoriqueDto,
   versProgressionDto,
@@ -123,6 +124,7 @@ export class SessionAnimeeController {
     private readonly sauterQuestionSession: SauterQuestionSession,
     private readonly reactiverQuestionSession: ReactiverQuestionSession,
     private readonly terminerPrematurementSession: TerminerPrematurementSession,
+    private readonly terminerSession: TerminerSession,
   ) {}
 
   @Get()
@@ -292,6 +294,20 @@ export class SessionAnimeeController {
     if (resultat.type === 'non_ouverte') {
       throw new ConflictException(
         'La Session doit être ouverte pour être terminée prématurément',
+      );
+    }
+    return this.rechargerPilotage(id);
+  }
+
+  @Post(':id/terminer')
+  async terminer(@Param('id') id: string): Promise<PilotageSessionDto> {
+    const resultat = await this.terminerSession.executer(id);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Session ${id} introuvable`);
+    }
+    if (resultat.type === 'non_ouverte') {
+      throw new ConflictException(
+        'La Session doit être ouverte pour être terminée',
       );
     }
     return this.rechargerPilotage(id);

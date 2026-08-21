@@ -1,8 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { convertToParamMap, provideRouter, ActivatedRoute } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { convertToParamMap, provideRouter, ActivatedRoute, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { vi } from 'vitest';
 import { SynthesePage } from './synthese-page';
 
 function activatedRouteAvecId(id: string): Partial<ActivatedRoute> {
@@ -90,5 +93,116 @@ describe('SynthesePage', () => {
     expect(fixture.nativeElement.textContent).toContain(
       'Cet écran de synthèse n’est plus accessible.',
     );
+  });
+
+  describe('Terminer la séance (carte G1)', () => {
+    function boutonTerminer(): HTMLButtonElement {
+      return Array.from(fixture.nativeElement.querySelectorAll('button')).find((b) =>
+        (b as HTMLButtonElement).textContent?.includes('Terminer la séance'),
+      ) as HTMLButtonElement;
+    }
+
+    it('affiche le bouton quand la Session est encore OUVERTE', () => {
+      fixture = TestBed.createComponent(SynthesePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+        statut: 'OUVERTE',
+        code: '654321',
+        nbDevicesConnectes: 0,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [],
+      });
+      fixture.detectChanges();
+
+      expect(boutonTerminer()).toBeTruthy();
+    });
+
+    it('masque le bouton si la Session est déjà CLOTUREE', () => {
+      fixture = TestBed.createComponent(SynthesePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+        statut: 'CLOTUREE',
+        code: '654321',
+        nbDevicesConnectes: 0,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [],
+      });
+      fixture.detectChanges();
+
+      expect(boutonTerminer()).toBeFalsy();
+    });
+
+    it('confirme la popconfirm : appelle terminerSession puis navigue vers l’écran de pilotage', () => {
+      fixture = TestBed.createComponent(SynthesePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+        statut: 'OUVERTE',
+        code: '654321',
+        nbDevicesConnectes: 0,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [],
+      });
+      fixture.detectChanges();
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+      const bouton = fixture.debugElement
+        .queryAll(By.css('button'))
+        .find((el) => (el.nativeElement as HTMLElement).textContent?.includes('Terminer la séance'))!;
+      bouton.triggerEventHandler('nzOnConfirm', undefined);
+
+      const req = httpMock.expectOne('/api/sessions/s1/terminer');
+      expect(req.request.method).toBe('POST');
+      req.flush({
+        statut: 'CLOTUREE',
+        code: '654321',
+        nbDevicesConnectes: 0,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [],
+      });
+      fixture.detectChanges();
+
+      expect(navigateSpy).toHaveBeenCalledWith(['/sessions', 's1', 'pilotage']);
+    });
+
+    it('affiche un message d’erreur si le refus est renvoyé, sans naviguer', () => {
+      fixture = TestBed.createComponent(SynthesePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+        statut: 'OUVERTE',
+        code: '654321',
+        nbDevicesConnectes: 0,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [],
+      });
+      fixture.detectChanges();
+      const messageService = fixture.debugElement.injector.get(NzMessageService);
+      const errorSpy = vi.spyOn(messageService, 'error');
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+      const bouton = fixture.debugElement
+        .queryAll(By.css('button'))
+        .find((el) => (el.nativeElement as HTMLElement).textContent?.includes('Terminer la séance'))!;
+      bouton.triggerEventHandler('nzOnConfirm', undefined);
+
+      httpMock
+        .expectOne('/api/sessions/s1/terminer')
+        .flush('Refusé', { status: 409, statusText: 'Conflict' });
+      fixture.detectChanges();
+
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(navigateSpy).not.toHaveBeenCalled();
+    });
   });
 });

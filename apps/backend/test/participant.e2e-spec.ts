@@ -1261,4 +1261,96 @@ describe('Participant — jointure par Code (e2e)', () => {
       );
     });
   });
+
+  describe('carte G1 — le Coach termine la séance (#46)', () => {
+    it('POST /api/sessions/:id/terminer — 404 si la Session est inconnue', async () => {
+      await request(app.getHttpServer())
+        .post('/api/sessions/inconnue/terminer')
+        .expect(404);
+    });
+
+    it('POST /api/sessions/:id/terminer — 409 si la Session est encore PREPAREE', async () => {
+      const session = await sessionPreparee('G1a');
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer`)
+        .expect(409);
+    });
+
+    it('POST /api/sessions/:id/terminer — 409 si la Session est déjà CLOTUREE (double clôture)', async () => {
+      const session = await sessionOuverte('G1b');
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer`)
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer`)
+        .expect(409);
+    });
+
+    it('depuis OUVERTE : clôture la Session (statut CLOTUREE dans la réponse)', async () => {
+      const session = await sessionOuverte('G1c');
+
+      const reponse = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer`)
+        .expect(201);
+
+      const pilotage = reponse.body as PilotageSessionDto;
+      expect(pilotage.statut).toBe('CLOTUREE');
+    });
+
+    it('après clôture : GET /api/sessions/:id/pilotage reste accessible en lecture seule avec la même progression', async () => {
+      const session = await sessionADeuxQuestions('G1d');
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .expect(201);
+
+      const avantCloture = await request(app.getHttpServer())
+        .get(`/api/sessions/${session.id}/pilotage`)
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer`)
+        .expect(201);
+
+      const apresCloture = await request(app.getHttpServer())
+        .get(`/api/sessions/${session.id}/pilotage`)
+        .expect(200);
+      const pilotage = apresCloture.body as PilotageSessionDto;
+      expect(pilotage.statut).toBe('CLOTUREE');
+      expect(pilotage.progression).toEqual(
+        (avantCloture.body as PilotageSessionDto).progression,
+      );
+    });
+
+    it('après clôture : GET /api/projection/:id devient inaccessible (404)', async () => {
+      const session = await sessionOuverte('G1e');
+      await request(app.getHttpServer())
+        .get(`/api/projection/${session.id}`)
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer`)
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .get(`/api/projection/${session.id}`)
+        .expect(404);
+    });
+
+    it('après clôture : le Code de session ne permet plus de rejoindre (404, aucun nouveau Jeton)', async () => {
+      const session = await sessionOuverte('G1f');
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer`)
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post('/api/participant/rejoindre')
+        .send({ code: session.code })
+        .expect(404);
+    });
+  });
 });

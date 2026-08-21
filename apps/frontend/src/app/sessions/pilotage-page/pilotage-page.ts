@@ -88,6 +88,9 @@ export class PilotagePage implements OnInit {
       this.progression().every((p) => p.statut === 'TRAITEE' || p.statut === 'SAUTEE'),
   );
 
+  /** Lecture seule après CLOTUREE (carte G1) — un seul dérivé, réutilisé par les trois gardes du template. */
+  protected readonly estOuverte = computed(() => this.statut() === 'OUVERTE');
+
   /**
    * Vue d'ensemble de la Sélection entière (carte F1), qu'une Question ait déjà des Tours clos ou
    * non — fusionne la progression (ordre + statut de chaque Question, toujours complet) avec

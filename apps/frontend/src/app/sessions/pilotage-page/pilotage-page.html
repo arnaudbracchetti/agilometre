@@ -12,9 +12,11 @@
       <div class="pilotage__colonne-principale">
         <header class="pilotage__entete">
           <h2 class="pilotage__titre">Pilotage de la séance</h2>
-          <a nz-button nzType="default" [href]="urlProjection()" target="_blank" rel="noopener">
-            Ouvrir l’écran de projection
-          </a>
+          @if (estOuverte()) {
+            <a nz-button nzType="default" [href]="urlProjection()" target="_blank" rel="noopener">
+              Ouvrir l’écran de projection
+            </a>
+          }
         </header>
 
         <app-sticky-note couleur="blue" class="pilotage__code">
@@ -25,7 +27,7 @@
         <p class="pilotage__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
 
         <div class="pilotage__principal">
-          @if (statut() === 'OUVERTE') {
+          @if (estOuverte()) {
             @if (questionCourante(); as question) {
               <app-sticky-note couleur="violet" class="pilotage__question">
                 <p class="pilotage__question-libelle">{{ question.libelle }}</p>
@@ -152,7 +154,7 @@
                     >{{ libelleStatut(groupe.statut) }}</span>
                   </div>
                 }
-                @if (estSautable(groupe.statut)) {
+                @if (estOuverte() && estSautable(groupe.statut)) {
                   <button
                     type="button"
                     nz-button
@@ -167,7 +169,7 @@
                     Sauter
                   </button>
                 }
-                @if (groupe.statut === 'SAUTEE' && groupe.reactivable) {
+                @if (estOuverte() && groupe.statut === 'SAUTEE' && groupe.reactivable) {
                   <button
                     type="button"
                     nz-button

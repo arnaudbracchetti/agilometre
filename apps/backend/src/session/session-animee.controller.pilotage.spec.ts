@@ -67,6 +67,7 @@ function creerControleur(
     sauterQuestionSession as unknown as SauterQuestionSession,
     reactiverQuestionSession as unknown as ReactiverQuestionSession,
     terminerPrematurementSession as unknown as TerminerPrematurementSession,
+    nonUtilise,
   );
 }
 

@@ -33,6 +33,7 @@ import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
 import { SauterQuestionSession } from './application/sauter-question-session.usecase';
 import { ReactiverQuestionSession } from './application/reactiver-question-session.usecase';
 import { TerminerPrematurementSession } from './application/terminer-prematurement-session.usecase';
+import { TerminerSession } from './application/terminer-session.usecase';
 import { VoterParticipant } from './application/voter-participant.usecase';
 import { ObtenirEtatParticipant } from './application/obtenir-etat-participant.usecase';
 import { ObtenirInfoSessionParticipant } from './application/obtenir-info-session-participant.usecase';
@@ -335,6 +336,12 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
         PrismaTourDeVoteRepository,
         PrismaEtatToursQuery,
       ],
+    },
+    {
+      provide: TerminerSession,
+      useFactory: (sessions: PrismaSessionRepository) =>
+        new TerminerSession(sessions),
+      inject: [PrismaSessionRepository],
     },
     {
       provide: VoterParticipant,

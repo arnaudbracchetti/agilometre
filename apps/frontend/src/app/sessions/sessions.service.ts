@@ -39,6 +39,10 @@ export class SessionsService {
     );
   }
 
+  terminerSession(id: string): Observable<PilotageSessionDto> {
+    return this.http.post<PilotageSessionDto>(`${this.baseUrl}/${id}/terminer`, {});
+  }
+
   ouvrirTour(id: string): Observable<PilotageSessionDto> {
     return this.http.post<PilotageSessionDto>(`${this.baseUrl}/${id}/ouvrir-tour`, {});
   }

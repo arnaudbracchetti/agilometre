@@ -26,5 +26,20 @@
         </li>
       }
     </ul>
+
+    @if (statut() === 'OUVERTE') {
+      <button
+        class="synthese__bouton-terminer"
+        nz-button
+        nzType="primary"
+        nzDanger
+        nz-popconfirm
+        nzPopconfirmTitle="Terminer la séance ? Cette action est définitive : le Code, les accès participants et l'écran de projection deviendront inopérants."
+        (nzOnConfirm)="terminerSeance()"
+        [disabled]="terminerEnCours()"
+      >
+        Terminer la séance
+      </button>
+    }
   }
 </div>

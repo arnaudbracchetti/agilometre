@@ -719,4 +719,40 @@ describe('PilotagePage', () => {
       });
     });
   });
+
+  describe('Lecture seule après clôture (carte G1)', () => {
+    it('affiche « Séance clôturée », masque le lien de projection et les contrôles, mais garde la Vue d’ensemble visible', () => {
+      fixture = TestBed.createComponent(PilotagePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+        statut: 'CLOTUREE',
+        code: '654321',
+        nbDevicesConnectes: 0,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        // Combinaison non atteignable par le parcours normal (indexCourant dépasserait toute
+        // Question Sautée réactivable avant CLOTUREE) — sert ici uniquement à vérifier que le
+        // garde de template ne dépend que de statut(), pas de la dérivation reactivable.
+        progression: [
+          { questionId: 'q1', libelle: 'Traitée', statut: 'TRAITEE', reactivable: false },
+          { questionId: 'q2', libelle: 'Sautée', statut: 'SAUTEE', reactivable: true },
+        ],
+      });
+      fixture.detectChanges();
+
+      const texte = fixture.nativeElement.textContent as string;
+      expect(texte).toContain('Séance clôturée.');
+      expect(texte).toContain('Traitée');
+      expect(texte).toContain('Sautée');
+      expect(
+        fixture.nativeElement.querySelector('a[href="/projection/s1"]'),
+      ).toBeFalsy();
+      const boutons = Array.from(
+        fixture.nativeElement.querySelectorAll('button'),
+      ) as HTMLButtonElement[];
+      expect(boutons.some((b) => b.textContent?.includes('Sauter'))).toBe(false);
+      expect(boutons.some((b) => b.textContent?.includes('Réactiver'))).toBe(false);
+    });
+  });
 });
