@@ -61,6 +61,13 @@ export class SessionsService {
     );
   }
 
+  terminerPrematurement(id: string): Observable<PilotageSessionDto> {
+    return this.http.post<PilotageSessionDto>(
+      `${this.baseUrl}/${id}/terminer-prematurement`,
+      {},
+    );
+  }
+
   modifierInfos(id: string, equipeId: string, date: string): Observable<SessionDto> {
     return this.http.patch<SessionDto>(`${this.baseUrl}/${id}`, { equipeId, date });
   }

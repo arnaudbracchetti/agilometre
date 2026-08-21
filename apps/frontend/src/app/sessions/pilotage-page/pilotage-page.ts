@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -14,6 +14,7 @@ import {
   TourOuvertDto,
 } from '@agilometre/shared';
 import { LETTRES_OPTIONS } from '../../shared/lettres-options';
+import { libelleStatutProgression } from '../../shared/libelle-statut-progression';
 import { sonder } from '../../shared/sondage-2s';
 import { CouleurStickyNote, StickyNote } from '../../shared/sticky-note/sticky-note';
 import { ErrorMessage } from '../../shared/error-message/error-message';
@@ -33,22 +34,23 @@ interface GroupeProgression {
  */
 const COULEURS_NOTES_HISTORIQUE: readonly CouleurStickyNote[] = ['blue', 'violet', 'magenta'];
 
-const LIBELLES_STATUT: Record<StatutQuestionProgressionDto, string> = {
-  A_VENIR: 'À venir',
-  COURANTE: 'En cours',
-  TRAITEE: 'Traitée',
-  SAUTEE: 'Sautée',
-};
-
 /** Écran de pilotage (Coach) — sondage 2s (doc/spec/annexes/deroulement-session-animee.md). */
 @Component({
   selector: 'app-pilotage-page',
-  imports: [NzButtonModule, NzIconModule, NzPopconfirmModule, StickyNote, ErrorMessage],
+  imports: [
+    RouterLink,
+    NzButtonModule,
+    NzIconModule,
+    NzPopconfirmModule,
+    StickyNote,
+    ErrorMessage,
+  ],
   templateUrl: './pilotage-page.html',
   styleUrl: './pilotage-page.scss',
 })
 export class PilotagePage implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly sessionsService = inject(SessionsService);
   private readonly message = inject(NzMessageService);
   private readonly destroyRef = inject(DestroyRef);
@@ -72,6 +74,19 @@ export class PilotagePage implements OnInit {
   protected readonly sauterEnCours = signal<string | null>(null);
   /** questionId en cours de traitement, pour ne désactiver que le bon bouton Réactiver. */
   protected readonly reactiverEnCours = signal<string | null>(null);
+  protected readonly terminerPrematurementEnCours = signal(false);
+
+  /**
+   * Toutes les Questions de la Sélection sont Traitées ou Sautées (carte F3) — atteignable soit
+   * en avançant question par question jusqu'au bout, soit via « Terminer la séance
+   * prématurément ». Distingue ce cas de la salle d'attente, où `questionCourante` est aussi
+   * `null` mais où rien n'a encore de statut autre que À venir.
+   */
+  protected readonly estTerminee = computed(
+    () =>
+      this.progression().length > 0 &&
+      this.progression().every((p) => p.statut === 'TRAITEE' || p.statut === 'SAUTEE'),
+  );
 
   /**
    * Vue d'ensemble de la Sélection entière (carte F1), qu'une Question ait déjà des Tours clos ou
@@ -200,12 +215,30 @@ export class PilotagePage implements OnInit {
       });
   }
 
+  protected terminerPrematurement(): void {
+    const id = this.sessionId();
+    if (!id) {
+      return;
+    }
+    this.terminerPrematurementEnCours.set(true);
+    this.sessionsService
+      .terminerPrematurement(id)
+      .pipe(finalize(() => this.terminerPrematurementEnCours.set(false)))
+      .subscribe({
+        next: (pilotage) => {
+          this.appliquer(pilotage);
+          this.router.navigate(['/sessions', id, 'synthese']);
+        },
+        error: () => this.message.error('Impossible de terminer la séance prématurément.'),
+      });
+  }
+
   protected couleurNoteHistorique(index: number): CouleurStickyNote {
     return COULEURS_NOTES_HISTORIQUE[index % COULEURS_NOTES_HISTORIQUE.length];
   }
 
   protected libelleStatut(statut: StatutQuestionProgressionDto): string {
-    return LIBELLES_STATUT[statut];
+    return libelleStatutProgression(statut);
   }
 
   protected estGroupeHistoriqueOuvert(questionId: string): boolean {

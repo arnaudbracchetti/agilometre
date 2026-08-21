@@ -38,6 +38,11 @@
               @if (tourOuvert(); as tour) {
                 <p class="pilotage__compteur-tour">{{ tour.nbVotants }} / {{ nbDevicesConnectes() }} ont voté</p>
               }
+            } @else if (estTerminee()) {
+              <p class="pilotage__statut">Toutes les Questions ont été traitées ou sautées.</p>
+              <a nz-button nzType="primary" [routerLink]="['/sessions', sessionId(), 'synthese']">
+                Voir la synthèse
+              </a>
             } @else {
               <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
             }
@@ -53,15 +58,28 @@
                   {{ libelleBoutonTour() }}
                 </button>
               }
-              <button
-                class="pilotage__bouton"
-                nz-button
-                [nzType]="questionCourante() ? 'default' : 'primary'"
-                [disabled]="avancerEnCours() || tourOuvert() !== null"
-                (click)="avancer()"
-              >
-                {{ libelleBouton() }}
-              </button>
+              @if (!estTerminee()) {
+                <button
+                  class="pilotage__bouton"
+                  nz-button
+                  [nzType]="questionCourante() ? 'default' : 'primary'"
+                  [disabled]="avancerEnCours() || tourOuvert() !== null"
+                  (click)="avancer()"
+                >
+                  {{ libelleBouton() }}
+                </button>
+                <button
+                  class="pilotage__bouton"
+                  nz-button
+                  nzDanger
+                  nz-popconfirm
+                  nzPopconfirmTitle="Terminer la séance prématurément ? Toutes les Questions restantes seront automatiquement marquées comme sautées."
+                  (nzOnConfirm)="terminerPrematurement()"
+                  [disabled]="terminerPrematurementEnCours()"
+                >
+                  Terminer la séance prématurément
+                </button>
+              }
             </div>
           } @else {
             <p class="pilotage__statut">Séance clôturée.</p>

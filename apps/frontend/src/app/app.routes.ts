@@ -76,6 +76,14 @@ export const routes: Routes = [
             (m) => m.PilotagePage,
           ),
       },
+      {
+        path: 'sessions/:id/synthese',
+        data: { breadcrumb: 'Synthèse' },
+        loadComponent: () =>
+          import('./sessions/synthese-page/synthese-page').then(
+            (m) => m.SynthesePage,
+          ),
+      },
     ],
   },
 ];

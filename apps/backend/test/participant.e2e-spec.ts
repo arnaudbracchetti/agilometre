@@ -204,6 +204,30 @@ describe('Participant — jointure par Code (e2e)', () => {
     );
   });
 
+  /** Comme sessionADeuxQuestions, avec une troisième Question — nécessaire pour "terminer
+   *  prématurément" (carte F3) avec une Question Traitée, une Courante et une À venir en même
+   *  temps. */
+  async function sessionATroisQuestions(suffixe: string): Promise<SessionDto> {
+    const questionIds = [`qa${suffixe}`, `qb${suffixe}`, `qc${suffixe}`];
+    await importer(questionIds);
+    const entite = await creerEntite(`DSI-${suffixe}`);
+    const equipe = await creerEquipe(`Équipe ${suffixe}`, entite.id);
+    const modele = await creerModele(`Diagnostic ${suffixe}`);
+    await request(app.getHttpServer())
+      .post(`/api/modeles-session/${modele.id}/themes`)
+      .send({ questionIds })
+      .expect(201);
+    const creation = await request(app.getHttpServer())
+      .post('/api/sessions')
+      .send({
+        equipeId: equipe.id,
+        date: '2026-04-01',
+        modeleSessionId: modele.id,
+      })
+      .expect(201);
+    return creation.body as SessionDto;
+  }
+
   it('POST /api/participant/rejoindre — 404 pour un Code inconnu', async () => {
     await sessionOuverte();
 
@@ -1078,6 +1102,163 @@ describe('Participant — jointure par Code (e2e)', () => {
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/q1Re/reactiver`)
         .expect(409);
+    });
+  });
+
+  describe('carte F3 — le Coach termine la séance prématurément (#45)', () => {
+    it('depuis la salle d’attente : toutes les Questions deviennent Sautées', async () => {
+      const session = await sessionADeuxQuestions('F3a');
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir`)
+        .expect(201);
+
+      const reponse = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .expect(201);
+      const pilotage = reponse.body as PilotageSessionDto;
+      expect(pilotage.progression).toEqual([
+        // Aucune Question n'a jamais été courante : indexCourant n'a pas bougé, donc les deux
+        // restent réactivables (même mécanique que Sauter une Question à venir, carte F2).
+        {
+          questionId: 'qaF3a',
+          libelle: 'Libellé qaF3a',
+          statut: 'SAUTEE',
+          reactivable: true,
+        },
+        {
+          questionId: 'qbF3a',
+          libelle: 'Libellé qbF3a',
+          statut: 'SAUTEE',
+          reactivable: true,
+        },
+      ]);
+      expect(pilotage.questionCourante).toBeNull();
+    });
+
+    it('avec un Tour ouvert et des votes sur la Question courante : le Tour est clos sans résultat, le reste est sauté', async () => {
+      const session = await sessionATroisQuestions('F3b');
+      const ouverture = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir`)
+        .expect(201);
+      const code = (ouverture.body as SessionDto).code as string;
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201); // salle d'attente -> qaF3b courante
+
+      const jeton = await rejoindre(code);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jeton}`)
+        .send({ optionIndex: 0 })
+        .expect(201);
+
+      const reponse = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .expect(201);
+      const pilotage = reponse.body as PilotageSessionDto;
+      expect(pilotage.progression).toEqual([
+        {
+          questionId: 'qaF3b',
+          libelle: 'Libellé qaF3b',
+          statut: 'SAUTEE',
+          reactivable: false,
+        },
+        {
+          questionId: 'qbF3b',
+          libelle: 'Libellé qbF3b',
+          statut: 'SAUTEE',
+          reactivable: false,
+        },
+        {
+          questionId: 'qcF3b',
+          libelle: 'Libellé qcF3b',
+          statut: 'SAUTEE',
+          reactivable: false,
+        },
+      ]);
+      expect(pilotage.questionCourante).toBeNull();
+      expect(pilotage.tourOuvert).toBeNull();
+      // "sans qu'aucun résultat n'en découle" : le Tour forcé-clos de qaF3b n'apparaît pas.
+      expect(pilotage.historique).toEqual([]);
+    });
+
+    it('laisse intacte une Question déjà Traitée (Tour clos)', async () => {
+      const session = await sessionATroisQuestions('F3c');
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201); // salle d'attente -> qaF3c courante
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201); // qaF3c traitée
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201); // qaF3c résolue -> qbF3c courante
+
+      const reponse = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .expect(201);
+      const pilotage = reponse.body as PilotageSessionDto;
+      expect(pilotage.progression).toEqual([
+        {
+          questionId: 'qaF3c',
+          libelle: 'Libellé qaF3c',
+          statut: 'TRAITEE',
+          reactivable: false,
+        },
+        {
+          questionId: 'qbF3c',
+          libelle: 'Libellé qbF3c',
+          statut: 'SAUTEE',
+          reactivable: false,
+        },
+        {
+          questionId: 'qcF3c',
+          libelle: 'Libellé qcF3c',
+          statut: 'SAUTEE',
+          reactivable: false,
+        },
+      ]);
+    });
+
+    it('POST /api/sessions/:id/terminer-prematurement — 404 si la Session est inconnue', async () => {
+      await request(app.getHttpServer())
+        .post('/api/sessions/inconnue/terminer-prematurement')
+        .expect(404);
+    });
+
+    it('POST /api/sessions/:id/terminer-prematurement — 409 si la Session n’est pas OUVERTE', async () => {
+      const session = await sessionPreparee('F3d');
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .expect(409);
+    });
+
+    it('appelée une seconde fois alors que tout est déjà traité/sauté : no-op, toujours 201', async () => {
+      const session = await sessionADeuxQuestions('F3e');
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .expect(201);
+
+      const reponse = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .expect(201);
+      const pilotage = reponse.body as PilotageSessionDto;
+      expect(pilotage.progression.every((p) => p.statut === 'SAUTEE')).toBe(
+        true,
+      );
     });
   });
 });

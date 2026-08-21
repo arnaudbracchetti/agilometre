@@ -1,0 +1,30 @@
+<div class="synthese">
+  @if (chargementEnCours()) {
+    <p>Chargement…</p>
+  } @else if (inaccessible()) {
+    <app-error-message
+      message="Cet écran de synthèse n’est plus accessible."
+      taille="page"
+      class="synthese__erreur"
+    />
+  } @else {
+    <header class="synthese__entete">
+      <h2 class="synthese__titre">Synthèse de la séance</h2>
+      <a nz-button nzType="default" [routerLink]="['/sessions', sessionId(), 'pilotage']">
+        Retour au pilotage
+      </a>
+    </header>
+
+    <ul class="synthese__liste">
+      @for (entree of progression(); track entree.questionId) {
+        <li class="synthese__ligne">
+          <span class="synthese__libelle">{{ entree.libelle }}</span>
+          <span
+            class="synthese__statut"
+            [class.synthese__statut--sautee]="entree.statut === 'SAUTEE'"
+          >{{ libelleStatut(entree.statut) }}</span>
+        </li>
+      }
+    </ul>
+  }
+</div>

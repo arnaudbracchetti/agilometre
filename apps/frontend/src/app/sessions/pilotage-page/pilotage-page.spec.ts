@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { convertToParamMap, ActivatedRoute } from '@angular/router';
+import { convertToParamMap, provideRouter, ActivatedRoute, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -38,6 +38,7 @@ describe('PilotagePage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideNoopAnimations(),
+        provideRouter([]),
         { provide: ActivatedRoute, useValue: activatedRouteAvecId('s1') },
         // Sans ça, nz-icon tente de récupérer les SVG via HTTP (assets/outline|fill/*.svg), ce
         // que HttpTestingController rejette comme requête non attendue (même pattern que
@@ -582,6 +583,139 @@ describe('PilotagePage', () => {
 
         expect(errorSpy).toHaveBeenCalledTimes(1);
         expect(boutonsReactiver()).toHaveLength(1);
+      });
+    });
+
+    describe('Terminer la séance prématurément (carte F3)', () => {
+      function boutonTerminerPrematurement(): HTMLButtonElement {
+        return Array.from(
+          fixture.nativeElement.querySelectorAll('button'),
+        ).find((b) =>
+          (b as HTMLButtonElement).textContent?.includes('Terminer la séance prématurément'),
+        ) as HTMLButtonElement;
+      }
+
+      it('affiche le bouton tant que la Sélection n’est pas terminée, le masque une fois terminée', () => {
+        fixture = TestBed.createComponent(PilotagePage);
+        fixture.detectChanges();
+        httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [{ questionId: 'q1', libelle: 'À venir', statut: 'A_VENIR' }],
+        });
+        fixture.detectChanges();
+
+        expect(boutonTerminerPrematurement()).toBeTruthy();
+      });
+
+      it('confirme la popconfirm : appelle terminerPrematurement puis navigue vers l’écran de synthèse', () => {
+        fixture = TestBed.createComponent(PilotagePage);
+        fixture.detectChanges();
+        httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [
+            { questionId: 'q1', libelle: 'À venir', statut: 'A_VENIR', reactivable: false },
+          ],
+        });
+        fixture.detectChanges();
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+        const bouton = fixture.debugElement
+          .queryAll(By.css('button'))
+          .find((el) =>
+            (el.nativeElement as HTMLElement).textContent?.includes(
+              'Terminer la séance prématurément',
+            ),
+          )!;
+        bouton.triggerEventHandler('nzOnConfirm', undefined);
+
+        const req = httpMock.expectOne('/api/sessions/s1/terminer-prematurement');
+        expect(req.request.method).toBe('POST');
+        req.flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [
+            { questionId: 'q1', libelle: 'À venir', statut: 'SAUTEE', reactivable: true },
+          ],
+        });
+        fixture.detectChanges();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['/sessions', 's1', 'synthese']);
+      });
+
+      it('affiche un message d’erreur si le refus est renvoyé, sans naviguer', () => {
+        fixture = TestBed.createComponent(PilotagePage);
+        fixture.detectChanges();
+        httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [{ questionId: 'q1', libelle: 'À venir', statut: 'A_VENIR' }],
+        });
+        fixture.detectChanges();
+        const messageService = fixture.debugElement.injector.get(NzMessageService);
+        const errorSpy = vi.spyOn(messageService, 'error');
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+        const bouton = fixture.debugElement
+          .queryAll(By.css('button'))
+          .find((el) =>
+            (el.nativeElement as HTMLElement).textContent?.includes(
+              'Terminer la séance prématurément',
+            ),
+          )!;
+        bouton.triggerEventHandler('nzOnConfirm', undefined);
+
+        httpMock
+          .expectOne('/api/sessions/s1/terminer-prematurement')
+          .flush('Refusé', { status: 409, statusText: 'Conflict' });
+        fixture.detectChanges();
+
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).not.toHaveBeenCalled();
+      });
+
+      it('une fois toutes les Questions Traitées/Sautées : masque les contrôles, affiche « Voir la synthèse »', () => {
+        fixture = TestBed.createComponent(PilotagePage);
+        fixture.detectChanges();
+        httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [
+            { questionId: 'q1', libelle: 'Traitée', statut: 'TRAITEE' },
+            { questionId: 'q2', libelle: 'Sautée', statut: 'SAUTEE', reactivable: false },
+          ],
+        });
+        fixture.detectChanges();
+
+        const texte = fixture.nativeElement.textContent as string;
+        expect(texte).toContain('Toutes les Questions ont été traitées ou sautées');
+        expect(texte).not.toContain('Salle d’attente');
+        expect(boutonTerminerPrematurement()).toBeFalsy();
+        const lien = fixture.nativeElement.querySelector('a[href="/sessions/s1/synthese"]');
+        expect(lien).toBeTruthy();
       });
     });
   });

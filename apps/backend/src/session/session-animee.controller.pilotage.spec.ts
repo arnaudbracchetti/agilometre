@@ -10,6 +10,7 @@ import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
 import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
 import { SauterQuestionSession } from './application/sauter-question-session.usecase';
 import { ReactiverQuestionSession } from './application/reactiver-question-session.usecase';
+import { TerminerPrematurementSession } from './application/terminer-prematurement-session.usecase';
 import { SessionAnimeeController } from './session-animee.controller';
 
 const generateurDeCode: GenerateurDeCode = {
@@ -42,6 +43,9 @@ function creerControleur(
   cloreTourDeVote: { executer: jest.Mock } = { executer: jest.fn() },
   sauterQuestionSession: { executer: jest.Mock } = { executer: jest.fn() },
   reactiverQuestionSession: { executer: jest.Mock } = { executer: jest.fn() },
+  terminerPrematurementSession: { executer: jest.Mock } = {
+    executer: jest.fn(),
+  },
 ): SessionAnimeeController {
   const nonUtilise = {} as never;
   return new SessionAnimeeController(
@@ -62,6 +66,7 @@ function creerControleur(
     cloreTourDeVote as unknown as CloreTourDeVote,
     sauterQuestionSession as unknown as SauterQuestionSession,
     reactiverQuestionSession as unknown as ReactiverQuestionSession,
+    terminerPrematurementSession as unknown as TerminerPrematurementSession,
   );
 }
 
@@ -448,6 +453,76 @@ describe('SessionAnimeeController.reactiverQuestion', () => {
     );
 
     await expect(controller.reactiverQuestion('s1', 'q1')).rejects.toThrow(
+      ConflictException,
+    );
+  });
+});
+
+describe('SessionAnimeeController.terminerPrematurement', () => {
+  it('termine prématurément puis renvoie le pilotage rechargé', async () => {
+    const session = creerSessionOuverte();
+    await session.ouvrir();
+    const terminerPrematurementSession = {
+      executer: jest.fn().mockResolvedValue({ type: 'ok', session }),
+    };
+    const obtenirPilotageSession = {
+      executer: jest.fn().mockResolvedValue({
+        type: 'ok',
+        session,
+        nbDevicesConnectes: 2,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [],
+      }),
+    };
+    const controller = creerControleur(
+      obtenirPilotageSession,
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      terminerPrematurementSession,
+    );
+
+    const resultat = await controller.terminerPrematurement('s1');
+
+    expect(terminerPrematurementSession.executer).toHaveBeenCalledWith('s1');
+    expect(resultat.statut).toBe('OUVERTE');
+  });
+
+  it('renvoie 404 si la Session est introuvable', async () => {
+    const terminerPrematurementSession = {
+      executer: jest.fn().mockResolvedValue({ type: 'introuvable' }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      terminerPrematurementSession,
+    );
+
+    await expect(controller.terminerPrematurement('inconnue')).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('renvoie 409 si la Session n’est pas ouverte', async () => {
+    const terminerPrematurementSession = {
+      executer: jest.fn().mockResolvedValue({ type: 'non_ouverte' }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      terminerPrematurementSession,
+    );
+
+    await expect(controller.terminerPrematurement('s1')).rejects.toThrow(
       ConflictException,
     );
   });
