@@ -121,7 +121,9 @@ function referentielAvecQuestions(
   const theme = Theme.creer(
     't1',
     'Thème 1',
-    questions.map(([id, libelle]) => Question.creer(id, libelle, 't1', options).valeur),
+    questions.map(
+      ([id, libelle]) => Question.creer(id, libelle, 't1', options).valeur,
+    ),
   );
   return Referentiel.reconstituer(new Date('2026-01-01'), [theme]);
 }
@@ -399,6 +401,42 @@ describe('ObtenirPilotageSession', () => {
     ]);
   });
 
+  it('exclut de l’historique le Tour clos par une fermeture forcée de Sauter (carte F2, "aucun résultat n’en découle")', async () => {
+    const sessions = new SessionRepositoryFake();
+    const session = creerSessionPreparee('s1');
+    await session.ouvrir();
+    const etatTours = new EtatToursQueryFake();
+    session.passerQuestionSuivante(etatTours.etats); // salle d'attente -> q1 courante
+    // q1 sautée alors que son Tour t1 était encore ouvert : la fermeture forcée le clôt, mais
+    // il ne doit surfacer aucun résultat dans l'historique.
+    session.sauter('q1', etatTours.etats);
+    sessions.sessions.push(session);
+    const jetons = new JetonSessionRepositoryFake();
+    const referentiel = new ReferentielRepositoryFake();
+    referentiel.referentiel = referentielAvecQuestion('q1');
+    etatTours.etats = [
+      { tourId: 't1', questionId: 'q1', numero: 1, clos: true },
+    ];
+    const repartitions = new RepartitionTourQueryFake();
+    repartitions.repartitions = [
+      { tourId: 't1', comptesParNiveau: { 1: 3, 2: 0, 3: 0, 4: 0 } },
+    ];
+    const useCase = new ObtenirPilotageSession(
+      sessions,
+      jetons,
+      referentiel,
+      new TourDeVoteRepositoryFake(),
+      etatTours,
+      repartitions,
+    );
+
+    const resultat = await useCase.executer('s1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') throw new Error('unreachable');
+    expect(resultat.historique).toEqual([]);
+  });
+
   it('renvoie la progression de toute la Sélection (carte F1), y compris les Questions à venir', async () => {
     const sessions = new SessionRepositoryFake();
     const session = Session.creer(
@@ -411,7 +449,9 @@ describe('ObtenirPilotageSession', () => {
     ).valeur;
     await session.ouvrir();
     const etatTours = new EtatToursQueryFake();
-    etatTours.etats = [{ tourId: 't1', questionId: 'q1', numero: 1, clos: true }];
+    etatTours.etats = [
+      { tourId: 't1', questionId: 'q1', numero: 1, clos: true },
+    ];
     session.passerQuestionSuivante([]);
     session.passerQuestionSuivante(etatTours.etats);
     sessions.sessions.push(session);

@@ -15,7 +15,10 @@ import {
   HistoriqueTourClos,
   resoudreHistoriqueToursClos,
 } from './resoudre-historique-tours-clos';
-import { ProgressionQuestion, resoudreProgression } from './resoudre-progression';
+import {
+  ProgressionQuestion,
+  resoudreProgression,
+} from './resoudre-progression';
 import { resoudreQuestionCourante } from './resoudre-question-courante';
 
 export type ResultatObtenirPilotageSession =
@@ -65,7 +68,8 @@ export class ObtenirPilotageSession {
     );
     // Partagés entre les deux resolvers ci-dessous — jamais une lecture par resolver sur un
     // écran sondé toutes les 2s (docs/design/agregat-tour-de-vote.md §5).
-    const etatsDesTours = await this.etatTours.listerEtatsDesToursDeLaSession(id);
+    const etatsDesTours =
+      await this.etatTours.listerEtatsDesToursDeLaSession(id);
     const referentielCharge = await this.referentiel.charger();
     const historique = await resoudreHistoriqueToursClos(
       session,
@@ -73,7 +77,11 @@ export class ObtenirPilotageSession {
       this.repartitions,
       referentielCharge,
     );
-    const progression = resoudreProgression(session, etatsDesTours, referentielCharge);
+    const progression = resoudreProgression(
+      session,
+      etatsDesTours,
+      referentielCharge,
+    );
     return {
       type: 'ok',
       session,

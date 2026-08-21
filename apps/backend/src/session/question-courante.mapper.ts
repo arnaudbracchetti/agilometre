@@ -40,7 +40,9 @@ export function versTourOuvertDto(
 }
 
 /** Zero-fill 1-4 partagé par tout mapping d'un `comptesParNiveau` partiel vers le DTO. */
-function versRepartitionDto(comptes: Record<number, number>): RepartitionVotesDto {
+function versRepartitionDto(
+  comptes: Record<number, number>,
+): RepartitionVotesDto {
   return {
     1: comptes[1] ?? 0,
     2: comptes[2] ?? 0,

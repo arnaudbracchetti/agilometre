@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { convertToParamMap, ActivatedRoute } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
@@ -378,6 +379,101 @@ describe('PilotagePage', () => {
       expect(titreTour2.textContent).toContain('Pris en compte');
       const titreTour1 = titresDeTours.find((el) => el.textContent?.trim().startsWith('Tour 1'))!;
       expect(titreTour1.textContent).not.toContain('Pris en compte');
+    });
+
+    describe('Sauter une Question (carte F2)', () => {
+      function boutonsSauter(): HTMLButtonElement[] {
+        return Array.from(
+          fixture.nativeElement.querySelectorAll('.pilotage__historique-sauter'),
+        ) as HTMLButtonElement[];
+      }
+
+      it('affiche le bouton Sauter pour une Question À venir ou Courante, pas pour Traitée ou Sautée', () => {
+        fixture = TestBed.createComponent(PilotagePage);
+        fixture.detectChanges();
+        httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [
+            { questionId: 'q1', libelle: 'À venir', statut: 'A_VENIR' },
+            { questionId: 'q2', libelle: 'Courante', statut: 'COURANTE' },
+            { questionId: 'q3', libelle: 'Traitée', statut: 'TRAITEE' },
+            { questionId: 'q4', libelle: 'Sautée', statut: 'SAUTEE' },
+          ],
+        });
+        fixture.detectChanges();
+
+        expect(boutonsSauter()).toHaveLength(2);
+      });
+
+      it('confirme la popconfirm : appelle sauterQuestion puis applique le pilotage renvoyé', () => {
+        fixture = TestBed.createComponent(PilotagePage);
+        fixture.detectChanges();
+        httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: QUESTION_COURANTE,
+          tourOuvert: null,
+          historique: [],
+          progression: [{ questionId: 'q1', libelle: QUESTION_COURANTE.libelle, statut: 'COURANTE' }],
+        });
+        fixture.detectChanges();
+
+        const bouton = fixture.debugElement
+          .queryAll(By.css('.pilotage__historique-sauter'))
+          .find((el) => (el.nativeElement as HTMLElement).textContent?.includes('Sauter'))!;
+        bouton.triggerEventHandler('nzOnConfirm', undefined);
+
+        const req = httpMock.expectOne('/api/sessions/s1/questions/q1/sauter');
+        expect(req.request.method).toBe('POST');
+        req.flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [{ questionId: 'q1', libelle: QUESTION_COURANTE.libelle, statut: 'SAUTEE' }],
+        });
+        fixture.detectChanges();
+
+        const texte = fixture.nativeElement.textContent as string;
+        expect(texte).toContain('Sautée');
+      });
+
+      it('affiche un message d’erreur si Sauter est refusé, sans changer l’écran', () => {
+        fixture = TestBed.createComponent(PilotagePage);
+        fixture.detectChanges();
+        httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+          statut: 'OUVERTE',
+          code: '654321',
+          nbDevicesConnectes: 0,
+          questionCourante: null,
+          tourOuvert: null,
+          historique: [],
+          progression: [{ questionId: 'q1', libelle: 'À venir', statut: 'A_VENIR' }],
+        });
+        fixture.detectChanges();
+        const messageService = fixture.debugElement.injector.get(NzMessageService);
+        const errorSpy = vi.spyOn(messageService, 'error');
+
+        const bouton = fixture.debugElement.query(By.css('.pilotage__historique-sauter'));
+        bouton.triggerEventHandler('nzOnConfirm', undefined);
+
+        httpMock
+          .expectOne('/api/sessions/s1/questions/q1/sauter')
+          .flush('Refusé', { status: 409, statusText: 'Conflict' });
+        fixture.detectChanges();
+
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        const texte = fixture.nativeElement.textContent as string;
+        expect(texte).toContain('À venir');
+      });
     });
   });
 });

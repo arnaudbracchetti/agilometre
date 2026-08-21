@@ -263,6 +263,13 @@
     white-space: nowrap;
   }
 
+  // Seule action encore permise sur une Question restante (carte F2) — en retrait sous l'en-tête,
+  // jamais dans la même ligne que le libellé/statut pour ne pas la confondre avec un contrôle
+  // d'expansion de l'historique.
+  &__historique-sauter {
+    margin-top: var(--space-2);
+  }
+
   &__historique-chevron {
     flex-shrink: 0;
     transition: transform 0.2s ease;

@@ -8,6 +8,7 @@ import { Session } from './domain/session';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
 import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
 import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
+import { SauterQuestionSession } from './application/sauter-question-session.usecase';
 import { SessionAnimeeController } from './session-animee.controller';
 
 const generateurDeCode: GenerateurDeCode = {
@@ -38,6 +39,7 @@ function creerControleur(
   obtenirPilotageSession: { executer: jest.Mock },
   ouvrirTourDeVote: { executer: jest.Mock } = { executer: jest.fn() },
   cloreTourDeVote: { executer: jest.Mock } = { executer: jest.fn() },
+  sauterQuestionSession: { executer: jest.Mock } = { executer: jest.fn() },
 ): SessionAnimeeController {
   const nonUtilise = {} as never;
   return new SessionAnimeeController(
@@ -56,6 +58,7 @@ function creerControleur(
     nonUtilise,
     ouvrirTourDeVote as unknown as OuvrirTourDeVote,
     cloreTourDeVote as unknown as CloreTourDeVote,
+    sauterQuestionSession as unknown as SauterQuestionSession,
   );
 }
 
@@ -274,6 +277,88 @@ describe('SessionAnimeeController.clorerTour', () => {
     );
 
     await expect(controller.clorerTour('s1')).rejects.toThrow(
+      ConflictException,
+    );
+  });
+});
+
+describe('SessionAnimeeController.sauterQuestion', () => {
+  it('sauter la Question puis renvoie le pilotage rechargé', async () => {
+    const session = creerSessionOuverte();
+    await session.ouvrir();
+    const sauterQuestionSession = {
+      executer: jest.fn().mockResolvedValue({ type: 'ok', session }),
+    };
+    const obtenirPilotageSession = {
+      executer: jest.fn().mockResolvedValue({
+        type: 'ok',
+        session,
+        nbDevicesConnectes: 2,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [],
+      }),
+    };
+    const controller = creerControleur(
+      obtenirPilotageSession,
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      sauterQuestionSession,
+    );
+
+    const resultat = await controller.sauterQuestion('s1', 'q1');
+
+    expect(sauterQuestionSession.executer).toHaveBeenCalledWith('s1', 'q1');
+    expect(resultat.statut).toBe('OUVERTE');
+  });
+
+  it('renvoie 404 si la Session est introuvable', async () => {
+    const sauterQuestionSession = {
+      executer: jest.fn().mockResolvedValue({ type: 'introuvable' }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      sauterQuestionSession,
+    );
+
+    await expect(controller.sauterQuestion('inconnue', 'q1')).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('renvoie 404 si la Question n’est pas dans la Sélection', async () => {
+    const sauterQuestionSession = {
+      executer: jest.fn().mockResolvedValue({ type: 'question_introuvable' }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      sauterQuestionSession,
+    );
+
+    await expect(controller.sauterQuestion('s1', 'q-inconnue')).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('renvoie 409 si la Question est déjà traitée ou déjà sautée', async () => {
+    const sauterQuestionSession = {
+      executer: jest
+        .fn()
+        .mockResolvedValue({ type: 'invalide', erreur: new Error('refusé') }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      sauterQuestionSession,
+    );
+
+    await expect(controller.sauterQuestion('s1', 'q1')).rejects.toThrow(
       ConflictException,
     );
   });

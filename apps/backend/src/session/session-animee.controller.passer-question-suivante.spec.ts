@@ -45,6 +45,7 @@ function creerControleur(
     passerQuestionSuivanteSession as unknown as PasserQuestionSuivanteSession,
     nonUtilise,
     nonUtilise,
+    nonUtilise,
   );
 }
 

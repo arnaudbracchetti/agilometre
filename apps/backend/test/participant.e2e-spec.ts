@@ -860,4 +860,118 @@ describe('Participant — jointure par Code (e2e)', () => {
       ]);
     });
   });
+
+  describe('carte F2 — le Coach saute une Question (#44)', () => {
+    async function sessionADeuxQuestions(suffixe: string): Promise<SessionDto> {
+      await importer([`qa${suffixe}`, `qb${suffixe}`]);
+      const entite = await creerEntite(`DSI-${suffixe}`);
+      const equipe = await creerEquipe(`Équipe ${suffixe}`, entite.id);
+      const modele = await creerModele(`Diagnostic ${suffixe}`);
+      await request(app.getHttpServer())
+        .post(`/api/modeles-session/${modele.id}/themes`)
+        .send({ questionIds: [`qa${suffixe}`, `qb${suffixe}`] })
+        .expect(201);
+      const creation = await request(app.getHttpServer())
+        .post('/api/sessions')
+        .send({
+          equipeId: equipe.id,
+          date: '2026-04-01',
+          modeleSessionId: modele.id,
+        })
+        .expect(201);
+      return creation.body as SessionDto;
+    }
+
+    it('saute la Question courante alors qu’un Tour est ouvert avec des votes : le Tour est clos sans résultat, indexCourant avance', async () => {
+      const session = await sessionADeuxQuestions('F2a');
+      const ouverture = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir`)
+        .expect(201);
+      const code = (ouverture.body as SessionDto).code as string;
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201); // salle d'attente -> qaF2a courante
+
+      const jeton = await rejoindre(code);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jeton}`)
+        .send({ optionIndex: 0 })
+        .expect(201);
+
+      const saut = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/qaF2a/sauter`)
+        .expect(201);
+      const pilotageApresSaut = saut.body as PilotageSessionDto;
+      expect(pilotageApresSaut.progression).toEqual([
+        { questionId: 'qaF2a', libelle: 'Libellé qaF2a', statut: 'SAUTEE' },
+        { questionId: 'qbF2a', libelle: 'Libellé qbF2a', statut: 'COURANTE' },
+      ]);
+      expect(pilotageApresSaut.questionCourante?.questionId).toBe('qbF2a');
+      expect(pilotageApresSaut.tourOuvert).toBeNull();
+      // "sans qu'aucun résultat n'en découle" : le Tour forcé-clos de qaF2a n'apparaît pas.
+      expect(pilotageApresSaut.historique).toEqual([]);
+
+      const pilotage = await request(app.getHttpServer())
+        .get(`/api/sessions/${session.id}/pilotage`)
+        .expect(200);
+      expect((pilotage.body as PilotageSessionDto).historique).toEqual([]);
+    });
+
+    it('saute une Question à venir sans Tour, sans changer la Question courante', async () => {
+      const session = await sessionADeuxQuestions('F2b');
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/ouvrir`)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .expect(201); // salle d'attente -> qaF2b courante
+
+      const saut = await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/qbF2b/sauter`)
+        .expect(201);
+      const pilotage = saut.body as PilotageSessionDto;
+      expect(pilotage.progression).toEqual([
+        { questionId: 'qaF2b', libelle: 'Libellé qaF2b', statut: 'COURANTE' },
+        { questionId: 'qbF2b', libelle: 'Libellé qbF2b', statut: 'SAUTEE' },
+      ]);
+      expect(pilotage.questionCourante?.questionId).toBe('qaF2b');
+    });
+
+    it('POST /api/sessions/:id/questions/:questionId/sauter — 404 si la Session est inconnue', async () => {
+      await request(app.getHttpServer())
+        .post('/api/sessions/inconnue/questions/qa/sauter')
+        .expect(404);
+    });
+
+    it('POST /api/sessions/:id/questions/:questionId/sauter — 409 si la Session n’est pas OUVERTE', async () => {
+      const session = await sessionPreparee('F2c');
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/q1F2c/sauter`)
+        .expect(409);
+    });
+
+    it('POST /api/sessions/:id/questions/:questionId/sauter — 404 si la Question n’appartient pas à la Sélection', async () => {
+      const session = await sessionOuverte('F2d');
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/inconnue/sauter`)
+        .expect(404);
+    });
+
+    it('POST /api/sessions/:id/questions/:questionId/sauter — 409 si la Question est déjà sautée', async () => {
+      const session = await sessionOuverte('F2e');
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/q1F2e/sauter`)
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/questions/q1F2e/sauter`)
+        .expect(409);
+    });
+  });
 });

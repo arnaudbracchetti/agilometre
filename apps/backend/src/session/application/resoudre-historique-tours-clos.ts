@@ -25,7 +25,12 @@ export async function resoudreHistoriqueToursClos(
   repartitions: RepartitionTourQuery,
   referentielCharge: Referentiel,
 ): Promise<HistoriqueTourClos[]> {
-  const tours = etatsDesTours.filter((tour) => tour.clos);
+  // Exclut les Tours clos par la fermeture forcée d'un Sauter (carte #44) : Session.sauter()
+  // refuse déjà de sauter une Question dont un Tour est clos normalement, donc un Tour clos sur
+  // une Question sautée ne peut venir que de cette fermeture forcée — "aucun résultat n'en découle".
+  const tours = etatsDesTours.filter(
+    (tour) => tour.clos && !session.questionsSautees.has(tour.questionId),
+  );
   if (tours.length === 0) {
     return [];
   }

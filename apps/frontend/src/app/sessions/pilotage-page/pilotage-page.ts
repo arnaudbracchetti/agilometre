@@ -4,6 +4,7 @@ import { finalize } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import {
   PilotageSessionDto,
   ProgressionQuestionDto,
@@ -41,7 +42,7 @@ const LIBELLES_STATUT: Record<StatutQuestionProgressionDto, string> = {
 /** Écran de pilotage (Coach) — sondage 2s (doc/spec/annexes/deroulement-session-animee.md). */
 @Component({
   selector: 'app-pilotage-page',
-  imports: [NzButtonModule, NzIconModule, StickyNote, ErrorMessage],
+  imports: [NzButtonModule, NzIconModule, NzPopconfirmModule, StickyNote, ErrorMessage],
   templateUrl: './pilotage-page.html',
   styleUrl: './pilotage-page.scss',
 })
@@ -66,6 +67,8 @@ export class PilotagePage implements OnInit {
   protected readonly chargementEnCours = signal(true);
   protected readonly avancerEnCours = signal(false);
   protected readonly tourEnCours = signal(false);
+  /** questionId en cours de traitement, pour ne désactiver que le bon bouton Sauter. */
+  protected readonly sauterEnCours = signal<string | null>(null);
 
   /**
    * Vue d'ensemble de la Sélection entière (carte F1), qu'une Question ait déjà des Tours clos ou
@@ -156,6 +159,26 @@ export class PilotagePage implements OnInit {
       next: (pilotage) => this.appliquer(pilotage),
       error: () => this.message.error('Impossible de basculer l’état du vote.'),
     });
+  }
+
+  /** Seule action encore permise sur une Question restante (carte F2) : pas sur une déjà traitée/sautée. */
+  protected estSautable(statut: StatutQuestionProgressionDto): boolean {
+    return statut === 'A_VENIR' || statut === 'COURANTE';
+  }
+
+  protected sauterQuestion(questionId: string): void {
+    const id = this.sessionId();
+    if (!id) {
+      return;
+    }
+    this.sauterEnCours.set(questionId);
+    this.sessionsService
+      .sauterQuestion(id, questionId)
+      .pipe(finalize(() => this.sauterEnCours.set(null)))
+      .subscribe({
+        next: (pilotage) => this.appliquer(pilotage),
+        error: () => this.message.error('Impossible de sauter cette Question.'),
+      });
   }
 
   protected couleurNoteHistorique(index: number): CouleurStickyNote {

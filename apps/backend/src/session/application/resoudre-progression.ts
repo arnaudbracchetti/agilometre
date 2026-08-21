@@ -1,5 +1,9 @@
 import { Referentiel } from '../../referentiel/domain/referentiel';
-import { EtatTour, Session, StatutQuestionProgression } from '../domain/session';
+import {
+  EtatTour,
+  Session,
+  StatutQuestionProgression,
+} from '../domain/session';
 
 export interface ProgressionQuestion {
   questionId: string;
