@@ -11,18 +11,21 @@
       <ul class="projection__options">
         @for (option of question.options; track $index) {
           <li>
-            <span class="projection__lettre">{{ lettres[$index] }}</span> — {{ option.libelle }}
-            @if (!tourOuvert() && dernierTourClos()) {
-              <span class="projection__resultat" role="status" aria-live="polite">
-                <span class="projection__barre-piste">
-                  <span
-                    class="projection__barre"
-                    [style.transform]="'scaleX(' + fractionOption($index) + ')'"
-                  ></span>
-                </span>
-                <span class="projection__resultat-compteur">{{ compteOption($index) }}</span>
+            <span class="projection__lettre">{{ lettres[$index] }}</span> {{ option.libelle }}
+            <span
+              class="projection__resultat"
+              [class.projection__resultat--visible]="!tourOuvert() && dernierTourClos()"
+              role="status"
+              aria-live="polite"
+            >
+              <span class="projection__barre-piste">
+                <span
+                  class="projection__barre"
+                  [style.transform]="'scaleX(' + fractionOption($index) + ')'"
+                ></span>
               </span>
-            }
+              <span class="projection__resultat-compteur">{{ compteOption($index) }}</span>
+            </span>
           </li>
         }
       </ul>

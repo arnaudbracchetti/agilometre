@@ -74,8 +74,8 @@ describe('ProjectionPage', () => {
 
     const texte = fixture.nativeElement.textContent as string;
     expect(texte).toContain('Les rétrospectives sont-elles régulières ?');
-    expect(texte).toContain('A — Jamais');
-    expect(texte).toContain('D — Toujours');
+    expect(texte).toContain('A Jamais');
+    expect(texte).toContain('D Toujours');
     expect(texte).not.toContain('Salle d’attente');
     expect(texte).toContain('654321');
     expect(texte).not.toContain('ont voté');
@@ -134,8 +134,8 @@ describe('ProjectionPage', () => {
 
     const texte = fixture.nativeElement.textContent as string;
     expect(texte).toContain('Les rétrospectives sont-elles régulières ?');
-    expect(texte).toContain('A — Jamais');
-    expect(texte).toContain('D — Toujours');
+    expect(texte).toContain('A Jamais');
+    expect(texte).toContain('D Toujours');
     expect(texte).not.toContain('ont voté');
   });
 

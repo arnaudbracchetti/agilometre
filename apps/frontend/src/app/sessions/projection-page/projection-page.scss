@@ -9,7 +9,7 @@
   color: var(--color-on-primary);
   font-family: var(--font-family-base);
   text-align: center;
-  padding: var(--space-6);
+  padding: var(--space-6) clamp(var(--space-8), 12vw, 12rem);
 
   &__message {
     font-size: var(--font-size-xl);
@@ -85,12 +85,17 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-6);
+    gap: var(--space-8);
   }
 
+  /* Or de la charte (déjà utilisé pour la barre de résultat sur ce même fond navy — contraste
+     mesuré 6.4:1, bien au-delà du seuil AA) plutôt qu'un ton pâle : fait ressortir la Question
+     du reste de l'écran (badges/labels restent en --color-on-primary), sans sacrifier la
+     lisibilité à distance propre à cet écran. */
   &__libelle {
-    font-size: clamp(var(--font-size-2xl), 5vw, var(--font-size-display));
+    font-size: clamp(var(--font-size-display), 6vw, 3rem);
     font-weight: var(--font-weight-bold);
+    color: var(--color-gold-600);
     margin: 0;
     max-width: 60ch;
   }
@@ -100,7 +105,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-3);
+    gap: var(--space-5);
     margin: 0;
     padding: 0;
     font-size: clamp(var(--font-size-lg), 3vw, var(--font-size-2xl));
@@ -114,13 +119,22 @@
   }
 
   /* Résultat (carte #40) — accompagne le libellé de son Option, jamais un bloc séparé désolidarisé
-     du texte : une barre proportionnelle au compte, poussée à droite de la ligne. */
+     du texte : une barre proportionnelle au compte, poussée à droite de la ligne. Toujours rendu
+     (visibility, jamais @if/display:none) : son espace reste réservé avant la clôture du Tour,
+     sinon la ligne la plus large de la liste change entre les deux états et le bloc d'Options —
+     centré dans .projection — se recentre en entier, ce qui fait visuellement « sauter » le
+     libellé et la lettre au moment où le résultat apparaît. */
   &__resultat {
     display: inline-flex;
     align-items: center;
     gap: var(--space-3);
     margin-left: auto;
     padding-left: var(--space-6);
+    visibility: hidden;
+
+    &--visible {
+      visibility: visible;
+    }
   }
 
   &__barre-piste {
@@ -141,7 +155,7 @@
     background: var(--color-gold-600);
     border-radius: 999px;
     transform-origin: left;
-    transition: transform 0.3s ease;
+    transition: transform 1s ease;
   }
 
   &__resultat-compteur {
@@ -160,9 +174,10 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     width: 1.9em;
     height: 1.9em;
-    margin-right: var(--space-3);
+    margin-right: var(--space-5);
     border-radius: 50%;
     border: 2px solid rgba(255, 255, 255, 0.5);
     font-weight: var(--font-weight-bold);
