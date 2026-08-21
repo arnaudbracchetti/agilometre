@@ -100,12 +100,43 @@ describe('ProjectionPage', () => {
         ],
       },
       tourOuvert: { numero: 1, nbVotants: 2 },
+      dernierTourClos: null,
     });
     fixture.detectChanges();
 
     const texte = fixture.nativeElement.textContent as string;
     expect(texte).toContain('Les rétrospectives sont-elles régulières ?');
     expect(texte).toContain('2 / 5 ont voté');
+  });
+
+  it('affiche l’histogramme de répartition après clôture du Tour, sans compteur de participation (carte #40)', () => {
+    fixture = TestBed.createComponent(ProjectionPage);
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/projection/s1').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 5,
+      questionCourante: {
+        questionId: 'q1',
+        libelle: 'Les rétrospectives sont-elles régulières ?',
+        options: [
+          { libelle: 'Jamais' },
+          { libelle: 'Parfois' },
+          { libelle: 'Souvent' },
+          { libelle: 'Toujours' },
+        ],
+      },
+      tourOuvert: null,
+      dernierTourClos: { numero: 1, repartition: { 1: 0, 2: 1, 3: 3, 4: 1 } },
+    });
+    fixture.detectChanges();
+
+    const texte = fixture.nativeElement.textContent as string;
+    expect(texte).toContain('Les rétrospectives sont-elles régulières ?');
+    expect(texte).toContain('A — Jamais');
+    expect(texte).toContain('D — Toujours');
+    expect(texte).not.toContain('ont voté');
   });
 
   it('sonde /api/projection/:sessionId toutes les 2 secondes', () => {

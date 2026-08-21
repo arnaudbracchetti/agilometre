@@ -77,6 +77,7 @@ describe('SessionAnimeeController.passerQuestionSuivante', () => {
       nbDevicesConnectes: 2,
       questionCourante: null,
       tourOuvert: null,
+      dernierTourClos: null,
     });
   });
 

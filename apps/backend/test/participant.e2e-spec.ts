@@ -443,4 +443,65 @@ describe('Participant — jointure par Code (e2e)', () => {
       });
     });
   });
+
+  describe('carte D3 — le Coach clôt le vote et révèle le résultat (#40)', () => {
+    it('GET /api/projection/:sessionId — dernierTourClos reflète la répartition des votes après clôture, tourOuvert redevient null', async () => {
+      const session = await sessionEnVote();
+      const jetonA = await rejoindre(session.code as string);
+      const jetonB = await rejoindre(session.code as string);
+      const jetonC = await rejoindre(session.code as string);
+
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonA}`)
+        .send({ optionIndex: 1 }) // Niveau 2
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonB}`)
+        .send({ optionIndex: 2 }) // Niveau 3
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jetonC}`)
+        .send({ optionIndex: 2 }) // Niveau 3
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+
+      const projection = await request(app.getHttpServer())
+        .get(`/api/projection/${session.id}`)
+        .expect(200);
+      const dto = projection.body as ProjectionSessionDto;
+      expect(dto.tourOuvert).toBeNull();
+      expect(dto.dernierTourClos).toEqual({
+        numero: 1,
+        repartition: { 1: 0, 2: 1, 3: 2, 4: 0 },
+      });
+    });
+
+    it('GET /api/participant/moi — reste hors vote après clôture, sans jamais exposer la répartition des votes', async () => {
+      const session = await sessionEnVote();
+      const jeton = await rejoindre(session.code as string);
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jeton}`)
+        .send({ optionIndex: 0 })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/clore-tour`)
+        .expect(201);
+
+      const moi = await request(app.getHttpServer())
+        .get('/api/participant/moi')
+        .set('Authorization', `Bearer ${jeton}`)
+        .expect(200);
+      expect((moi.body as MoiParticipantDto).voteOuvert).toBe(false);
+      expect(moi.body).not.toHaveProperty('dernierTourClos');
+      expect(moi.body).not.toHaveProperty('repartition');
+    });
+  });
 });

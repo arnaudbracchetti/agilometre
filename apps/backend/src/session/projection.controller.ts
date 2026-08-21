@@ -7,6 +7,7 @@ import {
 import { ObtenirProjectionSession } from './application/obtenir-projection-session.usecase';
 import {
   versQuestionCouranteDto,
+  versTourClosDto,
   versTourOuvertDto,
 } from './question-courante.mapper';
 
@@ -39,6 +40,7 @@ export class ProjectionController {
       nbDevicesConnectes: resultat.nbDevicesConnectes,
       questionCourante: versQuestionCouranteDto(resultat.questionCourante),
       tourOuvert: versTourOuvertDto(resultat.tourOuvert),
+      dernierTourClos: versTourClosDto(resultat.dernierTourClos),
     };
   }
 }

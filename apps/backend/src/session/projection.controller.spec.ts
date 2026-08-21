@@ -55,6 +55,7 @@ describe('ProjectionController', () => {
       nbDevicesConnectes: 3,
       questionCourante: null,
       tourOuvert: null,
+      dernierTourClos: null,
     });
   });
 
@@ -122,6 +123,34 @@ describe('ProjectionController', () => {
     const resultat = await controller.obtenir('s1');
 
     expect(resultat.tourOuvert).toEqual({ numero: 1, nbVotants: 1 });
+  });
+
+  it('mappe dernierTourClos en TourClosDto (numero + répartition par Niveau), carte #40', async () => {
+    const session = creerSession();
+    await session.ouvrir();
+    const obtenirProjectionSession = {
+      executer: jest.fn().mockResolvedValue({
+        type: 'ok',
+        session,
+        nbDevicesConnectes: 3,
+        questionCourante: creerQuestion('q1'),
+        tourOuvert: null,
+        dernierTourClos: {
+          numero: 1,
+          comptesParNiveau: { 1: 0, 2: 1, 3: 2, 4: 0 },
+        },
+      }),
+    };
+    const controller = new ProjectionController(
+      obtenirProjectionSession as never,
+    );
+
+    const resultat = await controller.obtenir('s1');
+
+    expect(resultat.dernierTourClos).toEqual({
+      numero: 1,
+      repartition: { 1: 0, 2: 1, 3: 2, 4: 0 },
+    });
   });
 
   it('renvoie 404 quand la projection est introuvable', async () => {

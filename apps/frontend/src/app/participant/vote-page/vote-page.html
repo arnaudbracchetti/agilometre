@@ -1,5 +1,9 @@
 <div class="vote">
-  <app-sticky-note couleur="blue" class="vote__card">
+  <app-sticky-note
+    couleur="blue"
+    class="vote__card"
+    [class.vote__card--vote]="phase() === 'vote'"
+  >
     @if (phase() === 'saisie') {
       <form class="vote__formulaire" (ngSubmit)="rejoindre()">
         <h1 class="vote__titre">Rejoindre une séance</h1>

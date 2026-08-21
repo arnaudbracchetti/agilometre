@@ -42,6 +42,7 @@ import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
 import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
 import {
   versQuestionCouranteDto,
+  versTourClosDto,
   versTourOuvertDto,
 } from './question-courante.mapper';
 import {
@@ -243,6 +244,7 @@ export class SessionAnimeeController {
       nbDevicesConnectes: resultat.nbDevicesConnectes,
       questionCourante: versQuestionCouranteDto(resultat.questionCourante),
       tourOuvert: versTourOuvertDto(resultat.tourOuvert),
+      dernierTourClos: versTourClosDto(resultat.dernierTourClos),
     };
   }
 

@@ -14,3 +14,8 @@ coverage/
 
 # Self-managed plugin install, not project content
 .agents/skills/impeccable/
+
+# Local tool state, not project content
+.codex/
+.impeccable/
+apps/frontend/.impeccable/

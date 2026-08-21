@@ -59,12 +59,26 @@ export interface TourOuvertDto {
   nbVotants: number;
 }
 
+/** Répartition des votes d'un Tour clos, par Niveau — jamais un objet partiel (carte #40). */
+export interface RepartitionVotesDto {
+  1: number;
+  2: number;
+  3: number;
+  4: number;
+}
+
+export interface TourClosDto {
+  numero: number;
+  repartition: RepartitionVotesDto;
+}
+
 export interface ProjectionSessionDto {
   statut: StatutSession;
   code: string;
   nbDevicesConnectes: number;
   questionCourante: QuestionCouranteDto | null;
   tourOuvert: TourOuvertDto | null;
+  dernierTourClos: TourClosDto | null;
 }
 
 export interface PilotageSessionDto {
@@ -73,6 +87,7 @@ export interface PilotageSessionDto {
   nbDevicesConnectes: number;
   questionCourante: QuestionCouranteDto | null;
   tourOuvert: TourOuvertDto | null;
+  dernierTourClos: TourClosDto | null;
 }
 
 export interface JetonSessionDto {

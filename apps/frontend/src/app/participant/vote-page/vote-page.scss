@@ -15,7 +15,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-6) var(--space-5);
+  padding: var(--space-5) var(--space-4);
   font-family: var(--font-family-base);
   color: var(--color-on-primary);
   // Même bleu profond que l'écran de projection (--color-primary-emphasis) : le participant
@@ -25,10 +25,33 @@
 
   // Même matériau « note autocollante » que l'accueil, porté par <app-sticky-note> (voir
   // shared/sticky-note) : la carte de séance en direct est elle aussi un moment d'atelier.
+  // Grandit avec le viewport — sur un téléphone/tablette, l'écran de vote est la seule tâche à
+  // l'écran, la note doit occuper l'espace disponible plutôt que flotter, petite, dans le navy.
   &__card {
     width: 100%;
-    max-width: 22rem;
-    --sticky-note-padding: var(--space-6) var(--space-5) var(--space-5);
+    max-width: 26rem;
+    --sticky-note-padding: var(--space-5) var(--space-4) var(--space-4);
+
+    @media (min-width: 480px) {
+      max-width: 32rem;
+      --sticky-note-padding: var(--space-6) var(--space-5) var(--space-5);
+    }
+
+    @media (min-width: 768px) {
+      max-width: 38rem;
+    }
+  }
+
+  // Phase Vote seulement : la note grandit pour occuper la quasi-totalité de l'écran plutôt que
+  // rester un petit pavé centré — sur un device de vote, ces 4 boutons SONT la tâche à l'écran.
+  &__card--vote {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - (var(--space-5) * 2));
+
+    @media (min-width: 480px) {
+      min-height: calc(100vh - (var(--space-6) * 2));
+    }
   }
 
   &__formulaire {
@@ -87,7 +110,7 @@
   }
 
   &__attente-message {
-    font-size: var(--font-size-lg);
+    font-size: clamp(var(--font-size-lg), 4vw, var(--font-size-2xl));
     font-weight: var(--font-weight-medium);
     margin: 0;
   }
@@ -109,10 +132,12 @@
     flex-direction: column;
     gap: var(--space-4);
     width: 100%;
+    flex: 1;
+    min-height: 0;
   }
 
   &__vote-libelle {
-    font-size: var(--font-size-lg);
+    font-size: clamp(var(--font-size-lg), 5vw, var(--font-size-2xl));
     font-weight: var(--font-weight-medium);
     margin: 0;
     text-align: center;
@@ -133,23 +158,37 @@
   &__options {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-3);
+    grid-auto-rows: 1fr;
+    gap: var(--space-4);
     width: 100%;
+    flex: 1;
+    min-height: 0;
   }
 
+  // Hauteur croissante avec le viewport — priorité PRD à la cible tactile ; sur un téléphone,
+  // ces 4 boutons sont la quasi-totalité de l'écran, ils doivent en occuper l'espace, pas
+  // rester des pavés de 88px flottant dans la carte.
   &__option {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: var(--space-2);
-    min-height: 5.5rem;
-    padding: var(--space-3);
+    min-height: 7rem;
+    padding: var(--space-4);
     border: 2px solid var(--color-gray-300);
     border-radius: var(--radius-sm);
     background: var(--color-white);
     cursor: pointer;
     transition: border-color 0.15s ease, background-color 0.15s ease;
+
+    @media (min-width: 480px) {
+      min-height: 8.5rem;
+    }
+
+    @media (min-width: 768px) {
+      min-height: 10rem;
+    }
 
     &:disabled {
       cursor: default;
@@ -166,9 +205,10 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: clamp(2.25rem, 9vw, 3.5rem);
+    height: clamp(2.25rem, 9vw, 3.5rem);
     border-radius: 50%;
+    font-size: clamp(var(--font-size-base), 4vw, var(--font-size-xl));
     font-weight: var(--font-weight-bold);
     color: var(--color-blue-900);
   }
@@ -177,12 +217,16 @@
     background: var(--color-blue-300);
   }
 
+  // --color-blue-900 (encre par défaut de &__option-lettre) ne passe pas le contraste AA texte sur
+  // ces deux fonds vifs — voir --color-pastille-ink-violet/-magenta dans styles.scss.
   &__options &__option:nth-child(4n + 2) &__option-lettre {
     background: var(--color-violet-300);
+    color: var(--color-pastille-ink-violet);
   }
 
   &__options &__option:nth-child(4n + 3) &__option-lettre {
     background: var(--color-magenta-300);
+    color: var(--color-pastille-ink-magenta);
   }
 
   &__options &__option:nth-child(4n + 4) &__option-lettre {
@@ -190,7 +234,8 @@
   }
 
   &__option-libelle {
-    font-size: var(--font-size-sm);
+    font-size: clamp(var(--font-size-md), 3.5vw, var(--font-size-xl));
+    font-weight: var(--font-weight-medium);
     color: var(--color-ink);
     text-align: center;
   }
@@ -203,9 +248,9 @@
     }
 
     &__option-lettre {
-      width: 2.75rem;
-      height: 2.75rem;
-      font-size: var(--font-size-lg);
+      width: 3.5rem;
+      height: 3.5rem;
+      font-size: var(--font-size-xl);
     }
   }
 }

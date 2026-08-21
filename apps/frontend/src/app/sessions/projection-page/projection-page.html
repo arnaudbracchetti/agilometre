@@ -2,13 +2,28 @@
   @if (chargementEnCours()) {
     <p class="projection__message">Chargement…</p>
   } @else if (inaccessible()) {
-    <app-error-message message="Cette séance n’est pas accessible." taille="page" />
+    <app-sticky-note couleur="magenta" class="projection__erreur" role="alert">
+      <p>Cette séance n’est pas accessible.</p>
+    </app-sticky-note>
   } @else if (questionCourante(); as question) {
     <div class="projection__question">
       <p class="projection__libelle">{{ question.libelle }}</p>
       <ul class="projection__options">
         @for (option of question.options; track $index) {
-          <li><span class="projection__lettre">{{ lettres[$index] }}</span> — {{ option.libelle }}</li>
+          <li>
+            <span class="projection__lettre">{{ lettres[$index] }}</span> — {{ option.libelle }}
+            @if (!tourOuvert() && dernierTourClos()) {
+              <span class="projection__resultat" role="status" aria-live="polite">
+                <span class="projection__barre-piste">
+                  <span
+                    class="projection__barre"
+                    [style.transform]="'scaleX(' + fractionOption($index) + ')'"
+                  ></span>
+                </span>
+                <span class="projection__resultat-compteur">{{ compteOption($index) }}</span>
+              </span>
+            }
+          </li>
         }
       </ul>
     </div>

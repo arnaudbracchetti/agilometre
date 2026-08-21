@@ -7,6 +7,12 @@ import { Question } from '../../referentiel/domain/question';
 import { Referentiel } from '../../referentiel/domain/referentiel';
 import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
 import { Theme } from '../../referentiel/domain/theme';
+import { EtatTour } from '../domain/session';
+import { EtatToursQuery } from '../domain/etat-tours.query';
+import {
+  RepartitionTour,
+  RepartitionTourQuery,
+} from '../domain/repartition-tour.query';
 import { Selection } from '../domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
@@ -86,6 +92,22 @@ class TourDeVoteRepositoryFake implements TourDeVoteRepository {
   }
 }
 
+class EtatToursQueryFake implements EtatToursQuery {
+  etats: EtatTour[] = [];
+  listerEtatsDesToursDeLaSession(): Promise<EtatTour[]> {
+    return Promise.resolve(this.etats);
+  }
+}
+
+class RepartitionTourQueryFake implements RepartitionTourQuery {
+  repartitions: RepartitionTour[] = [];
+  listerRepartitionsDesTours(tourIds: string[]): Promise<RepartitionTour[]> {
+    return Promise.resolve(
+      this.repartitions.filter((r) => tourIds.includes(r.tourId)),
+    );
+  }
+}
+
 function referentielAvecQuestion(questionId: string): Referentiel {
   const options = [1, 2, 3, 4].map((niveau) =>
     Option.creer(`Option ${niveau}`, Niveau.creer(niveau).valeur),
@@ -115,6 +137,8 @@ describe('ObtenirPilotageSession', () => {
       jetons,
       new ReferentielRepositoryFake(),
       new TourDeVoteRepositoryFake(),
+      new EtatToursQueryFake(),
+      new RepartitionTourQueryFake(),
     );
 
     const resultat = await useCase.executer('inconnue');
@@ -131,6 +155,8 @@ describe('ObtenirPilotageSession', () => {
       jetons,
       new ReferentielRepositoryFake(),
       new TourDeVoteRepositoryFake(),
+      new EtatToursQueryFake(),
+      new RepartitionTourQueryFake(),
     );
 
     const resultat = await useCase.executer('s1');
@@ -150,6 +176,8 @@ describe('ObtenirPilotageSession', () => {
       jetons,
       new ReferentielRepositoryFake(),
       new TourDeVoteRepositoryFake(),
+      new EtatToursQueryFake(),
+      new RepartitionTourQueryFake(),
     );
 
     const resultat = await useCase.executer('s1');
@@ -160,6 +188,7 @@ describe('ObtenirPilotageSession', () => {
     expect(resultat.nbDevicesConnectes).toBe(3);
     expect(resultat.questionCourante).toBeNull();
     expect(resultat.tourOuvert).toBeNull();
+    expect(resultat.dernierTourClos).toBeNull();
   });
 
   it('renvoie questionCourante une fois indexCourant avancé', async () => {
@@ -176,6 +205,8 @@ describe('ObtenirPilotageSession', () => {
       jetons,
       referentiel,
       new TourDeVoteRepositoryFake(),
+      new EtatToursQueryFake(),
+      new RepartitionTourQueryFake(),
     );
 
     const resultat = await useCase.executer('s1');
@@ -210,6 +241,8 @@ describe('ObtenirPilotageSession', () => {
       jetons,
       referentiel,
       tours,
+      new EtatToursQueryFake(),
+      new RepartitionTourQueryFake(),
     );
 
     const resultat = await useCase.executer('s1');
@@ -231,10 +264,80 @@ describe('ObtenirPilotageSession', () => {
       jetons,
       new ReferentielRepositoryFake(),
       new TourDeVoteRepositoryFake(),
+      new EtatToursQueryFake(),
+      new RepartitionTourQueryFake(),
     );
 
     const resultat = await useCase.executer('s1');
 
     expect(resultat.type).toBe('ok');
+  });
+
+  it('renvoie dernierTourClos=null tant qu’aucun Tour n’est clos sur la Question courante', async () => {
+    const sessions = new SessionRepositoryFake();
+    const session = creerSessionPreparee('s1');
+    await session.ouvrir();
+    session.passerQuestionSuivante([]);
+    sessions.sessions.push(session);
+    const jetons = new JetonSessionRepositoryFake();
+    const referentiel = new ReferentielRepositoryFake();
+    referentiel.referentiel = referentielAvecQuestion('q1');
+    const etatTours = new EtatToursQueryFake();
+    etatTours.etats = [
+      { tourId: 't1', questionId: 'q1', numero: 1, clos: false },
+    ];
+    const useCase = new ObtenirPilotageSession(
+      sessions,
+      jetons,
+      referentiel,
+      new TourDeVoteRepositoryFake(),
+      etatTours,
+      new RepartitionTourQueryFake(),
+    );
+
+    const resultat = await useCase.executer('s1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') throw new Error('unreachable');
+    expect(resultat.dernierTourClos).toBeNull();
+  });
+
+  it('renvoie la répartition du dernier Tour clos de la Question courante (carte #40)', async () => {
+    const sessions = new SessionRepositoryFake();
+    const session = creerSessionPreparee('s1');
+    await session.ouvrir();
+    session.passerQuestionSuivante([]);
+    sessions.sessions.push(session);
+    const jetons = new JetonSessionRepositoryFake();
+    const referentiel = new ReferentielRepositoryFake();
+    referentiel.referentiel = referentielAvecQuestion('q1');
+    const etatTours = new EtatToursQueryFake();
+    // Deux Tours clos sur q1 (revote) : seul le numero le plus haut (t2) doit être retenu.
+    etatTours.etats = [
+      { tourId: 't1', questionId: 'q1', numero: 1, clos: true },
+      { tourId: 't2', questionId: 'q1', numero: 2, clos: true },
+    ];
+    const repartitions = new RepartitionTourQueryFake();
+    repartitions.repartitions = [
+      { tourId: 't1', comptesParNiveau: { 1: 9, 2: 0, 3: 0, 4: 0 } },
+      { tourId: 't2', comptesParNiveau: { 1: 0, 2: 1, 3: 2, 4: 1 } },
+    ];
+    const useCase = new ObtenirPilotageSession(
+      sessions,
+      jetons,
+      referentiel,
+      new TourDeVoteRepositoryFake(),
+      etatTours,
+      repartitions,
+    );
+
+    const resultat = await useCase.executer('s1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') throw new Error('unreachable');
+    expect(resultat.dernierTourClos).toEqual({
+      numero: 2,
+      comptesParNiveau: { 1: 0, 2: 1, 3: 2, 4: 1 },
+    });
   });
 });

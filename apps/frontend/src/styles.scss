@@ -26,6 +26,7 @@
   --color-blue-300: #8ab6f5; // vif — pastilles sur fond sombre (écran de projection)
   --color-blue-100: #ebf5ff; // insee.fr application.css, fond bleu très clair
   --color-violet-600: #5b32b8; // teinte de liaison bleu → magenta, propre au pictogramme
+  --color-violet-800: #402381; // assombri, seul à passer le contraste AA texte (4.63:1) sur --color-violet-300
   --color-violet-300: #b98ef2; // vif — pastilles sur fond sombre
   --color-violet-100: #ede6fa;
   --color-gold-600: #ffc400; // insee.fr application.css, or/jaune d'action (51 occurrences)
@@ -86,6 +87,13 @@
   --color-accent-emphasis: var(--color-magenta-700);
   /* Texte/icônes posés sur un fond --color-primary ou --color-primary-emphasis. */
   --color-on-primary: var(--color-white);
+
+  /* Encre des pastilles de lettre d'option (vote/pilotage/projection) — distinctes de
+     --color-sticky-*-ink (calées pour les fonds -100 pâles des notes) : les pastilles vives -300
+     sont plus saturées et --color-blue-900 n'y passe le contraste AA texte (4.5:1) que sur le
+     bleu et l'or ; violet et magenta ont besoin de leur propre encre plus sombre. */
+  --color-pastille-ink-violet: var(--color-violet-800);
+  --color-pastille-ink-magenta: var(--color-magenta-700);
 
   /* Élévation — ombre portée pour un élément soulevé au-dessus du reste (ex. aperçu de drag). */
   --shadow-elevated: 0 4px 12px rgba(29, 29, 29, 0.2);

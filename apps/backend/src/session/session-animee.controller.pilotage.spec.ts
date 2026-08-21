@@ -82,6 +82,7 @@ describe('SessionAnimeeController.pilotage', () => {
       nbDevicesConnectes: 3,
       questionCourante: null,
       tourOuvert: null,
+      dernierTourClos: null,
     });
   });
 

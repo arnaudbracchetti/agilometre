@@ -1,10 +1,16 @@
 import { JetonSessionRepository } from '../domain/jeton-session.repository';
 import { Question } from '../../referentiel/domain/question';
 import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
+import { EtatToursQuery } from '../domain/etat-tours.query';
+import { RepartitionTourQuery } from '../domain/repartition-tour.query';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { TourDeVote } from '../domain/tour-de-vote';
 import { TourDeVoteRepository } from '../domain/tour-de-vote.repository';
+import {
+  DernierTourClos,
+  resoudreDernierTourClos,
+} from './resoudre-dernier-tour-clos';
 import { resoudreQuestionCourante } from './resoudre-question-courante';
 
 export type ResultatObtenirProjectionSession =
@@ -15,6 +21,7 @@ export type ResultatObtenirProjectionSession =
       nbDevicesConnectes: number;
       questionCourante: Question | null;
       tourOuvert: TourDeVote | null;
+      dernierTourClos: DernierTourClos | null;
     };
 
 /**
@@ -28,6 +35,8 @@ export class ObtenirProjectionSession {
     private readonly jetons: JetonSessionRepository,
     private readonly referentiel: ReferentielRepository,
     private readonly tours: TourDeVoteRepository,
+    private readonly etatTours: EtatToursQuery,
+    private readonly repartitions: RepartitionTourQuery,
   ) {}
 
   async executer(id: string): Promise<ResultatObtenirProjectionSession> {
@@ -41,12 +50,19 @@ export class ObtenirProjectionSession {
       this.referentiel,
     );
     const tourOuvert = await this.tours.trouverTourOuvertDeLaSession(id);
+    const dernierTourClos = await resoudreDernierTourClos(
+      id,
+      questionCourante,
+      this.etatTours,
+      this.repartitions,
+    );
     return {
       type: 'ok',
       session,
       nbDevicesConnectes,
       questionCourante,
       tourOuvert,
+      dernierTourClos,
     };
   }
 }

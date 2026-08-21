@@ -16,6 +16,14 @@
     margin: 0;
   }
 
+  // Matériau note (comme les 2 autres états) plutôt que <app-error-message>, dont le gabarit
+  // formulaire (petit chip inline) se perd sur ce fond marine plein écran — voir critique
+  // $impeccable critique (2026-08-20).
+  &__erreur {
+    font-size: clamp(var(--font-size-xl), 4vw, var(--font-size-2xl));
+    max-width: 40rem;
+  }
+
   /* État salle d'attente — le Code/URL et le compteur sont chacun un grand post-it
      (<app-sticky-note>, voir shared/sticky-note), posés côte à côte comme deux repères de
      salle à parité, plutôt que deux lignes de texte empilées sur le fond navy. Rotation légère
@@ -95,8 +103,52 @@
     gap: var(--space-3);
     margin: 0;
     padding: 0;
-    font-size: var(--font-size-xl);
+    font-size: clamp(var(--font-size-lg), 3vw, var(--font-size-2xl));
     text-align: left;
+
+    li {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+  }
+
+  /* Résultat (carte #40) — accompagne le libellé de son Option, jamais un bloc séparé désolidarisé
+     du texte : une barre proportionnelle au compte, poussée à droite de la ligne. */
+  &__resultat {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-left: auto;
+    padding-left: var(--space-6);
+  }
+
+  &__barre-piste {
+    display: block;
+    width: 10rem;
+    height: 0.7em;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  // width fixe + transform: scaleX() plutôt qu'animer width (layout thrash) — voir détecteur
+  // Impeccable et critique $impeccable critique (2026-08-20).
+  &__barre {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--color-gold-600);
+    border-radius: 999px;
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  &__resultat-compteur {
+    font-family: var(--font-family-mono);
+    font-weight: var(--font-weight-medium);
+    min-width: 1.5em;
+    text-align: right;
   }
 
   /* Pastille par option — reprend les 4 teintes de la charte (les 3 barres du logo Insee plus
@@ -121,12 +173,16 @@
     background: var(--color-blue-300);
   }
 
+  // --color-blue-900 (encre par défaut de &__lettre) ne passe pas le contraste AA texte sur ces
+  // deux fonds vifs — voir --color-pastille-ink-violet/-magenta dans styles.scss.
   &__options li:nth-child(4n + 2) &__lettre {
     background: var(--color-violet-300);
+    color: var(--color-pastille-ink-violet);
   }
 
   &__options li:nth-child(4n + 3) &__lettre {
     background: var(--color-magenta-300);
+    color: var(--color-pastille-ink-magenta);
   }
 
   &__options li:nth-child(4n + 4) &__lettre {
@@ -165,5 +221,11 @@
   &__badge-compteur-vote {
     font-family: var(--font-family-mono);
     font-weight: var(--font-weight-medium);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projection__barre {
+    transition: none;
   }
 }

@@ -40,6 +40,7 @@ import { PrismaTourDeVoteRepository } from './infrastructure/prisma-tour-de-vote
 import { PrismaReponseRepository } from './infrastructure/prisma-reponse.repository';
 import { PrismaJetonSessionRepository } from './infrastructure/prisma-jeton-session.repository';
 import { PrismaEtatToursQuery } from './infrastructure/prisma-etat-tours.query';
+import { PrismaRepartitionTourQuery } from './infrastructure/prisma-repartition-tour.query';
 import { CryptoGenerateurDeCode } from './infrastructure/crypto-generateur-de-code';
 import { SessionController } from './session.controller';
 import { SessionAnimeeController } from './session-animee.controller';
@@ -65,6 +66,7 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
     PrismaReponseRepository,
     PrismaJetonSessionRepository,
     PrismaEtatToursQuery,
+    PrismaRepartitionTourQuery,
     JetonParticipantGuard,
     {
       provide: CreerModeleSession,
@@ -232,12 +234,24 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
         jetons: PrismaJetonSessionRepository,
         referentiel: PrismaReferentielRepository,
         tours: PrismaTourDeVoteRepository,
-      ) => new ObtenirProjectionSession(sessions, jetons, referentiel, tours),
+        etatTours: PrismaEtatToursQuery,
+        repartitions: PrismaRepartitionTourQuery,
+      ) =>
+        new ObtenirProjectionSession(
+          sessions,
+          jetons,
+          referentiel,
+          tours,
+          etatTours,
+          repartitions,
+        ),
       inject: [
         PrismaSessionRepository,
         PrismaJetonSessionRepository,
         PrismaReferentielRepository,
         PrismaTourDeVoteRepository,
+        PrismaEtatToursQuery,
+        PrismaRepartitionTourQuery,
       ],
     },
     {
@@ -247,12 +261,24 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
         jetons: PrismaJetonSessionRepository,
         referentiel: PrismaReferentielRepository,
         tours: PrismaTourDeVoteRepository,
-      ) => new ObtenirPilotageSession(sessions, jetons, referentiel, tours),
+        etatTours: PrismaEtatToursQuery,
+        repartitions: PrismaRepartitionTourQuery,
+      ) =>
+        new ObtenirPilotageSession(
+          sessions,
+          jetons,
+          referentiel,
+          tours,
+          etatTours,
+          repartitions,
+        ),
       inject: [
         PrismaSessionRepository,
         PrismaJetonSessionRepository,
         PrismaReferentielRepository,
         PrismaTourDeVoteRepository,
+        PrismaEtatToursQuery,
+        PrismaRepartitionTourQuery,
       ],
     },
     {
