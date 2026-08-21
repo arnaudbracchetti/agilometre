@@ -117,6 +117,7 @@ export class Session {
     private _indexCourant: number,
     private _questionsSautees: Set<string>,
     private readonly generateurDeCode: GenerateurDeCode,
+    private _ouvertureLe: Date | null,
   ) {}
 
   static creer(
@@ -143,6 +144,7 @@ export class Session {
         Session.SANS_QUESTION_COURANTE,
         new Set(),
         generateurDeCode,
+        null,
       ),
     );
   }
@@ -163,6 +165,7 @@ export class Session {
     indexCourant: number,
     questionsSautees: Set<string>,
     generateurDeCode: GenerateurDeCode,
+    ouvertureLe: Date | null = null,
   ): Session {
     return new Session(
       id,
@@ -175,6 +178,7 @@ export class Session {
       indexCourant,
       new Set(questionsSautees),
       generateurDeCode,
+      ouvertureLe,
     );
   }
 
@@ -209,6 +213,11 @@ export class Session {
 
   get code(): string | null {
     return this._code;
+  }
+
+  /** Fixé une seule fois par `ouvrir()` — `null` tant que la Session n'est pas encore OUVERTE. */
+  get ouvertureLe(): Date | null {
+    return this._ouvertureLe;
   }
 
   get indexCourant(): number {
@@ -339,6 +348,7 @@ export class Session {
     this._code = await this.generateurDeCode.generer();
     this._statut = 'OUVERTE';
     this._indexCourant = Session.SANS_QUESTION_COURANTE;
+    this._ouvertureLe = new Date();
     return Result.succes(undefined);
   }
 

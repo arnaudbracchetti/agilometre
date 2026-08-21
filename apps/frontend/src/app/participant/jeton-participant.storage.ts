@@ -29,4 +29,8 @@ export class JetonParticipantStorage {
   enregistrer(sessionId: string, jeton: string): void {
     localStorage.setItem(CLE_STOCKAGE, JSON.stringify({ sessionId, jeton }));
   }
+
+  effacer(): void {
+    localStorage.removeItem(CLE_STOCKAGE);
+  }
 }

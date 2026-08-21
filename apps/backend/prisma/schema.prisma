@@ -132,6 +132,7 @@ model Session {
   date             DateTime                @default(now())
   statut           StatutSession           @default(PREPAREE)
   code             String?
+  ouvertureLe      DateTime?
   indexCourant     Int                     @default(-1)
   modeleSessionId  String
   items            SessionSelectionItem[]

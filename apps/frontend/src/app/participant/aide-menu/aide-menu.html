@@ -1,0 +1,51 @@
+<button
+  type="button"
+  nz-button
+  nzShape="circle"
+  class="aide-menu__declencheur"
+  aria-label="Informations sur la séance"
+  (click)="ouvrir()"
+>
+  <span nz-icon nzType="question-circle" nzTheme="outline"></span>
+</button>
+
+@if (ouvert()) {
+  <button
+    type="button"
+    class="aide-menu__fond"
+    aria-label="Fermer"
+    (click)="fermer()"
+  ></button>
+  <div
+    class="aide-menu__panneau"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Informations sur la séance"
+  >
+    <h2 class="aide-menu__titre">Séance en cours</h2>
+    @if (chargement()) {
+      <p class="aide-menu__ligne">Chargement…</p>
+    } @else {
+      <p class="aide-menu__ligne">
+        <span class="aide-menu__label">Équipe</span>
+        <span>{{ equipeNom() }}</span>
+      </p>
+      <p class="aide-menu__ligne">
+        <span class="aide-menu__label">Ouverte le</span>
+        <span>{{ ouvertureLeAffichage() }}</span>
+      </p>
+    }
+    <div class="aide-menu__actions">
+      <button nz-button nzBlock (click)="fermer()">Fermer</button>
+      <button
+        nz-button
+        nzType="text"
+        nzDanger
+        nzBlock
+        (click)="confirmerDeconnexion()"
+      >
+        Se déconnecter
+      </button>
+    </div>
+  </div>
+}

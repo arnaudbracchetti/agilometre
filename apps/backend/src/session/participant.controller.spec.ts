@@ -4,6 +4,7 @@ import { Option } from '../referentiel/domain/option';
 import { Question } from '../referentiel/domain/question';
 import { RejoindreSession } from './application/rejoindre-session.usecase';
 import { ObtenirEtatParticipant } from './application/obtenir-etat-participant.usecase';
+import { ObtenirInfoSessionParticipant } from './application/obtenir-info-session-participant.usecase';
 import { VoterParticipant } from './application/voter-participant.usecase';
 import { RequeteAvecJetonParticipant } from './jeton-participant.guard';
 import { ParticipantController } from './participant.controller';
@@ -26,10 +27,14 @@ function requete(
 function creerControleur(
   obtenirEtatParticipant: { executer: jest.Mock },
   voterParticipant: { executer: jest.Mock } = { executer: jest.fn() },
+  obtenirInfoSessionParticipant: { executer: jest.Mock } = {
+    executer: jest.fn(),
+  },
 ): ParticipantController {
   return new ParticipantController(
     {} as unknown as RejoindreSession,
     obtenirEtatParticipant as unknown as ObtenirEtatParticipant,
+    obtenirInfoSessionParticipant as unknown as ObtenirInfoSessionParticipant,
     voterParticipant as unknown as VoterParticipant,
   );
 }
@@ -82,6 +87,66 @@ describe('ParticipantController.moi', () => {
         { libelle: 'Option 4' },
       ],
     });
+  });
+});
+
+describe('ParticipantController.infoSession', () => {
+  it('renvoie le nom d’équipe et la date d’ouverture', async () => {
+    const ouvertureLe = new Date('2026-08-21T09:00:00.000Z');
+    const obtenirInfoSessionParticipant = {
+      executer: jest.fn().mockResolvedValue({
+        type: 'ok',
+        equipeNom: 'Les Mangoustes',
+        ouvertureLe,
+      }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      obtenirInfoSessionParticipant,
+    );
+
+    const resultat = await controller.infoSession(requete());
+
+    expect(obtenirInfoSessionParticipant.executer).toHaveBeenCalledWith('s1');
+    expect(resultat).toEqual({
+      equipeNom: 'Les Mangoustes',
+      ouvertureLe: ouvertureLe.toISOString(),
+    });
+  });
+
+  it('renvoie ouvertureLe=null tant que la Session n’est pas ouverte', async () => {
+    const obtenirInfoSessionParticipant = {
+      executer: jest.fn().mockResolvedValue({
+        type: 'ok',
+        equipeNom: 'Les Mangoustes',
+        ouvertureLe: null,
+      }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      obtenirInfoSessionParticipant,
+    );
+
+    const resultat = await controller.infoSession(requete());
+
+    expect(resultat.ouvertureLe).toBeNull();
+  });
+
+  it('renvoie 404 si la Session est introuvable', async () => {
+    const obtenirInfoSessionParticipant = {
+      executer: jest.fn().mockResolvedValue({ type: 'introuvable' }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      obtenirInfoSessionParticipant,
+    );
+
+    await expect(controller.infoSession(requete())).rejects.toThrow(
+      NotFoundException,
+    );
   });
 });
 

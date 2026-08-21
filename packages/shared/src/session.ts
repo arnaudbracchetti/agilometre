@@ -100,3 +100,8 @@ export interface MoiParticipantDto {
   question: QuestionCouranteDto | null;
   optionChoisieIndex: number | null;
 }
+
+export interface InfoSessionParticipantDto {
+  equipeNom: string;
+  ouvertureLe: string | null;
+}

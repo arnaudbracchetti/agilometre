@@ -17,6 +17,7 @@ import {
   DesktopOutline,
   UnorderedListOutline,
   ExclamationCircleOutline,
+  QuestionCircleOutline,
 } from '@ant-design/icons-angular/icons';
 import { registerLocaleData } from '@angular/common';
 import fr from '@angular/common/locales/fr';
@@ -46,6 +47,7 @@ export const appConfig: ApplicationConfig = {
       DesktopOutline,
       UnorderedListOutline,
       ExclamationCircleOutline,
+      QuestionCircleOutline,
     ]),
   ],
 };

@@ -7,6 +7,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { QuestionCouranteDto } from '@agilometre/shared';
 import { JetonParticipantStorage } from '../jeton-participant.storage';
 import { ParticipantService } from '../participant.service';
+import { AideMenu } from '../aide-menu/aide-menu';
 import { LETTRES_OPTIONS } from '../../shared/lettres-options';
 import { sonder } from '../../shared/sondage-2s';
 import { StickyNote } from '../../shared/sticky-note/sticky-note';
@@ -25,7 +26,14 @@ const INTERVALLE_SONDAGE_PARTICIPANT_MS = 1000;
  */
 @Component({
   selector: 'app-vote-page',
-  imports: [FormsModule, NzButtonModule, NzInputModule, StickyNote, ErrorMessage],
+  imports: [
+    FormsModule,
+    NzButtonModule,
+    NzInputModule,
+    StickyNote,
+    ErrorMessage,
+    AideMenu,
+  ],
   templateUrl: './vote-page.html',
   styleUrl: './vote-page.scss',
 })
@@ -45,6 +53,8 @@ export class VotePage implements OnInit {
   protected readonly optionChoisieIndex = signal<number | null>(null);
   protected readonly voteEnCours = signal(false);
   protected readonly connexionPerdue = signal(false);
+  /** Jeton du device connecté — non null en phases 'attente'/'vote', consommé par `app-aide-menu`. */
+  protected readonly jetonActuel = signal<string | null>(null);
   /** Reflète « ai-je voté sur le Tour actuellement ouvert » — volontairement non mis à jour tant
    * que `voteOuvert` est false, donc reste figé sur le dernier Tour une fois clos : c'est ce qui
    * permet de distinguer, en phase 'attente', « jamais encore voté » de « Vote enregistré,
@@ -90,11 +100,24 @@ export class VotePage implements OnInit {
 
   protected rejoindreAutreSeance(): void {
     this.sondageAbonnement?.unsubscribe();
+    this.resetAffichage();
+  }
+
+  /** Vraie déconnexion (menu d'assistance) : contrairement à `rejoindreAutreSeance`, vide aussi le
+   * storage — ici aucune jointure suivante n'est prévue pour écraser le Jeton quitté. */
+  protected seDeconnecter(): void {
+    this.sondageAbonnement?.unsubscribe();
+    this.storage.effacer();
+    this.resetAffichage();
+  }
+
+  private resetAffichage(): void {
     this.code.set('');
     this.erreur.set(null);
     this.question.set(null);
     this.optionChoisieIndex.set(null);
     this.voteEnregistreSurDernierTour.set(false);
+    this.jetonActuel.set(null);
     this.phase.set('saisie');
   }
 
@@ -123,6 +146,7 @@ export class VotePage implements OnInit {
   }
 
   private demarrerSondage(jeton: string): void {
+    this.jetonActuel.set(jeton);
     this.sondageAbonnement?.unsubscribe();
     this.sondageAbonnement = sonder(
       () => this.participantService.obtenirMoi(jeton),

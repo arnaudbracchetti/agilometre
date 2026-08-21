@@ -32,6 +32,7 @@ import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
 import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
 import { VoterParticipant } from './application/voter-participant.usecase';
 import { ObtenirEtatParticipant } from './application/obtenir-etat-participant.usecase';
+import { ObtenirInfoSessionParticipant } from './application/obtenir-info-session-participant.usecase';
 import { PrismaModeleSessionRepository } from './infrastructure/prisma-modele-session.repository';
 import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-modele-session-bibliotheque.query';
 import { PrismaSessionRepository } from './infrastructure/prisma-session.repository';
@@ -327,6 +328,14 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
         PrismaReponseRepository,
         PrismaReferentielRepository,
       ],
+    },
+    {
+      provide: ObtenirInfoSessionParticipant,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        equipes: PrismaEquipeRepository,
+      ) => new ObtenirInfoSessionParticipant(sessions, equipes),
+      inject: [PrismaSessionRepository, PrismaEquipeRepository],
     },
     {
       provide: PasserQuestionSuivanteSession,

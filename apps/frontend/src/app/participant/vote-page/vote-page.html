@@ -1,3 +1,7 @@
+@if (jetonActuel(); as jeton) {
+  <app-aide-menu [jeton]="jeton" (deconnexion)="seDeconnecter()" />
+}
+
 <div class="vote">
   <app-sticky-note
     couleur="blue"

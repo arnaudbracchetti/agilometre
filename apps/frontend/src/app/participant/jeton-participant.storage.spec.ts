@@ -27,4 +27,12 @@ describe('JetonParticipantStorage', () => {
 
     expect(storage.obtenir()).toEqual({ sessionId: 's2', jeton: 'jeton-def' });
   });
+
+  it('effacer() vide le Jeton, sans ressusciter au prochain obtenir()', () => {
+    storage.enregistrer('s1', 'jeton-abc');
+
+    storage.effacer();
+
+    expect(storage.obtenir()).toBeNull();
+  });
 });

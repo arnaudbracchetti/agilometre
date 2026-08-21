@@ -455,6 +455,8 @@ describe('Session', () => {
         generateurDeCode,
       ).valeur;
 
+      expect(session.ouvertureLe).toBeNull();
+
       const resultat = await session.ouvrir();
 
       expect(resultat.estSucces).toBe(true);
@@ -462,6 +464,7 @@ describe('Session', () => {
       expect(session.estVerrouillee()).toBe(true);
       expect(session.code).toBe('AB12');
       expect(session.indexCourant).toBe(-1);
+      expect(session.ouvertureLe).toBeInstanceOf(Date);
     });
 
     it('rejette si la Session n’est pas PREPAREE, sans solliciter le générateur', async () => {

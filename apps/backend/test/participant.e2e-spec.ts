@@ -5,6 +5,7 @@ import { App } from 'supertest/types';
 import {
   EntiteDto,
   EquipeDto,
+  InfoSessionParticipantDto,
   JetonSessionDto,
   ModeleSessionDto,
   MoiParticipantDto,
@@ -289,6 +290,31 @@ describe('Participant — jointure par Code (e2e)', () => {
         .expect(401);
       await request(app.getHttpServer())
         .get('/api/participant/moi')
+        .set('Authorization', 'Bearer inconnu')
+        .expect(401);
+    });
+
+    it('GET /api/participant/info-session — nom d’équipe et date d’ouverture', async () => {
+      const session = await sessionOuverte();
+      const jeton = await rejoindre(session.code as string);
+
+      const reponse = await request(app.getHttpServer())
+        .get('/api/participant/info-session')
+        .set('Authorization', `Bearer ${jeton}`)
+        .expect(200);
+
+      const info = reponse.body as InfoSessionParticipantDto;
+      expect(info.equipeNom).toBe('Équipe Alpha');
+      expect(info.ouvertureLe).not.toBeNull();
+      expect(new Date(info.ouvertureLe as string).getTime()).not.toBeNaN();
+    });
+
+    it('GET /api/participant/info-session — 401 pour un Jeton absent ou invalide', async () => {
+      await request(app.getHttpServer())
+        .get('/api/participant/info-session')
+        .expect(401);
+      await request(app.getHttpServer())
+        .get('/api/participant/info-session')
         .set('Authorization', 'Bearer inconnu')
         .expect(401);
     });

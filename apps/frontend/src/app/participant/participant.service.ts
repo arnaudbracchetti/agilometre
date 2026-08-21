@@ -1,7 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { JetonSessionDto, MoiParticipantDto } from '@agilometre/shared';
+import {
+  InfoSessionParticipantDto,
+  JetonSessionDto,
+  MoiParticipantDto,
+} from '@agilometre/shared';
 
 /**
  * Service séparé de SessionsService : routes publiques, sans compte, consommées par l'écran
@@ -24,6 +28,13 @@ export class ParticipantService {
     return this.http.get<MoiParticipantDto>('/api/participant/moi', {
       headers: this.enteteAuth(jeton),
     });
+  }
+
+  obtenirInfoSession(jeton: string): Observable<InfoSessionParticipantDto> {
+    return this.http.get<InfoSessionParticipantDto>(
+      '/api/participant/info-session',
+      { headers: this.enteteAuth(jeton) },
+    );
   }
 
   voter(jeton: string, optionIndex: number): Observable<MoiParticipantDto> {

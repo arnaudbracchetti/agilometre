@@ -65,6 +65,39 @@ describe('VotePage', () => {
     httpMock.expectNone('/api/participant/moi');
   });
 
+  it('le menu d’assistance est absent en phase de saisie (aucun Jeton connu)', () => {
+    fixture = TestBed.createComponent(VotePage);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-aide-menu button')).toBeFalsy();
+  });
+
+  it('le menu d’assistance apparaît dès qu’un Jeton est connu (phase d’attente)', () => {
+    TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+    fixture = TestBed.createComponent(VotePage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-aide-menu button')).toBeTruthy();
+  });
+
+  it('se déconnecter depuis le menu d’assistance efface le Jeton en storage et repasse en saisie', () => {
+    TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+    fixture = TestBed.createComponent(VotePage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+    fixture.detectChanges();
+
+    fixture.componentInstance['seDeconnecter']();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#code')).toBeTruthy();
+    expect(TestBed.inject(JetonParticipantStorage).obtenir()).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-aide-menu button')).toBeFalsy();
+    httpMock.expectNone('/api/participant/moi');
+  });
+
   it('démarre directement en attente si un Jeton est déjà en storage et sonde /api/participant/moi', () => {
     TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
 

@@ -57,6 +57,7 @@ export class PrismaSessionRepository implements SessionRepository {
       row.indexCourant,
       new Set(row.questionsSautees.map((item) => item.questionId)),
       this.generateurDeCode,
+      row.ouvertureLe,
     );
   }
 
@@ -70,6 +71,7 @@ export class PrismaSessionRepository implements SessionRepository {
           date: session.date,
           statut: session.statut,
           code: session.code,
+          ouvertureLe: session.ouvertureLe,
           indexCourant: session.indexCourant,
           modeleSessionId: session.modeleSessionId,
         },
@@ -78,6 +80,7 @@ export class PrismaSessionRepository implements SessionRepository {
           date: session.date,
           statut: session.statut,
           code: session.code,
+          ouvertureLe: session.ouvertureLe,
           indexCourant: session.indexCourant,
           modeleSessionId: session.modeleSessionId,
         },

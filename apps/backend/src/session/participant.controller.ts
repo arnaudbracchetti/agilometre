@@ -9,9 +9,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
-import { JetonSessionDto, MoiParticipantDto } from '@agilometre/shared';
+import {
+  InfoSessionParticipantDto,
+  JetonSessionDto,
+  MoiParticipantDto,
+} from '@agilometre/shared';
 import { RejoindreSession } from './application/rejoindre-session.usecase';
 import { ObtenirEtatParticipant } from './application/obtenir-etat-participant.usecase';
+import { ObtenirInfoSessionParticipant } from './application/obtenir-info-session-participant.usecase';
 import { VoterParticipant } from './application/voter-participant.usecase';
 import { RejoindreSessionDto, VoterParticipantDto } from './session.dto';
 import { versQuestionCouranteDto } from './question-courante.mapper';
@@ -32,6 +37,7 @@ export class ParticipantController {
   constructor(
     private readonly rejoindreSession: RejoindreSession,
     private readonly obtenirEtatParticipant: ObtenirEtatParticipant,
+    private readonly obtenirInfoSessionParticipant: ObtenirInfoSessionParticipant,
     private readonly voterParticipant: VoterParticipant,
   ) {}
 
@@ -54,6 +60,24 @@ export class ParticipantController {
     @Req() request: RequeteAvecJetonParticipant,
   ): Promise<MoiParticipantDto> {
     return this.rechargerMoi(request.sessionId, request.jetonId);
+  }
+
+  @Get('info-session')
+  @UseGuards(JetonParticipantGuard)
+  @SkipThrottle()
+  async infoSession(
+    @Req() request: RequeteAvecJetonParticipant,
+  ): Promise<InfoSessionParticipantDto> {
+    const resultat = await this.obtenirInfoSessionParticipant.executer(
+      request.sessionId,
+    );
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException('Session introuvable');
+    }
+    return {
+      equipeNom: resultat.equipeNom,
+      ouvertureLe: resultat.ouvertureLe?.toISOString() ?? null,
+    };
   }
 
   @Post('voter')
