@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
@@ -24,6 +25,10 @@ export class AideMenu {
 
   readonly jeton = input.required<string>();
   readonly deconnexion = output<void>();
+  /** Jeton rejeté (401, carte #47) en consultant `info-session` — distinct de `deconnexion` :
+   * ce n'est pas un choix du Membre, l'écran hôte doit afficher le message de rejet, pas juste
+   * repasser en saisie silencieusement. */
+  readonly sessionRejetee = output<void>();
 
   protected readonly ouvert = signal(false);
   protected readonly chargement = signal(false);
@@ -50,7 +55,12 @@ export class AideMenu {
         this.ouvertureLe.set(info.ouvertureLe);
         this.chargement.set(false);
       },
-      error: () => this.chargement.set(false),
+      error: (erreur: unknown) => {
+        this.chargement.set(false);
+        if (erreur instanceof HttpErrorResponse && erreur.status === 401) {
+          this.sessionRejetee.emit();
+        }
+      },
     });
   }
 

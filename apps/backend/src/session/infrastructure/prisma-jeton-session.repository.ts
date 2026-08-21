@@ -59,7 +59,7 @@ export class PrismaJetonSessionRepository implements JetonSessionRepository {
 
   async resoudreSessionActive(jetonId: string): Promise<string | null> {
     const row = await this.prisma.jetonSession.findFirst({
-      where: { id: jetonId, remplaceLe: null },
+      where: { id: jetonId, remplaceLe: null, session: { statut: 'OUVERTE' } },
       select: { sessionId: true },
     });
     return row?.sessionId ?? null;

@@ -94,4 +94,17 @@ describe('AideMenu', () => {
     expect(deconnexionSpy).toHaveBeenCalledTimes(1);
     expect(fixture.nativeElement.querySelector('.aide-menu__panneau')).toBeFalsy();
   });
+
+  it('un 401 sur /api/participant/info-session émet sessionRejetee (carte #47)', () => {
+    const sessionRejeteeSpy = vi.fn();
+    fixture.componentInstance.sessionRejetee.subscribe(sessionRejeteeSpy);
+
+    fixture.componentInstance['ouvrir']();
+    httpMock
+      .expectOne('/api/participant/info-session')
+      .flush('Jeton invalide', { status: 401, statusText: 'Unauthorized' });
+    fixture.detectChanges();
+
+    expect(sessionRejeteeSpy).toHaveBeenCalledTimes(1);
+  });
 });

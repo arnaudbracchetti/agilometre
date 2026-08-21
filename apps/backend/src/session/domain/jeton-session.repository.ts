@@ -19,8 +19,9 @@ export interface JetonSessionRepository {
   invalider(id: string): Promise<void>;
   /**
    * Résolution "Guard" du Jeton (docs/design/agregat-tour-de-vote.md §5, "Le Guard résout le
-   * Jeton en sessionId") : `null` si le Jeton est inconnu ou invalidé (`remplaceLe` renseigné) —
-   * jamais l'agrégat Session, appelée sur le sondage 1s du participant.
+   * Jeton en sessionId") : `null` si le Jeton est inconnu, invalidé (`remplaceLe` renseigné), ou
+   * rattaché à une Session qui n'est plus `OUVERTE` (clôturée entretemps) — jamais l'agrégat
+   * Session, appelée sur le sondage 1s du participant.
    */
   resoudreSessionActive(jetonId: string): Promise<string | null>;
 }

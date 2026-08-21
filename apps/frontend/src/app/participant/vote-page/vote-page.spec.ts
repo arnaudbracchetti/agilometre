@@ -312,4 +312,84 @@ describe('VotePage', () => {
       expect(fixture.nativeElement.textContent).not.toContain('Vote enregistré');
     });
   });
+
+  describe('carte G2 — le Membre reconnecté après clôture (#47)', () => {
+    it('un 401 du sondage /api/participant/moi repasse en saisie du Code, storage vidé, avec un message clair', () => {
+      vi.useFakeTimers();
+      TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+      httpMock
+        .expectOne('/api/participant/moi')
+        .flush('Jeton invalide', { status: 401, statusText: 'Unauthorized' });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('#code')).toBeTruthy();
+      expect(fixture.nativeElement.textContent).toContain('Séance terminée ou expirée');
+      expect(TestBed.inject(JetonParticipantStorage).obtenir()).toBeNull();
+
+      // Le sondage est bien coupé — plus aucune requête, même après avance du temps.
+      vi.advanceTimersByTime(2000);
+      httpMock.expectNone('/api/participant/moi');
+    });
+
+    it('une erreur réseau (non 401) du sondage /api/participant/moi ne change pas de phase (non-régression)', () => {
+      vi.useFakeTimers();
+      TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+      httpMock
+        .expectOne('/api/participant/moi')
+        .flush('Erreur serveur', { status: 500, statusText: 'Internal Server Error' });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('#code')).toBeFalsy();
+      expect(fixture.nativeElement.textContent).toContain('Connexion perdue');
+      expect(TestBed.inject(JetonParticipantStorage).obtenir()).not.toBeNull();
+
+      vi.advanceTimersByTime(1000);
+      httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+    });
+
+    it('un 401 sur POST /api/participant/voter repasse en saisie du Code avec un message clair', () => {
+      vi.useFakeTimers();
+      TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/participant/moi').flush({
+        voteOuvert: true,
+        question: QUESTION_COURANTE,
+        optionChoisieIndex: null,
+      });
+      fixture.detectChanges();
+
+      boutonParTexte('Jamais')?.click();
+      httpMock
+        .expectOne('/api/participant/voter')
+        .flush('Jeton invalide', { status: 401, statusText: 'Unauthorized' });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('#code')).toBeTruthy();
+      expect(fixture.nativeElement.textContent).toContain('Séance terminée ou expirée');
+      expect(TestBed.inject(JetonParticipantStorage).obtenir()).toBeNull();
+    });
+
+    it('un rejet remonté par le menu d’assistance (info-session en 401) repasse aussi en saisie avec le message', () => {
+      TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+      fixture.detectChanges();
+
+      fixture.debugElement.query(By.css('app-aide-menu')).triggerEventHandler(
+        'sessionRejetee',
+        undefined,
+      );
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('#code')).toBeTruthy();
+      expect(fixture.nativeElement.textContent).toContain('Séance terminée ou expirée');
+      expect(TestBed.inject(JetonParticipantStorage).obtenir()).toBeNull();
+    });
+  });
 });

@@ -47,6 +47,18 @@ describe('sonder', () => {
     expect(valeurs).toEqual([42]);
   });
 
+  it('transmet l’erreur d’origine à onErreur', () => {
+    const fixture = TestBed.createComponent(ComposantHote);
+    const echec = new Error('ko');
+    const appel = () => throwError(() => echec);
+    const onErreur = vi.fn();
+    vi.useFakeTimers();
+
+    sonder(appel, onErreur, fixture.componentInstance.destroyRef).subscribe();
+
+    expect(onErreur).toHaveBeenCalledWith(echec);
+  });
+
   it('arrête le sondage à la destruction du composant', () => {
     const fixture = TestBed.createComponent(ComposantHote);
     const appel = vi.fn<() => Observable<number>>(() => of(1));

@@ -14,7 +14,7 @@ const INTERVALLE_SONDAGE_MS = 2000;
  */
 export function sonder<T>(
   appel: () => Observable<T>,
-  onErreur: () => void,
+  onErreur: (erreur: unknown) => void,
   destroyRef: DestroyRef,
   intervalleMs = INTERVALLE_SONDAGE_MS,
 ): Observable<T> {
@@ -22,8 +22,8 @@ export function sonder<T>(
     startWith(0),
     switchMap(() =>
       appel().pipe(
-        catchError(() => {
-          onErreur();
+        catchError((erreur: unknown) => {
+          onErreur(erreur);
           return EMPTY;
         }),
       ),

@@ -1353,4 +1353,56 @@ describe('Participant — jointure par Code (e2e)', () => {
         .expect(404);
     });
   });
+
+  describe('carte G2 — le Membre reconnecté après clôture (#47)', () => {
+    it('GET /api/participant/moi — 401 pour un Jeton émis avant clôture (Session CLOTUREE entretemps)', async () => {
+      const session = await sessionOuverte('G2a');
+      const jeton = await rejoindre(session.code as string);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer`)
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .get('/api/participant/moi')
+        .set('Authorization', `Bearer ${jeton}`)
+        .expect(401);
+    });
+
+    it('GET /api/participant/info-session — 401 pour un Jeton émis avant clôture', async () => {
+      const session = await sessionOuverte('G2b');
+      const jeton = await rejoindre(session.code as string);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer`)
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .get('/api/participant/info-session')
+        .set('Authorization', `Bearer ${jeton}`)
+        .expect(401);
+    });
+
+    it('POST /api/participant/voter — 401 pour un Jeton émis avant clôture', async () => {
+      const session = await sessionEnVote('G2c');
+      const jeton = await rejoindre(session.code as string);
+      await request(app.getHttpServer())
+        .post(`/api/sessions/${session.id}/terminer`)
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post('/api/participant/voter')
+        .set('Authorization', `Bearer ${jeton}`)
+        .send({ optionIndex: 0 })
+        .expect(401);
+    });
+
+    it('un Jeton d’une Session encore OUVERTE continue de fonctionner (non-régression)', async () => {
+      const session = await sessionOuverte('G2d');
+      const jeton = await rejoindre(session.code as string);
+
+      await request(app.getHttpServer())
+        .get('/api/participant/moi')
+        .set('Authorization', `Bearer ${jeton}`)
+        .expect(200);
+    });
+  });
 });

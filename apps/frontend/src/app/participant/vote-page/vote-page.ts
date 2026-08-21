@@ -1,4 +1,5 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -121,6 +122,20 @@ export class VotePage implements OnInit {
     this.phase.set('saisie');
   }
 
+  /** Jeton rejeté par `JetonParticipantGuard` (401) — invalide, ou Session plus `OUVERTE`
+   * (carte #47) : même écran de saisie qu'un Code invalide, sans distinguer la cause
+   * (doc/spec/annexes/deroulement-session-animee.md, « Synchronisation des écrans » § Erreurs). */
+  protected sessionRejetee(): void {
+    this.sondageAbonnement?.unsubscribe();
+    this.storage.effacer();
+    this.resetAffichage();
+    this.erreur.set('Séance terminée ou expirée. Merci de ressaisir le Code de session.');
+  }
+
+  private estJetonRejete(erreur: unknown): boolean {
+    return erreur instanceof HttpErrorResponse && erreur.status === 401;
+  }
+
   protected voter(index: number): void {
     const jeton = this.storage.obtenir()?.jeton;
     if (!jeton || this.voteEnCours()) {
@@ -137,9 +152,13 @@ export class VotePage implements OnInit {
           this.optionChoisieIndex.set(etat.optionChoisieIndex);
           this.voteEnregistreSurDernierTour.set(etat.optionChoisieIndex !== null);
         },
-        error: () => {
+        error: (erreur: unknown) => {
           this.voteEnCours.set(false);
           this.optionChoisieIndex.set(choixPrecedent);
+          if (this.estJetonRejete(erreur)) {
+            this.sessionRejetee();
+            return;
+          }
           this.message.error('Vote impossible — vérifiez votre connexion et réessayez.');
         },
       });
@@ -150,7 +169,13 @@ export class VotePage implements OnInit {
     this.sondageAbonnement?.unsubscribe();
     this.sondageAbonnement = sonder(
       () => this.participantService.obtenirMoi(jeton),
-      () => this.connexionPerdue.set(true),
+      (erreur) => {
+        if (this.estJetonRejete(erreur)) {
+          this.sessionRejetee();
+          return;
+        }
+        this.connexionPerdue.set(true);
+      },
       this.destroyRef,
       INTERVALLE_SONDAGE_PARTICIPANT_MS,
     ).subscribe((etat) => {

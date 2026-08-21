@@ -1,5 +1,9 @@
 @if (jetonActuel(); as jeton) {
-  <app-aide-menu [jeton]="jeton" (deconnexion)="seDeconnecter()" />
+  <app-aide-menu
+    [jeton]="jeton"
+    (deconnexion)="seDeconnecter()"
+    (sessionRejetee)="sessionRejetee()"
+  />
 }
 
 <div class="vote">
