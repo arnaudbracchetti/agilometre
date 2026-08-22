@@ -42,6 +42,7 @@ function creerControleur(
     nonUtilise,
     nonUtilise,
     obtenirPilotageSession as unknown as ObtenirPilotageSession,
+    nonUtilise,
     passerQuestionSuivanteSession as unknown as PasserQuestionSuivanteSession,
     nonUtilise,
     nonUtilise,

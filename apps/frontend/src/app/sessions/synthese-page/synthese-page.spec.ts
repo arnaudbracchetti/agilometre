@@ -6,6 +6,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { vi } from 'vitest';
+import { PilotageSessionDto, StatutSession, SyntheseSessionDto } from '@agilometre/shared';
 import { SynthesePage } from './synthese-page';
 
 function activatedRouteAvecId(id: string): Partial<ActivatedRoute> {
@@ -13,6 +14,17 @@ function activatedRouteAvecId(id: string): Partial<ActivatedRoute> {
     snapshot: { paramMap: convertToParamMap({ id }) } as ActivatedRoute['snapshot'],
   };
 }
+
+const PILOTAGE_PAR_DEFAUT: PilotageSessionDto = {
+  statut: StatutSession.Ouverte,
+  code: '654321',
+  nbDevicesConnectes: 0,
+  questionCourante: null,
+  tourOuvert: null,
+  dernierTourClos: null,
+  historique: [],
+  progression: [],
+};
 
 describe('SynthesePage', () => {
   let httpMock: HttpTestingController;
@@ -36,17 +48,21 @@ describe('SynthesePage', () => {
     httpMock.verify();
   });
 
+  function repondre(
+    pilotage: Partial<PilotageSessionDto> = {},
+    synthese: SyntheseSessionDto = { themes: [] },
+  ): void {
+    httpMock
+      .expectOne('/api/sessions/s1/pilotage')
+      .flush({ ...PILOTAGE_PAR_DEFAUT, ...pilotage });
+    httpMock.expectOne('/api/sessions/s1/synthese').flush(synthese);
+  }
+
   it('charge la progression une seule fois (pas de sondage) et affiche chaque Question avec son statut', () => {
     fixture = TestBed.createComponent(SynthesePage);
     fixture.detectChanges();
 
-    httpMock.expectOne('/api/sessions/s1/pilotage').flush({
-      statut: 'OUVERTE',
-      code: '654321',
-      nbDevicesConnectes: 0,
-      questionCourante: null,
-      tourOuvert: null,
-      historique: [],
+    repondre({
       progression: [
         { questionId: 'q1', libelle: 'Question traitée', statut: 'TRAITEE', reactivable: false },
         { questionId: 'q2', libelle: 'Question sautée', statut: 'SAUTEE', reactivable: false },
@@ -60,20 +76,13 @@ describe('SynthesePage', () => {
     expect(texte).toContain('Question sautée');
     expect(texte).toContain('Sautée');
     httpMock.expectNone('/api/sessions/s1/pilotage');
+    httpMock.expectNone('/api/sessions/s1/synthese');
   });
 
   it('affiche le lien de retour vers le pilotage', () => {
     fixture = TestBed.createComponent(SynthesePage);
     fixture.detectChanges();
-    httpMock.expectOne('/api/sessions/s1/pilotage').flush({
-      statut: 'OUVERTE',
-      code: '654321',
-      nbDevicesConnectes: 0,
-      questionCourante: null,
-      tourOuvert: null,
-      historique: [],
-      progression: [],
-    });
+    repondre();
     fixture.detectChanges();
 
     const lien = fixture.nativeElement.querySelector('a[href="/sessions/s1/pilotage"]');
@@ -87,12 +96,78 @@ describe('SynthesePage', () => {
     httpMock
       .expectOne('/api/sessions/s1/pilotage')
       .flush('Introuvable', { status: 404, statusText: 'Not Found' });
+    // forkJoin annule la requête synthese dès que pilotage échoue — pas de second flush à faire.
+    httpMock.expectOne('/api/sessions/s1/synthese');
     fixture.detectChanges();
 
     expect(fixture.componentInstance['inaccessible']()).toBe(true);
     expect(fixture.nativeElement.textContent).toContain(
       'Cet écran de synthèse n’est plus accessible.',
     );
+  });
+
+  describe('Palier par Thème et lecture fine (carte #52)', () => {
+    function syntheseAUnTheme(): SyntheseSessionDto {
+      return {
+        themes: [
+          {
+            themeId: 't1',
+            libelle: 'Thème collaboration',
+            palier: 3,
+            tauxApproche: 0.8,
+            margeAvantDescente: 0.2,
+            effectif: 4,
+            questions: [
+              {
+                questionId: 'q1',
+                libelle: 'Question sur le daily',
+                effectif: 4,
+                moyenne: 2.5,
+                consensus: 'MODERE',
+                repartition: { 1: 0, 2: 2, 3: 2, 4: 0 },
+              },
+            ],
+          },
+        ],
+      };
+    }
+
+    it('affiche un Palier par Thème traité, avec la Moyenne et le cran de consensus par Question', () => {
+      fixture = TestBed.createComponent(SynthesePage);
+      fixture.detectChanges();
+      repondre({}, syntheseAUnTheme());
+      fixture.detectChanges();
+
+      const texte = fixture.nativeElement.textContent as string;
+      expect(texte).toContain('Thème collaboration');
+      expect(texte).toContain('Palier 3');
+      expect(texte).toContain('Question sur le daily');
+      expect(texte).toContain('Moyenne 2.5');
+      expect(texte).toContain('Consensus modéré');
+    });
+
+    it('affiche la répartition en % par Niveau sous chaque Question', () => {
+      fixture = TestBed.createComponent(SynthesePage);
+      fixture.detectChanges();
+      repondre({}, syntheseAUnTheme());
+      fixture.detectChanges();
+
+      const texte = fixture.nativeElement.textContent as string;
+      // 2/4 = 50 % pour les Niveaux 2 et 3, 0 % pour 1 et 4.
+      expect(texte).toContain('Niveau 2');
+      expect(texte).toContain('50 %');
+      expect(texte).toContain('Niveau 1');
+      expect(texte).toContain('0 %');
+    });
+
+    it("n'affiche aucun bloc Thème quand la synthèse est vide", () => {
+      fixture = TestBed.createComponent(SynthesePage);
+      fixture.detectChanges();
+      repondre({}, { themes: [] });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('nz-collapse')).toBeNull();
+    });
   });
 
   describe('Terminer la séance (carte G1)', () => {
@@ -105,15 +180,7 @@ describe('SynthesePage', () => {
     it('affiche le bouton quand la Session est encore OUVERTE', () => {
       fixture = TestBed.createComponent(SynthesePage);
       fixture.detectChanges();
-      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
-        statut: 'OUVERTE',
-        code: '654321',
-        nbDevicesConnectes: 0,
-        questionCourante: null,
-        tourOuvert: null,
-        historique: [],
-        progression: [],
-      });
+      repondre({ statut: StatutSession.Ouverte });
       fixture.detectChanges();
 
       expect(boutonTerminer()).toBeTruthy();
@@ -122,15 +189,7 @@ describe('SynthesePage', () => {
     it('masque le bouton si la Session est déjà CLOTUREE', () => {
       fixture = TestBed.createComponent(SynthesePage);
       fixture.detectChanges();
-      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
-        statut: 'CLOTUREE',
-        code: '654321',
-        nbDevicesConnectes: 0,
-        questionCourante: null,
-        tourOuvert: null,
-        historique: [],
-        progression: [],
-      });
+      repondre({ statut: StatutSession.Cloturee });
       fixture.detectChanges();
 
       expect(boutonTerminer()).toBeFalsy();
@@ -139,15 +198,7 @@ describe('SynthesePage', () => {
     it('confirme la popconfirm : appelle terminerSession puis navigue vers l’écran de pilotage', () => {
       fixture = TestBed.createComponent(SynthesePage);
       fixture.detectChanges();
-      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
-        statut: 'OUVERTE',
-        code: '654321',
-        nbDevicesConnectes: 0,
-        questionCourante: null,
-        tourOuvert: null,
-        historique: [],
-        progression: [],
-      });
+      repondre({ statut: StatutSession.Ouverte });
       fixture.detectChanges();
       const router = TestBed.inject(Router);
       const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -159,15 +210,7 @@ describe('SynthesePage', () => {
 
       const req = httpMock.expectOne('/api/sessions/s1/terminer');
       expect(req.request.method).toBe('POST');
-      req.flush({
-        statut: 'CLOTUREE',
-        code: '654321',
-        nbDevicesConnectes: 0,
-        questionCourante: null,
-        tourOuvert: null,
-        historique: [],
-        progression: [],
-      });
+      req.flush({ ...PILOTAGE_PAR_DEFAUT, statut: StatutSession.Cloturee });
       fixture.detectChanges();
 
       expect(navigateSpy).toHaveBeenCalledWith(['/sessions', 's1', 'pilotage']);
@@ -176,15 +219,7 @@ describe('SynthesePage', () => {
     it('affiche un message d’erreur si le refus est renvoyé, sans naviguer', () => {
       fixture = TestBed.createComponent(SynthesePage);
       fixture.detectChanges();
-      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
-        statut: 'OUVERTE',
-        code: '654321',
-        nbDevicesConnectes: 0,
-        questionCourante: null,
-        tourOuvert: null,
-        historique: [],
-        progression: [],
-      });
+      repondre({ statut: StatutSession.Ouverte });
       fixture.detectChanges();
       const messageService = fixture.debugElement.injector.get(NzMessageService);
       const errorSpy = vi.spyOn(messageService, 'error');

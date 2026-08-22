@@ -64,6 +64,18 @@
               >
                 <span nz-icon nzType="desktop" nzTheme="outline"></span>
               </a>
+            } @else if (ligne.statut === 'CLOTUREE') {
+              <a
+                nz-button
+                nzType="text"
+                nzShape="circle"
+                class="bibliotheque__action"
+                nz-tooltip
+                nzTooltipTitle="Voir la synthèse"
+                [routerLink]="['/sessions', ligne.id, 'synthese']"
+              >
+                <span nz-icon nzType="bar-chart" nzTheme="outline"></span>
+              </a>
             }
             <button
               nz-button

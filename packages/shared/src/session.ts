@@ -109,6 +109,31 @@ export interface PilotageSessionDto {
   progression: ProgressionQuestionDto[];
 }
 
+export type CranConsensusDto = 'FORT' | 'MODERE' | 'FAIBLE';
+
+export interface SyntheseQuestionDto {
+  questionId: string;
+  libelle: string;
+  effectif: number;
+  moyenne: number | null;
+  consensus: CranConsensusDto | null;
+  repartition: RepartitionVotesDto;
+}
+
+export interface SyntheseThemeDto {
+  themeId: string;
+  libelle: string;
+  palier: 1 | 2 | 3 | 4;
+  tauxApproche: number | null;
+  margeAvantDescente: number;
+  effectif: number;
+  questions: SyntheseQuestionDto[];
+}
+
+export interface SyntheseSessionDto {
+  themes: SyntheseThemeDto[];
+}
+
 export interface JetonSessionDto {
   sessionId: string;
   jeton: string;

@@ -60,6 +60,13 @@ class ReponseRepositoryFake implements ReponseRepository {
   findById(id: string): Promise<Reponse | null> {
     return Promise.resolve(this.reponses.find((r) => r.id === id) ?? null);
   }
+  findByTourIds(tourIds: string[]): Promise<Reponse[]> {
+    return Promise.resolve(
+      this.reponses.filter(
+        (r) => r.tourId !== null && tourIds.includes(r.tourId),
+      ),
+    );
+  }
   save(reponse: Reponse): Promise<void> {
     this.ordreAppels.push(`save:${reponse.id}`);
     this.reponses.push(reponse);

@@ -830,6 +830,103 @@ describe('Session', () => {
     });
   });
 
+  describe('estTourValable', () => {
+    it('true pour un Tour clos sur une Question non Sautée', () => {
+      const session = sessionOuverte(['q1', 'q2'], 1);
+      expect(
+        session.estTourValable({
+          tourId: 't1',
+          questionId: 'q1',
+          numero: 1,
+          clos: true,
+        }),
+      ).toBe(true);
+    });
+
+    it('false pour un Tour non clos', () => {
+      const session = sessionOuverte(['q1', 'q2'], 1);
+      expect(
+        session.estTourValable({
+          tourId: 't1',
+          questionId: 'q1',
+          numero: 1,
+          clos: false,
+        }),
+      ).toBe(false);
+    });
+
+    it('false pour un Tour clos sur une Question Sautée (fermeture forcée, #44)', () => {
+      const session = sessionOuverte(['q1', 'q2'], 1, ['q1']);
+      expect(
+        session.estTourValable({
+          tourId: 't1',
+          questionId: 'q1',
+          numero: 1,
+          clos: true,
+        }),
+      ).toBe(false);
+    });
+  });
+
+  describe('dernierTourClosParQuestion', () => {
+    it('ne garde que le Tour de plus haut numero par Question (un revote ne compte jamais double)', () => {
+      const session = sessionOuverte(['q1'], 0);
+      const tours = [
+        { tourId: 't1', questionId: 'q1', numero: 1, clos: true },
+        { tourId: 't2', questionId: 'q1', numero: 2, clos: true },
+      ];
+
+      const resultat = session.dernierTourClosParQuestion(tours);
+
+      expect(resultat.size).toBe(1);
+      expect(resultat.get('q1')).toEqual({
+        tourId: 't2',
+        questionId: 'q1',
+        numero: 2,
+        clos: true,
+      });
+    });
+
+    it('exclut les Tours clos sur une Question Sautée', () => {
+      const session = sessionOuverte(['q1', 'q2'], 0, ['q2']);
+      const tours = [
+        { tourId: 't1', questionId: 'q1', numero: 1, clos: true },
+        { tourId: 't2', questionId: 'q2', numero: 1, clos: true },
+      ];
+
+      const resultat = session.dernierTourClosParQuestion(tours);
+
+      expect([...resultat.keys()]).toEqual(['q1']);
+    });
+
+    it('exclut les Tours non clos', () => {
+      const session = sessionOuverte(['q1'], 0);
+      const tours = [
+        { tourId: 't1', questionId: 'q1', numero: 1, clos: false },
+      ];
+
+      expect(session.dernierTourClosParQuestion(tours).size).toBe(0);
+    });
+
+    it('retourne une map vide sans aucun Tour', () => {
+      const session = sessionOuverte(['q1'], 0);
+      expect(session.dernierTourClosParQuestion([]).size).toBe(0);
+    });
+
+    it('résout indépendamment plusieurs Questions', () => {
+      const session = sessionOuverte(['q1', 'q2'], 0);
+      const tours = [
+        { tourId: 't1', questionId: 'q1', numero: 1, clos: true },
+        { tourId: 't2', questionId: 'q2', numero: 1, clos: true },
+      ];
+
+      const resultat = session.dernierTourClosParQuestion(tours);
+
+      expect(resultat.get('q1')?.tourId).toBe('t1');
+      expect(resultat.get('q2')?.tourId).toBe('t2');
+    });
+  });
+
   describe('questionCouranteId', () => {
     it('retourne null en salle d’attente (indexCourant = -1)', () => {
       const session = Session.reconstituer(

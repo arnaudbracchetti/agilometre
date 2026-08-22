@@ -15,6 +15,49 @@
       </a>
     </header>
 
+    @if (themes().length > 0) {
+      <nz-collapse class="synthese__themes">
+        @for (theme of themes(); track theme.themeId) {
+          <nz-collapse-panel [nzHeader]="enteteTheme">
+            <ng-template #enteteTheme>
+              <span class="synthese__theme-libelle">{{ theme.libelle }}</span>
+              <span
+                class="synthese__palier-badge"
+                [class.synthese__palier-badge--haut]="theme.palier >= 3"
+              >Palier {{ theme.palier }}</span>
+            </ng-template>
+
+            <nz-collapse class="synthese__questions" nzGhost>
+              @for (question of theme.questions; track question.questionId) {
+                <nz-collapse-panel [nzHeader]="enteteQuestion">
+                  <ng-template #enteteQuestion>
+                    <span class="synthese__question-libelle">{{ question.libelle }}</span>
+                    <span class="synthese__question-moyenne">
+                      Moyenne {{ question.moyenne }}
+                    </span>
+                    @if (question.consensus) {
+                      <span class="synthese__question-consensus">
+                        {{ libelleConsensus(question.consensus) }}
+                      </span>
+                    }
+                  </ng-template>
+
+                  <ul class="synthese__repartition">
+                    @for (niveau of niveaux; track niveau) {
+                      <li class="synthese__repartition-ligne">
+                        <span>Niveau {{ niveau }}</span>
+                        <span>{{ pourcentage(question.repartition[niveau], question.effectif) }} %</span>
+                      </li>
+                    }
+                  </ul>
+                </nz-collapse-panel>
+              }
+            </nz-collapse>
+          </nz-collapse-panel>
+        }
+      </nz-collapse>
+    }
+
     <ul class="synthese__liste">
       @for (entree of progression(); track entree.questionId) {
         <li class="synthese__ligne">

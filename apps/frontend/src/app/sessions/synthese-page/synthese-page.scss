@@ -23,6 +23,65 @@
     margin: 0;
   }
 
+  &__themes {
+    margin-bottom: var(--space-5);
+  }
+
+  &__theme-libelle {
+    font-weight: var(--font-weight-medium);
+    margin-right: var(--space-3);
+  }
+
+  &__palier-badge {
+    display: inline-block;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-on-primary);
+    background: var(--color-primary);
+    border-radius: var(--radius-sm);
+    padding: 0 var(--space-2);
+
+    &--haut {
+      background: var(--color-primary-emphasis);
+    }
+  }
+
+  &__questions {
+    margin-top: var(--space-2);
+  }
+
+  &__question-libelle {
+    font-weight: var(--font-weight-medium);
+    margin-right: var(--space-3);
+  }
+
+  &__question-moyenne {
+    font-size: var(--font-size-sm);
+    color: var(--color-ink-muted);
+    margin-right: var(--space-3);
+  }
+
+  &__question-consensus {
+    font-size: var(--font-size-sm);
+    color: var(--color-ink-muted);
+  }
+
+  &__repartition {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+  }
+
+  &__repartition-ligne {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    font-size: var(--font-size-sm);
+  }
+
   &__liste {
     list-style: none;
     display: flex;

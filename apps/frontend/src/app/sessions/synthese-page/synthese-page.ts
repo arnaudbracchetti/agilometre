@@ -1,26 +1,35 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import {
+  CranConsensusDto,
   PilotageSessionDto,
   ProgressionQuestionDto,
   StatutQuestionProgressionDto,
+  SyntheseThemeDto,
 } from '@agilometre/shared';
 import { ErrorMessage } from '../../shared/error-message/error-message';
 import { libelleStatutProgression } from '../../shared/libelle-statut-progression';
 import { SessionsService } from '../sessions.service';
 
+const LIBELLE_CONSENSUS: Record<CranConsensusDto, string> = {
+  FORT: 'Consensus fort',
+  MODERE: 'Consensus modéré',
+  FAIBLE: 'Consensus faible',
+};
+
 /**
- * Écran de synthèse (cartes F3 #45 + G1 #46) : liste Traitée/Sautée sans détail par thème (hors
- * périmètre, cf. #46), et porte le bouton de clôture finale (« Terminer la séance ») depuis lequel
- * le Coach fait passer la Session à CLOTUREE.
+ * Écran de synthèse (cartes F3 #45, G1 #46, lecture par Thème #52) : Palier par Thème traité avec
+ * drill-down par Question (Moyenne, cran de consensus, répartition par Niveau), liste
+ * Traitée/Sautée, et porte le bouton de clôture finale (« Terminer la séance »).
  */
 @Component({
   selector: 'app-synthese-page',
-  imports: [RouterLink, NzButtonModule, NzPopconfirmModule, ErrorMessage],
+  imports: [RouterLink, NzButtonModule, NzCollapseModule, NzPopconfirmModule, ErrorMessage],
   templateUrl: './synthese-page.html',
   styleUrl: './synthese-page.scss',
 })
@@ -33,9 +42,11 @@ export class SynthesePage implements OnInit {
   protected readonly sessionId = signal<string | null>(null);
   protected readonly statut = signal<PilotageSessionDto['statut'] | null>(null);
   protected readonly progression = signal<ProgressionQuestionDto[]>([]);
+  protected readonly themes = signal<SyntheseThemeDto[]>([]);
   protected readonly chargementEnCours = signal(true);
   protected readonly inaccessible = signal(false);
   protected readonly terminerEnCours = signal(false);
+  protected readonly niveaux = [1, 2, 3, 4] as const;
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -44,8 +55,11 @@ export class SynthesePage implements OnInit {
     }
     this.sessionId.set(id);
 
-    this.sessionsService.obtenirPilotage(id).subscribe({
-      next: (pilotage) => {
+    forkJoin({
+      pilotage: this.sessionsService.obtenirPilotage(id),
+      synthese: this.sessionsService.obtenirSynthese(id),
+    }).subscribe({
+      next: ({ pilotage, synthese }) => {
         this.statut.set(pilotage.statut);
         // Traitée/Sautée seulement — une visite avant que tout ne soit résolu (onglet resté
         // ouvert, retour arrière) ne doit pas montrer une Question encore À venir/Courante ici,
@@ -55,6 +69,7 @@ export class SynthesePage implements OnInit {
             (p) => p.statut === 'TRAITEE' || p.statut === 'SAUTEE',
           ),
         );
+        this.themes.set(synthese.themes);
         this.chargementEnCours.set(false);
       },
       error: () => {
@@ -66,6 +81,15 @@ export class SynthesePage implements OnInit {
 
   protected libelleStatut(statut: StatutQuestionProgressionDto): string {
     return libelleStatutProgression(statut);
+  }
+
+  protected libelleConsensus(consensus: CranConsensusDto | null): string {
+    return consensus ? LIBELLE_CONSENSUS[consensus] : '';
+  }
+
+  /** % arrondi d'un Niveau dans la répartition d'une Question — 0 sur un effectif nul. */
+  protected pourcentage(compte: number, effectif: number): number {
+    return effectif === 0 ? 0 : Math.round((compte / effectif) * 100);
   }
 
   protected terminerSeance(): void {

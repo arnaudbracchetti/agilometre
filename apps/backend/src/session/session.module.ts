@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ReferentielModule } from '../referentiel/referentiel.module';
 import { OrganisationModule } from '../organisation/organisation.module';
 import { ReponseModule } from '../reponse/reponse.module';
 import { PrismaReferentielRepository } from '../referentiel/infrastructure/prisma-referentiel.repository';
 import { PrismaEquipeRepository } from '../organisation/infrastructure/prisma-equipe.repository';
 import { PrismaReponseRepository } from '../reponse/infrastructure/prisma-reponse.repository';
+import { ScoringV1 } from '../scoring/domain/scoring-v1';
 import { CreerModeleSession } from './application/creer-modele-session.usecase';
 import { RenommerModeleSession } from './application/renommer-modele-session.usecase';
 import { AjouterQuestionModeleSession } from './application/ajouter-question-modele-session.usecase';
@@ -28,6 +30,7 @@ import { SupprimerSession } from './application/supprimer-session.usecase';
 import { OuvrirSession } from './application/ouvrir-session.usecase';
 import { ObtenirProjectionSession } from './application/obtenir-projection-session.usecase';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
+import { ObtenirSyntheseSession } from './application/obtenir-synthese-session.usecase';
 import { PasserQuestionSuivanteSession } from './application/passer-question-suivante-session.usecase';
 import { RejoindreSession } from './application/rejoindre-session.usecase';
 import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
@@ -284,6 +287,31 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
         PrismaTourDeVoteRepository,
         PrismaEtatToursQuery,
         PrismaRepartitionTourQuery,
+      ],
+    },
+    {
+      provide: ObtenirSyntheseSession,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        referentiel: PrismaReferentielRepository,
+        etatTours: PrismaEtatToursQuery,
+        reponses: PrismaReponseRepository,
+        config: ConfigService,
+      ) =>
+        new ObtenirSyntheseSession(
+          sessions,
+          referentiel,
+          etatTours,
+          reponses,
+          new ScoringV1(),
+          config.get<number>('SCORING_SEUIL_PALIER')!,
+        ),
+      inject: [
+        PrismaSessionRepository,
+        PrismaReferentielRepository,
+        PrismaEtatToursQuery,
+        PrismaReponseRepository,
+        ConfigService,
       ],
     },
     {

@@ -23,6 +23,26 @@ export class PrismaReponseRepository implements ReponseRepository {
     );
   }
 
+  async findByTourIds(tourIds: string[]): Promise<Reponse[]> {
+    if (tourIds.length === 0) {
+      return [];
+    }
+    const rows = await this.prisma.reponse.findMany({
+      where: { tourId: { in: tourIds } },
+    });
+    return rows.map((row) =>
+      Reponse.reconstituer(
+        row.id,
+        row.questionId,
+        row.niveau,
+        row.equipeId,
+        row.horodatage,
+        row.origine,
+        row.tourId,
+      ),
+    );
+  }
+
   /** Toujours une insertion : Reponse est immuable, jamais mise à jour une fois persistée. */
   async save(reponse: Reponse): Promise<void> {
     await this.prisma.reponse.create({

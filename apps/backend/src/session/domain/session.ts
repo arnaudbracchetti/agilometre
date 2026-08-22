@@ -484,6 +484,35 @@ export class Session {
     });
   }
 
+  /**
+   * Un Tour clos sur une Question Sautée ne peut venir que d'une fermeture forcée (#44) — jamais
+   * compté nulle part (historique, scoring #52). Seul point de vérité pour cette règle.
+   */
+  estTourValable(tour: EtatTour): boolean {
+    return tour.clos && !this._questionsSautees.has(tour.questionId);
+  }
+
+  /**
+   * Le dernier Tour clos (numero max) de chaque Question ayant au moins un Tour valable — base
+   * commune du "dernier résultat affiché" (pilotage) et de ce qui compte pour le scoring (#52) :
+   * un revote ne compte jamais double, une Sautée jamais.
+   */
+  dernierTourClosParQuestion(
+    tours: readonly EtatTour[],
+  ): ReadonlyMap<string, EtatTour> {
+    const dernierParQuestion = new Map<string, EtatTour>();
+    for (const tour of tours) {
+      if (!this.estTourValable(tour)) {
+        continue;
+      }
+      const actuel = dernierParQuestion.get(tour.questionId);
+      if (!actuel || tour.numero > actuel.numero) {
+        dernierParQuestion.set(tour.questionId, tour);
+      }
+    }
+    return dernierParQuestion;
+  }
+
   /** Encapsule le sentinel SANS_QUESTION_COURANTE — jamais -1 exposé hors de l'agrégat. */
   questionCouranteId(): string | null {
     return this._indexCourant === Session.SANS_QUESTION_COURANTE

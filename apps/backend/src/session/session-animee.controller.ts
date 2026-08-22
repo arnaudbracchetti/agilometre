@@ -17,6 +17,7 @@ import {
   SelectionQuestionDto,
   SessionDto,
   StatutSession as StatutSessionDto,
+  SyntheseSessionDto,
 } from '@agilometre/shared';
 import { Question } from '../referentiel/domain/question';
 import { Theme } from '../referentiel/domain/theme';
@@ -37,6 +38,7 @@ import { ChangerModeleSession } from './application/changer-modele-session.useca
 import { SupprimerSession } from './application/supprimer-session.usecase';
 import { OuvrirSession } from './application/ouvrir-session.usecase';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
+import { ObtenirSyntheseSession } from './application/obtenir-synthese-session.usecase';
 import { PasserQuestionSuivanteSession } from './application/passer-question-suivante-session.usecase';
 import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
 import { CloreTourDeVote } from './application/clore-tour-de-vote.usecase';
@@ -51,6 +53,7 @@ import {
   versTourClosDto,
   versTourOuvertDto,
 } from './question-courante.mapper';
+import { versSyntheseDto } from './synthese.mapper';
 import {
   AjouterQuestionSessionDto,
   AjouterThemeSessionDto,
@@ -118,6 +121,7 @@ export class SessionAnimeeController {
     private readonly supprimerSession: SupprimerSession,
     private readonly ouvrirSession: OuvrirSession,
     private readonly obtenirPilotageSession: ObtenirPilotageSession,
+    private readonly obtenirSyntheseSession: ObtenirSyntheseSession,
     private readonly passerQuestionSuivanteSession: PasserQuestionSuivanteSession,
     private readonly ouvrirTourDeVote: OuvrirTourDeVote,
     private readonly cloreTourDeVote: CloreTourDeVote,
@@ -184,6 +188,18 @@ export class SessionAnimeeController {
   @SkipThrottle()
   async pilotage(@Param('id') id: string): Promise<PilotageSessionDto> {
     return this.rechargerPilotage(id);
+  }
+
+  @Get(':id/synthese')
+  @SkipThrottle()
+  async synthese(@Param('id') id: string): Promise<SyntheseSessionDto> {
+    const resultat = await this.obtenirSyntheseSession.executer(id);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(
+        `Aucune synthèse accessible pour la Session ${id}`,
+      );
+    }
+    return versSyntheseDto(resultat.themes);
   }
 
   @Post(':id/passer-question-suivante')

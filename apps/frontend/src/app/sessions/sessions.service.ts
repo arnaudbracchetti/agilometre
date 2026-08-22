@@ -5,6 +5,7 @@ import {
   LigneListeSessionDto,
   PilotageSessionDto,
   SessionDto,
+  SyntheseSessionDto,
 } from '@agilometre/shared';
 
 @Injectable({ providedIn: 'root' })
@@ -30,6 +31,10 @@ export class SessionsService {
 
   obtenirPilotage(id: string): Observable<PilotageSessionDto> {
     return this.http.get<PilotageSessionDto>(`${this.baseUrl}/${id}/pilotage`);
+  }
+
+  obtenirSynthese(id: string): Observable<SyntheseSessionDto> {
+    return this.http.get<SyntheseSessionDto>(`${this.baseUrl}/${id}/synthese`);
   }
 
   passerQuestionSuivante(id: string): Observable<PilotageSessionDto> {

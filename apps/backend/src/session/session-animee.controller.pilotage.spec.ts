@@ -62,6 +62,7 @@ function creerControleur(
     nonUtilise,
     obtenirPilotageSession as unknown as ObtenirPilotageSession,
     nonUtilise,
+    nonUtilise,
     ouvrirTourDeVote as unknown as OuvrirTourDeVote,
     cloreTourDeVote as unknown as CloreTourDeVote,
     sauterQuestionSession as unknown as SauterQuestionSession,

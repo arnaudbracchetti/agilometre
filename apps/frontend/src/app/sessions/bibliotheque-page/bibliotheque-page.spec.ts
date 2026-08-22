@@ -6,7 +6,12 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
-import { DeleteOutline, DesktopOutline, PlayCircleOutline } from '@ant-design/icons-angular/icons';
+import {
+  BarChartOutline,
+  DeleteOutline,
+  DesktopOutline,
+  PlayCircleOutline,
+} from '@ant-design/icons-angular/icons';
 import { StatutSession } from '@agilometre/shared';
 import { BibliothequePage } from './bibliotheque-page';
 
@@ -23,7 +28,7 @@ describe('BibliothequePage (Sessions)', () => {
         provideRouter([]),
         // Sans ça, nz-icon tente de récupérer les SVG via HTTP (assets/outline/*.svg), ce que
         // HttpTestingController rejette comme requête non attendue — mêmes icônes qu'app.config.ts.
-        provideNzIcons([DeleteOutline, PlayCircleOutline, DesktopOutline]),
+        provideNzIcons([DeleteOutline, PlayCircleOutline, DesktopOutline, BarChartOutline]),
       ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
@@ -203,6 +208,29 @@ describe('BibliothequePage (Sessions)', () => {
 
     const lien = fixture.nativeElement.querySelector('a[href="/sessions/s1/pilotage"]');
     expect(lien).toBeTruthy();
+  });
+
+  it('affiche un lien « Voir la synthèse » pour une ligne CLOTUREE (carte #52)', () => {
+    const fixture = TestBed.createComponent(BibliothequePage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/sessions').flush([
+      {
+        id: 's1',
+        equipeNom: 'Alpha',
+        date: '2026-04-01T00:00:00.000Z',
+        statut: 'CLOTUREE',
+        verrouillee: true,
+        nbQuestions: 1,
+        modeleSessionNom: 'M',
+      },
+    ]);
+    fixture.detectChanges();
+
+    const lien = fixture.nativeElement.querySelector('a[href="/sessions/s1/synthese"]');
+    expect(lien).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('a[href="/sessions/s1/pilotage"]'),
+    ).toBeFalsy();
   });
 
   it('affiche un message d’erreur si le chargement échoue', () => {

@@ -808,6 +808,10 @@ describe('PilotagePage', () => {
       expect(
         fixture.nativeElement.querySelector('a[href="/projection/s1"]'),
       ).toBeFalsy();
+      // carte #52 : la synthèse doit rester accessible après clôture, pas seulement en OUVERTE.
+      expect(
+        fixture.nativeElement.querySelector('a[href="/sessions/s1/synthese"]'),
+      ).toBeTruthy();
       const boutons = Array.from(
         fixture.nativeElement.querySelectorAll('button'),
       ) as HTMLButtonElement[];

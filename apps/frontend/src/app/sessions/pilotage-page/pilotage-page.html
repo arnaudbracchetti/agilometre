@@ -92,6 +92,9 @@
             </div>
           } @else {
             <p class="pilotage__statut">Séance clôturée.</p>
+            <a nz-button nzType="primary" [routerLink]="['/sessions', sessionId(), 'synthese']">
+              Voir la synthèse
+            </a>
           }
         </div>
       </div>

@@ -72,6 +72,14 @@ describe('SessionsService', () => {
     req.flush({ statut: 'OUVERTE', code: '654321' });
   });
 
+  it('obtient la synthèse via GET /api/sessions/:id/synthese', () => {
+    service.obtenirSynthese('s1').subscribe();
+
+    const req = httpMock.expectOne('/api/sessions/s1/synthese');
+    expect(req.request.method).toBe('GET');
+    req.flush({ themes: [] });
+  });
+
   it('ouvre un Tour via POST /api/sessions/:id/ouvrir-tour', () => {
     service.ouvrirTour('s1').subscribe();
 
