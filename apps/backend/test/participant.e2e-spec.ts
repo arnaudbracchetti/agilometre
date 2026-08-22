@@ -304,6 +304,44 @@ describe('Participant — jointure par Code (e2e)', () => {
     return (reponse.body as JetonSessionDto).jeton;
   }
 
+  /** Tire plus de 100 requêtes sur un point de lecture live et vérifie qu'aucune n'est freinée
+   *  par le ThrottlerGuard global (ADR-0012), **dans la fenêtre d'une minute** que la limite
+   *  vise réellement — sans cette mesure, un test qui se contenterait de compter les requêtes ne
+   *  prouverait rien sur le "par minute" de l'AC. Séquentiel plutôt qu'en parallèle : des dizaines
+   *  de connexions TCP réellement concurrentes vers le serveur éphémère de supertest provoquent
+   *  des ECONNRESET dans cet environnement, sans rapport avec le comportement applicatif testé. */
+  async function verifierAucunThrottle(
+    faireRequete: () => Promise<{ status: number }>,
+  ): Promise<void> {
+    const nbRequetes = 110; // > 100, la limite du ThrottlerGuard global sur 60s.
+    const debut = Date.now();
+    for (let i = 0; i < nbRequetes; i++) {
+      const reponse = await faireRequete();
+      expect(reponse.status).not.toBe(429);
+    }
+    expect(Date.now() - debut).toBeLessThan(60_000);
+  }
+
+  /** Vérifie qu'un point de lecture live renvoie un ETag sur sa réponse, et que la représenter
+   *  via `If-None-Match` sur une lecture suivante (sans changement d'état entretemps) renvoie
+   *  304 sans corps (ADR-0013). */
+  async function verifierEtagEt304(
+    faireRequete: (etagAPresenter?: string) => Promise<{
+      status: number;
+      headers: Record<string, string>;
+      text: string;
+    }>,
+  ): Promise<void> {
+    const premiere = await faireRequete();
+    expect(premiere.status).toBe(200);
+    const etag = premiere.headers['etag'];
+    expect(etag).toBeDefined();
+
+    const seconde = await faireRequete(etag);
+    expect(seconde.status).toBe(304);
+    expect(seconde.text).toBe('');
+  }
+
   describe('parcours D2 — ouvrir un Tour, voter, revoter, clore', () => {
     it('POST /api/sessions/:id/ouvrir-tour — 409 en salle d’attente (aucune Question courante)', async () => {
       const session = await sessionOuverte();
@@ -1403,6 +1441,74 @@ describe('Participant — jointure par Code (e2e)', () => {
         .get('/api/participant/moi')
         .set('Authorization', `Bearer ${jeton}`)
         .expect(200);
+    });
+  });
+
+  describe('carte H1 — le sondage tient la charge d’une vraie séance (#48)', () => {
+    it('GET /api/participant/moi reste accessible au-delà de 100 requêtes/minute depuis la même IP (ThrottlerGuard exonéré)', async () => {
+      const session = await sessionOuverte('H1a');
+      const jeton = await rejoindre(session.code as string);
+
+      await verifierAucunThrottle(() =>
+        request(app.getHttpServer())
+          .get('/api/participant/moi')
+          .set('Authorization', `Bearer ${jeton}`),
+      );
+    });
+
+    it('GET /api/projection/:sessionId reste accessible au-delà de 100 requêtes/minute depuis la même IP', async () => {
+      const session = await sessionOuverte('H1b');
+
+      await verifierAucunThrottle(() =>
+        request(app.getHttpServer()).get(`/api/projection/${session.id}`),
+      );
+    });
+
+    it('GET /api/sessions/:id/pilotage reste accessible au-delà de 100 requêtes/minute depuis la même IP', async () => {
+      const session = await sessionOuverte('H1c');
+
+      await verifierAucunThrottle(() =>
+        request(app.getHttpServer()).get(
+          `/api/sessions/${session.id}/pilotage`,
+        ),
+      );
+    });
+
+    it('GET /api/participant/moi — renvoie un ETag et 304 sans corps si l’état n’a pas changé', async () => {
+      const session = await sessionOuverte('H1d');
+      const jeton = await rejoindre(session.code as string);
+
+      await verifierEtagEt304((etagAPresenter) => {
+        const requete = request(app.getHttpServer())
+          .get('/api/participant/moi')
+          .set('Authorization', `Bearer ${jeton}`);
+        if (etagAPresenter) requete.set('If-None-Match', etagAPresenter);
+        return requete;
+      });
+    });
+
+    it('GET /api/projection/:sessionId — renvoie un ETag et 304 sans corps si inchangé', async () => {
+      const session = await sessionOuverte('H1e');
+
+      await verifierEtagEt304((etagAPresenter) => {
+        const requete = request(app.getHttpServer()).get(
+          `/api/projection/${session.id}`,
+        );
+        if (etagAPresenter) requete.set('If-None-Match', etagAPresenter);
+        return requete;
+      });
+    });
+
+    it('GET /api/sessions/:id/pilotage — renvoie un ETag et 304 sans corps si inchangé', async () => {
+      const session = await sessionOuverte('H1f');
+
+      await verifierEtagEt304((etagAPresenter) => {
+        const requete = request(app.getHttpServer()).get(
+          `/api/sessions/${session.id}/pilotage`,
+        );
+        if (etagAPresenter) requete.set('If-None-Match', etagAPresenter);
+        return requete;
+      });
     });
   });
 });
