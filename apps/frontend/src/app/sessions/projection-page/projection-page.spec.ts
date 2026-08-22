@@ -162,7 +162,8 @@ describe('ProjectionPage', () => {
     });
   });
 
-  it('affiche un écran d’erreur si la Session n’est pas accessible', () => {
+  it('affiche un écran d’erreur si la Session n’est pas accessible, et arrête le sondage pour de bon (carte H2, #49)', () => {
+    vi.useFakeTimers();
     fixture = TestBed.createComponent(ProjectionPage);
     fixture.detectChanges();
 
@@ -172,5 +173,64 @@ describe('ProjectionPage', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('n’est pas accessible');
+
+    vi.advanceTimersByTime(2000);
+    httpMock.expectNone('/api/projection/s1');
+  });
+
+  it('une erreur réseau isolée (non 404) du sondage ne déclenche pas « inaccessible » (non-régression, carte H2, #49)', () => {
+    fixture = TestBed.createComponent(ProjectionPage);
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne('/api/projection/s1')
+      .flush('Erreur serveur', { status: 500, statusText: 'Internal Server Error' });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['inaccessible']()).toBe(false);
+    expect(fixture.componentInstance['connexionPerdue']()).toBe(false);
+  });
+
+  it('affiche le bandeau « connexion perdue » seulement après plusieurs échecs consécutifs du sondage, et le masque au succès suivant (carte H2, #49)', () => {
+    vi.useFakeTimers();
+    fixture = TestBed.createComponent(ProjectionPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/projection/s1').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 0,
+      questionCourante: null,
+      tourOuvert: null,
+    });
+    fixture.detectChanges();
+
+    for (let i = 0; i < 2; i++) {
+      vi.advanceTimersByTime(2000);
+      httpMock
+        .expectOne('/api/projection/s1')
+        .flush('Erreur serveur', { status: 500, statusText: 'Internal Server Error' });
+      fixture.detectChanges();
+      expect(fixture.componentInstance['connexionPerdue']()).toBe(false);
+    }
+
+    vi.advanceTimersByTime(2000);
+    httpMock
+      .expectOne('/api/projection/s1')
+      .flush('Erreur serveur', { status: 500, statusText: 'Internal Server Error' });
+    fixture.detectChanges();
+    expect(fixture.componentInstance['connexionPerdue']()).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Connexion perdue');
+
+    vi.advanceTimersByTime(2000);
+    httpMock.expectOne('/api/projection/s1').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 0,
+      questionCourante: null,
+      tourOuvert: null,
+    });
+    fixture.detectChanges();
+    expect(fixture.componentInstance['connexionPerdue']()).toBe(false);
+    expect(fixture.nativeElement.textContent).not.toContain('Connexion perdue');
   });
 });

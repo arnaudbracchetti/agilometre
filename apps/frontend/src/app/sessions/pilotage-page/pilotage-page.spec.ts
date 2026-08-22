@@ -156,7 +156,8 @@ describe('PilotagePage', () => {
     expect(fixture.componentInstance['questionCourante']()).toBeNull();
   });
 
-  it('affiche un message d’erreur si le pilotage n’est plus accessible', () => {
+  it('affiche un message d’erreur si le pilotage n’est plus accessible, et arrête le sondage pour de bon (carte H2, #49)', () => {
+    vi.useFakeTimers();
     fixture = TestBed.createComponent(PilotagePage);
     fixture.detectChanges();
     const messageService = fixture.debugElement.injector.get(NzMessageService);
@@ -169,6 +170,65 @@ describe('PilotagePage', () => {
 
     expect(errorSpy).toHaveBeenCalledTimes(1);
     expect(fixture.componentInstance['inaccessible']()).toBe(true);
+
+    vi.advanceTimersByTime(2000);
+    httpMock.expectNone('/api/sessions/s1/pilotage');
+  });
+
+  it('une erreur réseau isolée (non 404) du sondage ne déclenche pas « inaccessible » (non-régression, carte H2, #49)', () => {
+    fixture = TestBed.createComponent(PilotagePage);
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne('/api/sessions/s1/pilotage')
+      .flush('Erreur serveur', { status: 500, statusText: 'Internal Server Error' });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['inaccessible']()).toBe(false);
+    expect(fixture.componentInstance['connexionPerdue']()).toBe(false);
+  });
+
+  it('affiche le bandeau « connexion perdue » seulement après plusieurs échecs consécutifs du sondage, et le masque au succès suivant (carte H2, #49)', () => {
+    vi.useFakeTimers();
+    fixture = TestBed.createComponent(PilotagePage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 0,
+      questionCourante: null,
+      tourOuvert: null,
+    });
+    fixture.detectChanges();
+
+    for (let i = 0; i < 2; i++) {
+      vi.advanceTimersByTime(2000);
+      httpMock
+        .expectOne('/api/sessions/s1/pilotage')
+        .flush('Erreur serveur', { status: 500, statusText: 'Internal Server Error' });
+      fixture.detectChanges();
+      expect(fixture.componentInstance['connexionPerdue']()).toBe(false);
+    }
+
+    vi.advanceTimersByTime(2000);
+    httpMock
+      .expectOne('/api/sessions/s1/pilotage')
+      .flush('Erreur serveur', { status: 500, statusText: 'Internal Server Error' });
+    fixture.detectChanges();
+    expect(fixture.componentInstance['connexionPerdue']()).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Connexion perdue');
+
+    vi.advanceTimersByTime(2000);
+    httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+      statut: 'OUVERTE',
+      code: '654321',
+      nbDevicesConnectes: 0,
+      questionCourante: null,
+      tourOuvert: null,
+    });
+    fixture.detectChanges();
+    expect(fixture.componentInstance['connexionPerdue']()).toBe(false);
+    expect(fixture.nativeElement.textContent).not.toContain('Connexion perdue');
   });
 
   describe('Tour de vote (carte D2)', () => {
@@ -753,6 +813,25 @@ describe('PilotagePage', () => {
       ) as HTMLButtonElement[];
       expect(boutons.some((b) => b.textContent?.includes('Sauter'))).toBe(false);
       expect(boutons.some((b) => b.textContent?.includes('Réactiver'))).toBe(false);
+    });
+
+    it('arrête le sondage pour de bon dès que la réponse indique CLOTUREE (carte H2, #49)', () => {
+      vi.useFakeTimers();
+      fixture = TestBed.createComponent(PilotagePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/sessions/s1/pilotage').flush({
+        statut: 'CLOTUREE',
+        code: '654321',
+        nbDevicesConnectes: 0,
+        questionCourante: null,
+        tourOuvert: null,
+        historique: [],
+        progression: [],
+      });
+      fixture.detectChanges();
+
+      vi.advanceTimersByTime(2000);
+      httpMock.expectNone('/api/sessions/s1/pilotage');
     });
   });
 });

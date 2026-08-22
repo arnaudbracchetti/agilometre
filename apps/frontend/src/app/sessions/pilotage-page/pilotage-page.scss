@@ -15,6 +15,11 @@
     margin-bottom: var(--space-5);
   }
 
+  // Apparence portée par <app-error-message> ; ici seulement l'espacement avant le contenu qui suit.
+  &__connexion-perdue {
+    margin-bottom: var(--space-5);
+  }
+
   &__titre {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);

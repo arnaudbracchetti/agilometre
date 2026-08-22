@@ -1,4 +1,9 @@
 <div class="projection">
+  @if (connexionPerdue()) {
+    <app-sticky-note couleur="magenta" class="projection__connexion-perdue" role="alert">
+      <p>Connexion perdue — nouvelle tentative en cours…</p>
+    </app-sticky-note>
+  }
   @if (chargementEnCours()) {
     <p class="projection__message">Chargement…</p>
   } @else if (inaccessible()) {

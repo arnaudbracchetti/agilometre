@@ -8,6 +8,13 @@
       class="pilotage__erreur"
     />
   } @else {
+    @if (connexionPerdue()) {
+      <app-error-message
+        message="Connexion perdue — nouvelle tentative en cours…"
+        taille="inline"
+        class="pilotage__connexion-perdue"
+      />
+    }
     <div class="pilotage__mise-en-page">
       <div class="pilotage__colonne-principale">
         <header class="pilotage__entete">

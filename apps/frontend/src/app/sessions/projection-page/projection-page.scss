@@ -24,6 +24,13 @@
     max-width: 40rem;
   }
 
+  // Même raison que &__erreur ci-dessus (matériau note plutôt que <app-error-message> sur ce
+  // fond plein écran) — mais posée en tête d'écran, discrète, sans remplacer le contenu en cours.
+  &__connexion-perdue {
+    max-width: 30rem;
+    margin-bottom: var(--space-5);
+  }
+
   /* État salle d'attente — le Code/URL et le compteur sont chacun un grand post-it
      (<app-sticky-note>, voir shared/sticky-note), posés côte à côte comme deux repères de
      salle à parité, plutôt que deux lignes de texte empilées sur le fond navy. Rotation légère

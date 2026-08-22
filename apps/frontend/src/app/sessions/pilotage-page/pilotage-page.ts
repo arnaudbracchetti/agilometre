@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subscription, finalize } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -15,7 +16,7 @@ import {
 } from '@agilometre/shared';
 import { LETTRES_OPTIONS } from '../../shared/lettres-options';
 import { libelleStatutProgression } from '../../shared/libelle-statut-progression';
-import { sonder } from '../../shared/sondage-2s';
+import { SEUIL_ECHECS_CONNEXION_PERDUE, sonder } from '../../shared/sondage-2s';
 import { CouleurStickyNote, StickyNote } from '../../shared/sticky-note/sticky-note';
 import { ErrorMessage } from '../../shared/error-message/error-message';
 import { SessionsService } from '../sessions.service';
@@ -67,6 +68,9 @@ export class PilotagePage implements OnInit {
   /** Repliées par défaut — consultation à la demande, jamais imposée au premier affichage. */
   protected readonly groupesHistoriqueOuverts = signal<ReadonlySet<string>>(new Set());
   protected readonly inaccessible = signal(false);
+  /** Bandeau discret, distinct de `inaccessible` — plusieurs échecs de sondage consécutifs, mais
+   * l'écran déjà rendu reste affiché tel quel (carte H2, #49). */
+  protected readonly connexionPerdue = signal(false);
   protected readonly chargementEnCours = signal(true);
   protected readonly avancerEnCours = signal(false);
   protected readonly tourEnCours = signal(false);
@@ -75,6 +79,9 @@ export class PilotagePage implements OnInit {
   /** questionId en cours de traitement, pour ne désactiver que le bon bouton Réactiver. */
   protected readonly reactiverEnCours = signal<string | null>(null);
   protected readonly terminerPrematurementEnCours = signal(false);
+  /** Coupé définitivement sur 404 (jamais ouverte) ou dès qu'un pilotage renvoie CLOTUREE — évite
+   * un sondage perpétuel sur un onglet oublié ouvert (carte H2, #49). */
+  private sondageAbonnement: Subscription | null = null;
 
   /**
    * Toutes les Questions de la Sélection sont Traitées ou Sautées (carte F3) — atteignable soit
@@ -123,17 +130,28 @@ export class PilotagePage implements OnInit {
     }
     this.sessionId.set(id);
 
-    sonder(
+    this.sondageAbonnement = sonder(
       () => this.sessionsService.obtenirPilotage(id),
-      () => {
-        this.inaccessible.set(true);
-        this.chargementEnCours.set(false);
-        this.message.error('Cet écran de pilotage n’est plus accessible.');
+      (erreur, echecsConsecutifs) => {
+        if (erreur instanceof HttpErrorResponse && erreur.status === 404) {
+          this.sondageAbonnement?.unsubscribe();
+          this.inaccessible.set(true);
+          this.chargementEnCours.set(false);
+          this.message.error('Cet écran de pilotage n’est plus accessible.');
+          return;
+        }
+        if (echecsConsecutifs >= SEUIL_ECHECS_CONNEXION_PERDUE) {
+          this.connexionPerdue.set(true);
+        }
       },
       this.destroyRef,
     ).subscribe((pilotage) => {
+      this.connexionPerdue.set(false);
       this.appliquer(pilotage);
       this.chargementEnCours.set(false);
+      if (pilotage.statut === 'CLOTUREE') {
+        this.sondageAbonnement?.unsubscribe();
+      }
     });
   }
 

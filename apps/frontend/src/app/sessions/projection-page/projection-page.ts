@@ -1,12 +1,14 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import {
   QuestionCouranteDto,
   TourClosDto,
   TourOuvertDto,
 } from '@agilometre/shared';
 import { LETTRES_OPTIONS } from '../../shared/lettres-options';
-import { sonder } from '../../shared/sondage-2s';
+import { SEUIL_ECHECS_CONNEXION_PERDUE, sonder } from '../../shared/sondage-2s';
 import { StickyNote } from '../../shared/sticky-note/sticky-note';
 import { ProjectionService } from '../projection.service';
 
@@ -29,11 +31,18 @@ export class ProjectionPage implements OnInit {
   protected readonly tourOuvert = signal<TourOuvertDto | null>(null);
   protected readonly dernierTourClos = signal<TourClosDto | null>(null);
   protected readonly inaccessible = signal(false);
+  /** Bandeau discret, distinct de `inaccessible` — plusieurs échecs de sondage consécutifs, mais
+   * l'écran déjà rendu reste affiché tel quel (carte H2, #49). */
+  protected readonly connexionPerdue = signal(false);
   protected readonly chargementEnCours = signal(true);
   /** URL à saisir par un participant pour rejoindre (doc "Écran de projection", état salle d'attente). */
   protected readonly urlDeJointure = signal(
     typeof window !== 'undefined' ? `${window.location.origin}/vote` : '',
   );
+  /** Coupé définitivement dès le 404 (Session plus OUVERTE, y compris CLOTUREE — la lecture
+   * publique ne distingue pas les deux, voir ObtenirProjectionSession) — évite un sondage
+   * perpétuel sur un onglet oublié ouvert (carte H2, #49). */
+  private sondageAbonnement: Subscription | null = null;
 
   ngOnInit(): void {
     const sessionId = this.route.snapshot.paramMap.get('sessionId');
@@ -43,14 +52,22 @@ export class ProjectionPage implements OnInit {
       return;
     }
 
-    sonder(
+    this.sondageAbonnement = sonder(
       () => this.projectionService.obtenir(sessionId),
-      () => {
-        this.inaccessible.set(true);
-        this.chargementEnCours.set(false);
+      (erreur, echecsConsecutifs) => {
+        if (erreur instanceof HttpErrorResponse && erreur.status === 404) {
+          this.sondageAbonnement?.unsubscribe();
+          this.inaccessible.set(true);
+          this.chargementEnCours.set(false);
+          return;
+        }
+        if (echecsConsecutifs >= SEUIL_ECHECS_CONNEXION_PERDUE) {
+          this.connexionPerdue.set(true);
+        }
       },
       this.destroyRef,
     ).subscribe((projection) => {
+      this.connexionPerdue.set(false);
       this.code.set(projection.code);
       this.nbDevicesConnectes.set(projection.nbDevicesConnectes);
       this.questionCourante.set(projection.questionCourante);

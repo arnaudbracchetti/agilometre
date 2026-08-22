@@ -56,7 +56,30 @@ describe('sonder', () => {
 
     sonder(appel, onErreur, fixture.componentInstance.destroyRef).subscribe();
 
-    expect(onErreur).toHaveBeenCalledWith(echec);
+    expect(onErreur).toHaveBeenCalledWith(echec, 1);
+  });
+
+  it('incrémente le compte d’échecs consécutifs à chaque échec, et le remet à zéro au succès suivant', () => {
+    const fixture = TestBed.createComponent(ComposantHote);
+    let echec = true;
+    const appel = () => (echec ? throwError(() => new Error('ko')) : of(42));
+    const onErreur = vi.fn();
+    vi.useFakeTimers();
+
+    sonder(appel, onErreur, fixture.componentInstance.destroyRef).subscribe();
+    expect(onErreur).toHaveBeenNthCalledWith(1, expect.any(Error), 1);
+
+    vi.advanceTimersByTime(2000);
+    expect(onErreur).toHaveBeenNthCalledWith(2, expect.any(Error), 2);
+
+    vi.advanceTimersByTime(2000);
+    expect(onErreur).toHaveBeenNthCalledWith(3, expect.any(Error), 3);
+
+    echec = false;
+    vi.advanceTimersByTime(2000); // succès : remet le compteur à zéro
+    echec = true;
+    vi.advanceTimersByTime(2000);
+    expect(onErreur).toHaveBeenNthCalledWith(4, expect.any(Error), 1);
   });
 
   it('arrête le sondage à la destruction du composant', () => {

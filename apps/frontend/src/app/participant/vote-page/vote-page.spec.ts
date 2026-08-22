@@ -5,6 +5,7 @@ import { NgModel } from '@angular/forms';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { JetonParticipantStorage } from '../jeton-participant.storage';
 import { VotePage } from './vote-page';
 
@@ -250,6 +251,36 @@ describe('VotePage', () => {
       req.flush({ voteOuvert: true, question: QUESTION_COURANTE, optionChoisieIndex: 1 });
     });
 
+    it('un vote tenté hors ligne (aucune réponse réseau) affiche une erreur explicite et annule la sélection optimiste (carte H2, #49)', () => {
+      chargerEnAttente();
+      vi.advanceTimersByTime(1000);
+      httpMock.expectOne('/api/participant/moi').flush({
+        voteOuvert: true,
+        question: QUESTION_COURANTE,
+        optionChoisieIndex: null,
+      });
+      fixture.detectChanges();
+      const messageService = TestBed.inject(NzMessageService);
+      const errorSpy = vi.spyOn(messageService, 'error');
+
+      const boutonsOption = Array.from(
+        fixture.nativeElement.querySelectorAll('.vote__option'),
+      ) as HTMLButtonElement[];
+      boutonsOption[1].click();
+      fixture.detectChanges();
+      expect(boutonsOption[1].classList).toContain('vote__option--choisi');
+
+      httpMock
+        .expectOne('/api/participant/voter')
+        .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+      fixture.detectChanges();
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Vote impossible — vérifiez votre connexion et réessayez.',
+      );
+      expect(boutonsOption[1].classList).not.toContain('vote__option--choisi');
+    });
+
     it('un revote remplace immédiatement l’Option choisie', () => {
       chargerEnAttente();
       vi.advanceTimersByTime(1000);
@@ -333,7 +364,7 @@ describe('VotePage', () => {
       httpMock.expectNone('/api/participant/moi');
     });
 
-    it('une erreur réseau (non 401) du sondage /api/participant/moi ne change pas de phase (non-régression)', () => {
+    it('une erreur réseau (non 401) isolée du sondage /api/participant/moi ne change pas de phase et n’affiche pas encore le bandeau (non-régression)', () => {
       vi.useFakeTimers();
       TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
       fixture = TestBed.createComponent(VotePage);
@@ -344,11 +375,43 @@ describe('VotePage', () => {
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('#code')).toBeFalsy();
-      expect(fixture.nativeElement.textContent).toContain('Connexion perdue');
+      expect(fixture.nativeElement.textContent).not.toContain('Connexion perdue');
       expect(TestBed.inject(JetonParticipantStorage).obtenir()).not.toBeNull();
 
       vi.advanceTimersByTime(1000);
       httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+    });
+
+    it('affiche le bandeau « connexion perdue » seulement après plusieurs échecs consécutifs du sondage, et le masque au succès suivant', () => {
+      vi.useFakeTimers();
+      TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+
+      httpMock
+        .expectOne('/api/participant/moi')
+        .flush('Erreur serveur', { status: 500, statusText: 'Internal Server Error' });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).not.toContain('Connexion perdue');
+
+      vi.advanceTimersByTime(1000);
+      httpMock
+        .expectOne('/api/participant/moi')
+        .flush('Erreur serveur', { status: 500, statusText: 'Internal Server Error' });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).not.toContain('Connexion perdue');
+
+      vi.advanceTimersByTime(1000);
+      httpMock
+        .expectOne('/api/participant/moi')
+        .flush('Erreur serveur', { status: 500, statusText: 'Internal Server Error' });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Connexion perdue');
+
+      vi.advanceTimersByTime(1000);
+      httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).not.toContain('Connexion perdue');
     });
 
     it('un 401 sur POST /api/participant/voter repasse en saisie du Code avec un message clair', () => {

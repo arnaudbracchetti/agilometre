@@ -10,7 +10,7 @@ import { JetonParticipantStorage } from '../jeton-participant.storage';
 import { ParticipantService } from '../participant.service';
 import { AideMenu } from '../aide-menu/aide-menu';
 import { LETTRES_OPTIONS } from '../../shared/lettres-options';
-import { sonder } from '../../shared/sondage-2s';
+import { SEUIL_ECHECS_CONNEXION_PERDUE, sonder } from '../../shared/sondage-2s';
 import { StickyNote } from '../../shared/sticky-note/sticky-note';
 import { ErrorMessage } from '../../shared/error-message/error-message';
 
@@ -169,12 +169,14 @@ export class VotePage implements OnInit {
     this.sondageAbonnement?.unsubscribe();
     this.sondageAbonnement = sonder(
       () => this.participantService.obtenirMoi(jeton),
-      (erreur) => {
+      (erreur, echecsConsecutifs) => {
         if (this.estJetonRejete(erreur)) {
           this.sessionRejetee();
           return;
         }
-        this.connexionPerdue.set(true);
+        if (echecsConsecutifs >= SEUIL_ECHECS_CONNEXION_PERDUE) {
+          this.connexionPerdue.set(true);
+        }
       },
       this.destroyRef,
       INTERVALLE_SONDAGE_PARTICIPANT_MS,
