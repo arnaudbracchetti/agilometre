@@ -136,16 +136,41 @@ La règle qui limite Manager et Direction aux Paliers calculés, jamais à la r�
 ### Scoring
 
 **Palier**:
-Le plus haut Niveau *N* pour lequel la part des Réponses situées à *N* ou au-dessus atteint le Paramètre X. Toujours bien défini : le Niveau 1 est validé par construction.
+Le plus haut Niveau *N* pour lequel la part des Réponses situées à *N* ou au-dessus atteint le Seuil de Palier. Toujours bien défini dès qu'il existe au moins une Réponse : le Niveau 1 est validé par construction. Sur une Portée sans aucune Réponse, il n'y a pas de Palier - jamais un Palier 1 par défaut.
 
 **Taux d'approche**:
-La part des Réponses déjà situées au Niveau juste au-dessus du Palier atteint - l'indicateur qui rend visible la progression entre deux Paliers.
+La part des Réponses déjà situées au Niveau juste au-dessus du Palier atteint, rapportée au Seuil de Palier (pas à l'effectif total) - l'indicateur qui rend visible la progression entre deux Paliers. Rapportée à l'effectif total, cette part plafonnerait toujours juste sous le Seuil de Palier (l'atteindre ferait déjà passer au Palier suivant) ; rapportée au Seuil de Palier, 100 % coïncide exactement avec le franchissement.
 
-**Paramètre X**:
+**Marge avant descente**:
+Symétrique du Taux d'approche côté risque : la part des Réponses déjà au Palier courant ou au-dessus, repositionnée entre le Seuil de Palier (0 %, Palier tenu à la limite stricte) et l'effectif total (100 %, Palier solidement acquis). Le Palier 1 n'a pas de Palier 0 en dessous : sa Marge avant descente vaut donc toujours 100 %. Volontairement distinct du Taux d'approche plutôt que fusionné en un seul indicateur : les deux portent sur des populations de Réponses différentes (le Niveau du Palier pour l'un, celui du Palier+1 pour l'autre), qu'un chiffre composite unique fusionnerait sans justification métier.
+
+**Seuil de Palier**:
 Le seuil de validation d'un Palier, configurable au niveau de l'instance uniquement, jamais par Équipe.
+_Avoid_: Paramètre X (terme du PRD - Seuil de Palier est le terme retenu côté code et glossaire)
 
 **Badge**:
 La représentation visuelle d'un Palier atteint sur un Thème - pas un objet distinct, seulement un habillage de la même donnée.
+
+**Portée**:
+L'ensemble de Réponses sur lequel porte un calcul de scoring : soit une Session donnée, soit une Période de calcul pour une Équipe ou une Entité. Les deux modes sont exclusifs - une Portée de Session ignore tout découpage temporel.
+
+**Période de calcul**:
+L'intervalle calendaire contigu, de durée fixée pour toute l'instance et aligné sur le calendrier pour toutes les Équipes, qui sert de Portée aux restitutions synthétiques et à la Tendance.
+
+**Lecture fine**:
+La restitution au grain Question - Moyenne, Dispersion et répartition des Niveaux - destinée au Coach et à l'Équipe pour situer les points à travailler. Complète le Palier, volontairement grossier, sans le remplacer.
+
+**Moyenne** (d'une Question):
+La moyenne des Niveaux des Réponses à une Question sur une Portée. Jamais calculée au-delà de la Question : au grain Thème ou Équipe, elle recréerait le classement fin que la granularité du Palier écarte délibérément.
+
+**Dispersion**:
+L'écart entre les Réponses à une même Question - le désaccord de l'Équipe - restitué en trois crans de consensus (fort, modéré, faible) plutôt qu'en valeur brute.
+
+**Tendance**:
+La suite des Paliers d'une Équipe ou d'une Entité, une Période de calcul après l'autre. Une Période sans Réponse y laisse un trou, jamais le report du dernier Palier connu.
+
+**Mur de badges**:
+La vue comparant les Badges de plusieurs Équipes entre elles, sans classement chiffré.
 
 ### Restitutions
 

@@ -58,21 +58,25 @@ L'anonymat est une propriété du modèle de données, pas un filtre d'affichage
 
 ## 6. Moteur de scoring
 
-Une fonction unique, appelée par toutes les vues. Entrée : un ensemble de réponses filtré (équipe ou entité, période, thème ou totalité). Sortie : un palier et un taux d'approche.
+Une fonction unique, appelée par toutes les vues. Entrée : un ensemble de réponses filtré (équipe ou entité, période, thème ou totalité). Sortie : un palier et un taux d'approche. Détail fonctionnel complet, y compris les deux niveaux de lecture ci-dessous : [annexe Moteur de scoring](annexes/moteur-de-scoring.md).
 
-**Règle du palier.** Un niveau *N* est validé si la part des réponses situées à *N* ou au-dessus atteint *X %*. Le palier est le plus haut *N* validé. La part des réponses ≥ *N* étant décroissante en *N*, le palier est toujours bien défini et sans trou. Le niveau 1 est validé par construction.
+**Règle du palier.** Un niveau *N* est validé si la part des réponses situées à *N* ou au-dessus atteint *X %*. Le palier est le plus haut *N* validé. La part des réponses ≥ *N* étant décroissante en *N*, le palier est toujours bien défini et sans trou dès qu'il existe au moins une réponse : le niveau 1 est validé par construction. **Sur un périmètre sans aucune réponse, il n'y a pas de palier** — jamais un niveau 1 par défaut, qui laisserait croire à une équipe évaluée alors qu'elle ne l'a simplement pas été.
 
-**Taux d'approche.** Part des réponses déjà situées à *N+1* ou au-dessus. C'est cet indicateur qui rend la progression visible : le palier bouge par crans rares, le taux d'approche évolue en continu.
+**Taux d'approche.** Part des réponses déjà situées à *N+1* ou au-dessus, **rapportée au Seuil de Palier** plutôt qu'à l'effectif total. Rapportée à l'effectif total, cette part plafonne toujours juste sous *X* — si elle l'atteignait, le palier serait déjà passé à *N+1* — donc "100 % = franchissement" serait faux. Rapportée au Seuil de Palier, en revanche, 100 % coïncide exactement avec le franchissement du palier suivant. C'est cet indicateur qui rend la progression visible : le palier bouge par crans rares, le taux d'approche évolue en continu.
 
-*Exemple, X = 60 %.* Sur un thème, 40 réponses dans la fenêtre. Réponses ≥ 2 : 30, soit 75 % → niveau 2 validé. Réponses ≥ 3 : 22, soit 55 % → non validé. **Palier 2, taux d'approche du niveau 3 : 55 %** (il en faut 60).
+**Marge avant descente.** Symétrique du taux d'approche côté risque : la part des réponses déjà au palier *courant* ou au-dessus, repositionnée entre le Seuil de Palier (0 %, palier tenu à la limite stricte — une réponse de moins et il retombe) et 100 % des réponses (100 %, palier solidement acquis). Le palier 1 n'a pas de palier 0 en dessous : sa marge avant descente vaut donc toujours 100 %. Voir [ADR-0020](../../docs/adr/0020-taux-approche-normalise-marge-avant-descente.md) : ces deux indicateurs restent volontairement séparés plutôt que fusionnés en un seul, chacun portant sur une population de réponses différente (*N* pour l'un, *N+1* pour l'autre).
 
-**Paramètre X.** Configurable, mais **au niveau de l'instance**, jamais par équipe : deux équipes du même client doivent avoir des badges comparables. Repère utile : X = 50 % équivaut à la médiane, 75 % est nettement exigeant, 100 % demande l'unanimité et ne bougera pratiquement jamais.
+*Exemple, X = 60 %.* Sur un thème, 40 réponses dans la fenêtre. Réponses ≥ 2 : 30, soit 75 % → niveau 2 validé. Réponses ≥ 3 : 22, soit 55 % → non validé. **Palier 2.** Taux d'approche du niveau 3 : 55 % rapportés au seuil de 60 %, soit ≈ 92 %. Marge avant descente du palier 2 : 75 % repositionnés entre 60 % et 100 %, soit ≈ 38 %.
+
+**Seuil de Palier** (noté *X* dans les formules ci-dessus). Configurable, mais **au niveau de l'instance**, jamais par équipe : deux équipes du même client doivent avoir des badges comparables. Repère utile : X = 50 % équivaut à la médiane, 75 % est nettement exigeant, 100 % demande l'unanimité et ne bougera pratiquement jamais.
+
+**Deux niveaux de lecture.** Le palier reste volontairement grossier (quatre crans, pour l'émulation entre équipes sans classement fin) mais ne dit pas où une équipe doit se concentrer. Une **lecture fine**, réservée au grain question, complète donc chaque restitution synthétique : moyenne des niveaux et indicateur de dispersion (l'accord ou le désaccord de l'équipe, restitué en trois crans de consensus), avec accès au détail de la répartition par niveau. Cette moyenne n'est jamais agrégée au-delà de la question — au grain thème ou équipe, elle recréerait le classement fin que le palier écarte délibérément.
 
 **Score global.** Même calcul appliqué à toutes les réponses, tous thèmes confondus. *Limite assumée en v1 : les thèmes comportant le plus de questions pèsent mécaniquement davantage.*
 
 **Agrégation entité / BU.** Recalcul du palier sur l'ensemble des réponses de l'entité. *Limite assumée : les grandes équipes pèsent davantage que les petites.*
 
-**Fenêtres d'agrégation.** Séance : la session elle-même. Pouls : fenêtre glissante configurable. Vue consolidée d'une équipe : les deux sources réunies.
+**Fenêtres d'agrégation.** Séance : la session elle-même, hors de toute notion de période. Vue synthétique d'une équipe ou d'une entité (paliers, tendance) : des **périodes de calcul** calendaires contiguës, de durée fixée pour toute l'instance et alignée sur le calendrier pour toutes les équipes — condition pour que deux badges restent comparables. Une période sans réponse laisse un trou dans la tendance plutôt que de reporter le dernier palier connu. Pouls : fenêtre glissante configurable, à réconcilier avec ce découpage lors de la conception de l'Epic Campagne de pouls.
 
 **Badges.** Un badge est la représentation visuelle d'un palier atteint sur un thème. Ce n'est pas un objet distinct — même donnée, autre habillage. La granularité à quatre crans est délibérée : elle permet l'émulation entre équipes sans autoriser le classement fin.
 
@@ -103,15 +107,15 @@ Principe : plus on s'éloigne de la pièce où la conversation a eu lieu, moins 
 | Rôle | Accès |
 |---|---|
 | Membre | Paliers de son équipe par thème, score global, badges des autres équipes, répartition détaillée des sessions auxquelles il a participé |
-| Coach | Tout sur ses équipes : répartitions brutes, tours de vote, historique des sessions, taux de participation au pouls, comparaison entre ses équipes |
+| Coach | Tout sur ses équipes : répartitions brutes, tours de vote, historique des sessions, taux de participation au pouls, comparaison entre ses équipes (mur de badges) |
 | Manager d'équipe | Paliers par thème, taux d'approche, tendance. Ni répartition brute, ni détail question par question. Pouls en agrégats glissants uniquement |
-| Direction | Paliers par thème agrégés au niveau entité, mur de badges des équipes. Pas de vue détaillée équipe par équipe |
+| Direction | Paliers par thème agrégés au niveau entité, tendance de l'entité. Pas de mur de badges par équipe — voir divergence ci-dessous |
 
 **Trois vues à concevoir**
 
 - **Profil par thème** — radar ou barres, chaque thème portant son palier et la jauge d'approche du palier suivant.
 - **Tendance** — le palier en escalier, doublé de la courbe du taux d'approche qui bouge en continu et rend lisible la progression entre deux crans.
-- **Mur de badges** — les paliers des équipes, sans classement chiffré.
+- **Mur de badges** — les paliers des équipes côte à côte, sans classement chiffré. **Divergence assumée lors de la conception de l'Epic Moteur de scoring** (voir [annexe](annexes/moteur-de-scoring.md)) : cette vue comparative par équipe reste une vue **Coach**, jamais Direction — la Direction ne voit que la synthèse déjà agrégée au niveau de son entité.
 
 ## 10. Contraintes techniques
 
