@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ReferentielModule } from '../referentiel/referentiel.module';
 import { OrganisationModule } from '../organisation/organisation.module';
+import { ReponseModule } from '../reponse/reponse.module';
 import { PrismaReferentielRepository } from '../referentiel/infrastructure/prisma-referentiel.repository';
 import { PrismaEquipeRepository } from '../organisation/infrastructure/prisma-equipe.repository';
+import { PrismaReponseRepository } from '../reponse/infrastructure/prisma-reponse.repository';
 import { CreerModeleSession } from './application/creer-modele-session.usecase';
 import { RenommerModeleSession } from './application/renommer-modele-session.usecase';
 import { AjouterQuestionModeleSession } from './application/ajouter-question-modele-session.usecase';
@@ -42,7 +44,6 @@ import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-mo
 import { PrismaSessionRepository } from './infrastructure/prisma-session.repository';
 import { PrismaSessionListeQuery } from './infrastructure/prisma-session-liste.query';
 import { PrismaTourDeVoteRepository } from './infrastructure/prisma-tour-de-vote.repository';
-import { PrismaReponseRepository } from './infrastructure/prisma-reponse.repository';
 import { PrismaJetonSessionRepository } from './infrastructure/prisma-jeton-session.repository';
 import { PrismaEtatToursQuery } from './infrastructure/prisma-etat-tours.query';
 import { PrismaRepartitionTourQuery } from './infrastructure/prisma-repartition-tour.query';
@@ -54,7 +55,7 @@ import { ParticipantController } from './participant.controller';
 import { JetonParticipantGuard } from './jeton-participant.guard';
 
 @Module({
-  imports: [ReferentielModule, OrganisationModule],
+  imports: [ReferentielModule, OrganisationModule, ReponseModule],
   controllers: [
     SessionController,
     SessionAnimeeController,
@@ -68,7 +69,6 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
     PrismaSessionRepository,
     PrismaSessionListeQuery,
     PrismaTourDeVoteRepository,
-    PrismaReponseRepository,
     PrismaJetonSessionRepository,
     PrismaEtatToursQuery,
     PrismaRepartitionTourQuery,

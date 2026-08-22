@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
-import { ReponseRepository } from '../domain/reponse.repository';
+import { ReponseRepository } from '../../reponse/domain/reponse.repository';
 import { SessionRepository } from '../domain/session.repository';
 import { TourDeVote } from '../domain/tour-de-vote';
 import { TourDeVoteRepository } from '../domain/tour-de-vote.repository';

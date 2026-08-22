@@ -1,5 +1,5 @@
 import { Participation } from './participation';
-import { NiveauInvalideError, Reponse } from './reponse';
+import { NiveauInvalideError, Reponse } from '../../reponse/domain/reponse';
 import { Result } from '../../shared-kernel/result';
 
 export class NumeroTourInvalideError extends Error {

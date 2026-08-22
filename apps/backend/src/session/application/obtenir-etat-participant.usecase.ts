@@ -1,6 +1,6 @@
 import { Question } from '../../referentiel/domain/question';
 import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
-import { ReponseRepository } from '../domain/reponse.repository';
+import { ReponseRepository } from '../../reponse/domain/reponse.repository';
 import { TourDeVoteRepository } from '../domain/tour-de-vote.repository';
 import { resoudreQuestionParId } from './resoudre-question-par-id';
 

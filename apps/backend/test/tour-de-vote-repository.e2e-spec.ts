@@ -5,7 +5,7 @@ import { GenerateurDeCode } from './../src/session/domain/generateur-de-code';
 import { Selection } from './../src/session/domain/selection';
 import { Session } from './../src/session/domain/session';
 import { PrismaSessionRepository } from './../src/session/infrastructure/prisma-session.repository';
-import { Reponse } from './../src/session/domain/reponse';
+import { Reponse } from './../src/reponse/domain/reponse';
 import { TourDeVote } from './../src/session/domain/tour-de-vote';
 
 function generateurFixe(code: string): GenerateurDeCode {
