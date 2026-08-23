@@ -73,14 +73,24 @@
         <h3 class="creer__apercu-titre">
           Aperçu — {{ modele.selection.length }} question{{ modele.selection.length > 1 ? 's' : '' }}
         </h3>
-        <ul class="creer__apercu-liste">
-          @for (question of modele.selection; track question.questionId) {
-            <li>
-              <nz-tag>{{ question.themeLibelle }}</nz-tag>
-              {{ question.libelle }}
-            </li>
+        <nz-collapse class="creer__apercu-groupes" [nzBordered]="false">
+          @for (groupe of groupesApercu(); track groupe.themeId) {
+            <nz-collapse-panel [nzHeader]="enteteGroupe" [nzActive]="false">
+              <ng-template #enteteGroupe>
+                <span class="creer__apercu-pastille" [style.background]="groupe.couleur"></span>
+                <span class="creer__apercu-theme-libelle">{{ groupe.themeLibelle }}</span>
+                <span class="creer__apercu-theme-compte">
+                  {{ groupe.questions.length }} question{{ groupe.questions.length > 1 ? 's' : '' }}
+                </span>
+              </ng-template>
+              <ul class="creer__apercu-liste">
+                @for (question of groupe.questions; track question.questionId) {
+                  <li>{{ question.libelle }}</li>
+                }
+              </ul>
+            </nz-collapse-panel>
           }
-        </ul>
+        </nz-collapse>
       </aside>
     }
   </div>

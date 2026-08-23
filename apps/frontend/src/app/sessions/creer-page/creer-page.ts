@@ -1,21 +1,36 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 import { NzSelectModule } from 'ng-zorro-antd/select';
-import { NzTagModule } from 'ng-zorro-antd/tag';
-import { EntiteDto, EquipeDto, LigneBibliothequeModeleSessionDto, ModeleSessionDto } from '@agilometre/shared';
+import {
+  EntiteDto,
+  EquipeDto,
+  LigneBibliothequeModeleSessionDto,
+  ModeleSessionDto,
+  SelectionQuestionDto,
+} from '@agilometre/shared';
 import { OrganisationService } from '../../organisation/organisation.service';
 import { ModelesSessionService } from '../../modeles-session/modeles-session.service';
 import { SessionsService } from '../sessions.service';
 import { DialogActions } from '../../shared/dialog-actions/dialog-actions';
 
+const TAILLE_PALETTE = 8;
+
+interface GroupeApercuTheme {
+  themeId: string;
+  themeLibelle: string;
+  questions: SelectionQuestionDto[];
+  couleur: string;
+}
+
 /** Toujours ouverte comme contenu d'un `NzModalService.create(...)` — jamais routée (carte fil d'Ariane). */
 @Component({
   selector: 'app-creer-page',
-  imports: [FormsModule, DialogActions, NzDatePickerModule, NzSelectModule, NzTagModule],
+  imports: [FormsModule, DialogActions, NzCollapseModule, NzDatePickerModule, NzSelectModule],
   templateUrl: './creer-page.html',
   styleUrl: './creer-page.scss',
 })
@@ -43,6 +58,24 @@ export class CreerPage implements OnInit {
   protected readonly formulaireValide = computed(
     () => this.equipeId() !== null && this.date() !== null && this.modeleSessionId() !== null,
   );
+
+  protected readonly groupesApercu = computed<GroupeApercuTheme[]>(() => {
+    const groupes = new Map<string, GroupeApercuTheme>();
+    (this.apercuModele()?.selection ?? []).forEach((question) => {
+      let groupe = groupes.get(question.themeId);
+      if (!groupe) {
+        groupe = {
+          themeId: question.themeId,
+          themeLibelle: question.themeLibelle,
+          questions: [],
+          couleur: `var(--color-cat-${(groupes.size % TAILLE_PALETTE) + 1})`,
+        };
+        groupes.set(question.themeId, groupe);
+      }
+      groupe.questions.push(question);
+    });
+    return [...groupes.values()];
+  });
 
   ngOnInit(): void {
     this.organisationService.listerEntites().subscribe((entites) => this.entites.set(entites));

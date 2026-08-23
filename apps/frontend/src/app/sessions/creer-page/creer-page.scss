@@ -18,8 +18,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
-    flex: 0 0 24rem;
-    max-width: 24rem;
+    flex: 0 0 18rem;
+    max-width: 18rem;
 
     @media (max-width: 800px) {
       flex-basis: auto;
@@ -70,6 +70,28 @@
     margin: 0 0 var(--space-2);
   }
 
+  &__apercu-groupes {
+    background: transparent;
+  }
+
+  &__apercu-pastille {
+    display: inline-block;
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: var(--radius-pill);
+    margin-right: var(--space-2);
+  }
+
+  &__apercu-theme-libelle {
+    font-weight: var(--font-weight-medium);
+    margin-right: var(--space-3);
+  }
+
+  &__apercu-theme-compte {
+    font-size: var(--font-size-sm);
+    color: var(--color-ink-muted);
+  }
+
   &__apercu-liste {
     list-style: none;
     margin: 0;
@@ -80,14 +102,19 @@
     font-size: var(--font-size-sm);
 
     li {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--space-2);
-    }
+      position: relative;
+      padding-left: var(--space-3);
 
-    nz-tag {
-      flex-shrink: 0;
-      margin-inline-end: 0;
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0.55em;
+        width: 4px;
+        height: 4px;
+        border-radius: var(--radius-pill);
+        background: var(--color-ink-muted);
+      }
     }
   }
 }
