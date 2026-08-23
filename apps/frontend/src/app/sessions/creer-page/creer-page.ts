@@ -1,19 +1,21 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { NzButtonModule } from 'ng-zorro-antd/button';
+import { Router } from '@angular/router';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { EntiteDto, EquipeDto, LigneBibliothequeModeleSessionDto, ModeleSessionDto } from '@agilometre/shared';
 import { OrganisationService } from '../../organisation/organisation.service';
 import { ModelesSessionService } from '../../modeles-session/modeles-session.service';
 import { SessionsService } from '../sessions.service';
+import { DialogActions } from '../../shared/dialog-actions/dialog-actions';
 
+/** Toujours ouverte comme contenu d'un `NzModalService.create(...)` — jamais routée (carte fil d'Ariane). */
 @Component({
   selector: 'app-creer-page',
-  imports: [FormsModule, RouterLink, NzButtonModule, NzDatePickerModule, NzSelectModule, NzTagModule],
+  imports: [FormsModule, DialogActions, NzDatePickerModule, NzSelectModule, NzTagModule],
   templateUrl: './creer-page.html',
   styleUrl: './creer-page.scss',
 })
@@ -23,6 +25,7 @@ export class CreerPage implements OnInit {
   private readonly sessionsService = inject(SessionsService);
   private readonly message = inject(NzMessageService);
   private readonly router = inject(Router);
+  private readonly modalRef = inject(NzModalRef);
 
   protected readonly entites = signal<EntiteDto[]>([]);
   protected readonly equipesDeLEntite = signal<EquipeDto[]>([]);
@@ -44,6 +47,10 @@ export class CreerPage implements OnInit {
   ngOnInit(): void {
     this.organisationService.listerEntites().subscribe((entites) => this.entites.set(entites));
     this.modelesSessionService.listerBibliotheque().subscribe((modeles) => this.modeles.set(modeles));
+  }
+
+  protected annuler(): void {
+    this.modalRef.close();
   }
 
   protected onEntiteChange(entiteId: string | null): void {
@@ -88,6 +95,7 @@ export class CreerPage implements OnInit {
     this.creationEnCours.set(true);
     this.sessionsService.creer(equipeId, date.toISOString(), modeleSessionId).subscribe({
       next: (session) => {
+        this.modalRef.close();
         this.router.navigate(['/sessions', session.id]);
       },
       error: () => {

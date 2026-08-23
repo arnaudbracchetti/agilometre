@@ -5,6 +5,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 import { provideNzI18n, fr_FR } from 'ng-zorro-antd/i18n';
 import { provideNzNativeDateAdapter } from 'ng-zorro-antd/core/time';
 import { CreerPage } from './creer-page';
@@ -12,8 +13,12 @@ import { CreerPage } from './creer-page';
 describe('CreerPage', () => {
   let httpMock: HttpTestingController;
   let fixture: ReturnType<typeof TestBed.createComponent<CreerPage>>;
+  let modalRefMock: { close: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    // Toujours ouverte comme contenu de modal (voir creer-page.ts) — jamais routée, donc
+    // `NzModalRef` n'est fourni par aucun mécanisme de test standard, à fournir nous-mêmes.
+    modalRefMock = { close: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [CreerPage],
       providers: [
@@ -23,6 +28,7 @@ describe('CreerPage', () => {
         provideRouter([]),
         provideNzI18n(fr_FR),
         provideNzNativeDateAdapter(),
+        { provide: NzModalRef, useValue: modalRefMock },
       ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
@@ -75,6 +81,12 @@ describe('CreerPage', () => {
     expect(fixture.componentInstance['apercuModele']()?.selection).toHaveLength(1);
   });
 
+  it('annuler — ferme le modal sans créer de Session', () => {
+    fixture.componentInstance['annuler']();
+
+    expect(modalRefMock.close).toHaveBeenCalled();
+  });
+
   it('formulaireValide — faux tant qu’Équipe, date et Modèle ne sont pas tous renseignés', () => {
     expect(fixture.componentInstance['formulaireValide']()).toBe(false);
 
@@ -86,7 +98,7 @@ describe('CreerPage', () => {
     expect(fixture.componentInstance['formulaireValide']()).toBe(true);
   });
 
-  it('creer — crée la Session puis navigue vers /sessions/:id', () => {
+  it('creer — crée la Session, ferme le modal puis navigue vers /sessions/:id', () => {
     fixture.componentInstance['equipeId'].set('e1');
     fixture.componentInstance['modeleSessionId'].set('m1');
     fixture.componentInstance['date'].set(new Date('2026-04-01T00:00:00.000Z'));
@@ -114,6 +126,7 @@ describe('CreerPage', () => {
       selection: [],
     });
 
+    expect(modalRefMock.close).toHaveBeenCalled();
     expect(navigateSpy).toHaveBeenCalledWith(['/sessions', 's1']);
   });
 
@@ -130,5 +143,6 @@ describe('CreerPage', () => {
     httpMock.expectOne('/api/sessions').flush(null, { status: 404, statusText: 'Not Found' });
 
     expect(erreurSpy).toHaveBeenCalledWith('Impossible de créer cette Session.');
+    expect(modalRefMock.close).not.toHaveBeenCalled();
   });
 });

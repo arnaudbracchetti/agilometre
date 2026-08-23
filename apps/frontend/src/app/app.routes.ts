@@ -25,80 +25,104 @@ export const routes: Routes = [
       {
         path: 'organisation',
         data: { breadcrumb: 'Organisation' },
-        loadComponent: () =>
-          import('./organisation/organisation-page/organisation-page').then(
-            (m) => m.OrganisationPage,
-          ),
-      },
-      {
-        path: 'organisation/equipes/:id/profil',
-        data: { breadcrumb: 'Profil de l’Équipe' },
-        loadComponent: () =>
-          import('./organisation/profil-page/profil-page').then(
-            (m) => m.ProfilPage,
-          ),
-      },
-      {
-        path: 'organisation/equipes/:id/profil/:themeId',
-        data: { breadcrumb: 'Lecture fine' },
-        loadComponent: () =>
-          import('./organisation/lecture-fine-page/lecture-fine-page').then(
-            (m) => m.LectureFinePage,
-          ),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () =>
+              import('./organisation/organisation-page/organisation-page').then(
+                (m) => m.OrganisationPage,
+              ),
+          },
+          {
+            path: 'equipes/:id/profil',
+            data: { breadcrumb: 'Profil de l’Équipe' },
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./organisation/profil-page/profil-page').then(
+                    (m) => m.ProfilPage,
+                  ),
+              },
+              {
+                path: ':themeId',
+                data: { breadcrumb: 'Lecture fine' },
+                loadComponent: () =>
+                  import('./organisation/lecture-fine-page/lecture-fine-page').then(
+                    (m) => m.LectureFinePage,
+                  ),
+              },
+            ],
+          },
+        ],
       },
       {
         path: 'modeles-session',
         data: { breadcrumb: 'Modèles de session' },
-        loadComponent: () =>
-          import('./modeles-session/bibliotheque-page/bibliotheque-page').then(
-            (m) => m.BibliothequePage,
-          ),
-      },
-      {
-        path: 'modeles-session/:id',
-        data: { breadcrumb: 'Modifier le Modèle' },
-        loadComponent: () =>
-          import('./modeles-session/composer-page/composer-page').then(
-            (m) => m.ComposerPage,
-          ),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () =>
+              import('./modeles-session/bibliotheque-page/bibliotheque-page').then(
+                (m) => m.BibliothequePage,
+              ),
+          },
+          {
+            path: ':id',
+            data: { breadcrumb: 'Modifier le Modèle' },
+            loadComponent: () =>
+              import('./modeles-session/composer-page/composer-page').then(
+                (m) => m.ComposerPage,
+              ),
+          },
+        ],
       },
       {
         path: 'sessions',
         data: { breadcrumb: 'Sessions' },
-        loadComponent: () =>
-          import('./sessions/bibliotheque-page/bibliotheque-page').then(
-            (m) => m.BibliothequePage,
-          ),
-      },
-      {
-        path: 'sessions/nouvelle',
-        data: { breadcrumb: 'Créer une session' },
-        loadComponent: () =>
-          import('./sessions/creer-page/creer-page').then((m) => m.CreerPage),
-      },
-      {
-        path: 'sessions/:id',
-        data: { breadcrumb: 'Ajuster la session' },
-        loadComponent: () =>
-          import('./sessions/ajustement-page/ajustement-page').then(
-            (m) => m.AjustementPage,
-          ),
-      },
-      {
-        path: 'sessions/:id/pilotage',
-        data: { breadcrumb: 'Piloter la séance' },
-        loadComponent: () =>
-          import('./sessions/pilotage-page/pilotage-page').then(
-            (m) => m.PilotagePage,
-          ),
-      },
-      {
-        path: 'sessions/:id/synthese',
-        data: { breadcrumb: 'Synthèse' },
-        loadComponent: () =>
-          import('./sessions/synthese-page/synthese-page').then(
-            (m) => m.SynthesePage,
-          ),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () =>
+              import('./sessions/bibliotheque-page/bibliotheque-page').then(
+                (m) => m.BibliothequePage,
+              ),
+          },
+          {
+            path: ':id',
+            data: { breadcrumb: 'Ajuster la session' },
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./sessions/ajustement-page/ajustement-page').then(
+                    (m) => m.AjustementPage,
+                  ),
+              },
+              {
+                path: 'pilotage',
+                data: { breadcrumb: 'Piloter la séance' },
+                loadComponent: () =>
+                  import('./sessions/pilotage-page/pilotage-page').then(
+                    (m) => m.PilotagePage,
+                  ),
+              },
+              {
+                path: 'synthese',
+                data: { breadcrumb: 'Synthèse' },
+                loadComponent: () =>
+                  import('./sessions/synthese-page/synthese-page').then(
+                    (m) => m.SynthesePage,
+                  ),
+              },
+            ],
+          },
+        ],
       },
     ],
   },

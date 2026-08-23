@@ -22,8 +22,13 @@ export function buildBreadcrumbs(
 
   const routeUrl = firstChild.url.map((segment) => segment.path).join('/');
   const nextUrl = routeUrl ? `${url}/${routeUrl}` : url;
+  // Une route "index" à chemin vide (ex. celle qui affiche la liste sous `sessions`) n'a jamais
+  // son propre `breadcrumb` — avec `paramsInheritanceStrategy: 'always'` (nécessaire pour que
+  // `:id`/`:themeId` traversent les routes imbriquées), elle hérite du `data` de son parent, donc
+  // `firstChild.data['breadcrumb']` renverrait le libellé du parent une deuxième fois sans ce garde.
+  const estIndex = firstChild.routeConfig?.path === '';
   const label = firstChild.data['breadcrumb'] as string | undefined;
-  if (label) {
+  if (label && !estIndex) {
     breadcrumbs.push({ label, url: nextUrl });
   }
 

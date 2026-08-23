@@ -1,9 +1,4 @@
 <div class="creer">
-  <header class="creer__entete">
-    <h2 class="creer__titre">Créer une session</h2>
-    <a nz-button nzType="default" routerLink="/sessions">Retour à la liste</a>
-  </header>
-
   <div class="creer__corps">
     <form class="creer__formulaire" (ngSubmit)="creer()">
       <div class="creer__champ">
@@ -65,15 +60,12 @@
         </nz-select>
       </div>
 
-      <button
-        nz-button
-        nzType="primary"
-        type="submit"
-        [disabled]="!formulaireValide()"
-        [nzLoading]="creationEnCours()"
-      >
-        Créer
-      </button>
+      <app-dialog-actions
+        libelleAction="Créer"
+        [actionDesactivee]="!formulaireValide()"
+        [actionEnCours]="creationEnCours()"
+        (annuler)="annuler()"
+      ></app-dialog-actions>
     </form>
 
     @if (apercuModele(); as modele) {

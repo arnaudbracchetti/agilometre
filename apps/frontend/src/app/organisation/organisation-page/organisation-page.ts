@@ -1,8 +1,9 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
@@ -72,9 +73,88 @@ function membreVersNoeud(membre: MembreDto): NoeudOrganisation {
   };
 }
 
+function texteCorrespond(texte: string, terme: string): boolean {
+  return texte.toLowerCase().includes(terme);
+}
+
+function membreCorrespond(membre: MembreDto, terme: string): boolean {
+  return texteCorrespond(membre.nom, terme) || texteCorrespond(membre.email, terme);
+}
+
+function equipeCorrespond(equipe: EquipeDto, terme: string): boolean {
+  return texteCorrespond(equipe.nom, terme) || equipe.membres.some((membre) => membreCorrespond(membre, terme));
+}
+
+function entiteCorrespond(entite: EntiteDto, equipes: EquipeDto[], terme: string): boolean {
+  return texteCorrespond(entite.nom, terme) || equipes.some((equipe) => equipeCorrespond(equipe, terme));
+}
+
+/**
+ * Arbre filtré par terme de recherche : une Entité/Équipe reste affichée si elle correspond
+ * elle-même, ou si l'un de ses enfants correspond. Une Entité/Équipe qui correspond directement
+ * affiche tous ses enfants (pas de double filtrage) — chercher "DSI" montre bien toutes les
+ * Équipes de l'Entité DSI, pas seulement celles dont le nom contient aussi "DSI".
+ */
+function racineFiltreeVersNoeud(
+  entites: EntiteDto[],
+  equipesParEntite: Record<string, EquipeDto[]>,
+  terme: string,
+): NoeudOrganisation {
+  const entitesCorrespondantes = entites.filter((entite) =>
+    entiteCorrespond(entite, equipesParEntite[entite.id] ?? [], terme),
+  );
+  return {
+    title: 'Organisation',
+    key: RACINE_KEY,
+    type: 'racine',
+    isLeaf: false,
+    children: entitesCorrespondantes.map((entite) =>
+      entiteFiltreeVersNoeud(entite, equipesParEntite[entite.id] ?? [], terme),
+    ),
+  };
+}
+
+function entiteFiltreeVersNoeud(entite: EntiteDto, equipes: EquipeDto[], terme: string): NoeudOrganisation {
+  const equipesAffichees = texteCorrespond(entite.nom, terme)
+    ? equipes
+    : equipes.filter((equipe) => equipeCorrespond(equipe, terme));
+  return {
+    title: entite.nom,
+    key: entite.id,
+    type: 'entite',
+    isLeaf: false,
+    children: equipesAffichees.map((equipe) => equipeFiltreeVersNoeud(equipe, terme)),
+  };
+}
+
+function equipeFiltreeVersNoeud(equipe: EquipeDto, terme: string): NoeudOrganisation {
+  const membresAffiches = texteCorrespond(equipe.nom, terme)
+    ? equipe.membres
+    : equipe.membres.filter((membre) => membreCorrespond(membre, terme));
+  return {
+    title: equipe.nom,
+    key: equipe.id,
+    type: 'equipe',
+    isLeaf: false,
+    children: membresAffiches.map(membreVersNoeud),
+  };
+}
+
+function collecterCles(noeuds: NoeudOrganisation[]): string[] {
+  return noeuds.flatMap((noeud) => [noeud.key as string, ...collecterCles((noeud.children as NoeudOrganisation[]) ?? [])]);
+}
+
 @Component({
   selector: 'app-organisation-page',
-  imports: [RouterLink, FormsModule, NzButtonModule, NzInputModule, NzPopconfirmModule, NzTreeModule],
+  imports: [
+    RouterLink,
+    FormsModule,
+    NzButtonModule,
+    NzIconModule,
+    NzInputModule,
+    NzPopconfirmModule,
+    NzTreeModule,
+  ],
   templateUrl: './organisation-page.html',
   styleUrl: './organisation-page.scss',
 })
@@ -87,6 +167,11 @@ export class OrganisationPage implements OnInit {
   private readonly manuallyExpandedKeys = signal<string[]>([RACINE_KEY]);
   private readonly manuallySelectedKeys = signal<string[]>([RACINE_KEY]);
   private readonly selection = signal<Selection>(RACINE_SELECTIONNEE);
+
+  protected readonly filtre = signal('');
+  private readonly champNouvelleEntite = viewChild<ElementRef<HTMLInputElement>>('champNouvelleEntite');
+  private readonly champNouvelleEquipe = viewChild<ElementRef<HTMLInputElement>>('champNouvelleEquipe');
+  private readonly champNouveauMembre = viewChild<ElementRef<HTMLInputElement>>('champNouveauMembre');
 
   protected readonly nouveauNomEntite = signal('');
   protected readonly nomRenommeEntite = signal('');
@@ -104,9 +189,20 @@ export class OrganisationPage implements OnInit {
   protected readonly ajoutMembreEnCours = signal(false);
   protected readonly modificationMembreEnCours = signal(false);
 
-  protected readonly treeData = computed<NoeudOrganisation[]>(() => [
-    racineVersNoeud(this.entites(), this.equipesParEntite()),
-  ]);
+  protected readonly treeData = computed<NoeudOrganisation[]>(() => {
+    const terme = this.filtre().trim().toLowerCase();
+    if (terme.length === 0) {
+      return [racineVersNoeud(this.entites(), this.equipesParEntite())];
+    }
+    return [racineFiltreeVersNoeud(this.entites(), this.equipesParEntite(), terme)];
+  });
+
+  protected readonly aucunResultat = computed<boolean>(() => {
+    if (this.filtre().trim().length === 0) {
+      return false;
+    }
+    return (this.treeData()[0].children as NoeudOrganisation[] | undefined)?.length === 0;
+  });
 
   /**
    * nz-tree réinitialise son état d'expansion/de sélection interne à chaque changement de
@@ -118,8 +214,15 @@ export class OrganisationPage implements OnInit {
    * création/modification/suppression). D'où ces deux `computed` qui dépendent des mêmes signaux
    * que `treeData`, pour produire un nouveau tableau à chaque fois que l'arbre change, même quand
    * le set manuel sous-jacent est inchangé.
+   *
+   * Pendant une recherche active, toutes les branches affichées (déjà filtrées à ne garder que
+   * les correspondances) sont dépliées de force — sans ça une Équipe/un Membre trouvé resterait
+   * caché sous une Entité repliée.
    */
   protected readonly expandedKeys = computed<string[]>(() => {
+    if (this.filtre().trim().length > 0) {
+      return collecterCles(this.treeData());
+    }
     this.entites();
     this.equipesParEntite();
     return [...this.manuallyExpandedKeys()];
@@ -146,6 +249,18 @@ export class OrganisationPage implements OnInit {
     }
     return this.trouverEquipe(selection.id);
   });
+
+  protected readonly nombreEquipesEntiteSelectionnee = computed<number | null>(() => {
+    const entite = this.entiteSelectionnee();
+    if (!entite) {
+      return null;
+    }
+    return this.equipesParEntite()[entite.id]?.length ?? null;
+  });
+
+  protected readonly nombreMembresEquipeSelectionnee = computed<number | null>(
+    () => this.equipeSelectionnee()?.membres.length ?? null,
+  );
 
   protected readonly membreSelectionne = computed<{ membre: MembreDto; equipeId: string } | null>(
     () => {
@@ -197,6 +312,34 @@ export class OrganisationPage implements OnInit {
 
   ngOnInit(): void {
     this.organisationService.listerEntites().subscribe((entites) => this.entites.set(entites));
+  }
+
+  /**
+   * Le filtrage se fait côté client sur les données déjà en cache : dès qu'une recherche
+   * démarre, on charge d'un coup les Équipes de toutes les Entités pas encore dépliées (au plus
+   * une dizaine d'appels à cette échelle) pour que le filtre porte aussi sur les Équipes/Membres
+   * des Entités jamais dépliées manuellement. `chargerEquipes` ne refait pas de requête pour une
+   * Entité déjà en cache.
+   */
+  protected onFiltreChange(valeur: string): void {
+    this.filtre.set(valeur);
+    if (valeur.trim().length > 0) {
+      for (const entite of this.entites()) {
+        this.chargerEquipes(entite.id);
+      }
+    }
+  }
+
+  /**
+   * Distingue un nœud qui correspond lui-même au terme recherché d'un nœud affiché seulement
+   * comme contexte (ancêtre d'une correspondance, ou enfant d'une Entité/Équipe qui correspond
+   * directement — voir `entiteFiltreeVersNoeud`/`equipeFiltreeVersNoeud`). `node.title` porte déjà
+   * `nom` seul (Entité/Équipe) ou `nom — email` (Membre), donc une correspondance sur l'un ou
+   * l'autre reste détectable par une simple sous-chaîne sur le titre affiché.
+   */
+  protected estCorrespondanceDirecte(titre: string): boolean {
+    const terme = this.filtre().trim().toLowerCase();
+    return terme.length > 0 && titre.toLowerCase().includes(terme);
   }
 
   /**
@@ -337,6 +480,7 @@ export class OrganisationPage implements OnInit {
         this.entites.update((entites) => [...entites, entite]);
         this.nouveauNomEntite.set('');
         this.creationEntiteEnCours.set(false);
+        this.champNouvelleEntite()?.nativeElement.focus();
       },
       error: (erreur: HttpErrorResponse) => {
         this.creationEntiteEnCours.set(false);
@@ -386,6 +530,7 @@ export class OrganisationPage implements OnInit {
         }));
         this.nouveauNomEquipe.set('');
         this.creationEquipeEnCours.set(false);
+        this.champNouvelleEquipe()?.nativeElement.focus();
       },
       error: (erreur: HttpErrorResponse) => {
         this.creationEquipeEnCours.set(false);
@@ -452,6 +597,7 @@ export class OrganisationPage implements OnInit {
         this.nouveauMembreNom.set('');
         this.nouveauMembreEmail.set('');
         this.ajoutMembreEnCours.set(false);
+        this.champNouveauMembre()?.nativeElement.focus();
       },
       error: (erreur: HttpErrorResponse) => {
         this.ajoutMembreEnCours.set(false);

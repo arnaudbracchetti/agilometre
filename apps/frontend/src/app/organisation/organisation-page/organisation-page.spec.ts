@@ -8,6 +8,8 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzFormatEmitEvent } from 'ng-zorro-antd/tree';
+import { provideNzIcons } from 'ng-zorro-antd/icon';
+import { ApartmentOutline, SearchOutline, TeamOutline, UserOutline } from '@ant-design/icons-angular/icons';
 import { OrganisationPage } from './organisation-page';
 
 /**
@@ -74,6 +76,7 @@ describe('OrganisationPage', () => {
         provideHttpClientTesting(),
         provideNoopAnimations(),
         provideRouter([]),
+        provideNzIcons([ApartmentOutline, TeamOutline, UserOutline, SearchOutline]),
       ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
@@ -508,5 +511,80 @@ describe('OrganisationPage', () => {
     );
 
     expect(erreurSpy).toHaveBeenCalledWith('Un Membre porte déjà cet email dans cette Équipe.');
+  });
+
+  it('le filtre de recherche ne garde que les Entités correspondantes, en chargeant les Équipes des autres Entités pour pouvoir filtrer dessus', () => {
+    const fixture = TestBed.createComponent(OrganisationPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites').flush([
+      { id: 'e1', nom: 'DSI' },
+      { id: 'e2', nom: 'Marketing' },
+    ]);
+    fixture.detectChanges();
+
+    saisir(fixture, '.organisation__recherche-champ', 'dsi');
+    httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([]);
+    httpMock.expectOne('/api/organisation/entites/e2/equipes').flush([]);
+    fixture.detectChanges();
+
+    const arbre: HTMLElement = fixture.nativeElement.querySelector('.organisation__tree');
+    expect(arbre.textContent).toContain('DSI');
+    expect(arbre.textContent).not.toContain('Marketing');
+  });
+
+  it('surligne uniquement les nœuds qui correspondent directement au terme recherché, pas leurs ancêtres affichés pour le contexte', () => {
+    const fixture = TestBed.createComponent(OrganisationPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+    fixture.detectChanges();
+
+    saisir(fixture, '.organisation__recherche-champ', 'alpha');
+    httpMock
+      .expectOne('/api/organisation/entites/e1/equipes')
+      .flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
+    fixture.detectChanges();
+
+    const titres = Array.from(
+      fixture.nativeElement.querySelectorAll('.organisation__noeud-titre'),
+    ) as HTMLElement[];
+    const titreDsi = titres.find((t) => t.textContent?.includes('DSI'))!;
+    const titreAlpha = titres.find((t) => t.textContent?.includes('Alpha'))!;
+
+    expect(titreDsi.classList).not.toContain('organisation__noeud-titre--correspond');
+    expect(titreAlpha.classList).toContain('organisation__noeud-titre--correspond');
+  });
+
+  it('affiche un message dédié quand la recherche ne trouve rien', () => {
+    const fixture = TestBed.createComponent(OrganisationPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+    fixture.detectChanges();
+
+    saisir(fixture, '.organisation__recherche-champ', 'introuvable');
+    httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([]);
+    fixture.detectChanges();
+
+    const message: HTMLElement = fixture.nativeElement.querySelector('.organisation__recherche-vide');
+    expect(message.textContent).toContain('introuvable');
+    expect(fixture.nativeElement.querySelector('.organisation__tree')).toBeFalsy();
+  });
+
+  it('replace le focus sur le champ de création d’Entité après une création, pour enchaîner les créations', () => {
+    const fixture = TestBed.createComponent(OrganisationPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites').flush([]);
+    fixture.detectChanges();
+
+    const champ = fixture.debugElement.query(By.css('#nouveauNomEntite')).nativeElement as HTMLInputElement;
+    const focusSpy = vi.spyOn(champ, 'focus');
+
+    saisir(fixture, '#nouveauNomEntite', 'Achats');
+    const formDebug = fixture.debugElement.query(By.css('#nouveauNomEntite')).parent!;
+    formDebug.triggerEventHandler('submit', new Event('submit'));
+
+    httpMock.expectOne('/api/organisation/entites').flush({ id: 'e3', nom: 'Achats' });
+    fixture.detectChanges();
+
+    expect(focusSpy).toHaveBeenCalled();
   });
 });

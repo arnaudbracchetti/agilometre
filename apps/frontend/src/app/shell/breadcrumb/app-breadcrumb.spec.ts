@@ -1,8 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withRouterConfig } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Component } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideNzNativeDateAdapter } from 'ng-zorro-antd/core/time';
 import { AppBreadcrumb } from './app-breadcrumb';
+import { routes } from '../../app.routes';
 
 @Component({ selector: 'app-stub', template: 'stub' })
 class StubPage {}
@@ -30,5 +35,69 @@ describe('AppBreadcrumb', () => {
     );
     const texts = Array.from(items).map((el) => el.textContent?.trim());
     expect(texts).toEqual(['Accueil', '›', 'Organisation']);
+  });
+});
+
+/**
+ * Régression : app.routes.ts déclarait autrefois ses routes à plat (chemins complets comme
+ * entrées indépendantes plutôt que des enfants), donc l'arbre d'ActivatedRouteSnapshot ne
+ * contenait jamais qu'un seul niveau — buildBreadcrumbs (qui remonte les `firstChild`) ne pouvait
+ * alors produire qu'un fil à un seul maillon, perdant les niveaux ancêtres. Ces tests utilisent
+ * les vraies routes imbriquées pour garantir que le fil complet reste construit à chaque niveau.
+ */
+describe('AppBreadcrumb (routes réelles de l’application)', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter(routes, withRouterConfig({ paramsInheritanceStrategy: 'always' })),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        provideNzNativeDateAdapter(),
+      ],
+    });
+  });
+
+  function libelles(harness: Awaited<ReturnType<typeof RouterTestingHarness.create>>): string[] {
+    const items: NodeListOf<HTMLElement> = harness.routeNativeElement!.querySelectorAll(
+      '.app-breadcrumb li',
+    );
+    return Array.from(items)
+      .map((el) => el.textContent?.trim() ?? '')
+      .filter((texte) => texte !== '›');
+  }
+
+  it('n’affiche « Sessions » qu’une seule fois sur la liste elle-même (/sessions)', async () => {
+    const harness = await RouterTestingHarness.create('/sessions');
+
+    expect(libelles(harness)).toEqual(['Accueil', 'Sessions']);
+  });
+
+  it('n’affiche « Organisation » qu’une seule fois sur /organisation', async () => {
+    const harness = await RouterTestingHarness.create('/organisation');
+
+    expect(libelles(harness)).toEqual(['Accueil', 'Organisation']);
+  });
+
+  it('accumule les trois niveaux jusqu’à /sessions/:id/pilotage', async () => {
+    const harness = await RouterTestingHarness.create('/sessions/s1/pilotage');
+
+    expect(libelles(harness)).toEqual([
+      'Accueil',
+      'Sessions',
+      'Ajuster la session',
+      'Piloter la séance',
+    ]);
+  });
+
+  it('accumule les niveaux jusqu’à /organisation/equipes/:id/profil/:themeId', async () => {
+    const harness = await RouterTestingHarness.create('/organisation/equipes/e1/profil/t1');
+
+    expect(libelles(harness)).toEqual([
+      'Accueil',
+      'Organisation',
+      'Profil de l’Équipe',
+      'Lecture fine',
+    ]);
   });
 });

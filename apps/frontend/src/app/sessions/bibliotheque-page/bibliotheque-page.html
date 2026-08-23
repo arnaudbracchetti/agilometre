@@ -1,30 +1,45 @@
 <div class="bibliotheque">
   <header class="bibliotheque__entete">
     <h2 class="bibliotheque__titre">Sessions</h2>
-    <a nz-button nzType="primary" routerLink="/sessions/nouvelle">Créer une session</a>
+    <button nz-button nzType="primary" (click)="ouvrirCreation()">Créer une session</button>
   </header>
+
+  <div class="bibliotheque__recherche">
+    <span nz-icon nzType="search" class="bibliotheque__recherche-icone" aria-hidden="true"></span>
+    <input
+      nz-input
+      type="search"
+      class="bibliotheque__recherche-champ"
+      placeholder="Rechercher une Équipe, un Modèle…"
+      aria-label="Rechercher dans les Sessions"
+      [ngModel]="filtre()"
+      (ngModelChange)="filtre.set($event)"
+    />
+  </div>
 
   <nz-table
     #table
-    [nzData]="lignes()"
+    nzSize="middle"
+    [nzData]="lignesFiltrees()"
     [nzLoading]="chargementEnCours()"
     [nzShowPagination]="false"
-    nzNoResult="Aucune Session pour l’instant."
+    [nzScroll]="{ x: '860px', y: '60vh' }"
+    [nzNoResult]="filtre().trim().length > 0 ? 'Aucun résultat pour « ' + filtre().trim() + ' ».' : 'Aucune Session pour l’instant.'"
   >
     <thead>
       <tr>
-        <th>Équipe</th>
-        <th>Date</th>
-        <th>Statut</th>
-        <th>Questions</th>
-        <th>Modèle utilisé</th>
-        <th class="bibliotheque__colonne-actions">Actions</th>
+        <th nzWidth="180px" [nzSortFn]="trierParEquipe">Équipe</th>
+        <th nzWidth="110px" [nzSortFn]="trierParDate">Date</th>
+        <th nzWidth="120px">Statut</th>
+        <th nzWidth="100px" [nzSortFn]="trierParNbQuestions">Questions</th>
+        <th nzWidth="200px" [nzSortFn]="trierParModele">Modèle utilisé</th>
+        <th nzWidth="150px" class="bibliotheque__colonne-actions">Actions</th>
       </tr>
     </thead>
     <tbody>
       @for (ligne of table.data; track ligne.id) {
         <tr class="bibliotheque__ligne" (click)="voirDetail(ligne.id)">
-          <td>{{ ligne.equipeNom }}</td>
+          <td nzEllipsis>{{ ligne.equipeNom }}</td>
           <td>{{ ligne.date | date: 'dd/MM/yyyy' }}</td>
           <td>
             <nz-tag
@@ -37,8 +52,8 @@
               }}
             </nz-tag>
           </td>
-          <td>{{ ligne.nbQuestions }}</td>
-          <td>{{ ligne.modeleSessionNom ?? 'Modèle supprimé' }}</td>
+          <td><span class="bibliotheque__mesure">{{ ligne.nbQuestions }}</span></td>
+          <td nzEllipsis>{{ ligne.modeleSessionNom ?? 'Modèle supprimé' }}</td>
           <td class="bibliotheque__actions" (click)="$event.stopPropagation()">
             @if (ligne.statut === 'PREPAREE') {
               <button

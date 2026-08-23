@@ -5,10 +5,33 @@
     <a routerLink="/" class="app-header__brand">Agilomètre</a>
     <nav class="app-header__nav">
       @for (lien of liens(); track lien.label) {
-        @if (lien.routerLink) {
-          <a [routerLink]="lien.routerLink" routerLinkActive="app-header__link--active">{{ lien.label }}</a>
+        @if (lien.children) {
+          <a
+            class="app-header__link app-header__link--dropdown"
+            nz-dropdown
+            [nzDropdownMenu]="sousMenu"
+            [class.app-header__link--active]="estActif(lien)"
+          >
+            {{ lien.label }}
+            <span nz-icon nzType="down"></span>
+          </a>
+          <nz-dropdown-menu #sousMenu="nzDropdownMenu">
+            <ul nz-menu>
+              @for (enfant of lien.children; track enfant.label) {
+                <li nz-menu-item [nzSelected]="estActif(enfant)">
+                  <a [routerLink]="enfant.routerLink">{{ enfant.label }}</a>
+                </li>
+              }
+            </ul>
+          </nz-dropdown-menu>
+        } @else if (lien.routerLink) {
+          <a
+            class="app-header__link"
+            [routerLink]="lien.routerLink"
+            [class.app-header__link--active]="estActif(lien)"
+          >{{ lien.label }}</a>
         } @else {
-          <a [href]="lien.href ?? 'javascript:void(0)'">{{ lien.label }}</a>
+          <a class="app-header__link" [href]="lien.href ?? 'javascript:void(0)'">{{ lien.label }}</a>
         }
       }
       <ng-content></ng-content>

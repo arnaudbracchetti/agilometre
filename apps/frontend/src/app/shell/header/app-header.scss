@@ -45,6 +45,13 @@
     }
   }
 
+  &__link--dropdown {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    cursor: pointer;
+  }
+
   &__link--active {
     text-decoration: underline;
     text-underline-offset: var(--space-1);

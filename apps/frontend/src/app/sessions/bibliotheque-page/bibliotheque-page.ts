@@ -1,23 +1,30 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { NzTableModule } from 'ng-zorro-antd/table';
+import { NzTableModule, NzTableSortFn } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { LigneListeSessionDto } from '@agilometre/shared';
 import { SessionsService } from '../sessions.service';
+import { CreerPage } from '../creer-page/creer-page';
 
 @Component({
   selector: 'app-bibliotheque-page',
   imports: [
     DatePipe,
+    FormsModule,
     RouterLink,
     NzButtonModule,
     NzIconModule,
+    NzInputModule,
+    NzModalModule,
     NzPopconfirmModule,
     NzTableModule,
     NzTagModule,
@@ -30,9 +37,36 @@ export class BibliothequePage implements OnInit {
   private readonly sessionsService = inject(SessionsService);
   private readonly message = inject(NzMessageService);
   private readonly router = inject(Router);
+  private readonly modal = inject(NzModalService);
 
   protected readonly lignes = signal<LigneListeSessionDto[]>([]);
   protected readonly chargementEnCours = signal(false);
+  protected readonly filtre = signal('');
+
+  /** Recherche côté client, sur les deux colonnes texte libre (Équipe, Modèle utilisé). */
+  protected readonly lignesFiltrees = computed<LigneListeSessionDto[]>(() => {
+    const terme = this.filtre().trim().toLowerCase();
+    if (terme.length === 0) {
+      return this.lignes();
+    }
+    return this.lignes().filter(
+      (ligne) =>
+        ligne.equipeNom.toLowerCase().includes(terme) ||
+        (ligne.modeleSessionNom ?? '').toLowerCase().includes(terme),
+    );
+  });
+
+  protected readonly trierParEquipe: NzTableSortFn<LigneListeSessionDto> = (a, b) =>
+    a.equipeNom.localeCompare(b.equipeNom);
+
+  protected readonly trierParDate: NzTableSortFn<LigneListeSessionDto> = (a, b) =>
+    new Date(a.date).getTime() - new Date(b.date).getTime();
+
+  protected readonly trierParNbQuestions: NzTableSortFn<LigneListeSessionDto> = (a, b) =>
+    a.nbQuestions - b.nbQuestions;
+
+  protected readonly trierParModele: NzTableSortFn<LigneListeSessionDto> = (a, b) =>
+    (a.modeleSessionNom ?? '').localeCompare(b.modeleSessionNom ?? '');
 
   ngOnInit(): void {
     this.rafraichir();
@@ -49,6 +83,16 @@ export class BibliothequePage implements OnInit {
         this.chargementEnCours.set(false);
         this.message.error('Impossible de charger la liste des Sessions.');
       },
+    });
+  }
+
+  /** Modal plutôt que page routée (`/sessions/nouvelle` retirée) : reste au-dessus de la liste. */
+  protected ouvrirCreation(): void {
+    this.modal.create({
+      nzTitle: 'Créer une session',
+      nzContent: CreerPage,
+      nzFooter: null,
+      nzWidth: 760,
     });
   }
 

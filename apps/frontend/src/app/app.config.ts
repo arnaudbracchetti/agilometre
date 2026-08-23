@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withRouterConfig } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideNzI18n, fr_FR } from 'ng-zorro-antd/i18n';
@@ -20,7 +20,11 @@ import {
   QuestionCircleOutline,
   DownOutline,
   CaretRightFill,
+  CaretUpOutline,
+  CaretDownOutline,
   BarChartOutline,
+  SearchOutline,
+  UserOutline,
 } from '@ant-design/icons-angular/icons';
 import { registerLocaleData } from '@angular/common';
 import fr from '@angular/common/locales/fr';
@@ -32,7 +36,11 @@ registerLocaleData(fr);
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    // Nécessaire depuis que app.routes.ts imbrique les routes (pour un fil d'Ariane correct,
+    // carte breadcrumb-imbrication) : par défaut Angular n'hérite les paramètres d'un ancêtre
+    // que via un enfant à chemin vide ('emptyOnly') — 'pilotage'/'synthese'/':themeId' sont des
+    // chemins non vides et perdraient sinon le `:id`/`:id` porté par leur route parente.
+    provideRouter(routes, withRouterConfig({ paramsInheritanceStrategy: 'always' })),
     provideHttpClient(),
     provideAnimationsAsync(),
     provideNzI18n(fr_FR),
@@ -53,7 +61,11 @@ export const appConfig: ApplicationConfig = {
       QuestionCircleOutline,
       DownOutline,
       CaretRightFill,
+      CaretUpOutline,
+      CaretDownOutline,
       BarChartOutline,
+      SearchOutline,
+      UserOutline,
     ]),
   ],
 };

@@ -1,0 +1,12 @@
+<button nz-button nzType="default" type="button" (click)="annuler.emit()">Annuler</button>
+<button
+  nz-button
+  nzType="primary"
+  [nzDanger]="actionDangereuse()"
+  [type]="typeAction()"
+  [nzLoading]="actionEnCours()"
+  [disabled]="actionDesactivee()"
+  (click)="action.emit()"
+>
+  {{ libelleAction() }}
+</button>

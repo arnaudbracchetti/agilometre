@@ -21,6 +21,25 @@
     margin: 0;
   }
 
+  &__recherche {
+    position: relative;
+    max-width: 24rem;
+    margin-bottom: var(--space-5);
+
+    &-icone {
+      position: absolute;
+      top: 50%;
+      left: var(--space-3);
+      transform: translateY(-50%);
+      color: var(--color-ink-muted);
+      pointer-events: none;
+    }
+
+    &-champ {
+      padding-left: calc(var(--space-3) * 2 + var(--space-2));
+    }
+  }
+
   &__ligne {
     cursor: pointer;
 
@@ -33,6 +52,10 @@
     text-align: right;
   }
 
+  &__mesure {
+    font-family: var(--font-family-mono);
+  }
+
   &__actions {
     display: flex;
     justify-content: flex-end;
@@ -40,7 +63,20 @@
     white-space: nowrap;
   }
 
+  // DESIGN.md (Buttons > Text/Link) : les actions de ligne de tableau s'affichent en Bleu
+  // Profond — `nzType="text"` ne porte aucune teinte de marque par défaut chez ng-zorro
+  // (contrairement à `nzType="link"`), d'où cette règle explicite plutôt qu'un héritage implicite.
+  // Le bouton de suppression (`nzDanger`, classe `.ant-btn-dangerous`) reste en rouge.
   &__action {
     font-size: var(--font-size-md);
+
+    &:not(.ant-btn-dangerous) {
+      color: var(--color-primary);
+
+      &:hover,
+      &:focus {
+        color: var(--color-primary-hover);
+      }
+    }
   }
 }
