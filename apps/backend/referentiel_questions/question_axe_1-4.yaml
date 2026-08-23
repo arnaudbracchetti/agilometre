@@ -1,0 +1,467 @@
+themes:
+  - id: axe-1-collaboration
+    libelle: La collaboration au sein de l’équipe
+    questions:
+      - id: test
+        libelle: Quand un membre de l’équipe rencontre un blocage, que se passe-t-il le plus souvent ?
+        options:
+          - libelle: Il essaie de le résoudre seul ou attend qu’on lui demande de partager son problème avec une autre personne.
+            niveau: 1
+          - libelle: Il en parle le lendemain en daily et on lui donne des conseils en séance
+            niveau: 2
+          - libelle: Il en parle le lendemain en daily l’équipe décide qu’une personne va travailler avec lui résoudre son problème
+            niveau: 3
+          - libelle: Le sujet est rapidement discuté au sein de l’équipe sans attendre le daily pour trouver une solution.
+            niveau: 4
+      - id: collab-blocage
+        libelle: Quand un membre de l’équipe rencontre un blocage, que se passe-t-il le plus souvent ?
+        options:
+          - libelle: Il essaie de le résoudre seul ou attend qu’on lui demande de partager son problème avec une autre personne.
+            niveau: 1
+          - libelle: Il en parle le lendemain en daily et on lui donne des conseils en séance
+            niveau: 2
+          - libelle: Il en parle le lendemain en daily l’équipe décide qu’une personne va travailler avec lui résoudre son problème
+            niveau: 3
+          - libelle: Le sujet est rapidement discuté au sein de l’équipe sans attendre le daily pour trouver une solution.
+            niveau: 4
+      - id: collab-dailies
+        libelle: Lors des Dailies, quel est le mode de fonctionnement dominant ?
+        options:
+          - libelle: Chacun fait son reporting au Scrum Master ou au PO.
+            niveau: 1
+          - libelle: Quelques personnes échangent, les autres restent en retrait.
+            niveau: 2
+          - libelle: Les échanges sont ouverts et l’équipe identifie ensemble comment avancer.
+            niveau: 3
+          - libelle: La discussion est orientée sur l’objectif de sprint et décisions rapides sont prises pour le maximiser.
+            niveau: 4
+      - id: collab-organisation
+        libelle: Comment se prennent les décisions d’organisation de l’équipe ?
+        options:
+          - libelle: Le PO, le tech lead, ou un manager décide seul.
+            niveau: 1
+          - libelle: Le Scrum Master facilite les discussions, mais les décisions restent concentrées sur une ou deux personnes.
+            niveau: 2
+          - libelle: L’équipe peut proposer des solutions et ses propositions sont prises en compte par des décideurs.
+            niveau: 3
+          - libelle: L’équipe décide collectivement de manière fluide et autonome.
+            niveau: 4
+      - id: collab-desaccord
+        libelle: Si un désaccord fort survient dans l’équipe, comment est-il géré ?
+        options:
+          - libelle: L’équipe évite d’en parler au nom de l’harmonie du groupe.
+            niveau: 1
+          - libelle: Il est tranché par le PO, le Scrum Master, le Lead tech ou un manager.
+            niveau: 2
+          - libelle: L’équipe prend le temps d’en discuter pour trouver une solution acceptable.
+            niveau: 3
+          - libelle: Les désaccords sont vus comme des opportunités d’apprentissage collectif, des évolutions de l’équipe en découlent.
+            niveau: 4
+      - id: collab-qualite
+        libelle: Qui porte la responsabilité de la qualité des livrables ?
+        options:
+          - libelle: Un expert ou le PO.
+            niveau: 1
+          - libelle: Chacun est responsable de son périmètre.
+            niveau: 2
+          - libelle: L’équipe s’assure collectivement de la qualité de l’ensemble du code.
+            niveau: 3
+          - libelle: La qualité est une responsabilité partagée et intégrée dans la façon de travailler.
+            niveau: 4
+      - id: collab-review
+        libelle: Pendant les Sprints Review, qui s’implique le plus ?
+        options:
+          - libelle: Le PO présente, l’équipe reste en retrait.
+            niveau: 1
+          - libelle: Quelques développeurs interviennent ponctuellement.
+            niveau: 2
+          - libelle: L’équipe dans son ensemble présente et répond aux questions.
+            niveau: 3
+          - libelle: La Review est une véritable discussion collective avec toutes les parties prenantes.
+            niveau: 4
+      - id: collab-autonomie
+        libelle: Dans quelle mesure l’équipe se sent autonome pour organiser son travail ?
+        options:
+          - libelle: Les tâches sont attribuées par le PO, le Scrum Master ou un manager.
+            niveau: 1
+          - libelle: L’équipe répartit parfois son travail, mais certaines affectations restent imposées.
+            niveau: 2
+          - libelle: L’équipe répartit librement son travail mais sans avoir une stratégie précise.
+            niveau: 3
+          - libelle: L’équipe adapte en continu sa manière de s’organiser dans le but de diminuer les risque et d’atteindre au mieux ses objectifs.
+            niveau: 4
+      - id: collab-imprevus
+        libelle: Comment l’équipe réagit face aux imprévus en cours de Sprint ?
+        options:
+          - libelle: L’équipe attend une décision du PO, du Scrum Master ou d’un manager avant d’agir.
+            niveau: 1
+          - libelle: Un ou deux membres peuvent prendre des initiatives isolées, sans réelle coordination avec le reste de l’équipe.
+            niveau: 2
+          - libelle: L’équipe en discute collectivement et décide d’un ajustement du plan, mais cela peut prendre du temps ou générer des tensions.
+            niveau: 3
+          - libelle: L’équipe réagit rapidement et de manière collective, en adaptant son plan de travail tout en essayant de préserver ses objectifs de Sprint.
+            niveau: 4
+      - id: collab-retrospectives
+        libelle: Quelle est la dynamique pendant les rétrospectives ?
+        options:
+          - libelle: Peu de participation, une formalité animée par le Scrum Master.
+            niveau: 1
+          - libelle: Quelques membres partagent, les autres restent en retrait.
+            niveau: 2
+          - libelle: La majorité participe et des actions concrètes sont décidées.
+            niveau: 3
+          - libelle: La rétrospective est un moment attendu où l’équipe réfléchit et les actions sont suivies d’effets
+            niveau: 4
+      - id: collab-dependances
+        libelle: Dans quelle mesure vous gérez vos dépendances à d’autres équipes ?
+        options:
+          - libelle: Les échanges passent uniquement par le PO ou le Scrum Master.
+            niveau: 1
+          - libelle: Quelques contacts existent, mais restent rares.
+            niveau: 2
+          - libelle: Les équipes échangent directement quand nécessaire, mais chaque partie défend sa position.
+            niveau: 3
+          - libelle: Les équipes interagissent régulièrement dans un esprit de collaboration.
+            niveau: 4
+
+  - id: axe-2-orientation-produit
+    libelle: Orientation “Produit”
+    questions:
+      - id: prod-vision
+        libelle: Dans quelle mesure l’équipe comprend la vision du produit qu’elle produit ?
+        options:
+          - libelle: La vision n’est pas définie.
+            niveau: 1
+          - libelle: La vision est définie, mais n’est connue et comprise que par un petit nombre de personnes (PO, direction, …).
+            niveau: 2
+          - libelle: La vision est communiquée et comprise, mais n’est pas utilisée par l’équipe.
+            niveau: 3
+          - libelle: L’équipe partage une vision claire et cohérente, et l’utilise dans ses prises de décisions.
+            niveau: 4
+      - id: prod-roadmap
+        libelle: Comment la roadmap produit est-elle construite et utilisée ?
+        options:
+          - libelle: Il n’existe pas de roadmap, on gère le backlog produit au fil de l’eau.
+            niveau: 1
+          - libelle: La roadmap existe sous forme d’une liste de fonctionnalités associées à des dates.
+            niveau: 2
+          - libelle: La roadmap inclut des jalons avec des objectifs produits clairs, et une liste précise de fonctionnalités à réaliser pour y arriver.
+            niveau: 3
+          - libelle: La roadmap est construite autour de jalons avec des objectifs produits clairs, partagée et utilisée par l’équipe pour ajuster ses réalisations au fil de l’eau.
+            niveau: 4
+      - id: prod-projection
+        libelle: Comment l’équipe se projette sur les livraisons à venir ?
+        options:
+          - libelle: Aucune projection n’est faite.
+            niveau: 1
+          - libelle: Les projections se limitent au sprint en cours et éventuellement au suivant.
+            niveau: 2
+          - libelle: L’équipe fait parfois des projections sur quelques sprints (2 à 3 mois), le PO les utilise pour s’engager auprès des parties prenantes.
+            niveau: 3
+          - libelle: L’équipe élabore régulièrement des projections sur quelques mois en utilisant sa capacité réelle de production. Le PO utilise ces informations et l’incertitude associée pour communiquer avec ses parties prenantes.
+            niveau: 4
+      - id: prod-valeur
+        libelle: Comment la notion de valeur est-elle abordée dans l’équipe ?
+        options:
+          - libelle: Le terme “valeur” n’est jamais évoqué.
+            niveau: 1
+          - libelle: Le PO l’évoque ponctuellement, sans définition claire.
+            niveau: 2
+          - libelle: L’équipe en a discuté et s’est accordée sur certains critères de valeur.
+            niveau: 3
+          - libelle: L’équipe a défini et utilise régulièrement des règles explicites pour estimer et mesurer la valeur pour prendre des décisions.
+            niveau: 4
+      - id: prod-pertinence
+        libelle: Lorsqu’un élément de backlog est choisi, comment juge-t-on de sa pertinence ?
+        options:
+          - libelle: En fonction du demandeur et de son niveau hiérarchique.
+            niveau: 1
+          - libelle: Sur la base du ressenti ou de l’intuition du PO.
+            niveau: 2
+          - libelle: Parce qu’il correspond à un besoin exprimé en lien avec la vision sans l’exprimer clairement.
+            niveau: 3
+          - libelle: En fonction de critères partagés (impact sur la vision, valeur perçue, effort, stratégie).
+            niveau: 4
+      - id: prod-evaluation
+        libelle: Comment le produit et ses livraisons sont-ils évalués ?
+        options:
+          - libelle: Aucune évaluation formelle n’est réalisée.
+            niveau: 1
+          - libelle: Seules des métriques techniques (ex. vélocité) sont suivies.
+            niveau: 2
+          - libelle: Des indicateurs de valeur ou d’usage sont identifiés mais peu exploités.
+            niveau: 3
+          - libelle: L’équipe suit et analyse régulièrement des indicateurs de valeur, d’usage et de satisfaction pour orienter ses choix.
+            niveau: 4
+      - id: prod-estimation
+        libelle: Comment l’équipe estime l’effort ou la complexité des éléments de backlog ?
+        options:
+          - libelle: Aucune évaluation n’est réalisée, on avance “au feeling”.
+            niveau: 1
+          - libelle: L’effort est estimé en temps (j.h) de façon individuelle.
+            niveau: 2
+          - libelle: L’équipe utilise une méthode d’évaluation relative, mais seuls les Tech Lead donne leur avis.
+            niveau: 3
+          - libelle: L’équipe pratique des évaluations relatives de manière collective.
+            niveau: 4
+      - id: prod-maintenance
+        libelle: Comment la maintenance (bugs, incidents) est-elle gérée par rapport aux évolutions ?
+        options:
+          - libelle: La maintenance est confiée à une autre équipe.
+            niveau: 1
+          - libelle: Les évolutions sont prioritaires, la maintenance est traitée “quand on peut”.
+            niveau: 2
+          - libelle: L’équipe intègre une partie de correction de bugs dans ses sprints.
+            niveau: 3
+          - libelle: L’équipe intègre et équilibre systématiquement maintenance, réduction de la dette technique et évolutions dans son backlog.
+            niveau: 4
+      - id: prod-structure
+        libelle: Comment l’équipe est-elle structurée ?
+        options:
+          - libelle: Elle est organisée par spécialités (dev, test, run séparés).
+            niveau: 1
+          - libelle: Elle est organisée autour de projets ponctuels.
+            niveau: 2
+          - libelle: Elle est en partie organisée autour d’un produit mais dépend de ressources externes.
+            niveau: 3
+          - libelle: Elle est pleinement structurée autour d’un produit, avec toutes les compétences nécessaires intégrées.
+            niveau: 4
+      - id: prod-role-po
+        libelle: Comment se traduit le rôle du PO au quotidien ?
+        options:
+          - libelle: Le PO distribue les tâches.
+            niveau: 1
+          - libelle: Le PO décide seul des priorités et l’équipe exécute.
+            niveau: 2
+          - libelle: Le PO apporte la vision et travaille en lien avec l’équipe, mais garde la main sur toutes les décisions.
+            niveau: 3
+          - libelle: Le PO anime la vision produit et facilite les choix, l’équipe contribuant activement à la compréhension et aux décisions.
+            niveau: 4
+
+  - id: axe-3-amelioration-continue
+    libelle: Prise de recul et amélioration continue
+    questions:
+      - id: amel-actions-retro
+        libelle: Que se passe-t-il avec les actions d’amélioration décidées en rétro ?
+        options:
+          - libelle: Nous ne faisons pas de rétrospective qui donne lieu à un plan d’action.
+            niveau: 1
+          - libelle: Les actions sont parfois définies mais rarement suivies, elles sont souvent oubliées.
+            niveau: 2
+          - libelle: Les actions prioritaires sont généralement mises en œuvre, mais sans suivi particulier.
+            niveau: 3
+          - libelle: Les actions sont intégrées au backlog et suivies avec autant d’importance que les User Stories produit.
+            niveau: 4
+      - id: amel-ambiance-retro
+        libelle: Dans quelle ambiance se déroulent les rétrospectives ?
+        options:
+          - libelle: Peu de personnes osent s’exprimer.
+            niveau: 1
+          - libelle: Quelques personnes s’expriment, mais seulement sur des sujets consensuels qui ne créent pas de tensions.
+            niveau: 2
+          - libelle: Quelques personnes osent aborder les vrais problèmes, même si ce n’est pas consensuel.
+            niveau: 3
+          - libelle: Tout le monde s’exprime librement, dans un climat de confiance et d’écoute.
+            niveau: 4
+      - id: amel-type-retro
+        libelle: Quel type de rétrospective l’équipe pratique le plus souvent ?
+        options:
+          - libelle: Nous n’avons pas ou très rarement de rétrospectives.
+            niveau: 1
+          - libelle: Les rétros sont surtout centrées sur le partage de ressentis et l’expression des frustrations, sans aller beaucoup plus loin.
+            niveau: 2
+          - libelle: L’équipe expérimente différents formats selon les besoins, mais l’approfondissement sur les problèmes complexes reste limité.
+            niveau: 3
+          - libelle: Les rétrospectives alternent naturellement entre libération de la parole et analyse en profondeur, avec recherche des causes racines et des résultats visibles.
+            niveau: 4
+      - id: amel-connaissances
+        libelle: Comment les connaissances circulent-elles dans l’équipe ?
+        options:
+          - libelle: Chacun est spécialiste de son domaine, ce qui crée des dépendances fortes entre nous.
+            niveau: 1
+          - libelle: Le partage existe, mais reste informel et irrégulier.
+            niveau: 2
+          - libelle: Des moments dédiés existent (pairing, ateliers, communautés de pratiques).
+            niveau: 3
+          - libelle: Le partage est naturel et régulier, l’équipe se distribue naturellement le travail pour favoriser l’apprentissage en continu et capitaliser ses savoirs.
+            niveau: 4
+      - id: amel-integration
+        libelle: Lorsqu’une nouvelle personne rejoint l’équipe, comment apprend-elle ?
+        options:
+          - libelle: Elle doit se débrouiller seule, aucun vrai accompagnement n'existe.
+            niveau: 1
+          - libelle: Quelques collègues l’aident, mais sans cadre clair.
+            niveau: 2
+          - libelle: Du temps est dégagé pour certaines personnes, il y a un minimum de transmission orale et de documentation.
+            niveau: 3
+          - libelle: L’intégration est structurée et favorise rapidement la montée en compétence et l’autonomie.
+            niveau: 4
+      - id: amel-competence-cle
+        libelle: Quand une compétence clé est nécessaire, que se passe-t-il ?
+        options:
+          - libelle: On dépend d’une seule personne, et si elle est absente, on est bloqué.
+            niveau: 1
+          - libelle: Quelques personnes peuvent se dépanner, mais c’est risqué.
+            niveau: 2
+          - libelle: La plupart des compétences critiques sont couvertes par au moins deux personnes, mais il reste des sujets connus par une seule personne.
+            niveau: 3
+          - libelle: L’équipe est globalement polyvalente et s’organise pour éviter toute dépendance forte.
+            niveau: 4
+      - id: amel-innovation
+        libelle: Quelle place est donnée à l’innovation dans l’équipe ?
+        options:
+          - libelle: On n’a pas de temps pour ça.
+            niveau: 1
+          - libelle: De temps en temps, on essaie quelque chose de nouveau, mais sans vrai cadre.
+            niveau: 2
+          - libelle: L’équipe se donne des moments pour tester de nouvelles choses ou proposer des alternatives innovantes.
+            niveau: 3
+          - libelle: L’expérimentation fait partie intégrante du fonctionnement et se traduit dans le backlog par des spikes et des recherches de feedback.
+            niveau: 4
+      - id: amel-echec
+        libelle: Lorsqu’une expérimentation échoue, que se passe-t-il ?
+        options:
+          - libelle: On évite de recommencer, car c’est perçu comme une perte de temps.
+            niveau: 1
+          - libelle: On en parle rapidement, puis on passe à autre chose.
+            niveau: 2
+          - libelle: On analyse ce qui n’a pas marché pour en tirer des enseignements.
+            niveau: 3
+          - libelle: L’échec est considéré comme une opportunité d’apprentissage, et on en tire des pratiques durables.
+            niveau: 4
+      - id: amel-probleme-recurrent
+        libelle: Quand un problème récurrent survient (ex.  retard, qualité, blocage), comment réagit l’équipe ?
+        options:
+          - libelle: On subit, en se disant “ici, c’est comme ça”.
+            niveau: 1
+          - libelle: On essaie de s’adapter sur le moment, mais sans analyser les causes.
+            niveau: 2
+          - libelle: On cherche rapidement à comprendre les causes et à trouver des solutions ponctuelles.
+            niveau: 3
+          - libelle: On prend le temps nécessaire pour analyser les causes profondes et les impacts sur notre écosystème, puis on adapte durablement nos pratiques.
+            niveau: 4
+      - id: amel-implication
+        libelle: Qui s’implique dans l’amélioration des pratiques ?
+        options:
+          - libelle: Personne en particulier, ce n’est pas un sujet prioritaire.
+            niveau: 1
+          - libelle: Principalement le Scrum Master ou quelques personnes motivées.
+            niveau: 2
+          - libelle: La majorité de l’équipe participe de temps en temps.
+            niveau: 3
+          - libelle: Toute l’équipe est impliquée et moteur de l’amélioration continue.
+            niveau: 4
+
+  - id: axe-4-delivery-qualite
+    libelle: Delivery et qualité
+    questions:
+      - id: deliv-fin-dev
+        libelle: Lorsqu’un item est terminé du point de vue développement, que se passe-t-il généralement ensuite ?
+        options:
+          - libelle: Il reste plusieurs étapes peu visibles de l'équipe avant toute mise en production.
+            niveau: 1
+          - libelle: Il passe par des validations ou phases de tests externes qui retardent souvent la livraison.
+            niveau: 2
+          - libelle: Il est généralement livrable, mais la mise en production dépend encore de décisions ou de créneaux externes à l'équipe.
+            niveau: 3
+          - libelle: Il est techniquement et fonctionnellement prêt à être mis en production sans délai significatif.
+            niveau: 4
+      - id: deliv-fin-sprint
+        libelle: À la fin d’un sprint, quelle est la situation la plus fréquente concernant les éléments terminés ?
+        options:
+          - libelle: Peu d’éléments sont réellement terminés, beaucoup sont reportés.
+            niveau: 1
+          - libelle: Les éléments sont terminés pour l'équipe, mais rarement directement livrables.
+            niveau: 2
+          - libelle: La majorité des éléments est livrable en production.
+            niveau: 3
+          - libelle: En fin de sprint les éléments sont déjà en production
+            niveau: 4
+      - id: deliv-dod
+        libelle: Dans quelle mesure la Definition of Done garantit-elle qu’un item terminé est réellement prêt pour la mise en production ?
+        options:
+          - libelle: L’équipe n’a pas de Definition of Done clairement définie.
+            niveau: 1
+          - libelle: La Definition of Done ne couvre que le développement, sans lien explicite avec la mise en production.
+            niveau: 2
+          - libelle: Elle inclut certains critères de qualité, mais pas tout ce qui est nécessaire pour aller en production.
+            niveau: 3
+          - libelle: Elle définit explicitement toutes les conditions pour qu’un item soit directement déployable en production et est systématiquement respectée.
+            niveau: 4
+      - id: deliv-probleme-qualite
+        libelle: Que se passe-t-il lorsqu’un problème de qualité est détecté sur un élément du sprint en cours ?
+        options:
+          - libelle: La revue et le test d'un item ne sont pas réalisés dans le sprint en cours
+            niveau: 1
+          - libelle: Le problème est corrigé uniquement s’il est bloquant.
+            niveau: 2
+          - libelle: Les problèmes bloquants sont corrigés, les non bloquants sont traités uniquement si cela ne change pas l'engagement du sprint
+            niveau: 3
+          - libelle: Les problèmes bloquants et non bloquants sont traités, même au prix d’un ajustement du périmètre.
+            niveau: 4
+      - id: deliv-dette-tech
+        libelle: Quelle place occupe la dette technique dans les décisions de delivery ?
+        options:
+          - libelle: Elle n'est pas reconnue et donc rarement prise en compte.
+            niveau: 1
+          - libelle: Elle est reconnue, mais traitée uniquement si on a le temps.
+            niveau: 2
+          - libelle: Elle est traitée par accou, au travers de sprints dédiés.
+            niveau: 3
+          - libelle: Elle est gérée de manière proactive et continue.
+            niveau: 4
+      - id: deliv-auto-tests
+        libelle: Quel est le niveau d’automatisation des tests ?
+        options:
+          - libelle: Les tests sont majoritairement manuels.
+            niveau: 1
+          - libelle: Quelques tests automatisés existent, mais beaucoup d'entre eux sont "cassés".
+            niveau: 2
+          - libelle: Les tests automatisés couvrent une partie significative du produit et son utilisé pour la recette.
+            niveau: 3
+          - libelle: Les tests automatisés sont nombreux, fiables et intégrés au flux de travail des développeurs.
+            niveau: 4
+      - id: deliv-mep-typique
+        libelle: Comment se déroule une mise en production typique ?
+        options:
+          - libelle: Elle est rare, lourde et risquée.
+            niveau: 1
+          - libelle: Elle nécessite une forte expertise et beaucoup de validations.
+            niveau: 2
+          - libelle: Elle est relativement maîtrisée mais encore stressante.
+            niveau: 3
+          - libelle: Elle est automatisée, rapide et peu risquée.
+            niveau: 4
+      - id: deliv-autonomie-mep
+        libelle: Dans quelle mesure l’équipe est-elle autonome pour mettre en production ?
+        options:
+          - libelle: Elle dépend totalement d’équipes externes.
+            niveau: 1
+          - libelle: Elle participe mais ne pilote pas la mise en production.
+            niveau: 2
+          - libelle: Elle pilote la mise en production avec un support externe.
+            niveau: 3
+          - libelle: Elle est entièrement autonome.
+            niveau: 4
+      - id: deliv-incident-prod
+        libelle: Lorsqu’un incident survient en production, que se passe-t-il ?
+        options:
+          - libelle: C'est la panique, la totalité de l'équipe est perturbée par la correction de l'incident
+            niveau: 1
+          - libelle: L’objectif principal est de rétablir le service avec sérénité sans faire de bilan.
+            niveau: 2
+          - libelle: Le service est rétabli, et une analyse post mortem est parfois menée, mais sans réel impact sur la suite.
+            niveau: 3
+          - libelle: Le service est rétabli, et une analyse post mortem est menée. De réelles modifications dans nos façons de faire sont mise en place.
+            niveau: 4
+      - id: deliv-declencheur-mep
+        libelle: Lorsque l’équipe livre un changement en production, qu’est-ce qui déclenche réellement cette décision ?
+        options:
+          - libelle: La décision est prise par une instance externe (management, release management, comité).
+            niveau: 1
+          - libelle: La décision est prise par le PO seul, en fonction de contraintes métiers.
+            niveau: 2
+          - libelle: La décision est prise par l’équipe, mais uniquement en fin de sprint.
+            niveau: 3
+          - libelle: La décision est prise par l’équipe en fonction de la valeur, du risque et de l’état réel du produit. La livraison n'est pas liée au sprint
+            niveau: 4
