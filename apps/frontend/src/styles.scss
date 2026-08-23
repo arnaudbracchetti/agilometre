@@ -174,3 +174,39 @@ body {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+
+/* Boîtes de dialogue (ng-zorro NzModalService — form dialogs et confirmations) : rendues hors de
+   l'arbre de vue Angular (portées sur <body>), donc stylées ici plutôt que dans un composant.
+   Bandeau/masque recolorés via theme.less (@modal-header-bg, préprocesseur Less, valeurs figées
+   en hexadécimal) ; l'ombre et la bande de tête ci-dessous, car elles n'ont pas d'équivalent dans
+   les variables Less d'Ant Design. La bande de tête (::before) donne aux dialogues sans en-tête
+   (confirmations) le même signal bleu foncé que le bandeau des dialogues à en-tête — sur ces
+   derniers elle se fond dans le bandeau, même couleur, pas de coupure visible. */
+.ant-modal-content {
+  overflow: hidden;
+  box-shadow:
+    0 8px 24px rgba(15, 65, 122, 0.28),
+    0 2px 8px rgba(15, 65, 122, 0.14);
+}
+
+.ant-modal-content::before {
+  content: '';
+  display: block;
+  height: var(--space-2);
+  background: var(--color-primary-emphasis);
+}
+
+/* Le bandeau garde par défaut ses propres coins arrondis (pensés pour être l'élément du haut) ;
+   la bande de tête ci-dessus lui a pris cette place, donc son arrondi désormais orphelin ne fait
+   plus que révéler un liseré blanc dans les coins — on l'annule ici. */
+.ant-modal-header {
+  border-radius: 0;
+}
+
+/* Ceinture et bretelles : @modal-close-color (theme.less) recolore déjà le bouton, mais l'icône
+   SVG doit explicitement hériter pour rester blanche sur le bandeau bleu foncé. */
+.ant-modal-close,
+.ant-modal-close .ant-modal-close-icon,
+.ant-modal-close svg {
+  color: var(--color-on-primary);
+}

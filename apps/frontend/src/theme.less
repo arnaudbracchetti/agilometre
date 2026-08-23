@@ -19,3 +19,13 @@
   'IBM Plex Sans', 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, Helvetica, Arial,
   sans-serif; // --font-family-base
 @shadow-color: rgba(15, 65, 122, 0.16); // teinté bleu comme --shadow-note, jamais noir pur
+
+// Boîtes de dialogue (NzModalService) : bandeau et masque repris du bleu foncé des surfaces
+// "vécues en salle" (en-tête, pied de page, écran de vote/projection) plutôt que le blanc/gris
+// neutre par défaut d'Ant Design — voir styles.scss pour le reste du traitement (ombre, bande de
+// tête des dialogues sans en-tête comme les confirmations).
+@modal-header-bg: #0f417a; // --color-primary-emphasis
+@modal-heading-color: #ffffff; // --color-on-primary, posé sur le bandeau bleu foncé
+@modal-close-color: rgba(255, 255, 255, 0.85); // idem, icône de fermeture
+@modal-header-border-width: 0; // le bandeau plein remplace la fine bordure grise par défaut
+@modal-mask-bg: rgba(15, 65, 122, 0.6); // masque teinté bleu foncé, jamais noir neutre
