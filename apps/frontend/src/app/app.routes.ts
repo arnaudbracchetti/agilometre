@@ -39,6 +39,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'organisation/equipes/:id/profil/:themeId',
+        data: { breadcrumb: 'Lecture fine' },
+        loadComponent: () =>
+          import('./organisation/lecture-fine-page/lecture-fine-page').then(
+            (m) => m.LectureFinePage,
+          ),
+      },
+      {
         path: 'modeles-session',
         data: { breadcrumb: 'Modèles de session' },
         loadComponent: () =>

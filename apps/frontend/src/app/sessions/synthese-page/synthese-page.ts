@@ -13,14 +13,10 @@ import {
   SyntheseThemeDto,
 } from '@agilometre/shared';
 import { ErrorMessage } from '../../shared/error-message/error-message';
+import { LibelleConsensus } from '../../shared/libelle-consensus';
 import { libelleStatutProgression } from '../../shared/libelle-statut-progression';
+import { PourcentageRepartition } from '../../shared/pourcentage-repartition';
 import { SessionsService } from '../sessions.service';
-
-const LIBELLE_CONSENSUS: Record<CranConsensusDto, string> = {
-  FORT: 'Consensus fort',
-  MODERE: 'Consensus modéré',
-  FAIBLE: 'Consensus faible',
-};
 
 /**
  * Écran de synthèse (cartes F3 #45, G1 #46, lecture par Thème #52) : Palier par Thème traité avec
@@ -90,12 +86,11 @@ export class SynthesePage implements OnInit {
   }
 
   protected libelleConsensus(consensus: CranConsensusDto | null): string {
-    return consensus ? LIBELLE_CONSENSUS[consensus] : '';
+    return LibelleConsensus.pour(consensus);
   }
 
-  /** % arrondi d'un Niveau dans la répartition d'une Question — 0 sur un effectif nul. */
   protected pourcentage(compte: number, effectif: number): number {
-    return effectif === 0 ? 0 : Math.round((compte / effectif) * 100);
+    return PourcentageRepartition.executer(compte, effectif);
   }
 
   /** Accord simple (ajout d'un -s) pour les compteurs de Questions/Réponses. */

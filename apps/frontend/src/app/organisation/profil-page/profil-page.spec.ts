@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { convertToParamMap, provideRouter, ActivatedRoute } from '@angular/router';
+import { convertToParamMap, provideRouter, ActivatedRoute, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { vi } from 'vitest';
 import { ProfilEquipeDto } from '@agilometre/shared';
 import { ProfilPage } from './profil-page';
 
@@ -147,5 +148,71 @@ describe('ProfilPage', () => {
     expect(texte).toContain('Questions répondues');
     expect(texte).toContain('3');
     expect(texte).toContain('Réponses totales');
+  });
+
+  describe('Navigation vers la Lecture fine (carte #54)', () => {
+    function themeFixture() {
+      return {
+        themeId: 't1',
+        libelle: 'Thème collaboration',
+        palier: 3 as const,
+        tauxApproche: 0.8,
+        margeAvantDescente: 0.2,
+        effectif: 4,
+        questions: [
+          {
+            questionId: 'q1',
+            libelle: 'Question sur le daily',
+            effectif: 4,
+            moyenne: 2.5,
+            consensus: 'MODERE' as const,
+            repartition: { 1: 0, 2: 2, 3: 2, 4: 0 },
+          },
+        ],
+      };
+    }
+
+    it('l’item de Thème pointe vers l’écran de Lecture fine du Thème', () => {
+      fixture = TestBed.createComponent(ProfilPage);
+      fixture.detectChanges();
+      repondre({ themes: [themeFixture()] });
+      fixture.detectChanges();
+
+      const lien = fixture.nativeElement.querySelector(
+        'a[href="/organisation/equipes/eq1/profil/t1"]',
+      );
+      expect(lien).toBeTruthy();
+    });
+
+    it('un clic sur un axe du radar navigue vers la Lecture fine du Thème correspondant', () => {
+      fixture = TestBed.createComponent(ProfilPage);
+      fixture.detectChanges();
+      repondre({ themes: [themeFixture()] });
+      fixture.detectChanges();
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+      fixture.componentInstance['onPointSelectionne'](0);
+
+      expect(navigateSpy).toHaveBeenCalledWith([
+        '/organisation/equipes',
+        'eq1',
+        'profil',
+        't1',
+      ]);
+    });
+
+    it('un index de point hors bornes ne navigue pas', () => {
+      fixture = TestBed.createComponent(ProfilPage);
+      fixture.detectChanges();
+      repondre({ themes: [themeFixture()] });
+      fixture.detectChanges();
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+      fixture.componentInstance['onPointSelectionne'](5);
+
+      expect(navigateSpy).not.toHaveBeenCalled();
+    });
   });
 });

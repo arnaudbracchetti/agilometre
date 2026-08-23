@@ -1,8 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApexAxisChartSeries, ApexChart, ApexMarkers, ApexTooltip, ApexXAxis, ApexYAxis, NgApexchartsModule } from 'ng-apexcharts';
-import type { ApexFormatterOpts } from 'apexcharts';
+import type ApexCharts from 'apexcharts';
+import type { ApexChartEventOpts, ApexFormatterOpts } from 'apexcharts';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { SyntheseThemeDto } from '@agilometre/shared';
 import { ErrorMessage } from '../../shared/error-message/error-message';
@@ -15,14 +16,16 @@ import { OrganisationService } from '../organisation.service';
  */
 @Component({
   selector: 'app-profil-page',
-  imports: [DatePipe, NgApexchartsModule, NzProgressModule, ErrorMessage],
+  imports: [DatePipe, RouterLink, NgApexchartsModule, NzProgressModule, ErrorMessage],
   templateUrl: './profil-page.html',
   styleUrl: './profil-page.scss',
 })
 export class ProfilPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly organisationService = inject(OrganisationService);
 
+  protected readonly equipeId = signal<string | null>(null);
   protected readonly chargementEnCours = signal(true);
   protected readonly inaccessible = signal(false);
   protected readonly periodeDebut = signal<string | null>(null);
@@ -48,6 +51,13 @@ export class ProfilPage implements OnInit {
     type: 'radar',
     height: 500,
     width: 500,
+    events: {
+      dataPointSelection: (_event: MouseEvent, _chart?: ApexCharts, options?: ApexChartEventOpts) => {
+        if (options) {
+          this.onPointSelectionne(options.dataPointIndex);
+        }
+      },
+    },
   };
   /** Échelle fixe 0-4 (jamais dérivée des Paliers affichés) : positionne toujours l'Équipe par
    * rapport au maximum possible, pas seulement par rapport à ses propres valeurs du moment. */
@@ -90,6 +100,7 @@ export class ProfilPage implements OnInit {
     if (!id) {
       return;
     }
+    this.equipeId.set(id);
 
     this.organisationService.obtenirProfil(id).subscribe({
       next: (profil) => {
@@ -103,5 +114,15 @@ export class ProfilPage implements OnInit {
         this.chargementEnCours.set(false);
       },
     });
+  }
+
+  /** Clic sur un axe du radar : ouvre la Lecture fine du Thème correspondant. */
+  protected onPointSelectionne(dataPointIndex: number): void {
+    const theme = this.themes()[dataPointIndex];
+    const id = this.equipeId();
+    if (!theme || !id) {
+      return;
+    }
+    this.router.navigate(['/organisation/equipes', id, 'profil', theme.themeId]);
   }
 }
