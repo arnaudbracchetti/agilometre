@@ -16,6 +16,9 @@ class SessionRepositoryFake implements SessionRepository {
   findById(id: string): Promise<Session | null> {
     return Promise.resolve(this.sessions.find((s) => s.id === id) ?? null);
   }
+  findFermeesParEquipeEtPeriode(): Promise<Session[]> {
+    return Promise.resolve([]);
+  }
   findByCode(): Promise<Session | null> {
     return Promise.resolve(null);
   }

@@ -123,9 +123,10 @@ export interface SyntheseQuestionDto {
 export interface SyntheseThemeDto {
   themeId: string;
   libelle: string;
-  palier: 1 | 2 | 3 | 4;
+  /** null : aucune Réponse sur la Portée ("aucune donnée"). */
+  palier: 1 | 2 | 3 | 4 | null;
   tauxApproche: number | null;
-  margeAvantDescente: number;
+  margeAvantDescente: number | null;
   effectif: number;
   questions: SyntheseQuestionDto[];
 }

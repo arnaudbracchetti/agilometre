@@ -34,7 +34,6 @@ export class CalculerSyntheseScoring {
     questions: readonly QuestionScorable[],
     seuilPalier: number,
   ): Promise<SyntheseThemeResultat[]> {
-    
     // 1. Regroupe les Réponses par Question (grain le plus fin).
     const reponses = await source.obtenirReponsesScorables();
     const niveauxParQuestion = new Map<string, number[]>();
@@ -58,8 +57,12 @@ export class CalculerSyntheseScoring {
       const niveauxTheme = questionIds.flatMap(
         (questionId) => niveauxParQuestion.get(questionId) ?? [],
       );
-      // Thème non traité : absent du résultat, pas de "non évalué" (portée Session, cf. moteur-de-scoring.md).
       if (niveauxTheme.length === 0) {
+        resultats.push({
+          themeId,
+          resultatPalier: { effectif: 0 },
+          questions: [],
+        });
         continue;
       }
       const resultatPalier = scoring.calculerPalier(niveauxTheme, seuilPalier);

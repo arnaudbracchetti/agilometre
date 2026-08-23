@@ -17,6 +17,9 @@ class SessionRepositoryFake implements SessionRepository {
     return Promise.resolve(this.sessions.find((s) => s.id === id) ?? null);
   }
   /** Même restriction que l'adaptateur Prisma : seules les Sessions OUVERTE portent un Code résolvable. */
+  findFermeesParEquipeEtPeriode(): Promise<Session[]> {
+    return Promise.resolve([]);
+  }
   findByCode(code: string): Promise<Session | null> {
     return Promise.resolve(
       this.sessions.find((s) => s.code === code && s.statut === 'OUVERTE') ??

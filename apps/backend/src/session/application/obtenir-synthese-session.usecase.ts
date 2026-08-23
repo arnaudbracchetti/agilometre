@@ -1,30 +1,15 @@
 import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
 import { ReponseRepository } from '../../reponse/domain/reponse.repository';
 import { Scoring } from '../../scoring/domain/scoring';
-import {
-  CalculerSyntheseScoring,
-  SyntheseThemeResultat,
-} from '../../scoring/application/calculer-synthese-scoring';
+import { CalculerSyntheseScoring } from '../../scoring/application/calculer-synthese-scoring';
 import { EtatToursQuery } from '../domain/etat-tours.query';
 import { SessionRepository } from '../domain/session.repository';
+import {
+  EnrichirResultatsAvecLibelles,
+  SyntheseThemeAvecLibelle,
+} from './enrichir-resultats-avec-libelles';
 import { ResoudreQuestionsScorables } from './resoudre-questions-scorables';
 import { SourceReponsesScorablesSession } from './source-reponses-scorables-session';
-
-export interface SyntheseQuestionAvecLibelle {
-  questionId: string;
-  libelle: string;
-  effectif: number;
-  moyenne: number | null;
-  consensus: SyntheseThemeResultat['questions'][number]['consensus'];
-  repartitionParNiveau: SyntheseThemeResultat['questions'][number]['repartitionParNiveau'];
-}
-
-export interface SyntheseThemeAvecLibelle {
-  themeId: string;
-  libelle: string;
-  resultatPalier: SyntheseThemeResultat['resultatPalier'];
-  questions: SyntheseQuestionAvecLibelle[];
-}
 
 export type ResultatObtenirSyntheseSession =
   { type: 'introuvable' } | { type: 'ok'; themes: SyntheseThemeAvecLibelle[] };
@@ -73,22 +58,9 @@ export class ObtenirSyntheseSession {
       seuil,
     );
 
-    const libelleTheme = new Map(
-      questions.map((q) => [q.themeId, q.libelleTheme] as const),
-    );
-    const libelleQuestion = new Map(
-      questions.map((q) => [q.questionId, q.libelleQuestion] as const),
-    );
-    const themes: SyntheseThemeAvecLibelle[] = resultatsParTheme.map(
-      (theme) => ({
-        themeId: theme.themeId,
-        libelle: libelleTheme.get(theme.themeId)!,
-        resultatPalier: theme.resultatPalier,
-        questions: theme.questions.map((question) => ({
-          ...question,
-          libelle: libelleQuestion.get(question.questionId)!,
-        })),
-      }),
+    const themes = EnrichirResultatsAvecLibelles.executer(
+      resultatsParTheme,
+      questions,
     );
 
     return { type: 'ok', themes };

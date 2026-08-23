@@ -101,6 +101,14 @@ describe('OrganisationService', () => {
     req.flush({ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] });
   });
 
+  it('obtient le Profil d’une Équipe via GET /api/organisation/equipes/:id/profil', () => {
+    service.obtenirProfil('eq1').subscribe();
+
+    const req = httpMock.expectOne('/api/organisation/equipes/eq1/profil');
+    expect(req.request.method).toBe('GET');
+    req.flush({ periodeDebut: '2026-04-01T00:00:00.000Z', periodeFin: '2026-07-01T00:00:00.000Z', themes: [] });
+  });
+
   it('modifie un Membre via PATCH /api/organisation/equipes/:id/membres/:membreId', () => {
     service.modifierMembre('eq1', 'm1', 'Jean D.', 'jean.d@example.com').subscribe();
 

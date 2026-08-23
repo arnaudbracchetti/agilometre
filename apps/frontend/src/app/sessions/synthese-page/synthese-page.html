@@ -16,43 +16,64 @@
     </header>
 
     @if (themes().length > 0) {
+      <div class="synthese__stats-globales">
+        <div class="synthese__stat">
+          <span class="synthese__stat-valeur">{{ totalQuestionsRepondues() }}</span>
+          <span class="synthese__stat-libelle">Questions répondues</span>
+        </div>
+        <div class="synthese__stat">
+          <span class="synthese__stat-valeur">{{ totalReponses() }}</span>
+          <span class="synthese__stat-libelle">Réponses totales</span>
+        </div>
+      </div>
+
       <nz-collapse class="synthese__themes">
         @for (theme of themes(); track theme.themeId) {
           <nz-collapse-panel [nzHeader]="enteteTheme">
             <ng-template #enteteTheme>
               <span class="synthese__theme-libelle">{{ theme.libelle }}</span>
-              <span
-                class="synthese__palier-badge"
-                [class.synthese__palier-badge--haut]="theme.palier >= 3"
-              >Palier {{ theme.palier }}</span>
+              @if (theme.palier !== null) {
+                <span
+                  class="synthese__palier-badge"
+                  [class.synthese__palier-badge--haut]="theme.palier >= 3"
+                >Palier {{ theme.palier }}</span>
+              } @else {
+                <span class="synthese__palier-badge synthese__palier-badge--vide">Aucune donnée</span>
+              }
+              <span class="synthese__theme-compte">
+                {{ theme.questions.length }} {{ pluriel(theme.questions.length, 'question') }}
+                · {{ theme.effectif }} {{ pluriel(theme.effectif, 'réponse') }}
+              </span>
             </ng-template>
 
-            <nz-collapse class="synthese__questions" nzGhost>
-              @for (question of theme.questions; track question.questionId) {
-                <nz-collapse-panel [nzHeader]="enteteQuestion">
-                  <ng-template #enteteQuestion>
-                    <span class="synthese__question-libelle">{{ question.libelle }}</span>
-                    <span class="synthese__question-moyenne">
-                      Moyenne {{ question.moyenne }}
-                    </span>
-                    @if (question.consensus) {
-                      <span class="synthese__question-consensus">
-                        {{ libelleConsensus(question.consensus) }}
+            @if (theme.palier !== null) {
+              <nz-collapse class="synthese__questions" nzGhost>
+                @for (question of theme.questions; track question.questionId) {
+                  <nz-collapse-panel [nzHeader]="enteteQuestion">
+                    <ng-template #enteteQuestion>
+                      <span class="synthese__question-libelle">{{ question.libelle }}</span>
+                      <span class="synthese__question-moyenne">
+                        Moyenne {{ question.moyenne }}
                       </span>
-                    }
-                  </ng-template>
+                      @if (question.consensus) {
+                        <span class="synthese__question-consensus">
+                          {{ libelleConsensus(question.consensus) }}
+                        </span>
+                      }
+                    </ng-template>
 
-                  <ul class="synthese__repartition">
-                    @for (niveau of niveaux; track niveau) {
-                      <li class="synthese__repartition-ligne">
-                        <span>Niveau {{ niveau }}</span>
-                        <span>{{ pourcentage(question.repartition[niveau], question.effectif) }} %</span>
-                      </li>
-                    }
-                  </ul>
-                </nz-collapse-panel>
-              }
-            </nz-collapse>
+                    <ul class="synthese__repartition">
+                      @for (niveau of niveaux; track niveau) {
+                        <li class="synthese__repartition-ligne">
+                          <span>Niveau {{ niveau }}</span>
+                          <span>{{ pourcentage(question.repartition[niveau], question.effectif) }} %</span>
+                        </li>
+                      }
+                    </ul>
+                  </nz-collapse-panel>
+                }
+              </nz-collapse>
+            }
           </nz-collapse-panel>
         }
       </nz-collapse>

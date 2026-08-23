@@ -22,6 +22,13 @@ export interface EntreeThemeImport {
   questions: EntreeQuestionImport[];
 }
 
+export interface QuestionActive {
+  questionId: string;
+  libelleQuestion: string;
+  themeId: string;
+  libelleTheme: string;
+}
+
 export class Referentiel {
   private constructor(
     private _derniereMajLe: Date | null,
@@ -62,6 +69,18 @@ export class Referentiel {
           theme.retireLe,
         ),
       );
+  }
+
+  /** Couples Question/Thème des Thèmes actifs (themesActifs()), aplatis avec leurs libellés. */
+  questionsActives(): QuestionActive[] {
+    return this.themesActifs().flatMap((theme) =>
+      theme.questions.map((question) => ({
+        questionId: question.id,
+        libelleQuestion: question.libelle,
+        themeId: theme.id,
+        libelleTheme: theme.libelle,
+      })),
+    );
   }
 
   /**

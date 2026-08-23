@@ -54,6 +54,15 @@
     } @else if (equipeSelectionnee(); as equipe) {
       <h2 class="organisation__titre">{{ equipe.nom }}</h2>
 
+      <a
+        nz-button
+        nzType="default"
+        class="organisation__voir-profil"
+        [routerLink]="['/organisation/equipes', equipe.id, 'profil']"
+      >
+        Voir le profil
+      </a>
+
       <form class="organisation__formulaire" (ngSubmit)="renommerEquipe()">
         <label for="nomRenommeEquipe">Renommer l’Équipe</label>
         <input

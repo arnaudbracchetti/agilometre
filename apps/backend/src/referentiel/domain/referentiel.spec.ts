@@ -1,5 +1,9 @@
 import { ChangeSet } from './change-set';
+import { Niveau } from './niveau';
+import { Option } from './option';
+import { Question } from './question';
 import { EntreeThemeImport, Referentiel } from './referentiel';
+import { Theme } from './theme';
 
 function entreesImport(): EntreeThemeImport[] {
   return [
@@ -598,5 +602,95 @@ describe('Referentiel — réconciliation par Clé stable (import ultérieur)', 
       expect(t1.retireLe!.getTime()).toBe(t2.retireLe!.getTime());
       expect(t1.retireLe!.getTime()).toBe(referentiel.derniereMajLe!.getTime());
     });
+  });
+});
+
+describe('Referentiel.questionsActives', () => {
+  function optionsValides(): Option[] {
+    return [1, 2, 3, 4].map((niveau) =>
+      Option.creer(`Option ${niveau}`, Niveau.creer(niveau).valeur),
+    );
+  }
+
+  function question(id: string, themeId: string): Question {
+    return Question.creer(id, `Libellé ${id}`, themeId, optionsValides())
+      .valeur;
+  }
+
+  it('aplati les Thèmes actifs en Questions, avec libellés', () => {
+    const themeA = Theme.creer('t1', 'Thème A', [
+      question('q1', 't1'),
+      question('q2', 't1'),
+    ]);
+    const themeB = Theme.creer('t2', 'Thème B', [question('q3', 't2')]);
+    const referentiel = Referentiel.reconstituer(new Date('2026-01-01'), [
+      themeA,
+      themeB,
+    ]);
+
+    expect(referentiel.questionsActives()).toEqual([
+      {
+        questionId: 'q1',
+        libelleQuestion: 'Libellé q1',
+        themeId: 't1',
+        libelleTheme: 'Thème A',
+      },
+      {
+        questionId: 'q2',
+        libelleQuestion: 'Libellé q2',
+        themeId: 't1',
+        libelleTheme: 'Thème A',
+      },
+      {
+        questionId: 'q3',
+        libelleQuestion: 'Libellé q3',
+        themeId: 't2',
+        libelleTheme: 'Thème B',
+      },
+    ]);
+  });
+
+  it('exclut un Thème archivé', () => {
+    const themeArchive = Theme.creer('t1', 'Thème archivé', [
+      question('q1', 't1'),
+    ]);
+    themeArchive.retirer(new Date('2026-02-01'));
+    const themeActif = Theme.creer('t2', 'Thème actif', [question('q2', 't2')]);
+    const referentiel = Referentiel.reconstituer(new Date('2026-01-01'), [
+      themeArchive,
+      themeActif,
+    ]);
+
+    expect(referentiel.questionsActives()).toEqual([
+      {
+        questionId: 'q2',
+        libelleQuestion: 'Libellé q2',
+        themeId: 't2',
+        libelleTheme: 'Thème actif',
+      },
+    ]);
+  });
+
+  it("exclut une Question archivée d'un Thème resté actif", () => {
+    const questionArchivee = Question.reconstituer(
+      'q1',
+      'Libellé q1',
+      't1',
+      optionsValides(),
+      new Date('2026-02-01'),
+    );
+    const theme = Theme.creer('t1', 'Thème A', [question('q2', 't1')]);
+    theme.ajouterQuestion(questionArchivee);
+    const referentiel = Referentiel.reconstituer(new Date('2026-01-01'), [
+      theme,
+    ]);
+
+    expect(referentiel.questionsActives().map((q) => q.questionId)).toEqual([
+      'q2',
+    ]);
+  });
+
+  it('sans aucun Thème actif, renvoie une liste vide', () => {
+    expect(Referentiel.vide().questionsActives()).toEqual([]);
   });
 });

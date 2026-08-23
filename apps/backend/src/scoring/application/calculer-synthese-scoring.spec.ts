@@ -36,15 +36,19 @@ describe('CalculerSyntheseScoring', () => {
       0.6,
     );
 
-    // t2 (Question q3) n'a aucune Réponse : absent du résultat, pas de "non évalué" (#52).
-    expect(resultat).toHaveLength(1);
-    const [theme] = resultat;
+    expect(resultat).toHaveLength(2);
+    const [theme, themeSansReponse] = resultat;
     expect(theme.themeId).toBe('t1');
     expect(theme.resultatPalier).toEqual({
       effectif: 6,
       palier: 2,
       tauxApproche: 0.5 / 0.6,
       margeAvantDescente: (4 / 6 - 0.6) / (1 - 0.6),
+    });
+    expect(themeSansReponse).toEqual({
+      themeId: 't2',
+      resultatPalier: { effectif: 0 },
+      questions: [],
     });
 
     expect(theme.questions).toEqual([
@@ -84,7 +88,7 @@ describe('CalculerSyntheseScoring', () => {
     expect(resultat[0].questions.map((q) => q.questionId)).toEqual(['q1']);
   });
 
-  it('sans aucune Réponse, ne renvoie aucun Thème', async () => {
+  it('sans aucune Réponse, renvoie le Thème avec un effectif nul', async () => {
     const source = new SourceReponsesScorablesFake([]);
 
     const resultat = await CalculerSyntheseScoring.executer(
@@ -94,7 +98,9 @@ describe('CalculerSyntheseScoring', () => {
       0.6,
     );
 
-    expect(resultat).toEqual([]);
+    expect(resultat).toEqual([
+      { themeId: 't1', resultatPalier: { effectif: 0 }, questions: [] },
+    ]);
   });
 
   it("préserve l'ordre de première apparition des Thèmes", async () => {

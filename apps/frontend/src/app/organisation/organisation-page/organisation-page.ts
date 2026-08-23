@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -73,7 +74,7 @@ function membreVersNoeud(membre: MembreDto): NoeudOrganisation {
 
 @Component({
   selector: 'app-organisation-page',
-  imports: [FormsModule, NzButtonModule, NzInputModule, NzPopconfirmModule, NzTreeModule],
+  imports: [RouterLink, FormsModule, NzButtonModule, NzInputModule, NzPopconfirmModule, NzTreeModule],
   templateUrl: './organisation-page.html',
   styleUrl: './organisation-page.scss',
 })

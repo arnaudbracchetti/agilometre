@@ -31,6 +31,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'organisation/equipes/:id/profil',
+        data: { breadcrumb: 'Profil de l’Équipe' },
+        loadComponent: () =>
+          import('./organisation/profil-page/profil-page').then(
+            (m) => m.ProfilPage,
+          ),
+      },
+      {
         path: 'modeles-session',
         data: { breadcrumb: 'Modèles de session' },
         loadComponent: () =>

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { EntiteDto, EquipeDto } from '@agilometre/shared';
+import { EntiteDto, EquipeDto, ProfilEquipeDto } from '@agilometre/shared';
 
 @Injectable({ providedIn: 'root' })
 export class OrganisationService {
@@ -57,6 +57,12 @@ export class OrganisationService {
   retirerMembre(equipeId: string, membreId: string): Observable<EquipeDto> {
     return this.http.delete<EquipeDto>(
       `${this.baseUrl}/equipes/${equipeId}/membres/${membreId}`,
+    );
+  }
+
+  obtenirProfil(equipeId: string): Observable<ProfilEquipeDto> {
+    return this.http.get<ProfilEquipeDto>(
+      `${this.baseUrl}/equipes/${equipeId}/profil`,
     );
   }
 

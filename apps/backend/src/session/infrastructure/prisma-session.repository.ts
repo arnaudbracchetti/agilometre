@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Periode } from '../../scoring/domain/scoring';
 import type { GenerateurDeCode } from '../domain/generateur-de-code';
 import { Selection } from '../domain/selection';
 import { Session } from '../domain/session';
@@ -59,6 +60,21 @@ export class PrismaSessionRepository implements SessionRepository {
       this.generateurDeCode,
       row.ouvertureLe,
     );
+  }
+
+  async findFermeesParEquipeEtPeriode(
+    equipeId: string,
+    periode: Periode,
+  ): Promise<Session[]> {
+    const rows = await this.prisma.session.findMany({
+      where: {
+        equipeId,
+        statut: 'CLOTUREE',
+        date: { gte: periode.debut, lt: periode.fin },
+      },
+      include: PrismaSessionRepository.AVEC_SELECTION,
+    });
+    return rows.map((row) => this.versDomaine(row));
   }
 
   async save(session: Session): Promise<void> {

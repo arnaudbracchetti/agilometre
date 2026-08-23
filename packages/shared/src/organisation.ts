@@ -1,3 +1,5 @@
+import { SyntheseThemeDto } from './session';
+
 export interface EntiteDto {
   id: string;
   nom: string;
@@ -15,4 +17,10 @@ export interface EquipeDto {
   nom: string;
   entiteId: string;
   membres: MembreDto[];
+}
+
+export interface ProfilEquipeDto {
+  periodeDebut: string; // ISO
+  periodeFin: string; // ISO
+  themes: SyntheseThemeDto[];
 }

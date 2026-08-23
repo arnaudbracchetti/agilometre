@@ -5,6 +5,7 @@ import { NgModel } from '@angular/forms';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzFormatEmitEvent } from 'ng-zorro-antd/tree';
 import { OrganisationPage } from './organisation-page';
@@ -68,7 +69,12 @@ describe('OrganisationPage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [OrganisationPage],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideNoopAnimations()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        provideRouter([]),
+      ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -236,6 +242,28 @@ describe('OrganisationPage', () => {
     );
     expect(detailTitre.textContent).toContain('Alpha');
     expect(fixture.debugElement.query(By.css('#nouveauMembreNom'))).toBeTruthy();
+  });
+
+  it('affiche un lien vers le Profil de l’Équipe sélectionnée', () => {
+    const fixture = TestBed.createComponent(OrganisationPage);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+    fixture.detectChanges();
+    cliquer(component, noeudEntite('e1'));
+    fixture.detectChanges();
+    httpMock
+      .expectOne('/api/organisation/entites/e1/equipes')
+      .flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
+    fixture.detectChanges();
+    cliquer(component, noeudEquipe('eq1'));
+    fixture.detectChanges();
+
+    const lien = fixture.nativeElement.querySelector(
+      'a[href="/organisation/equipes/eq1/profil"]',
+    );
+    expect(lien).toBeTruthy();
+    expect(lien.textContent).toContain('Voir le profil');
   });
 
   it('ajoute un Membre au roster depuis le panneau d’une Équipe sélectionnée', () => {

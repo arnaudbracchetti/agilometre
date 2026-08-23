@@ -31,6 +31,7 @@ import { OuvrirSession } from './application/ouvrir-session.usecase';
 import { ObtenirProjectionSession } from './application/obtenir-projection-session.usecase';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
 import { ObtenirSyntheseSession } from './application/obtenir-synthese-session.usecase';
+import { ObtenirProfilEquipe } from './application/obtenir-profil-equipe.usecase';
 import { PasserQuestionSuivanteSession } from './application/passer-question-suivante-session.usecase';
 import { RejoindreSession } from './application/rejoindre-session.usecase';
 import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
@@ -55,6 +56,7 @@ import { SessionController } from './session.controller';
 import { SessionAnimeeController } from './session-animee.controller';
 import { ProjectionController } from './projection.controller';
 import { ParticipantController } from './participant.controller';
+import { EquipeProfilController } from './equipe-profil.controller';
 import { JetonParticipantGuard } from './jeton-participant.guard';
 
 @Module({
@@ -64,6 +66,7 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
     SessionAnimeeController,
     ProjectionController,
     ParticipantController,
+    EquipeProfilController,
   ],
   providers: [
     PrismaModeleSessionRepository,
@@ -307,6 +310,35 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
           config.get<number>('SCORING_SEUIL_PALIER')!,
         ),
       inject: [
+        PrismaSessionRepository,
+        PrismaReferentielRepository,
+        PrismaEtatToursQuery,
+        PrismaReponseRepository,
+        ConfigService,
+      ],
+    },
+    {
+      provide: ObtenirProfilEquipe,
+      useFactory: (
+        equipes: PrismaEquipeRepository,
+        sessions: PrismaSessionRepository,
+        referentiel: PrismaReferentielRepository,
+        etatTours: PrismaEtatToursQuery,
+        reponses: PrismaReponseRepository,
+        config: ConfigService,
+      ) =>
+        new ObtenirProfilEquipe(
+          equipes,
+          sessions,
+          referentiel,
+          etatTours,
+          reponses,
+          new ScoringV1(),
+          config.get<number>('SCORING_SEUIL_PALIER')!,
+          config.get<number>('SCORING_DUREE_PERIODE_MOIS')!,
+        ),
+      inject: [
+        PrismaEquipeRepository,
         PrismaSessionRepository,
         PrismaReferentielRepository,
         PrismaEtatToursQuery,

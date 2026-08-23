@@ -48,12 +48,26 @@ qui vient de se dérouler, avec lecture fine par Question en drill-down. Portée
 Réponses portant sur une Question ou un Thème depuis archivé du Référentiel restent incluses — c'est
 le compte-rendu d'une séance qui a réellement eu lieu (ADR-0015).
 
+Affiche aussi, par Thème et au global (tous Thèmes confondus), un repère de couverture : le nombre
+de Questions ayant reçu au moins une Réponse et le nombre total de Réponses. À ne pas confondre avec
+le statut Traitée de la Progression (F1) : une Question passe Traitée dès que son Tour est clos,
+même sans aucun vote (Tour fermé avant que quiconque ait pu répondre) — ce repère de couverture,
+lui, ne compte que les Questions ayant effectivement reçu une Réponse.
+
+Un Thème de la Sélection sans aucune Réponse (Tour pas encore clos au moment de la consultation)
+reste affiché, marqué « Aucune donnée » plutôt qu'omis — même convention que le Thème « non évalué »
+du Profil ci-dessous.
+
 ## Écran — Profil par thème d'une Équipe (radar)
 
 Un axe par Thème du Référentiel actuel, portant son Palier et la jauge d'approche du Palier suivant,
 sur la Période de calcul en cours. Un Thème sans aucune Réponse sur la Période **garde son axe**,
 marqué « non évalué » — un radar dont le nombre de branches change d'une Équipe ou d'une Période à
 l'autre cesse d'être comparable visuellement.
+
+Même repère de couverture que l'écran de Résultat de fin de Session, à l'échelle de la Portée
+périodique cette fois : par Thème et au global, le nombre de Questions ayant reçu au moins une
+Réponse sur la Période et le nombre total de Réponses agrégées.
 
 ## Écran — Synthèse d'une Équipe (badge, niveau, tendance simplifiée)
 

@@ -1,0 +1,72 @@
+<div class="profil">
+  @if (chargementEnCours()) {
+    <p>Chargement…</p>
+  } @else if (inaccessible()) {
+    <app-error-message
+      message="Le Profil de cette Équipe n’est pas accessible."
+      taille="page"
+      class="profil__erreur"
+    />
+  } @else {
+    <header class="profil__entete">
+      <h2 class="profil__titre">Profil par Thème</h2>
+      @if (periodeDebut() && periodeFin()) {
+        <p class="profil__periode">
+          Période en cours : du {{ periodeDebut() | date: 'dd/MM/yyyy' }}
+          au {{ periodeFin() | date: 'dd/MM/yyyy' }}
+        </p>
+      }
+    </header>
+
+    @if (themes().length > 0) {
+      <div class="profil__stats-globales">
+        <div class="profil__stat">
+          <span class="profil__stat-valeur">{{ totalQuestionsRepondues() }}</span>
+          <span class="profil__stat-libelle">Questions répondues</span>
+        </div>
+        <div class="profil__stat">
+          <span class="profil__stat-valeur">{{ totalReponses() }}</span>
+          <span class="profil__stat-libelle">Réponses totales</span>
+        </div>
+      </div>
+
+      <div class="profil__radar">
+        <apx-chart
+          [series]="radarSeries()"
+          [chart]="radarChart"
+          [xaxis]="radarXaxis()"
+          [yaxis]="radarYaxis"
+          [colors]="radarColors"
+          [tooltip]="radarTooltip"
+          [markers]="radarMarkers()"
+        />
+      </div>
+
+      <ul class="profil__themes">
+        @for (theme of themes(); track theme.themeId) {
+          <li class="profil__theme">
+            <span class="profil__theme-libelle">{{ theme.libelle }}</span>
+            @if (theme.palier !== null) {
+              <span
+                class="profil__palier-badge"
+                [class.profil__palier-badge--haut]="theme.palier >= 3"
+              >Palier {{ theme.palier }}</span>
+              @if (theme.tauxApproche !== null) {
+                <nz-progress
+                  class="profil__jauge"
+                  [nzPercent]="theme.tauxApproche * 100"
+                  nzSize="small"
+                />
+              }
+            } @else {
+              <span class="profil__palier-badge profil__palier-badge--vide">Non évalué</span>
+            }
+            <span class="profil__theme-compte">
+              {{ theme.questions.length }} question(s) répondue(s) · {{ theme.effectif }} réponse(s)
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  }
+</div>

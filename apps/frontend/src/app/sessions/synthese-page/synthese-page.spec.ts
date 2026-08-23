@@ -168,6 +168,82 @@ describe('SynthesePage', () => {
 
       expect(fixture.nativeElement.querySelector('nz-collapse')).toBeNull();
     });
+
+    it('affiche le compte de Questions répondues et de Réponses par Thème et au global', () => {
+      fixture = TestBed.createComponent(SynthesePage);
+      fixture.detectChanges();
+      repondre({}, {
+        themes: [
+          ...syntheseAUnTheme().themes,
+          {
+            themeId: 't2',
+            libelle: 'Thème communication',
+            palier: 2,
+            tauxApproche: 0.5,
+            margeAvantDescente: 0.5,
+            effectif: 5,
+            questions: [
+              {
+                questionId: 'q2',
+                libelle: 'Question sur les rétros',
+                effectif: 3,
+                moyenne: 2,
+                consensus: 'FAIBLE',
+                repartition: { 1: 1, 2: 1, 3: 1, 4: 0 },
+              },
+              {
+                questionId: 'q3',
+                libelle: 'Question sur les démos',
+                effectif: 2,
+                moyenne: 3,
+                consensus: 'FORT',
+                repartition: { 1: 0, 2: 0, 3: 2, 4: 0 },
+              },
+            ],
+          },
+        ],
+      });
+      fixture.detectChanges();
+
+      const texte = fixture.nativeElement.textContent as string;
+      // Global : 1 Question (Thème collaboration) + 2 Questions (Thème communication) = 3.
+      expect(texte).toContain('3');
+      expect(texte).toContain('Questions répondues');
+      // Global : 4 Réponses (Thème collaboration) + 5 Réponses (Thème communication) = 9.
+      expect(texte).toContain('9');
+      expect(texte).toContain('Réponses totales');
+      // Par Thème : Thème collaboration a 1 Question et 4 Réponses.
+      expect(texte).toContain('1 question');
+      expect(texte).toContain('4 réponses');
+      // Par Thème : Thème communication a 2 Questions et 5 Réponses.
+      expect(texte).toContain('2 questions');
+      expect(texte).toContain('5 réponses');
+    });
+
+    it("affiche 'Aucune donnée' pour un Thème sans Réponse, sans drill-down par Question", () => {
+      fixture = TestBed.createComponent(SynthesePage);
+      fixture.detectChanges();
+      repondre({}, {
+        themes: [
+          ...syntheseAUnTheme().themes,
+          {
+            themeId: 't2',
+            libelle: 'Thème sans vote',
+            palier: null,
+            tauxApproche: null,
+            margeAvantDescente: null,
+            effectif: 0,
+            questions: [],
+          },
+        ],
+      });
+      fixture.detectChanges();
+
+      const texte = fixture.nativeElement.textContent as string;
+      expect(texte).toContain('Thème sans vote');
+      expect(texte).toContain('Aucune donnée');
+      expect(texte).not.toContain('Palier null');
+    });
   });
 
   describe('Terminer la séance (carte G1)', () => {

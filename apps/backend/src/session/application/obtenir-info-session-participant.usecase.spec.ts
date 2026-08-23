@@ -15,6 +15,9 @@ class SessionRepositoryFake implements SessionRepository {
   findById(id: string): Promise<Session | null> {
     return Promise.resolve(this.sessions.find((s) => s.id === id) ?? null);
   }
+  findFermeesParEquipeEtPeriode(): Promise<Session[]> {
+    return Promise.resolve([]);
+  }
   findByCode(code: string): Promise<Session | null> {
     return Promise.resolve(
       this.sessions.find((s) => s.code === code && s.statut === 'OUVERTE') ??
@@ -46,11 +49,26 @@ class EquipeRepositoryFake implements EquipeRepository {
   findByEntiteId(entiteId: string): Promise<Equipe[]> {
     return Promise.resolve(this.equipes.filter((e) => e.entiteId === entiteId));
   }
+  trouverParNom(nom: string): Promise<Equipe | null> {
+    return Promise.resolve(
+      this.equipes.find((e) => e.nom.toLowerCase() === nom.toLowerCase()) ??
+        null,
+    );
+  }
   save(equipe: Equipe): Promise<void> {
     if (!this.equipes.includes(equipe)) {
       this.equipes.push(equipe);
     }
     return Promise.resolve();
+  }
+  remove(id: string): Promise<void> {
+    this.equipes = this.equipes.filter((e) => e.id !== id);
+    return Promise.resolve();
+  }
+  compterParEntite(entiteId: string): Promise<number> {
+    return Promise.resolve(
+      this.equipes.filter((e) => e.entiteId === entiteId).length,
+    );
   }
 }
 

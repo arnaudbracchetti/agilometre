@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -43,6 +43,12 @@ export class SynthesePage implements OnInit {
   protected readonly statut = signal<PilotageSessionDto['statut'] | null>(null);
   protected readonly progression = signal<ProgressionQuestionDto[]>([]);
   protected readonly themes = signal<SyntheseThemeDto[]>([]);
+  protected readonly totalQuestionsRepondues = computed(() =>
+    this.themes().reduce((somme, theme) => somme + theme.questions.length, 0),
+  );
+  protected readonly totalReponses = computed(() =>
+    this.themes().reduce((somme, theme) => somme + theme.effectif, 0),
+  );
   protected readonly chargementEnCours = signal(true);
   protected readonly inaccessible = signal(false);
   protected readonly terminerEnCours = signal(false);
@@ -90,6 +96,11 @@ export class SynthesePage implements OnInit {
   /** % arrondi d'un Niveau dans la répartition d'une Question — 0 sur un effectif nul. */
   protected pourcentage(compte: number, effectif: number): number {
     return effectif === 0 ? 0 : Math.round((compte / effectif) * 100);
+  }
+
+  /** Accord simple (ajout d'un -s) pour les compteurs de Questions/Réponses. */
+  protected pluriel(compte: number, singulier: string): string {
+    return compte > 1 ? `${singulier}s` : singulier;
   }
 
   protected terminerSeance(): void {

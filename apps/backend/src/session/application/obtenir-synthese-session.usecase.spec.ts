@@ -23,6 +23,9 @@ class SessionRepositoryFake implements SessionRepository {
   findById(id: string): Promise<Session | null> {
     return Promise.resolve(this.sessions.find((s) => s.id === id) ?? null);
   }
+  findFermeesParEquipeEtPeriode(): Promise<Session[]> {
+    return Promise.resolve([]);
+  }
   findByCode(code: string): Promise<Session | null> {
     return Promise.resolve(
       this.sessions.find((s) => s.code === code && s.statut === 'OUVERTE') ??
@@ -200,7 +203,7 @@ describe('ObtenirSyntheseSession', () => {
 
     expect(resultat.type).toBe('ok');
     if (resultat.type !== 'ok') return;
-    // t2 (Thème B, Question q3) n'a reçu aucune Réponse : absent du résultat.
+    // t2 (Thème B, Question q3) n'est pas dans la Sélection de cette Session : absent du résultat.
     expect(resultat.themes.map((t) => t.themeId)).toEqual(['t1']);
     const [theme] = resultat.themes;
     expect(theme.libelle).toBe('Thème A');
@@ -213,5 +216,45 @@ describe('ObtenirSyntheseSession', () => {
       { questionId: 'q1', libelle: 'Libellé q1' },
       { questionId: 'q2', libelle: 'Libellé q2' },
     ]);
+  });
+
+  it("garde un Thème dont la Question sélectionnée n'a reçu aucune Réponse, marqué sans Palier", async () => {
+    const themeA = Theme.creer('t1', 'Thème A', [question('q1', 't1')]);
+    const themeB = Theme.creer('t2', 'Thème B', [question('q2', 't2')]);
+    const referentiel = Referentiel.reconstituer(new Date('2026-01-01'), [
+      themeA,
+      themeB,
+    ]);
+
+    const session = await creerSessionOuverte('s1', ['q1', 'q2']);
+    const sessions = new SessionRepositoryFake();
+    sessions.sessions.push(session);
+
+    // Seul le Tour de q1 est clos ; q2 n'a encore reçu aucun vote.
+    const etatTours = new EtatToursQueryFake([
+      { tourId: 't1', questionId: 'q1', numero: 1, clos: true },
+    ]);
+    const reponses = new ReponseRepositoryFake([reponse('r1', 'q1', 2, 't1')]);
+
+    const useCase = new ObtenirSyntheseSession(
+      sessions,
+      new ReferentielRepositoryFake(referentiel),
+      etatTours,
+      reponses,
+      new ScoringV1(),
+      60,
+    );
+
+    const resultat = await useCase.executer('s1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') return;
+    expect(resultat.themes.map((t) => t.themeId)).toEqual(['t1', 't2']);
+    expect(resultat.themes[1]).toEqual({
+      themeId: 't2',
+      libelle: 'Thème B',
+      resultatPalier: { effectif: 0 },
+      questions: [],
+    });
   });
 });
