@@ -1,11 +1,18 @@
 -- Génère 5 sessions CLOTUREE pour "Equipe Filière" sur le modèle "Modele de test",
 -- avec pour chaque question du modèle un tour de vote clos et 10 à 15 réponses aléatoires.
--- À exécuter contre la base de dev (port 5433), là où l'équipe et le modèle existent déjà.
+-- Crée l'Équipe et le Modèle de test s'ils n'existent pas encore (5 questions par Thème,
+-- dans l'ordre) — le Référentiel lui-même doit déjà être importé au préalable
+-- (scripts/import-referentiel.sh apps/backend/referentiel_questions/question_axe_1-4.yaml).
+-- À exécuter contre la base de dev (port 5433).
 
 DO $$
 DECLARE
-  v_equipe_id  text := 'fa293ca4-4cde-4555-8615-a275cbc75f03';
-  v_modele_id  text := 'a731379a-596e-40f7-9f0b-73d2a3cc5719';
+  v_entite_nom  text := 'Entité de test';
+  v_equipe_nom  text := 'Equipe Filière';
+  v_modele_nom  text := 'Modele de test';
+  v_entite_id  text;
+  v_equipe_id  text;
+  v_modele_id  text;
   v_dates      date[] := ARRAY['2026-08-15', '2026-07-07', '2026-07-20', '2026-05-10', '2026-04-05']::date[];
   v_date       date;
   v_session_id text;
@@ -15,6 +22,45 @@ DECLARE
   v_nb_reponses int;
   i            int;
 BEGIN
+  -- Entité (parent obligatoire de l'Équipe) — cherchée par nom (unique en base, cf.
+  -- entite_nom_unique_ci), créée seulement si absente.
+  SELECT id INTO v_entite_id FROM "Entite" WHERE lower(nom) = lower(v_entite_nom);
+  IF v_entite_id IS NULL THEN
+    v_entite_id := gen_random_uuid()::text;
+    INSERT INTO "Entite" (id, nom) VALUES (v_entite_id, v_entite_nom);
+  END IF;
+
+  -- Équipe — même pattern (unique par nom, cf. equipe_nom_unique_ci).
+  SELECT id INTO v_equipe_id FROM "Equipe" WHERE lower(nom) = lower(v_equipe_nom);
+  IF v_equipe_id IS NULL THEN
+    v_equipe_id := gen_random_uuid()::text;
+    INSERT INTO "Equipe" (id, nom, "entiteId") VALUES (v_equipe_id, v_equipe_nom, v_entite_id);
+  END IF;
+
+  -- Modèle de session, avec 5 questions par Thème si créé ici. Suppose le Référentiel déjà
+  -- importé (Thème/Question sont un bounded context séparé, pas créé par ce script).
+  SELECT id INTO v_modele_id FROM "ModeleSession" WHERE lower(nom) = lower(v_modele_nom);
+  IF v_modele_id IS NULL THEN
+    IF NOT EXISTS (SELECT 1 FROM "Theme" WHERE "retireLe" IS NULL) THEN
+      RAISE EXCEPTION 'Aucun Thème en base : importer le Référentiel avant ce script (scripts/import-referentiel.sh)';
+    END IF;
+
+    v_modele_id := gen_random_uuid()::text;
+    INSERT INTO "ModeleSession" (id, nom, "updatedAt") VALUES (v_modele_id, v_modele_nom, now());
+
+    INSERT INTO "SelectionItem" (id, "modeleSessionId", "questionId", "ordre")
+    SELECT gen_random_uuid()::text, v_modele_id, q.id, row_number() OVER (ORDER BY t.ordre, q.ordre)
+    FROM "Theme" t
+    JOIN LATERAL (
+      SELECT id, ordre
+      FROM "Question"
+      WHERE "themeId" = t.id AND "retireeLe" IS NULL
+      ORDER BY ordre
+      LIMIT 5
+    ) q ON true
+    WHERE t."retireLe" IS NULL;
+  END IF;
+
   FOREACH v_date IN ARRAY v_dates LOOP
     v_session_id := gen_random_uuid()::text;
     v_code := (1000 + floor(random() * 9000))::int::text;
