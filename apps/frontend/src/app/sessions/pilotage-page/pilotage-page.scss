@@ -27,15 +27,21 @@
     margin: 0;
   }
 
-  // Même matériau « note autocollante » que l'accueil/vote/projection, porté par
-  // <app-sticky-note> (voir shared/sticky-note) — la copie du coach du même repère que celui
-  // affiché en salle.
+  // Carte sobre Operate, comme &__question et &__historique-ligne — pas de matériau note ici :
+  // la teinte pâle de <app-sticky-note> (--color-sticky-blue, quasi blanche) ne se détache plus
+  // une fois isolée sur une page devenue sobre, sans note voisine ni fond coloré pour la faire
+  // ressortir (contrairement à l'accueil/au vote, où elle voisine d'autres notes ou repose sur un
+  // fond teinté). La valeur du Code (grande, grasse, bleu primaire, mono) porte déjà l'emphase.
   &__code {
     display: flex;
     align-items: baseline;
     gap: var(--space-3);
     width: fit-content;
     margin-bottom: var(--space-6);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-4) var(--space-5);
   }
 
   &__code-label {
@@ -59,10 +65,16 @@
     color: var(--color-ink-muted);
   }
 
+  // Carte sobre Operate (bordure nette, plat) — voir DESIGN.md « Cards / Containers » ; le
+  // matériau note autocollante reste réservé au badge Code sur cet écran (voir &__code).
   &__question {
     display: block;
     max-width: 34rem;
     margin-bottom: var(--space-6);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-5);
   }
 
   &__question-libelle {
@@ -82,14 +94,12 @@
   }
 
   // Mêmes 4 teintes « vives » que l'écran de projection (voir projection-page.scss) — le coach
-  // retrouve les mêmes repères de couleur que ce que la salle voit sur grand écran. Le palier
-  // vif (pas la teinte pâle -100 utilisée pour le fond de la note) est nécessaire ici aussi :
-  // l'option B (violette) siège sur une note elle-même violet pâle, un pâle sur pâle
-  // disparaîtrait.
+  // retrouve les mêmes repères de couleur que ce que la salle voit sur grand écran.
   &__lettre {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     width: 1.7em;
     height: 1.7em;
     margin-right: var(--space-2);
@@ -122,10 +132,15 @@
     margin-top: var(--space-5);
   }
 
+  // Bleu primaire — même rôle que le repère « En cours » de la Vue d'ensemble
+  // (&__historique-statut--courante, &__historique-indicateur) : ce compte est un signal en
+  // direct sur le Tour ouvert, pas une mesure déjà figée comme les comptes de l'historique
+  // (restés en encre neutre, &__historique-compte).
   &__compteur-tour {
     font-family: var(--font-family-mono);
     font-size: var(--font-size-md);
-    color: var(--color-ink);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-primary);
     margin: var(--space-3) 0 0;
   }
 
@@ -145,11 +160,18 @@
   // au même niveau que l'en-tête — pas seulement à côté de la Question courante — pour rester
   // visible sans scroll pendant qu'un Coach discute d'un résultat passé. `flex-wrap` repasse les
   // deux colonnes en pile dès que la largeur ne suffit plus pour les deux `flex-basis`.
+  // Bloc borné et centré : sans plafond, les deux colonnes s'écartaient jusqu'aux bords d'un
+  // écran large en creusant un grand vide au milieu — le contenu de la colonne principale est
+  // lui-même plafonné (Question à 34rem pour rester lisible), il ne remplit pas une colonne
+  // étirée. 86rem = 34rem (colonne principale) + 4rem (gap) + 48rem (Vue d'ensemble), soit la
+  // largeur réellement utile des deux colonnes.
   &__mise-en-page {
     display: flex;
     align-items: flex-start;
     gap: var(--space-8);
     flex-wrap: wrap;
+    max-width: 86rem;
+    margin: 0 auto;
   }
 
   &__colonne-principale {
@@ -159,7 +181,6 @@
 
   // Consultation secondaire (référence ponctuelle pendant la discussion, pas une action répétée
   // comme les contrôles de Tour) : toujours à côté du flux principal, jamais mêlée à sa boucle.
-  // `flex-basis`/`max-width` élargis pour laisser respirer les deux colonnes de la liste ci-dessous.
   &__historique {
     flex: 2 1 40rem;
     min-width: 0;
@@ -173,34 +194,76 @@
     margin: 0 0 var(--space-4);
   }
 
-  // Une note par Question (cf. `couleurNoteHistorique`, 3 teintes cyclées) plutôt qu'un composant
-  // de bibliothèque générique : même matériau que les notes Code/Question ci-dessus, pour que
-  // l'écran reste un seul registre visuel. Écart resserré (liste potentiellement longue, toute la
-  // Sélection dès la carte F1) : juste assez pour que deux coins pliés voisins ne se touchent
-  // jamais malgré l'inclinaison aléatoire (<app-sticky-note>), pas plus.
-  // Essai deux colonnes : `grid-auto-flow: row` remplit ligne par ligne (pas de tassement type
-  // masonry), un simple grid suffit tant que les notes repliées gardent une hauteur homogène.
+  // Liste compacte 1 colonne (pas de grille 2 colonnes de cartes empilées) : reste scannable
+  // d'un coup d'œil même sur une longue Sélection, sans faire concurrence visuellement à la
+  // Question courante — voir DESIGN.md « Règle du Registre Unique ».
+  // Hauteur plafonnée + défilement interne (même principe que
+  // shared/selection-editor/selection-editor.scss `&__panneau`) : sans ça, une Sélection longue
+  // étire la colonne bien au-delà de la colonne principale, laissant un grand vide sous les
+  // contrôles de vote et forçant à défiler loin d'eux pour atteindre la fin de la liste — alors
+  // que « en permanence visible » (annexe spec) n'exige pas qu'elle occupe une hauteur illimitée.
+  // Hauteur suivant l'écran, sans plafond : la liste descend jusqu'en bas du viewport pour
+  // afficher le plus de Questions possible d'un coup. Les 16rem retranchés couvrent le chrome
+  // au-dessus (bandeau + nav + fil d'Ariane + padding haut de page + titre de section ≈ 13.5rem)
+  // *et* le padding bas de page — sans ce dernier, la liste dépasse de quelques pixels et fait
+  // apparaître une barre de défilement de page inutile. `max()` garde un plancher : sur un écran
+  // très bas ou à fort zoom (RGAA, 200 %), la soustraction deviendrait nulle voire négative.
+  // `dvh` suit la barre d'adresse mobile ; la ligne `vh` reste le repli des moteurs sans `dvh`.
   &__historique-liste {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: var(--space-2);
+    max-height: max(16rem, calc(100vh - 16rem));
+    max-height: max(16rem, calc(100dvh - 16rem));
+    overflow-y: auto;
+  }
 
-    @media (max-width: 640px) {
-      grid-template-columns: 1fr;
+  // Carte sobre Operate, en version ligne de liste (padding resserré, pleine largeur) — même
+  // recette que &__question, jamais le matériau note autocollante ici.
+  &__historique-ligne {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3) var(--space-4);
+
+    // Fond + bordure teintés sur toute la ligne, pas une bordure gauche isolée (motif décoratif
+    // banni) — la ligne entière porte le repère de Question courante, comme un état
+    // sélectionné/actif de tableau, plutôt que la seule icône
+    // (&__historique-indicateur--courante).
+    &--courante {
+      background: var(--color-primary-subtle);
+      border-color: var(--color-primary);
+    }
+
+    // Grisée entièrement (fond + libellé) : la Question est exclue du score, elle doit reculer
+    // au second plan de la liste. Pas de teinte de danger — sauter est une décision d'animation,
+    // pas une erreur (voir DESIGN.md).
+    &--sautee {
+      background: var(--color-surface-alt);
+      border-color: var(--color-border);
+
+      .pilotage__historique-libelle {
+        color: var(--color-ink-muted);
+        font-weight: var(--font-weight-regular);
+      }
     }
   }
 
-  // Padding resserré (cf. --sticky-note-padding, même mécanisme que projection-page/vote-page) :
-  // plusieurs notes empilées, contrairement à la note « Question courante » seule à gauche.
-  &__historique-note {
-    --sticky-note-padding: var(--space-3) var(--space-4);
+  // Ligne d'en-tête + action (Sauter/Réactiver) côte à côte, jamais l'action en dessous — un
+  // bouton texte pleine largeur forçait un retour à la ligne et gonflait la hauteur de chaque
+  // ligne de la liste.
+  &__historique-entete-rangee {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
   }
 
   &__historique-entete {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     padding: 0;
     background: none;
     border: none;
@@ -210,18 +273,44 @@
     cursor: pointer;
 
     // Question sans Tour clos (à venir / sautée / courante pas encore votée, carte F1) : rien à
-    // déplier, jamais interactive comme les autres notes.
+    // déplier, jamais interactive comme les autres lignes. `padding-right` réserve le même espace
+    // que le chevron des lignes dépliables (icône ~1em + `gap: var(--space-3)` du flex parent),
+    // sinon le texte de statut des lignes sans chevron termine plus à droite que celui des lignes
+    // avec chevron — la colonne de statut cesse d'être scannable en un coup d'œil.
     &--statique {
       cursor: default;
+      padding-right: calc(1em + var(--space-3));
     }
   }
 
-  // Repère visuel de la Question courante (carte F1) — le texte « En cours » seul se perd dans
-  // une liste dense sur deux colonnes, l'icône permet de repérer la position d'un coup d'œil.
+  // Repère visuel par statut, présent sur les 4 (plus d'état « sans icône ») — le libellé de
+  // statut seul se perd dans une liste dense, l'icône permet de repérer chaque état d'un coup
+  // d'œil sans le lire. Plein = définitif, contour = pas encore résolu positivement (voir
+  // indicateurStatut()) : la forme porte la distinction, pas uniquement la couleur.
   &__historique-indicateur {
     flex-shrink: 0;
-    color: var(--color-primary);
     font-size: var(--font-size-md);
+
+    // Seule à porter le bleu primaire — la Question sur laquelle agir maintenant, jamais
+    // partagée avec un autre statut (voir DESIGN.md, rareté de l'accent).
+    &--courante {
+      color: var(--color-primary);
+    }
+
+    // Encre pleine, pas atténuée : un statut définitif (compte pour le score) mérite la même
+    // affirmation visuelle que le libellé « Traitée » lui-même (déjà en encre pleine, jamais
+    // atténué — voir &__historique-statut).
+    &--traitee {
+      color: var(--color-ink);
+    }
+
+    // À venir/Sautée restent en encre atténuée — ni l'un ni l'autre n'est l'action prioritaire du
+    // Coach ; la palette ne définit d'ailleurs aucun ton « succès » qui justifierait une couleur
+    // propre à Traitée au-delà de son encre pleine.
+    &--a-venir,
+    &--sautee {
+      color: var(--color-ink-muted);
+    }
   }
 
   &__historique-libelle {
@@ -229,8 +318,7 @@
     font-weight: var(--font-weight-medium);
   }
 
-  // Statut et nombre de Tours empilés (plutôt que côte à côte) : économise la largeur de la ligne,
-  // utile dès que la liste passe sur deux colonnes.
+  // Statut et nombre de Tours empilés (plutôt que côte à côte) : économise la largeur de la ligne.
   &__historique-meta {
     display: flex;
     flex-direction: column;
@@ -256,7 +344,6 @@
 
     &--sautee {
       color: var(--color-ink-muted);
-      text-decoration: line-through;
     }
   }
 
@@ -268,17 +355,26 @@
     white-space: nowrap;
   }
 
-  // Seule action encore permise sur une Question restante (carte F2) — en retrait sous l'en-tête,
-  // jamais dans la même ligne que le libellé/statut pour ne pas la confondre avec un contrôle
-  // d'expansion de l'historique.
-  &__historique-sauter {
-    margin-top: var(--space-2);
+  // Sauter (carte F2) / Réactiver (addendum #44) — bouton icône seule, en bout de ligne plutôt
+  // qu'un bouton texte sous l'en-tête, qui forçait un retour à la ligne et gonflait chaque ligne
+  // de la liste. Atténué au repos (action ponctuelle, pas la boucle principale du Coach) mais
+  // jamais masqué : en pleine animation de séance, une action qu'il faut d'abord trouver en
+  // survolant coûte plus cher que le peu de discrétion gagnée.
+  &__historique-action {
+    flex-shrink: 0;
+    opacity: 0.45;
+    transition: opacity 0.15s ease;
   }
 
-  // Inverse de Sauter (addendum #44) — même emplacement, jamais de couleur danger puisque
-  // réactiver n'est pas destructif.
-  &__historique-reactiver {
-    margin-top: var(--space-2);
+  &__historique-ligne:hover &__historique-action,
+  &__historique-action:focus-visible {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &__historique-action {
+      transition: none;
+    }
   }
 
   &__historique-chevron {
@@ -314,14 +410,11 @@
     font-weight: var(--font-weight-medium);
   }
 
+  // Information neutre, jamais --color-accent (réservé aux signaux d'erreur — voir DESIGN.md).
   &__historique-badge {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
-    // Encre de la note courante (bleu/violet/magenta selon l'instance) plutôt qu'une couleur
-    // fixe : le badge reste lisible sur les 3 teintes de fond sans jamais utiliser --color-accent
-    // (réservé aux signaux d'erreur, jamais à une information neutre — voir DESIGN.md).
-    color: inherit;
-    opacity: 0.85;
+    color: var(--color-ink-muted);
   }
 
   &__historique-barres {
@@ -369,13 +462,37 @@
     margin-right: 0;
   }
 
+  // Réponse de l'Option (carte E2) — reprend l'espace laissé par la barre, réduite à un tiers de
+  // sa largeur d'origine : la lettre + le résultat chiffré suffisaient à situer un compte, pas à
+  // savoir ce que l'Option disait. Petite taille pour tenir sur 1 ligne, 2 au pire sur les
+  // libellés les plus longs — jamais plus, `line-height` resserré pour ce cas.
+  &__historique-option-libelle {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: var(--font-size-xs);
+    line-height: 1.3;
+    color: var(--color-ink-muted);
+  }
+
+  // Passe de « remplit toute la largeur restante » à un tiers de la ligne (voir
+  // &__historique-option-libelle ci-dessus) : reste un repère visuel de comparaison entre
+  // Options, plus la donnée principale de la ligne.
   &__historique-barre-piste {
     display: block;
-    flex: 1 1 auto;
+    flex: 0 0 33%;
+    min-width: 3.5rem;
     height: 0.6em;
     background: var(--color-border);
     border-radius: var(--radius-pill);
     overflow: hidden;
+
+    // Sous 640px, 33% de la largeur restante à la réponse ne suffit plus à tenir en 1-2 lignes
+    // (colonne déjà resserrée à cette largeur — voir .pilotage padding) : la barre cède encore de
+    // la place, quitte à devenir un simple repère plutôt qu'un comparatif fin entre Options.
+    @media (max-width: 640px) {
+      flex-basis: 2.5rem;
+      min-width: 2.5rem;
+    }
   }
 
   // width fixe + transform: scaleX() plutôt qu'animer width (layout thrash) — même choix que

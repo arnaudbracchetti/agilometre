@@ -7,6 +7,8 @@ export interface HistoriqueTourClos {
   libelle: string;
   numero: number;
   comptesParNiveau: Record<number, number>;
+  /** Libellés des 4 Options de la Question, dans l'ordre de Niveau (déjà celui de `Question.options`, validé sans trou à la création). */
+  libellesOptions: string[];
 }
 
 /**
@@ -35,6 +37,9 @@ export async function resoudreHistoriqueToursClos(
   const questions = session.selectionEnrichie(referentielCharge);
   const indexQuestion = new Map(questions.map((q, index) => [q.id, index]));
   const libelleQuestion = new Map(questions.map((q) => [q.id, q.libelle]));
+  const libellesOptionsQuestion = new Map(
+    questions.map((q) => [q.id, q.options.map((option) => option.libelle)]),
+  );
 
   const repartitionsParTour = await repartitions.listerRepartitionsDesTours(
     tours.map((tour) => tour.tourId),
@@ -50,6 +55,7 @@ export async function resoudreHistoriqueToursClos(
       libelle: libelleQuestion.get(tour.questionId)!,
       numero: tour.numero,
       comptesParNiveau: comptesParTourId.get(tour.tourId) ?? {},
+      libellesOptions: libellesOptionsQuestion.get(tour.questionId)!,
     }))
     .sort((a, b) => {
       const parIndex =

@@ -77,6 +77,8 @@ export interface TourHistoriqueDto {
   libelle: string;
   numero: number;
   repartition: RepartitionVotesDto;
+  /** Une entrée par Niveau (1 à 4, même ordre que `repartition`) — voir `QuestionCouranteDto`. */
+  options: OptionAffichageDto[];
 }
 
 export type StatutQuestionProgressionDto = 'A_VENIR' | 'COURANTE' | 'TRAITEE' | 'SAUTEE';

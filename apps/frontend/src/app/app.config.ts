@@ -25,6 +25,11 @@ import {
   BarChartOutline,
   SearchOutline,
   UserOutline,
+  CheckCircleFill,
+  MinusCircleOutline,
+  ClockCircleOutline,
+  StepForwardOutline,
+  UndoOutline,
 } from '@ant-design/icons-angular/icons';
 import { registerLocaleData } from '@angular/common';
 import fr from '@angular/common/locales/fr';
@@ -66,6 +71,11 @@ export const appConfig: ApplicationConfig = {
       BarChartOutline,
       SearchOutline,
       UserOutline,
+      CheckCircleFill,
+      MinusCircleOutline,
+      ClockCircleOutline,
+      StepForwardOutline,
+      UndoOutline,
     ]),
   ],
 };

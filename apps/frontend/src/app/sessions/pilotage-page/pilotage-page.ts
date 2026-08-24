@@ -5,7 +5,8 @@ import { Subscription, finalize } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
+import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import {
   PilotageSessionDto,
   ProgressionQuestionDto,
@@ -17,7 +18,6 @@ import {
 import { LETTRES_OPTIONS } from '../../shared/lettres-options';
 import { libelleStatutProgression } from '../../shared/libelle-statut-progression';
 import { SEUIL_ECHECS_CONNEXION_PERDUE, sonder } from '../../shared/sondage-2s';
-import { CouleurStickyNote, StickyNote } from '../../shared/sticky-note/sticky-note';
 import { ErrorMessage } from '../../shared/error-message/error-message';
 import { SessionsService } from '../sessions.service';
 
@@ -29,11 +29,40 @@ interface GroupeProgression {
   tours: TourHistoriqueDto[];
 }
 
+interface IndicateurStatut {
+  type: string;
+  theme: 'fill' | 'outline';
+  classe: string;
+}
+
 /**
- * 3 teintes seulement (comme <app-sticky-note>, jamais une 4e) — cyclées par position de
- * Question, pas par contenu, pour varier visuellement une liste de plusieurs notes empilées.
+ * Repère visuel par statut — permet de scanner la Vue d'ensemble sans lire chaque libellé de
+ * statut : forme distincte par statut, jamais la couleur seule. Plein = définitif (Traitée),
+ * contour = pas encore résolu positivement (À venir, Sautée) ; Courante seule porte le bleu
+ * primaire, exclusif à la Question sur laquelle agir maintenant.
  */
-const COULEURS_NOTES_HISTORIQUE: readonly CouleurStickyNote[] = ['blue', 'violet', 'magenta'];
+const INDICATEURS_STATUT: Record<StatutQuestionProgressionDto, IndicateurStatut> = {
+  A_VENIR: {
+    type: 'clock-circle',
+    theme: 'outline',
+    classe: 'pilotage__historique-indicateur pilotage__historique-indicateur--a-venir',
+  },
+  COURANTE: {
+    type: 'caret-right',
+    theme: 'fill',
+    classe: 'pilotage__historique-indicateur pilotage__historique-indicateur--courante',
+  },
+  TRAITEE: {
+    type: 'check-circle',
+    theme: 'fill',
+    classe: 'pilotage__historique-indicateur pilotage__historique-indicateur--traitee',
+  },
+  SAUTEE: {
+    type: 'minus-circle',
+    theme: 'outline',
+    classe: 'pilotage__historique-indicateur pilotage__historique-indicateur--sautee',
+  },
+};
 
 /** Écran de pilotage (Coach) — sondage 2s (doc/spec/annexes/deroulement-session-animee.md). */
 @Component({
@@ -42,8 +71,8 @@ const COULEURS_NOTES_HISTORIQUE: readonly CouleurStickyNote[] = ['blue', 'violet
     RouterLink,
     NzButtonModule,
     NzIconModule,
-    NzPopconfirmModule,
-    StickyNote,
+    NzModalModule,
+    NzTooltipModule,
     ErrorMessage,
   ],
   templateUrl: './pilotage-page.html',
@@ -54,6 +83,7 @@ export class PilotagePage implements OnInit {
   private readonly router = inject(Router);
   private readonly sessionsService = inject(SessionsService);
   private readonly message = inject(NzMessageService);
+  private readonly modal = inject(NzModalService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly lettres = LETTRES_OPTIONS;
@@ -236,6 +266,19 @@ export class PilotagePage implements OnInit {
       });
   }
 
+  /** Boîte de dialogue générique (NzModalService) plutôt qu'un popconfirm posé à côté du bouton
+   * — même composant que ajustement-page/aide-menu pour toute confirmation de l'app. */
+  protected confirmerTerminerPrematurement(): void {
+    this.modal.confirm({
+      nzTitle: 'Terminer la séance prématurément ?',
+      nzContent: 'Toutes les Questions restantes seront automatiquement marquées comme sautées.',
+      nzOkText: 'Terminer la séance',
+      nzOkDanger: true,
+      nzCancelText: 'Annuler',
+      nzOnOk: () => this.terminerPrematurement(),
+    });
+  }
+
   protected terminerPrematurement(): void {
     const id = this.sessionId();
     if (!id) {
@@ -254,12 +297,12 @@ export class PilotagePage implements OnInit {
       });
   }
 
-  protected couleurNoteHistorique(index: number): CouleurStickyNote {
-    return COULEURS_NOTES_HISTORIQUE[index % COULEURS_NOTES_HISTORIQUE.length];
-  }
-
   protected libelleStatut(statut: StatutQuestionProgressionDto): string {
     return libelleStatutProgression(statut);
+  }
+
+  protected indicateurStatut(statut: StatutQuestionProgressionDto): IndicateurStatut {
+    return INDICATEURS_STATUT[statut];
   }
 
   protected estGroupeHistoriqueOuvert(questionId: string): boolean {

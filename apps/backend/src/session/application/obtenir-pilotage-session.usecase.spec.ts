@@ -394,12 +394,14 @@ describe('ObtenirPilotageSession', () => {
         libelle: 'Libellé',
         numero: 1,
         comptesParNiveau: { 1: 9, 2: 0, 3: 0, 4: 0 },
+        libellesOptions: ['Option 1', 'Option 2', 'Option 3', 'Option 4'],
       },
       {
         questionId: 'q1',
         libelle: 'Libellé',
         numero: 2,
         comptesParNiveau: { 1: 0, 2: 1, 3: 2, 4: 1 },
+        libellesOptions: ['Option 1', 'Option 2', 'Option 3', 'Option 4'],
       },
     ]);
   });

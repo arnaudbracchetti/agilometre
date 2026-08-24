@@ -73,6 +73,7 @@ export function versHistoriqueDto(
     libelle: tour.libelle,
     numero: tour.numero,
     repartition: versRepartitionDto(tour.comptesParNiveau),
+    options: tour.libellesOptions.map((libelle) => ({ libelle })),
   }));
 }
 

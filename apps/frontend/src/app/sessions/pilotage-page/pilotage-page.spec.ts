@@ -6,8 +6,17 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
-import { CaretRightFill, DownOutline } from '@ant-design/icons-angular/icons';
+import {
+  CaretRightFill,
+  CheckCircleFill,
+  ClockCircleOutline,
+  DownOutline,
+  MinusCircleOutline,
+  StepForwardOutline,
+  UndoOutline,
+} from '@ant-design/icons-angular/icons';
 import { PilotagePage } from './pilotage-page';
 
 function activatedRouteAvecId(id: string): Partial<ActivatedRoute> {
@@ -16,15 +25,17 @@ function activatedRouteAvecId(id: string): Partial<ActivatedRoute> {
   };
 }
 
+const OPTIONS_TEST = [
+  { libelle: 'Jamais' },
+  { libelle: 'Parfois' },
+  { libelle: 'Souvent' },
+  { libelle: 'Toujours' },
+];
+
 const QUESTION_COURANTE = {
   questionId: 'q1',
   libelle: 'Les rétrospectives sont-elles régulières ?',
-  options: [
-    { libelle: 'Jamais' },
-    { libelle: 'Parfois' },
-    { libelle: 'Souvent' },
-    { libelle: 'Toujours' },
-  ],
+  options: OPTIONS_TEST,
 };
 
 describe('PilotagePage', () => {
@@ -43,7 +54,15 @@ describe('PilotagePage', () => {
         // Sans ça, nz-icon tente de récupérer les SVG via HTTP (assets/outline|fill/*.svg), ce
         // que HttpTestingController rejette comme requête non attendue (même pattern que
         // bibliotheque-page.spec.ts).
-        provideNzIcons([DownOutline, CaretRightFill]),
+        provideNzIcons([
+          DownOutline,
+          CaretRightFill,
+          CheckCircleFill,
+          MinusCircleOutline,
+          ClockCircleOutline,
+          StepForwardOutline,
+          UndoOutline,
+        ]),
       ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
@@ -395,18 +414,21 @@ describe('PilotagePage', () => {
             libelle: 'Les rétrospectives sont-elles régulières ?',
             numero: 1,
             repartition: { 1: 2, 2: 0, 3: 0, 4: 0 },
+            options: OPTIONS_TEST,
           },
           {
             questionId: 'q1',
             libelle: 'Les rétrospectives sont-elles régulières ?',
             numero: 2,
             repartition: { 1: 0, 2: 0, 3: 0, 4: 2 },
+            options: OPTIONS_TEST,
           },
           {
             questionId: 'q2',
             libelle: 'Autre question',
             numero: 1,
             repartition: { 1: 0, 2: 1, 3: 0, 4: 0 },
+            options: OPTIONS_TEST,
           },
         ],
       });
@@ -445,7 +467,7 @@ describe('PilotagePage', () => {
     describe('Sauter une Question (carte F2)', () => {
       function boutonsSauter(): HTMLButtonElement[] {
         return Array.from(
-          fixture.nativeElement.querySelectorAll('.pilotage__historique-sauter'),
+          fixture.nativeElement.querySelectorAll('[aria-label="Sauter cette Question"]'),
         ) as HTMLButtonElement[];
       }
 
@@ -471,7 +493,7 @@ describe('PilotagePage', () => {
         expect(boutonsSauter()).toHaveLength(2);
       });
 
-      it('confirme la popconfirm : appelle sauterQuestion puis applique le pilotage renvoyé', () => {
+      it('au clic : appelle sauterQuestion puis applique le pilotage renvoyé', () => {
         fixture = TestBed.createComponent(PilotagePage);
         fixture.detectChanges();
         httpMock.expectOne('/api/sessions/s1/pilotage').flush({
@@ -485,10 +507,10 @@ describe('PilotagePage', () => {
         });
         fixture.detectChanges();
 
-        const bouton = fixture.debugElement
-          .queryAll(By.css('.pilotage__historique-sauter'))
-          .find((el) => (el.nativeElement as HTMLElement).textContent?.includes('Sauter'))!;
-        bouton.triggerEventHandler('nzOnConfirm', undefined);
+        const bouton = fixture.debugElement.query(
+          By.css('[aria-label="Sauter cette Question"]'),
+        );
+        (bouton.nativeElement as HTMLButtonElement).click();
 
         const req = httpMock.expectOne('/api/sessions/s1/questions/q1/sauter');
         expect(req.request.method).toBe('POST');
@@ -523,8 +545,8 @@ describe('PilotagePage', () => {
         const messageService = fixture.debugElement.injector.get(NzMessageService);
         const errorSpy = vi.spyOn(messageService, 'error');
 
-        const bouton = fixture.debugElement.query(By.css('.pilotage__historique-sauter'));
-        bouton.triggerEventHandler('nzOnConfirm', undefined);
+        const bouton = fixture.debugElement.query(By.css('[aria-label="Sauter cette Question"]'));
+        (bouton.nativeElement as HTMLButtonElement).click();
 
         httpMock
           .expectOne('/api/sessions/s1/questions/q1/sauter')
@@ -540,7 +562,7 @@ describe('PilotagePage', () => {
     describe('Réactiver une Question sautée (carte #44 addendum)', () => {
       function boutonsReactiver(): HTMLButtonElement[] {
         return Array.from(
-          fixture.nativeElement.querySelectorAll('.pilotage__historique-reactiver'),
+          fixture.nativeElement.querySelectorAll('[aria-label="Réactiver cette Question"]'),
         ) as HTMLButtonElement[];
       }
 
@@ -576,7 +598,7 @@ describe('PilotagePage', () => {
         expect(fixture.nativeElement.textContent).toContain('Sautée réactivable');
       });
 
-      it('confirme la popconfirm : appelle reactiverQuestion puis applique le pilotage renvoyé', () => {
+      it('au clic : appelle reactiverQuestion puis applique le pilotage renvoyé', () => {
         fixture = TestBed.createComponent(PilotagePage);
         fixture.detectChanges();
         httpMock.expectOne('/api/sessions/s1/pilotage').flush({
@@ -592,8 +614,8 @@ describe('PilotagePage', () => {
         });
         fixture.detectChanges();
 
-        const bouton = fixture.debugElement.query(By.css('.pilotage__historique-reactiver'));
-        bouton.triggerEventHandler('nzOnConfirm', undefined);
+        const bouton = fixture.debugElement.query(By.css('[aria-label="Réactiver cette Question"]'));
+        (bouton.nativeElement as HTMLButtonElement).click();
 
         const req = httpMock.expectOne('/api/sessions/s1/questions/q1/reactiver');
         expect(req.request.method).toBe('POST');
@@ -633,8 +655,8 @@ describe('PilotagePage', () => {
         const messageService = fixture.debugElement.injector.get(NzMessageService);
         const errorSpy = vi.spyOn(messageService, 'error');
 
-        const bouton = fixture.debugElement.query(By.css('.pilotage__historique-reactiver'));
-        bouton.triggerEventHandler('nzOnConfirm', undefined);
+        const bouton = fixture.debugElement.query(By.css('[aria-label="Réactiver cette Question"]'));
+        (bouton.nativeElement as HTMLButtonElement).click();
 
         httpMock
           .expectOne('/api/sessions/s1/questions/q1/reactiver')
@@ -672,7 +694,7 @@ describe('PilotagePage', () => {
         expect(boutonTerminerPrematurement()).toBeTruthy();
       });
 
-      it('confirme la popconfirm : appelle terminerPrematurement puis navigue vers l’écran de synthèse', () => {
+      it('confirme la boîte de dialogue : appelle terminerPrematurement puis navigue vers l’écran de synthèse', () => {
         fixture = TestBed.createComponent(PilotagePage);
         fixture.detectChanges();
         httpMock.expectOne('/api/sessions/s1/pilotage').flush({
@@ -689,6 +711,8 @@ describe('PilotagePage', () => {
         fixture.detectChanges();
         const router = TestBed.inject(Router);
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const modal = fixture.debugElement.injector.get(NzModalService);
+        const confirmSpy = vi.spyOn(modal, 'confirm');
 
         const bouton = fixture.debugElement
           .queryAll(By.css('button'))
@@ -697,7 +721,11 @@ describe('PilotagePage', () => {
               'Terminer la séance prématurément',
             ),
           )!;
-        bouton.triggerEventHandler('nzOnConfirm', undefined);
+        (bouton.nativeElement as HTMLButtonElement).click();
+
+        expect(confirmSpy).toHaveBeenCalledTimes(1);
+        const config = confirmSpy.mock.calls[0][0] as { nzOnOk?: () => void };
+        config.nzOnOk?.();
 
         const req = httpMock.expectOne('/api/sessions/s1/terminer-prematurement');
         expect(req.request.method).toBe('POST');
@@ -734,6 +762,8 @@ describe('PilotagePage', () => {
         const errorSpy = vi.spyOn(messageService, 'error');
         const router = TestBed.inject(Router);
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const modal = fixture.debugElement.injector.get(NzModalService);
+        const confirmSpy = vi.spyOn(modal, 'confirm');
 
         const bouton = fixture.debugElement
           .queryAll(By.css('button'))
@@ -742,7 +772,11 @@ describe('PilotagePage', () => {
               'Terminer la séance prématurément',
             ),
           )!;
-        bouton.triggerEventHandler('nzOnConfirm', undefined);
+        (bouton.nativeElement as HTMLButtonElement).click();
+
+        expect(confirmSpy).toHaveBeenCalledTimes(1);
+        const config = confirmSpy.mock.calls[0][0] as { nzOnOk?: () => void };
+        config.nzOnOk?.();
 
         httpMock
           .expectOne('/api/sessions/s1/terminer-prematurement')
