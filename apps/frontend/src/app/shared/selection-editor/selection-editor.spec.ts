@@ -40,6 +40,43 @@ describe('SelectionEditor', () => {
     expect(panneau[0].questionsRestantes.map((q) => q.id)).toEqual(['q2']);
   });
 
+  it('replie tous les Thèmes par défaut', () => {
+    const fixture = creerComponent();
+
+    expect(fixture.componentInstance['expandedThemeIds']().size).toBe(0);
+    expect(fixture.nativeElement.querySelector('.selection-editor__theme-questions')).toBeNull();
+  });
+
+  it('déplie un Thème au clic sur son chevron, et le replie au second clic', () => {
+    const fixture = creerComponent();
+
+    fixture.componentInstance['toggleThemeExpansion']('t1');
+    expect(fixture.componentInstance['expandedThemeIds']().has('t1')).toBe(true);
+
+    fixture.componentInstance['toggleThemeExpansion']('t1');
+    expect(fixture.componentInstance['expandedThemeIds']().has('t1')).toBe(false);
+  });
+
+  it('déplie et replie tous les Thèmes via les contrôles globaux', () => {
+    const fixture = creerComponent();
+
+    fixture.componentInstance['deplierTousLesThemes']();
+    expect(fixture.componentInstance['expandedThemeIds']()).toEqual(new Set(['t1']));
+
+    fixture.componentInstance['replierTousLesThemes']();
+    expect(fixture.componentInstance['expandedThemeIds']().size).toBe(0);
+  });
+
+  it('calcule la couverture de la Sélection par Thème', () => {
+    const fixture = creerComponent();
+
+    const couverture = fixture.componentInstance['couvertureParTheme']();
+
+    expect(couverture).toEqual([
+      expect.objectContaining({ id: 't1', libelle: 'Thème A', count: 1 }),
+    ]);
+  });
+
   it('émet ajouterQuestion au clic sur le bouton de transfert', () => {
     const fixture = creerComponent();
     const emissions: { questionId: string; position?: number }[] = [];

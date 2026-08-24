@@ -17,8 +17,7 @@ import { OrganisationService } from '../../organisation/organisation.service';
 import { ModelesSessionService } from '../../modeles-session/modeles-session.service';
 import { SessionsService } from '../sessions.service';
 import { DialogActions } from '../../shared/dialog-actions/dialog-actions';
-
-const TAILLE_PALETTE = 8;
+import { couleurCategorielle } from '../../shared/couleur-categorielle';
 
 interface GroupeApercuTheme {
   themeId: string;
@@ -68,7 +67,7 @@ export class CreerPage implements OnInit {
           themeId: question.themeId,
           themeLibelle: question.themeLibelle,
           questions: [],
-          couleur: `var(--color-cat-${(groupes.size % TAILLE_PALETTE) + 1})`,
+          couleur: couleurCategorielle(groupes.size),
         };
         groupes.set(question.themeId, groupe);
       }

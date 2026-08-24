@@ -65,7 +65,11 @@ describe('ComposerPage — mode édition (route /:id)', () => {
   it('charge le Référentiel et la Sélection du Modèle', () => {
     const inputNom = fixture.nativeElement.querySelector('#nomRenomme') as HTMLInputElement;
     expect(inputNom.value).toBe('Diagnostic complet');
-    expect(fixture.nativeElement.textContent).toContain('Question 2');
+    // Le Thème du Référentiel est replié par défaut : on vérifie son compteur "restantes/total"
+    // plutôt que le libellé d'une Question, masqué tant que le Thème n'est pas déplié.
+    expect(fixture.nativeElement.textContent).toContain('Thème A');
+    expect(fixture.nativeElement.textContent).toContain('1/2');
+    expect(fixture.nativeElement.textContent).toContain('Question 1');
   });
 
   it('renomme automatiquement le Modèle ~600ms après la dernière modification du champ nom', () => {

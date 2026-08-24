@@ -5,6 +5,7 @@ import {
   CdkDropList,
   CdkDropListGroup,
 } from '@angular/cdk/drag-drop';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import {
   OptionReferentielDto,
@@ -12,8 +13,7 @@ import {
   SelectionQuestionDto,
   ThemeReferentielDto,
 } from '@agilometre/shared';
-
-const TAILLE_PALETTE = 8;
+import { couleurCategorielle, couleurCategorielleFond } from '../couleur-categorielle';
 
 export type DragPayload =
   | { type: 'question'; questionId: string }
@@ -26,6 +26,14 @@ interface EntreeThemeGauche {
   idListeBulk: string;
 }
 
+interface EntreeCouvertureTheme {
+  id: string;
+  libelle: string;
+  couleur: string;
+  couleurFond: string;
+  count: number;
+}
+
 /**
  * Écran double-liste (arbre du Référentiel à gauche, Sélection réordonnable à droite), partagé
  * entre le composer d'un Modèle de session et l'ajustement de la Sélection d'une Session — même
@@ -36,7 +44,7 @@ interface EntreeThemeGauche {
  */
 @Component({
   selector: 'app-selection-editor',
-  imports: [CdkDrag, CdkDropList, CdkDropListGroup, NzButtonModule],
+  imports: [CdkDrag, CdkDropList, CdkDropListGroup, CdkScrollable, NzButtonModule],
   templateUrl: './selection-editor.html',
   styleUrl: './selection-editor.scss',
 })
@@ -51,6 +59,8 @@ export class SelectionEditor {
   readonly reordonnerQuestion = output<{ questionId: string; position: number }>();
 
   protected readonly expandedQuestionIds = signal<Set<string>>(new Set());
+  /** Thèmes dépliés dans le panneau Référentiel — tous repliés par défaut (Set vide). */
+  protected readonly expandedThemeIds = signal<Set<string>>(new Set());
 
   protected readonly panneauGauche = computed<EntreeThemeGauche[]>(() => {
     const idsSelectionnes = new Set(this.selection().map((q) => q.questionId));
@@ -72,17 +82,52 @@ export class SelectionEditor {
     return index;
   });
 
-  protected readonly indexTheme = computed<Record<string, number>>(() => {
-    const index: Record<string, number> = {};
-    this.themes().forEach((theme, position) => {
-      index[theme.id] = (position % TAILLE_PALETTE) + 1;
+  protected readonly positionTheme = computed<Record<string, number>>(() => {
+    const position: Record<string, number> = {};
+    this.themes().forEach((theme, index) => {
+      position[theme.id] = index;
     });
-    return index;
+    return position;
   });
 
   /** Couleur catégorielle d'un Thème (pastille du panneau gauche et de la sélection à droite). */
   protected couleurTheme(themeId: string): string {
-    return `var(--color-cat-${this.indexTheme()[themeId] ?? 1})`;
+    return couleurCategorielle(this.positionTheme()[themeId] ?? 0);
+  }
+
+  /** Nombre de Questions sélectionnées par Thème — bandeau de couverture du panneau droit. */
+  protected readonly couvertureParTheme = computed<EntreeCouvertureTheme[]>(() => {
+    const comptes = new Map<string, number>();
+    this.selection().forEach((question) => {
+      comptes.set(question.themeId, (comptes.get(question.themeId) ?? 0) + 1);
+    });
+    return this.themes().map((theme) => ({
+      id: theme.id,
+      libelle: theme.libelle,
+      couleur: this.couleurTheme(theme.id),
+      couleurFond: couleurCategorielleFond(this.positionTheme()[theme.id] ?? 0),
+      count: comptes.get(theme.id) ?? 0,
+    }));
+  });
+
+  protected toggleThemeExpansion(themeId: string): void {
+    this.expandedThemeIds.update((ids) => {
+      const copie = new Set(ids);
+      if (copie.has(themeId)) {
+        copie.delete(themeId);
+      } else {
+        copie.add(themeId);
+      }
+      return copie;
+    });
+  }
+
+  protected deplierTousLesThemes(): void {
+    this.expandedThemeIds.set(new Set(this.themes().map((theme) => theme.id)));
+  }
+
+  protected replierTousLesThemes(): void {
+    this.expandedThemeIds.set(new Set());
   }
 
   protected toggleExpansion(questionId: string): void {
