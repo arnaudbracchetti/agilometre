@@ -1,0 +1,27 @@
+@if (palier() !== null) {
+  <span class="palier-theme__badge" [class]="'palier-theme__badge--' + palier()">
+    Palier <span class="palier-theme__valeur">{{ palier() }}</span>
+  </span>
+} @else {
+  <span class="palier-theme__badge palier-theme__badge--vide">{{ libelleVide() }}</span>
+}
+
+@if (afficherJauge()) {
+  <span class="palier-theme__jauge">
+    <span class="palier-theme__jauge-libelle">→ Palier {{ palierSuivant() }}</span>
+    <nz-progress
+      class="palier-theme__jauge-barre"
+      [nzPercent]="tauxApprochePourcent()"
+      nzSize="small"
+      [nzShowInfo]="false"
+    />
+    <span class="palier-theme__jauge-valeur">{{ tauxApprochePourcent() }} %</span>
+  </span>
+}
+
+@if (alerteMargeFaible()) {
+  <span class="palier-theme__alerte">
+    <span nz-icon nzType="warning" nzTheme="outline" aria-hidden="true"></span>
+    Marge avant descente faible ({{ margeAvantDescentePourcent() }} %)
+  </span>
+}

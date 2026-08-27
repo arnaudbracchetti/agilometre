@@ -30,6 +30,7 @@ import {
   ClockCircleOutline,
   StepForwardOutline,
   UndoOutline,
+  WarningOutline,
 } from '@ant-design/icons-angular/icons';
 import { registerLocaleData } from '@angular/common';
 import fr from '@angular/common/locales/fr';
@@ -76,6 +77,7 @@ export const appConfig: ApplicationConfig = {
       ClockCircleOutline,
       StepForwardOutline,
       UndoOutline,
+      WarningOutline,
     ]),
   ],
 };

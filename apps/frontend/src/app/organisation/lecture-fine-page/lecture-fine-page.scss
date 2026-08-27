@@ -24,26 +24,6 @@
     margin: 0 var(--space-3) 0 0;
   }
 
-  &__palier-badge {
-    display: inline-block;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-on-primary);
-    background: var(--color-primary);
-    border-radius: var(--radius-sm);
-    padding: 0 var(--space-2);
-
-    &--haut {
-      background: var(--color-primary-emphasis);
-    }
-
-    &--vide {
-      color: var(--color-ink-muted);
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-    }
-  }
-
   &__vide {
     color: var(--color-ink-muted);
   }
@@ -54,39 +34,49 @@
     margin-bottom: var(--space-5);
   }
 
+  // Densité resserrée : la ligne d'une Question n'est qu'un point d'entrée vers son drill-down
+  // (répartition), pas du contenu à lire en continu — même resserrement que synthese-page.
   &__questions {
     margin-top: var(--space-2);
+
+    ::ng-deep .ant-collapse-header {
+      padding: var(--space-1) 0;
+    }
+
+    ::ng-deep .ant-collapse-body {
+      padding: 0 0 var(--space-2);
+    }
+  }
+
+  // Grille à colonnes fixes (pas flex) : la colonne Moyenne doit démarrer au même x sur toutes
+  // les lignes pour que les repères des barres graduées restent alignés verticalement d'une
+  // Question à l'autre, quelle que soit la longueur du libellé.
+  &__question-entete {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 12rem 10rem;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+
+    // Les 3 colonnes fixes n'ont plus la place de coexister sous 640 px : le libellé se
+    // retrouvait compressé à quelques caractères de large et se coupait lettre par lettre. On
+    // repasse en une seule colonne — l'alignement en table n'a de sens qu'avec de la largeur.
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+      row-gap: var(--space-1);
+    }
   }
 
   &__question-libelle {
     font-weight: var(--font-weight-medium);
-    margin-right: var(--space-3);
   }
 
   &__question-moyenne {
-    font-size: var(--font-size-sm);
-    color: var(--color-ink-muted);
-    margin-right: var(--space-3);
-  }
-
-  &__question-consensus {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
     font-size: var(--font-size-sm);
     color: var(--color-ink-muted);
   }
 
-  &__repartition {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    margin: 0;
-    padding: 0;
-  }
-
-  &__repartition-ligne {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-4);
-    font-size: var(--font-size-sm);
-  }
 }

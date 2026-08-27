@@ -81,6 +81,7 @@ describe('ProfilPage', () => {
         {
           themeId: 't1',
           libelle: 'Thème collaboration',
+          position: 0,
           palier: 3,
           tauxApproche: 0.8,
           margeAvantDescente: 0.2,
@@ -99,6 +100,7 @@ describe('ProfilPage', () => {
         {
           themeId: 't2',
           libelle: 'Thème non évalué',
+          position: 1,
           palier: null,
           tauxApproche: null,
           margeAvantDescente: null,
@@ -124,6 +126,7 @@ describe('ProfilPage', () => {
         {
           themeId: 't1',
           libelle: 'Thème A',
+          position: 0,
           palier: 2,
           tauxApproche: 0.4,
           margeAvantDescente: 0.6,
@@ -155,6 +158,7 @@ describe('ProfilPage', () => {
       return {
         themeId: 't1',
         libelle: 'Thème collaboration',
+        position: 0,
         palier: 3 as const,
         tauxApproche: 0.8,
         margeAvantDescente: 0.2,

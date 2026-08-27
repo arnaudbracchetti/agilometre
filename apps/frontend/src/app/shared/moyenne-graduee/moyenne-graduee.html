@@ -1,0 +1,10 @@
+@if (repere(); as repere) {
+  <span class="moyenne-graduee__piste" aria-hidden="true">
+    <span class="moyenne-graduee__ligne"></span>
+    @for (niveau of niveaux; track niveau) {
+      <span class="moyenne-graduee__graduation"></span>
+    }
+    <span class="moyenne-graduee__marqueur" [style.left.%]="repere.position"></span>
+  </span>
+  <span class="moyenne-graduee__valeur">{{ repere.valeur | number: '1.1-1' }}</span>
+}

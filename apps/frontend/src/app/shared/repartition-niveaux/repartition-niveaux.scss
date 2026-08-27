@@ -1,0 +1,81 @@
+:host {
+  display: block;
+}
+
+.repartition-niveaux__lignes {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+}
+
+.repartition-niveaux__libelle {
+  flex: 0 0 6rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-ink-muted);
+}
+
+// Même ordre bleu → violet → magenta → or que les pastilles d'option (vote/pilotage/projection) :
+// le Niveau N d'une Question correspond toujours à l'Option N (voir Option.creer), donc le même
+// repère de couleur reste reconnaissable d'un écran à l'autre (DESIGN.md). Registre posé, pas le
+// registre vif des pastilles : ce composant vit sur les cartes claires de la synthèse, du profil
+// et de la lecture fine, jamais sur le fond navy de la projection/du vote — le registre vif n'y
+// atteint pas 3:1 sur blanc.
+.repartition-niveaux__lignes li:nth-child(4n + 1) {
+  color: var(--color-blue-700);
+}
+
+.repartition-niveaux__lignes li:nth-child(4n + 2) {
+  color: var(--color-violet-600);
+}
+
+.repartition-niveaux__lignes li:nth-child(4n + 3) {
+  color: var(--color-magenta-600);
+}
+
+.repartition-niveaux__lignes li:nth-child(4n + 4) {
+  color: var(--color-gold-400);
+}
+
+.repartition-niveaux__piste {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 3.5rem;
+  height: 0.6em;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+// width fixe + transform: scaleX() plutôt qu'animer width (layout thrash) — même choix que
+// pilotage-page et l'écran de projection.
+.repartition-niveaux__barre {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: currentColor;
+  border-radius: var(--radius-pill);
+  transform-origin: left;
+  transition: transform 1s ease;
+}
+
+.repartition-niveaux__valeur {
+  font-family: var(--font-family-mono);
+  min-width: 3.5em;
+  text-align: right;
+  color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .repartition-niveaux__barre {
+    transition: none;
+  }
+}

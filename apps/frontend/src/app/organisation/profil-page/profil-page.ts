@@ -4,9 +4,10 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApexAxisChartSeries, ApexChart, ApexMarkers, ApexTooltip, ApexXAxis, ApexYAxis, NgApexchartsModule } from 'ng-apexcharts';
 import type ApexCharts from 'apexcharts';
 import type { ApexChartEventOpts, ApexFormatterOpts } from 'apexcharts';
-import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { SyntheseThemeDto } from '@agilometre/shared';
+import { Chargement } from '../../shared/chargement/chargement';
 import { ErrorMessage } from '../../shared/error-message/error-message';
+import { PalierTheme } from '../../shared/palier-theme/palier-theme';
 import { OrganisationService } from '../organisation.service';
 
 /**
@@ -16,7 +17,7 @@ import { OrganisationService } from '../organisation.service';
  */
 @Component({
   selector: 'app-profil-page',
-  imports: [DatePipe, RouterLink, NgApexchartsModule, NzProgressModule, ErrorMessage],
+  imports: [DatePipe, RouterLink, NgApexchartsModule, Chargement, ErrorMessage, PalierTheme],
   templateUrl: './profil-page.html',
   styleUrl: './profil-page.scss',
 })

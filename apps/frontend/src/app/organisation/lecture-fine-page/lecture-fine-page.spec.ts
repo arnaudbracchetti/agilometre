@@ -19,6 +19,7 @@ function themeAvecQuestions(): SyntheseThemeDto {
   return {
     themeId: 't1',
     libelle: 'Thème collaboration',
+    position: 0,
     palier: 3,
     tauxApproche: 0.8,
     margeAvantDescente: 0.2,

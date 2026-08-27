@@ -2,7 +2,7 @@
   padding: var(--space-6);
   font-family: var(--font-family-base);
   color: var(--color-ink);
-  max-width: 40rem;
+  max-width: 86rem;
 
   @media (max-width: 640px) {
     padding: var(--space-4);
@@ -10,10 +10,17 @@
 
   &__entete {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: var(--space-4);
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-4);
+  }
+
+  &__contexte {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
   }
 
   &__titre {
@@ -23,12 +30,41 @@
     margin: 0;
   }
 
-  &__stats-globales {
-    display: flex;
-    gap: var(--space-5);
-    margin-bottom: var(--space-5);
+  &__sous-titre {
+    font-size: var(--font-size-sm);
+    color: var(--color-ink-muted);
   }
 
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  &__aide {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0;
+    margin-bottom: var(--space-5);
+    color: var(--color-primary);
+  }
+
+  &__stats-globales {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+    margin-bottom: var(--space-5);
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-surface-alt);
+    border-radius: var(--radius-sm);
+  }
+
+  // Le Palier global partage ce conteneur avec les compteurs bruts mais y ajoute un badge
+  // (`app-palier-theme`, éventuellement jauge/alerte) plus haut qu'un simple chiffre — d'où
+  // `align-items: flex-start` sur le parent, pour que sa hauteur variable n'étire pas les colonnes
+  // voisines.
   &__stat {
     display: flex;
     flex-direction: column;
@@ -36,7 +72,21 @@
     gap: var(--space-1);
   }
 
+  // Seul chiffre-titre de l'écran (les deux voisins ne sont que des compteurs bruts) — la bande
+  // (`--color-surface-alt`) groupe déjà les trois stats comme une seule famille ; l'encadrer
+  // d'une deuxième carte (fond blanc + bordure) créait une carte imbriquée dans la bande, un
+  // signal parasite ("ceci est un widget à part") qui contredit le regroupement recherché.
+  // La hiérarchie tient déjà par l'échelle (badge en `--font-size-2xl` vs. `--font-size-xl` des
+  // compteurs) ; ce filet vertical exprime seulement "le reste suit" par une rupture de rythme
+  // (espacement resserré valeur/libellé, puis respiration nette avant les compteurs) plutôt que
+  // par un conteneur.
+  &__stat--global {
+    padding-inline-end: var(--space-4);
+    border-inline-end: 1px solid var(--color-border);
+  }
+
   &__stat-valeur {
+    font-family: var(--font-family-mono);
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-bold);
     color: var(--color-primary);
@@ -48,109 +98,145 @@
   }
 
   &__themes {
-    margin-bottom: var(--space-5);
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-5);
+    padding: 0;
+  }
+
+  &__theme {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  // Fond teinté par la couleur catégorielle du Thème (même repère que le composeur de session) :
+  // l'identité du Thème pèse sur la ligne d'en-tête plutôt que sur la seule pastille de 0,6 rem
+  // d'avant. Bordure nette, angle droit, aucune ombre — registre Operate, jamais le matériau note
+  // (Règle du Registre Unique). Repliable (même geste que les Questions juste en-dessous) : un
+  // Thème déjà revu peut se réduire à cette seule ligne pour condenser l'écran.
+  //
+  // Grille à colonnes fixes (même principe que __question-entete) : le libellé du Thème occupe
+  // une largeur constante quel que soit son nombre de caractères, pour que le badge de Palier —
+  // et tout ce qui le suit (jauge, alerte) — démarre au même x sur chaque ligne. Chaque <li> est
+  // sa propre grille indépendante, mais des colonnes fixes identiques suffisent à aligner leur
+  // contenu entre elles sans grille partagée.
+  &__theme-entete {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 20rem) auto 1fr;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: -2px;
+    }
+
+    // Sous 640 px, la colonne fixe de 20 rem ne tient plus dans la largeur de l'écran : on
+    // revient à un empilement libre, l'alignement en table n'a plus de sens sur si peu de place.
+    @media (max-width: 640px) {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  }
+
+  &__theme-chevron {
+    flex-shrink: 0;
+    color: var(--color-ink-muted);
+    transition: transform 200ms ease;
+
+    &--ouvert {
+      transform: rotate(90deg);
+    }
+  }
+
+  &__theme-pastille {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 50%;
+    flex-shrink: 0;
   }
 
   &__theme-libelle {
     font-weight: var(--font-weight-medium);
-    margin-right: var(--space-3);
   }
 
   &__theme-compte {
     font-size: var(--font-size-sm);
     color: var(--color-ink-muted);
-    margin-left: var(--space-3);
+    justify-self: end;
+    text-align: right;
+
+    @media (max-width: 640px) {
+      margin-left: auto;
+    }
   }
 
-  &__palier-badge {
-    display: inline-block;
+  &__theme-vide {
+    margin: 0;
+    padding: var(--space-2) var(--space-4) var(--space-4);
+    color: var(--color-ink-muted);
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-on-primary);
-    background: var(--color-primary);
-    border-radius: var(--radius-sm);
-    padding: 0 var(--space-2);
+  }
 
-    &--haut {
-      background: var(--color-primary-emphasis);
+  // Densité resserrée : la ligne d'une Question n'est qu'un point d'entrée vers son drill-down
+  // (répartition), pas du contenu à lire en continu — quitte à afficher 8-10 Questions par
+  // Thème sans scroll. Padding par défaut d'ant-collapse retiré au profit de celui du conteneur.
+  &__questions {
+    padding: var(--space-2) var(--space-4) var(--space-4);
+
+    ::ng-deep .ant-collapse-header {
+      padding: var(--space-1) 0;
     }
 
-    &--vide {
-      color: var(--color-ink-muted);
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
+    ::ng-deep .ant-collapse-body {
+      padding: 0 0 var(--space-2);
     }
   }
 
-  &__questions {
-    margin-top: var(--space-2);
+  // Grille à colonnes fixes (pas flex) : la colonne Moyenne doit démarrer au même x sur toutes
+  // les lignes pour que les repères des barres graduées restent alignés verticalement d'une
+  // Question à l'autre, quelle que soit la longueur du libellé.
+  &__question-entete {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 12rem 10rem;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+
+    // Les 3 colonnes fixes n'ont plus la place de coexister sous 640 px : le libellé se
+    // retrouvait compressé à quelques caractères de large et se coupait lettre par lettre. On
+    // repasse en une seule colonne — l'alignement en table n'a de sens qu'avec de la largeur.
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+      row-gap: var(--space-1);
+    }
   }
 
   &__question-libelle {
     font-weight: var(--font-weight-medium);
-    margin-right: var(--space-3);
   }
 
   &__question-moyenne {
-    font-size: var(--font-size-sm);
-    color: var(--color-ink-muted);
-    margin-right: var(--space-3);
-  }
-
-  &__question-consensus {
-    font-size: var(--font-size-sm);
-    color: var(--color-ink-muted);
-  }
-
-  &__repartition {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    margin: 0;
-    padding: 0;
-  }
-
-  &__repartition-ligne {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-4);
-    font-size: var(--font-size-sm);
-  }
-
-  &__liste {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    margin: 0;
-    padding: 0;
-  }
-
-  &__ligne {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    padding: var(--space-3) var(--space-4);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-  }
-
-  &__libelle {
-    font-weight: var(--font-weight-medium);
-  }
-
-  &__statut {
+    gap: var(--space-2);
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-primary);
-    white-space: nowrap;
+    color: var(--color-ink-muted);
+  }
 
-    &--sautee {
-      color: var(--color-ink-muted);
-      text-decoration: line-through;
+  &__vide {
+    color: var(--color-ink-muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .synthese__theme-chevron {
+      transition: none;
     }
   }
 }

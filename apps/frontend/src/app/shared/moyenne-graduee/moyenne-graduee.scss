@@ -1,0 +1,65 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.moyenne-graduee__piste {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 4.5rem;
+  height: 0.9rem;
+  flex-shrink: 0;
+}
+
+// Ligne et graduations en --color-border plutôt qu'en encre : la piste doit s'effacer derrière le
+// marqueur bleu, seul point que l'œil doit accrocher — une piste de la même encre que le texte
+// environnant lui faisait concurrence.
+.moyenne-graduee__ligne {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--color-border);
+  transform: translateY(-50%);
+}
+
+.moyenne-graduee__graduation {
+  position: relative;
+  width: 1px;
+  height: 100%;
+  background: var(--color-border);
+}
+
+// Point sur une ligne graduée, pas une barre de progression : une Moyenne est une position, pas
+// un but à remplir — couleur neutre constante, jamais une teinte qui varie avec la valeur (Règle
+// du Rouge Dédié).
+.moyenne-graduee__marqueur {
+  position: absolute;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--color-primary);
+  transform: translate(-50%, -50%);
+  // Écran de synthèse statique, jamais repollé (contrairement aux barres de pilotage-page,
+  // reconstruites toutes les 2s en direct) : animer `left` ici n'a pas le coût de layout thrash
+  // qui justifie ailleurs le détour par `transform: scaleX()`.
+  transition: left 300ms ease;
+}
+
+.moyenne-graduee__valeur {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-ink-muted);
+  min-width: 2em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moyenne-graduee__marqueur {
+    transition: none;
+  }
+}

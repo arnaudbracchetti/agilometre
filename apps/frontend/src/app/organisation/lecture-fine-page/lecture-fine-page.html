@@ -1,6 +1,6 @@
 <div class="lecture-fine">
   @if (chargementEnCours()) {
-    <p>Chargement…</p>
+    <app-chargement />
   } @else if (inaccessible()) {
     <app-error-message
       message="Le Profil de cette Équipe n’est pas accessible."
@@ -17,14 +17,7 @@
     <header class="lecture-fine__entete">
       <div>
         <h2 class="lecture-fine__titre">{{ theme.libelle }}</h2>
-        @if (theme.palier !== null) {
-          <span
-            class="lecture-fine__palier-badge"
-            [class.lecture-fine__palier-badge--haut]="theme.palier >= 3"
-          >Palier {{ theme.palier }}</span>
-        } @else {
-          <span class="lecture-fine__palier-badge lecture-fine__palier-badge--vide">Aucune donnée</span>
-        }
+        <app-palier-theme [palier]="theme.palier" />
       </div>
       <a nz-button nzType="default" [routerLink]="['/organisation/equipes', equipeId(), 'profil']">
         Retour au Profil
@@ -55,25 +48,20 @@
         @for (question of questionsTriees(); track question.questionId) {
           <nz-collapse-panel [nzHeader]="enteteQuestion">
             <ng-template #enteteQuestion>
-              <span class="lecture-fine__question-libelle">{{ question.libelle }}</span>
-              <span class="lecture-fine__question-moyenne">
-                Moyenne {{ question.moyenne }}
-              </span>
-              @if (question.consensus) {
-                <span class="lecture-fine__question-consensus">
-                  {{ libelleConsensus(question.consensus) }}
+              <div class="lecture-fine__question-entete">
+                <span class="lecture-fine__question-libelle">{{ question.libelle }}</span>
+                <span class="lecture-fine__question-moyenne">
+                  Moyenne
+                  <app-moyenne-graduee [moyenne]="question.moyenne" />
                 </span>
-              }
+                <app-cran-consensus [consensus]="question.consensus" />
+              </div>
             </ng-template>
 
-            <ul class="lecture-fine__repartition">
-              @for (niveau of niveaux; track niveau) {
-                <li class="lecture-fine__repartition-ligne">
-                  <span>Niveau {{ niveau }}</span>
-                  <span>{{ pourcentage(question.repartition[niveau], question.effectif) }} %</span>
-                </li>
-              }
-            </ul>
+            <app-repartition-niveaux
+              [repartition]="question.repartition"
+              [effectif]="question.effectif"
+            />
           </nz-collapse-panel>
         }
       </nz-collapse>

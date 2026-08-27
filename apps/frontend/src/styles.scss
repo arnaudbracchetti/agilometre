@@ -31,6 +31,8 @@
   --color-violet-100: #ede6fa;
   --color-gold-600: #ffc400; // insee.fr application.css, or/jaune d'action (51 occurrences)
   --color-gold-ink: #3d2f00; // encre sombre pour texte posé sur un fond --color-gold-600
+  --color-gold-400: #8a6300; // or assombri, seul à passer 4.5:1 comme texte/bordure sur blanc ou --color-gold-100
+  --color-gold-100: #fff8e1; // fond pâle — pastille/alerte « à regarder de près »
   --color-magenta-real: #e61778; // insee.fr application.css, magenta réel (tags de catégorie)
   --color-magenta-700: #6e0f3d; // magenta-real assombri, sûr comme texte sur fond clair
   --color-magenta-600: #a01464; // magenta-real assombri, sûr comme texte sur blanc (≥4.5:1)
@@ -87,6 +89,20 @@
   --color-accent-emphasis: var(--color-magenta-700);
   /* Texte/icônes posés sur un fond --color-primary ou --color-primary-emphasis. */
   --color-on-primary: var(--color-white);
+
+  /* « À regarder de près » — l'or d'action d'insee.fr, jamais --color-danger : un Palier fragile
+     ou un désaccord d'Équipe n'est pas une erreur, c'est un point à discuter (Règle du Rouge
+     Dédié). Sert l'alerte de marge avant descente et le cran de consensus faible. */
+  --color-attention: var(--color-gold-400);
+  --color-attention-subtle: var(--color-gold-100);
+
+  /* Crans de consensus (cran-consensus) — fort reste sur l'encre neutre (un accord n'a rien à
+     signaler), modéré reprend le bleu de mesure, faible reprend le rôle attention ci-dessus. */
+  --color-consensus-fort: var(--color-ink-muted);
+  --color-consensus-modere: var(--color-blue-900);
+  --color-consensus-modere-bg: var(--color-blue-100);
+  --color-consensus-faible: var(--color-attention);
+  --color-consensus-faible-bg: var(--color-attention-subtle);
 
   /* Encre des pastilles de lettre d'option (vote/pilotage/projection) — distinctes de
      --color-sticky-*-ink (calées pour les fonds -100 pâles des notes) : les pastilles vives -300
@@ -170,9 +186,14 @@ body {
   color: var(--color-on-primary);
 }
 
+// `!important` délibéré et unique : plusieurs resets ng-zorro/Ant Design (`a:focus`,
+// `.ant-btn:focus`, `.ant-collapse-header:focus-visible`, …) ont une spécificité supérieure à ce
+// sélecteur seul et écrasaient silencieusement l'anneau de focus de la charte par un `outline: 0`
+// ou par le bleu pâle par défaut d'Ant (contraste ~1.9:1, sous le minimum RGAA de 3:1) — patcher
+// chaque sélecteur Ant au cas par cas serait sans fin ; cette règle doit gagner partout, toujours.
 :focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: 2px solid var(--color-accent) !important;
+  outline-offset: 2px !important;
 }
 
 /* Boîtes de dialogue (ng-zorro NzModalService — form dialogs et confirmations) : rendues hors de

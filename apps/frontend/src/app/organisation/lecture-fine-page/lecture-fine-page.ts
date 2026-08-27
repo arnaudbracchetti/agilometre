@@ -2,10 +2,13 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
-import { CranConsensusDto, SyntheseThemeDto } from '@agilometre/shared';
+import { SyntheseThemeDto } from '@agilometre/shared';
+import { Chargement } from '../../shared/chargement/chargement';
+import { CranConsensus } from '../../shared/cran-consensus/cran-consensus';
 import { ErrorMessage } from '../../shared/error-message/error-message';
-import { LibelleConsensus } from '../../shared/libelle-consensus';
-import { PourcentageRepartition } from '../../shared/pourcentage-repartition';
+import { MoyenneGraduee } from '../../shared/moyenne-graduee/moyenne-graduee';
+import { PalierTheme } from '../../shared/palier-theme/palier-theme';
+import { RepartitionNiveaux } from '../../shared/repartition-niveaux/repartition-niveaux';
 import { OrganisationService } from '../organisation.service';
 import { CritereTriLectureFine, TrierQuestionsLectureFine } from './trier-questions-lecture-fine';
 
@@ -16,7 +19,17 @@ import { CritereTriLectureFine, TrierQuestionsLectureFine } from './trier-questi
  */
 @Component({
   selector: 'app-lecture-fine-page',
-  imports: [RouterLink, NzButtonModule, NzCollapseModule, ErrorMessage],
+  imports: [
+    RouterLink,
+    NzButtonModule,
+    NzCollapseModule,
+    Chargement,
+    CranConsensus,
+    ErrorMessage,
+    MoyenneGraduee,
+    PalierTheme,
+    RepartitionNiveaux,
+  ],
   templateUrl: './lecture-fine-page.html',
   styleUrl: './lecture-fine-page.scss',
 })
@@ -30,7 +43,6 @@ export class LectureFinePage implements OnInit {
   protected readonly themeIntrouvable = signal(false);
   protected readonly theme = signal<SyntheseThemeDto | null>(null);
   protected readonly tri = signal<CritereTriLectureFine>('moyenne');
-  protected readonly niveaux = [1, 2, 3, 4] as const;
 
   protected readonly questionsTriees = computed(() => {
     const theme = this.theme();
@@ -59,11 +71,4 @@ export class LectureFinePage implements OnInit {
     });
   }
 
-  protected libelleConsensus(consensus: CranConsensusDto | null): string {
-    return LibelleConsensus.pour(consensus);
-  }
-
-  protected pourcentage(compte: number, effectif: number): number {
-    return PourcentageRepartition.executer(compte, effectif);
-  }
 }

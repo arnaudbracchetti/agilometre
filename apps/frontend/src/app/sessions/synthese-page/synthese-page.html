@@ -1,6 +1,6 @@
 <div class="synthese">
   @if (chargementEnCours()) {
-    <p>Chargement…</p>
+    <app-chargement />
   } @else if (inaccessible()) {
     <app-error-message
       message="Cet écran de synthèse n’est plus accessible."
@@ -9,14 +9,52 @@
     />
   } @else {
     <header class="synthese__entete">
-      <h2 class="synthese__titre">Synthèse de la séance</h2>
-      <a nz-button nzType="default" [routerLink]="['/sessions', sessionId(), 'pilotage']">
-        Retour au pilotage
-      </a>
+      <div class="synthese__contexte">
+        <h1 class="synthese__titre">Synthèse de la séance du {{ date() | date: 'dd/MM/yyyy' }}</h1>
+        <span class="synthese__sous-titre">{{ equipeNom() }}</span>
+      </div>
+      <div class="synthese__actions">
+        <a nz-button nzType="default" [routerLink]="['/sessions', sessionId(), 'pilotage']">
+          Retour au pilotage
+        </a>
+        @if (statut() === 'OUVERTE') {
+          <button
+            class="synthese__bouton-terminer"
+            nz-button
+            nzType="primary"
+            nzDanger
+            nz-popconfirm
+            nzPopconfirmTitle="Terminer la séance ? Cette action est définitive : le Code, les accès participants et l'écran de projection deviendront inopérants."
+            (nzOnConfirm)="terminerSeance()"
+            [disabled]="terminerEnCours()"
+          >
+            Terminer la séance
+          </button>
+        }
+      </div>
     </header>
+
+    <button
+      class="synthese__aide"
+      nz-button
+      nzType="text"
+      (click)="ouvrirGlossaire()"
+    >
+      <span nz-icon nzType="question-circle" nzTheme="outline" aria-hidden="true"></span>
+      Comprendre les résultats
+    </button>
 
     @if (themes().length > 0) {
       <div class="synthese__stats-globales">
+        <div class="synthese__stat synthese__stat--global">
+          <app-palier-theme
+            taille="grande"
+            [palier]="palierGlobal()"
+            [tauxApproche]="tauxApprocheGlobal()"
+            [margeAvantDescente]="margeAvantDescenteGlobal()"
+          />
+          <span class="synthese__stat-libelle">Palier global</span>
+        </div>
         <div class="synthese__stat">
           <span class="synthese__stat-valeur">{{ totalQuestionsRepondues() }}</span>
           <span class="synthese__stat-libelle">Questions répondues</span>
@@ -27,83 +65,75 @@
         </div>
       </div>
 
-      <nz-collapse class="synthese__themes">
-        @for (theme of themes(); track theme.themeId) {
-          <nz-collapse-panel [nzHeader]="enteteTheme">
-            <ng-template #enteteTheme>
+      <ul class="synthese__themes">
+        @for (theme of themesTries(); track theme.themeId) {
+          <li class="synthese__theme">
+            <div
+              class="synthese__theme-entete"
+              role="button"
+              tabindex="0"
+              [attr.aria-expanded]="estOuvert(theme.themeId)"
+              (click)="toggleTheme(theme.themeId)"
+              (keydown.enter)="toggleTheme(theme.themeId)"
+              (keydown.space)="toggleTheme(theme.themeId); $event.preventDefault()"
+              [style.background]="couleurThemeFond(theme.position)"
+            >
+              <span
+                nz-icon
+                nzType="right"
+                nzTheme="outline"
+                class="synthese__theme-chevron"
+                [class.synthese__theme-chevron--ouvert]="estOuvert(theme.themeId)"
+                aria-hidden="true"
+              ></span>
+              <span
+                class="synthese__theme-pastille"
+                [style.background]="couleurTheme(theme.position)"
+              ></span>
               <span class="synthese__theme-libelle">{{ theme.libelle }}</span>
-              @if (theme.palier !== null) {
-                <span
-                  class="synthese__palier-badge"
-                  [class.synthese__palier-badge--haut]="theme.palier >= 3"
-                >Palier {{ theme.palier }}</span>
-              } @else {
-                <span class="synthese__palier-badge synthese__palier-badge--vide">Aucune donnée</span>
-              }
+              <app-palier-theme
+                [palier]="theme.palier"
+                [tauxApproche]="theme.tauxApproche"
+                [margeAvantDescente]="theme.margeAvantDescente"
+              />
               <span class="synthese__theme-compte">
                 {{ theme.questions.length }} {{ pluriel(theme.questions.length, 'question') }}
                 · {{ theme.effectif }} {{ pluriel(theme.effectif, 'réponse') }}
               </span>
-            </ng-template>
+            </div>
 
-            @if (theme.palier !== null) {
-              <nz-collapse class="synthese__questions" nzGhost>
-                @for (question of theme.questions; track question.questionId) {
-                  <nz-collapse-panel [nzHeader]="enteteQuestion">
-                    <ng-template #enteteQuestion>
-                      <span class="synthese__question-libelle">{{ question.libelle }}</span>
-                      <span class="synthese__question-moyenne">
-                        Moyenne {{ question.moyenne }}
-                      </span>
-                      @if (question.consensus) {
-                        <span class="synthese__question-consensus">
-                          {{ libelleConsensus(question.consensus) }}
-                        </span>
-                      }
-                    </ng-template>
+            @if (estOuvert(theme.themeId)) {
+              @if (theme.palier !== null) {
+                <nz-collapse class="synthese__questions" nzGhost>
+                  @for (question of theme.questions; track question.questionId) {
+                    <nz-collapse-panel [nzHeader]="enteteQuestion">
+                      <ng-template #enteteQuestion>
+                        <div class="synthese__question-entete">
+                          <span class="synthese__question-libelle">{{ question.libelle }}</span>
+                          <span class="synthese__question-moyenne">
+                            Moyenne
+                            <app-moyenne-graduee [moyenne]="question.moyenne" />
+                          </span>
+                          <app-cran-consensus [consensus]="question.consensus" />
+                        </div>
+                      </ng-template>
 
-                    <ul class="synthese__repartition">
-                      @for (niveau of niveaux; track niveau) {
-                        <li class="synthese__repartition-ligne">
-                          <span>Niveau {{ niveau }}</span>
-                          <span>{{ pourcentage(question.repartition[niveau], question.effectif) }} %</span>
-                        </li>
-                      }
-                    </ul>
-                  </nz-collapse-panel>
-                }
-              </nz-collapse>
+                      <app-repartition-niveaux
+                        [repartition]="question.repartition"
+                        [effectif]="question.effectif"
+                      />
+                    </nz-collapse-panel>
+                  }
+                </nz-collapse>
+              } @else {
+                <p class="synthese__theme-vide">Aucune réponse enregistrée sur ce Thème.</p>
+              }
             }
-          </nz-collapse-panel>
+          </li>
         }
-      </nz-collapse>
-    }
-
-    <ul class="synthese__liste">
-      @for (entree of progression(); track entree.questionId) {
-        <li class="synthese__ligne">
-          <span class="synthese__libelle">{{ entree.libelle }}</span>
-          <span
-            class="synthese__statut"
-            [class.synthese__statut--sautee]="entree.statut === 'SAUTEE'"
-          >{{ libelleStatut(entree.statut) }}</span>
-        </li>
-      }
-    </ul>
-
-    @if (statut() === 'OUVERTE') {
-      <button
-        class="synthese__bouton-terminer"
-        nz-button
-        nzType="primary"
-        nzDanger
-        nz-popconfirm
-        nzPopconfirmTitle="Terminer la séance ? Cette action est définitive : le Code, les accès participants et l'écran de projection deviendront inopérants."
-        (nzOnConfirm)="terminerSeance()"
-        [disabled]="terminerEnCours()"
-      >
-        Terminer la séance
-      </button>
+      </ul>
+    } @else {
+      <p class="synthese__vide">Aucune réponse enregistrée sur cette séance.</p>
     }
   }
 </div>

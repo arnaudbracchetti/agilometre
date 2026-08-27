@@ -5,6 +5,8 @@ import { Referentiel } from '../../referentiel/domain/referentiel';
 import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
 import { Theme } from '../../referentiel/domain/theme';
 import { ScoringV1 } from '../../scoring/domain/scoring-v1';
+import { Equipe } from '../../organisation/domain/equipe';
+import { EquipeRepository } from '../../organisation/domain/equipe.repository';
 import { Reponse } from '../../reponse/domain/reponse';
 import { ReponseRepository } from '../../reponse/domain/reponse.repository';
 import { EtatTour, Session } from '../domain/session';
@@ -43,6 +45,32 @@ class SessionRepositoryFake implements SessionRepository {
     return Promise.resolve(false);
   }
 }
+
+class EquipeRepositoryFake implements EquipeRepository {
+  constructor(private readonly equipes: Equipe[]) {}
+  findById(id: string): Promise<Equipe | null> {
+    return Promise.resolve(this.equipes.find((e) => e.id === id) ?? null);
+  }
+  findByEntiteId(): Promise<Equipe[]> {
+    return Promise.resolve(this.equipes);
+  }
+  trouverParNom(): Promise<Equipe | null> {
+    return Promise.resolve(null);
+  }
+  save(): Promise<void> {
+    return Promise.resolve();
+  }
+  remove(): Promise<void> {
+    return Promise.resolve();
+  }
+  compterParEntite(): Promise<number> {
+    return Promise.resolve(this.equipes.length);
+  }
+}
+
+const equipeParDefaut = (): Equipe[] => [
+  Equipe.creer('e1', 'Équipe A', 'ent1').valeur,
+];
 
 class ReferentielRepositoryFake implements ReferentielRepository {
   constructor(private readonly referentiel: Referentiel) {}
@@ -128,6 +156,7 @@ describe('ObtenirSyntheseSession', () => {
   it('renvoie "introuvable" si la Session n’existe pas', async () => {
     const useCase = new ObtenirSyntheseSession(
       new SessionRepositoryFake(),
+      new EquipeRepositoryFake(equipeParDefaut()),
       new ReferentielRepositoryFake(Referentiel.vide()),
       new EtatToursQueryFake([]),
       new ReponseRepositoryFake([]),
@@ -153,6 +182,7 @@ describe('ObtenirSyntheseSession', () => {
     sessions.sessions.push(sessionPreparee);
     const useCase = new ObtenirSyntheseSession(
       sessions,
+      new EquipeRepositoryFake(equipeParDefaut()),
       new ReferentielRepositoryFake(Referentiel.vide()),
       new EtatToursQueryFake([]),
       new ReponseRepositoryFake([]),
@@ -192,6 +222,7 @@ describe('ObtenirSyntheseSession', () => {
 
     const useCase = new ObtenirSyntheseSession(
       sessions,
+      new EquipeRepositoryFake(equipeParDefaut()),
       new ReferentielRepositoryFake(referentiel),
       etatTours,
       reponses,
@@ -205,6 +236,9 @@ describe('ObtenirSyntheseSession', () => {
     if (resultat.type !== 'ok') return;
     // t2 (Thème B, Question q3) n'est pas dans la Sélection de cette Session : absent du résultat.
     expect(resultat.themes.map((t) => t.themeId)).toEqual(['t1']);
+    expect(resultat.palierGlobal).toEqual(
+      new ScoringV1().calculerPalier([1, 1, 4], 0.6),
+    );
     const [theme] = resultat.themes;
     expect(theme.libelle).toBe('Thème A');
     expect(
@@ -238,6 +272,7 @@ describe('ObtenirSyntheseSession', () => {
 
     const useCase = new ObtenirSyntheseSession(
       sessions,
+      new EquipeRepositoryFake(equipeParDefaut()),
       new ReferentielRepositoryFake(referentiel),
       etatTours,
       reponses,
@@ -250,9 +285,14 @@ describe('ObtenirSyntheseSession', () => {
     expect(resultat.type).toBe('ok');
     if (resultat.type !== 'ok') return;
     expect(resultat.themes.map((t) => t.themeId)).toEqual(['t1', 't2']);
+    // Le Palier global ne pool que les Réponses effectivement reçues (q2 n'a pas encore voté).
+    expect(resultat.palierGlobal).toEqual(
+      new ScoringV1().calculerPalier([2], 0.6),
+    );
     expect(resultat.themes[1]).toEqual({
       themeId: 't2',
       libelle: 'Thème B',
+      position: 1,
       resultatPalier: { effectif: 0 },
       questions: [],
     });

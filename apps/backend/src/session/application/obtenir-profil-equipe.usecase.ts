@@ -57,12 +57,16 @@ export class ObtenirProfilEquipe {
       this.seuilPalierPourcentage,
     );
 
-    const resultatsParTheme = await CalculerSyntheseScoring.executer(
-      this.scoring,
-      source,
-      questions.map((q) => ({ questionId: q.questionId, themeId: q.themeId })),
-      seuil,
-    );
+    const { themes: resultatsParTheme } =
+      await CalculerSyntheseScoring.executer(
+        this.scoring,
+        source,
+        questions.map((q) => ({
+          questionId: q.questionId,
+          themeId: q.themeId,
+        })),
+        seuil,
+      );
 
     const themes = EnrichirResultatsAvecLibelles.executer(
       resultatsParTheme,

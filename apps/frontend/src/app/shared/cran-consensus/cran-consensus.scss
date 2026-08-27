@@ -1,0 +1,49 @@
+:host {
+  display: inline-flex;
+}
+
+.cran-consensus__pastille {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.15em var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.cran-consensus__glyphe {
+  width: 1.3em;
+  height: 0.45em;
+  flex-shrink: 0;
+}
+
+.cran-consensus__axe {
+  stroke: currentColor;
+  stroke-width: 0.6;
+  opacity: 0.35;
+}
+
+.cran-consensus__point {
+  fill: currentColor;
+}
+
+// Fort : un accord n'a rien à signaler — encre neutre, pas de fond, comme le reste des
+// métadonnées de la ligne de Question.
+.cran-consensus--fort {
+  color: var(--color-consensus-fort);
+}
+
+// Modéré : reprend le bleu de mesure, jamais l'or (réservé au cran qui mérite l'attention).
+.cran-consensus--modere {
+  color: var(--color-consensus-modere);
+  background: var(--color-consensus-modere-bg);
+}
+
+// Faible : rôle « à regarder de près » — une Question à remettre en discussion, jamais une
+// erreur (Règle du Rouge Dédié).
+.cran-consensus--faible {
+  color: var(--color-consensus-faible);
+  background: var(--color-consensus-faible-bg);
+  font-weight: var(--font-weight-medium);
+}

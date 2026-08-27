@@ -275,6 +275,7 @@ describe('ObtenirProfilEquipe', () => {
     expect(resultat.themes[1]).toEqual({
       themeId: 't2',
       libelle: 'Thème B',
+      position: 1,
       resultatPalier: { effectif: 0 },
       questions: [],
     });

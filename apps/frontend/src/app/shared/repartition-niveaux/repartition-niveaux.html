@@ -1,0 +1,14 @@
+<ul class="repartition-niveaux__lignes">
+  @for (ligne of lignes(); track ligne.niveau) {
+    <li>
+      <span class="repartition-niveaux__libelle">Niveau {{ ligne.niveau }}</span>
+      <span class="repartition-niveaux__piste">
+        <span
+          class="repartition-niveaux__barre"
+          [style.transform]="'scaleX(' + ligne.pourcentage / 100 + ')'"
+        ></span>
+      </span>
+      <span class="repartition-niveaux__valeur">{{ ligne.pourcentage }} %</span>
+    </li>
+  }
+</ul>

@@ -21,6 +21,17 @@ export interface SyntheseThemeResultat {
   questions: SyntheseQuestionResultat[];
 }
 
+export interface ResultatSyntheseScoring {
+  themes: SyntheseThemeResultat[];
+  /**
+   * Palier global (PRD §6 : « même calcul appliqué à toutes les réponses, tous thèmes confondus »)
+   * — mêmes Niveaux que les Paliers par Thème, regroupés en une seule population avant un unique
+   * appel à `calculerPalier`, jamais une moyenne des Paliers par Thème. Limite assumée en v1 : les
+   * Thèmes ayant le plus de Questions pèsent mécaniquement davantage.
+   */
+  global: ResultatPalier;
+}
+
 /**
  * Orchestrateur du port "source de Réponses scorables" (ADR-0018) : lit les Réponses via le port,
  * les regroupe par Thème pour le Palier et par Question pour la lecture fine (Moyenne, cran de
@@ -33,7 +44,7 @@ export class CalculerSyntheseScoring {
     source: SourceReponsesScorables,
     questions: readonly QuestionScorable[],
     seuilPalier: number,
-  ): Promise<SyntheseThemeResultat[]> {
+  ): Promise<ResultatSyntheseScoring> {
     // 1. Regroupe les Réponses par Question (grain le plus fin).
     const reponses = await source.obtenirReponsesScorables();
     const niveauxParQuestion = new Map<string, number[]>();
@@ -81,7 +92,14 @@ export class CalculerSyntheseScoring {
         .filter((question) => question.effectif > 0);
       resultats.push({ themeId, resultatPalier, questions: syntheseQuestions });
     }
-    return resultats;
+
+    const niveauxGlobal = Array.from(niveauxParQuestion.values()).flat();
+    const global: ResultatPalier =
+      niveauxGlobal.length === 0
+        ? { effectif: 0 }
+        : scoring.calculerPalier(niveauxGlobal, seuilPalier);
+
+    return { themes: resultats, global };
   }
 
   private static zeroFill(niveaux: number[]): Record<1 | 2 | 3 | 4, number> {
