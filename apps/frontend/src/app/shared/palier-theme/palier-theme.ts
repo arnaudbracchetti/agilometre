@@ -1,8 +1,26 @@
 import { Component, computed, input } from '@angular/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
+import { Evolution } from '@agilometre/shared';
 
 export type TaillePalierTheme = 'normale' | 'grande';
+
+// `rise`/`fall` (pas `arrow-up`/`arrow-down` pivotées en CSS) : icônes Ant Design déjà dessinées
+// en diagonale à 45° pour cet usage précis (tendance), un tracé de flèche propre plutôt qu'une
+// flèche verticale tournée artificiellement. `arrow-right` pour stable (pas `minus`, ambigu — se
+// lit comme une soustraction ou un retrait, sans rapport visuel avec les deux autres) : une
+// flèche horizontale complète la même famille de tracés que `rise`/`fall`, à 0° plutôt qu'à 45°.
+const ICONE_EVOLUTION: Record<Evolution, string> = {
+  hausse: 'rise',
+  baisse: 'fall',
+  stable: 'arrow-right',
+};
+
+const LIBELLE_EVOLUTION: Record<Evolution, string> = {
+  hausse: 'En hausse par rapport à la Période précédente',
+  baisse: 'En baisse par rapport à la Période précédente',
+  stable: 'Stable par rapport à la Période précédente',
+};
 
 /**
  * Repère de Palier partagé par synthese-page, profil-page et lecture-fine-page — badge de
@@ -48,6 +66,17 @@ export class PalierTheme {
    * « Non évalué » à la Portée périodique (profil-page — un Thème hors Sélection sur la Période).
    */
   readonly libelleVide = input('Aucune donnée');
+  /** `null` ou absent : aucune flèche d'Évolution affichée (pas de Période précédente à comparer). */
+  readonly evolution = input<Evolution | null>(null);
+
+  protected readonly iconeEvolution = computed(() => {
+    const evolution = this.evolution();
+    return evolution === null ? null : ICONE_EVOLUTION[evolution];
+  });
+  protected readonly libelleEvolution = computed(() => {
+    const evolution = this.evolution();
+    return evolution === null ? null : LIBELLE_EVOLUTION[evolution];
+  });
 
   protected readonly afficherJauge = computed(() => this.tauxApproche() !== null);
   protected readonly tauxApprochePourcent = computed(() => {

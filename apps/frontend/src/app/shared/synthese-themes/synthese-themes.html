@@ -6,6 +6,7 @@
         [palier]="palierGlobal()"
         [tauxApproche]="tauxApprocheGlobal()"
         [margeAvantDescente]="margeAvantDescenteGlobal()"
+        [evolution]="evolutionGlobale()"
       />
       <span class="synthese__stat-libelle">Palier global</span>
     </div>
@@ -49,6 +50,7 @@
             [palier]="theme.palier"
             [tauxApproche]="theme.tauxApproche"
             [margeAvantDescente]="theme.margeAvantDescente"
+            [evolution]="theme.evolution ?? null"
           />
           <span class="synthese__theme-compte">
             {{ theme.questions.length }} {{ pluriel(theme.questions.length, 'question') }}

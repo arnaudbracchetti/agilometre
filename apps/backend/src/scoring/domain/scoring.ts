@@ -30,6 +30,13 @@ export interface Periode {
 }
 
 /**
+ * Le mouvement d'un Palier entre la Période affichée et la Période immédiatement précédente —
+ * distinct de la Tendance (la suite complète des Paliers, cf. CONTEXT.md), qui ne compare que
+ * deux Périodes consécutives.
+ */
+export type Evolution = 'hausse' | 'baisse' | 'stable';
+
+/**
  * Concentre les règles de calcul du moteur de scoring (ADR-0019) : Palier + Taux d'approche
  * (grain Thème/Équipe/Entité), Moyenne + Dispersion (grain Question), découpage en Périodes
  * calendaires. Classe abstraite plutôt que fonctions libres ou méthodes statiques : seules les 3
@@ -49,6 +56,15 @@ export abstract class Scoring {
    * date fixe antérieure aux données réelles conviendrait) — seule compte sa fixité.
    */
   private static readonly DATE_REFERENCE = new Date(Date.UTC(2000, 0, 1));
+
+  /**
+   * Marge de tolérance (en points de fraction, donc 0.1 = 10 points de pourcentage) en-deçà de
+   * laquelle un écart de Taux d'approche ou de Marge avant descente entre deux Périodes est lu
+   * comme une Évolution stable plutôt qu'une hausse/baisse — sans elle, deux fractions calculées
+   * sur des effectifs différents ne tombent quasiment jamais exactement au même point, et `stable`
+   * ne se déclencherait presque plus jamais en pratique.
+   */
+  private static readonly MARGE_STABLE = 0.1;
 
   abstract calculerPalier(
     niveaux: number[],
@@ -84,6 +100,54 @@ export abstract class Scoring {
   /** Traduit le Seuil de Palier tel que stocké en configuration (pourcentage entier) en fraction. */
   pourcentageVersFraction(seuilPalierPourcentage: number): number {
     return seuilPalierPourcentage / 100;
+  }
+
+  /**
+   * Compare le Palier `actuel` à celui de la Période immédiatement précédente. `null` si l'un des
+   * deux n'a pas de Palier (`effectif: 0`) : rien à comparer. À Palier identique, ne s'arrête pas
+   * là — un Palier stable peut progresser à l'intérieur de lui-même : compare le Taux d'approche
+   * (progression vers le Palier suivant), sauf au Palier 4 où il n'y a pas de Palier suivant à
+   * approcher (`tauxApproche` toujours `null`) — on compare alors la Marge avant descente, pour
+   * garder un signal utile même au sommet de l'échelle plutôt que de figer l'Évolution à `stable`.
+   * Une seule grandeur comparée à la fois (jamais de fusion tauxApproche/margeAvantDescente en un
+   * chiffre composite, cf. `ResultatPalier`) — seul le choix de laquelle dépend du Palier. Écart
+   * absolu ≤ `MARGE_STABLE` (10 points) entre les deux valeurs : lu comme stable, pas une
+   * égalité stricte.
+   */
+  comparerEvolution(
+    actuel: ResultatPalier,
+    precedent: ResultatPalier,
+  ): Evolution | null {
+    if (!('palier' in actuel) || !('palier' in precedent)) {
+      return null;
+    }
+    if (actuel.palier !== precedent.palier) {
+      return actuel.palier > precedent.palier ? 'hausse' : 'baisse';
+    }
+    if (actuel.palier < 4) {
+      return Scoring.comparerNombres(
+        actuel.tauxApproche,
+        precedent.tauxApproche,
+      );
+    }
+    return Scoring.comparerNombres(
+      actuel.margeAvantDescente,
+      precedent.margeAvantDescente,
+    );
+  }
+
+  private static comparerNombres(
+    actuel: number | null,
+    precedent: number | null,
+  ): Evolution | null {
+    if (actuel === null || precedent === null) {
+      return null;
+    }
+    const ecart = actuel - precedent;
+    if (Math.abs(ecart) <= Scoring.MARGE_STABLE) {
+      return 'stable';
+    }
+    return ecart > 0 ? 'hausse' : 'baisse';
   }
 
   private static moisEntre(debut: Date, fin: Date): number {

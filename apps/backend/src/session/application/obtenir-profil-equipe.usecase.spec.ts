@@ -52,6 +52,14 @@ class SessionRepositoryFake implements SessionRepository {
   existeCodeOuvert(): Promise<boolean> {
     return Promise.resolve(false);
   }
+  existeFermeeAvant(equipeId: string, date: Date): Promise<boolean> {
+    return Promise.resolve(
+      this.sessions.some(
+        (s) =>
+          s.equipeId === equipeId && s.statut === 'CLOTUREE' && s.date < date,
+      ),
+    );
+  }
 }
 
 class EquipeRepositoryFake implements EquipeRepository {
@@ -289,5 +297,228 @@ describe('ObtenirProfilEquipe', () => {
       tauxApproche: 0,
       margeAvantDescente: 1,
     });
+    // sessionHorsPeriode est CLOTUREE et antérieure à `periode.debut` : il existe une Période
+    // précédente à explorer via le carrousel.
+    expect(resultat.aPeriodePrecedente).toBe(true);
+    expect(resultat.periodeEnCours).toBe(false);
+    // sessionHorsPeriode n'a aucun Tour clos (absente de `etatTours`) : la Période précédente n'a
+    // aucune Réponse scorable, donc aucune Évolution calculable.
+    expect(resultat.evolutionGlobale).toBeNull();
+    expect(resultat.evolutionsParTheme['t1']).toBeNull();
+  });
+
+  it('calcule l’Évolution par Thème et globale par rapport à la Période immédiatement précédente', async () => {
+    const equipe = Equipe.creer('e1', 'Équipe A', 'ent1').valeur;
+    const themeA = Theme.creer('t1', 'Thème A', [question('q1', 't1')]);
+    const themeB = Theme.creer('t2', 'Thème B', [question('q2', 't2')]);
+    const referentiel = Referentiel.reconstituer(new Date('2026-01-01'), [
+      themeA,
+      themeB,
+    ]);
+
+    const scoring = new ScoringV1();
+    const periodeEnCours = scoring.periodeContenant(new Date(), 3);
+    const derniereComplete = scoring.periodePrecedente(periodeEnCours, 3);
+    const encoreAvant = scoring.periodePrecedente(derniereComplete, 3);
+    const uneJourneeMs = 24 * 60 * 60 * 1000;
+
+    // t1 : Palier 1 (Niveau 1) en Période précédente → Palier 4 (Niveau 4) en Période affichée —
+    // hausse. t2 : répondu seulement en Période affichée, aucune donnée en Période précédente —
+    // Évolution non calculable (null).
+    const sessionActuelleT1 = sessionFermee(
+      's1',
+      'e1',
+      new Date(derniereComplete.debut.getTime() + uneJourneeMs),
+      ['q1'],
+    );
+    const sessionActuelleT2 = sessionFermee(
+      's2',
+      'e1',
+      new Date(derniereComplete.debut.getTime() + uneJourneeMs),
+      ['q2'],
+    );
+    const sessionPrecedenteT1 = sessionFermee(
+      's3',
+      'e1',
+      new Date(encoreAvant.debut.getTime() + uneJourneeMs),
+      ['q1'],
+    );
+
+    const sessions = new SessionRepositoryFake();
+    sessions.sessions.push(
+      sessionActuelleT1,
+      sessionActuelleT2,
+      sessionPrecedenteT1,
+    );
+
+    const etatTours = new EtatToursQueryFake({
+      s1: [{ tourId: 't-s1', questionId: 'q1', numero: 1, clos: true }],
+      s2: [{ tourId: 't-s2', questionId: 'q2', numero: 1, clos: true }],
+      s3: [{ tourId: 't-s3', questionId: 'q1', numero: 1, clos: true }],
+    });
+    const reponses = new ReponseRepositoryFake([
+      reponse('r1', 'q1', 4, 't-s1'),
+      reponse('r2', 'q2', 3, 't-s2'),
+      reponse('r3', 'q1', 1, 't-s3'),
+    ]);
+
+    const useCase = new ObtenirProfilEquipe(
+      new EquipeRepositoryFake([equipe]),
+      sessions,
+      new ReferentielRepositoryFake(referentiel),
+      etatTours,
+      reponses,
+      scoring,
+      60,
+      3,
+    );
+
+    const resultat = await useCase.executer('e1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') return;
+    expect(resultat.periode).toEqual(derniereComplete);
+    expect(resultat.evolutionsParTheme['t1']).toBe('hausse');
+    expect(resultat.evolutionsParTheme['t2']).toBeNull();
+    // Global (Niveaux de toutes les Réponses de la Période, tous Thèmes confondus, X=60%) :
+    // Période précédente = [1] → Palier 1 ; Période affichée = [4, 3] → Palier 3 (part(≥3)=100%,
+    // part(≥4)=50%<60%). 3 > 1 : hausse.
+    expect(resultat.evolutionGlobale).toBe('hausse');
+  });
+
+  it('n’appelle pas de second calcul et renvoie une Évolution nulle en l’absence de Période précédente', async () => {
+    const equipe = Equipe.creer('e1', 'Équipe A', 'ent1').valeur;
+    const themeA = Theme.creer('t1', 'Thème A', [question('q1', 't1')]);
+    const referentiel = Referentiel.reconstituer(new Date('2026-01-01'), [
+      themeA,
+    ]);
+    const scoring = new ScoringV1();
+    const periodeEnCours = scoring.periodeContenant(new Date(), 3);
+    const derniereComplete = scoring.periodePrecedente(periodeEnCours, 3);
+    const uneJourneeMs = 24 * 60 * 60 * 1000;
+
+    const sessions = new SessionRepositoryFake();
+    sessions.sessions.push(
+      sessionFermee(
+        's1',
+        'e1',
+        new Date(derniereComplete.debut.getTime() + uneJourneeMs),
+        ['q1'],
+      ),
+    );
+    const etatTours = new EtatToursQueryFake({
+      s1: [{ tourId: 't-s1', questionId: 'q1', numero: 1, clos: true }],
+    });
+    const reponses = new ReponseRepositoryFake([
+      reponse('r1', 'q1', 3, 't-s1'),
+    ]);
+
+    const useCase = new ObtenirProfilEquipe(
+      new EquipeRepositoryFake([equipe]),
+      sessions,
+      new ReferentielRepositoryFake(referentiel),
+      etatTours,
+      reponses,
+      scoring,
+      60,
+      3,
+    );
+
+    const resultat = await useCase.executer('e1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') return;
+    expect(resultat.aPeriodePrecedente).toBe(false);
+    expect(resultat.evolutionGlobale).toBeNull();
+    // Aucun second calcul déclenché (pas de Période précédente à comparer) : la map reste vide,
+    // pas remplie de `null` par Thème.
+    expect(resultat.evolutionsParTheme).toEqual({});
+  });
+
+  it('recule d’une Période supplémentaire par tranche d’`offset`', async () => {
+    const equipe = Equipe.creer('e1', 'Équipe A', 'ent1').valeur;
+    const referentiel = Referentiel.vide();
+    const scoring = new ScoringV1();
+    const periodeEnCours = scoring.periodeContenant(new Date(), 3);
+    const derniereComplete = scoring.periodePrecedente(periodeEnCours, 3);
+    const encoreAvant = scoring.periodePrecedente(derniereComplete, 3);
+
+    const useCase = new ObtenirProfilEquipe(
+      new EquipeRepositoryFake([equipe]),
+      new SessionRepositoryFake(),
+      new ReferentielRepositoryFake(referentiel),
+      new EtatToursQueryFake({}),
+      new ReponseRepositoryFake([]),
+      scoring,
+      60,
+      3,
+    );
+
+    const resultatOffset0 = await useCase.executer('e1', 0);
+    const resultatOffset1 = await useCase.executer('e1', 1);
+
+    expect(resultatOffset0.type).toBe('ok');
+    expect(resultatOffset1.type).toBe('ok');
+    if (resultatOffset0.type !== 'ok' || resultatOffset1.type !== 'ok') return;
+    expect(resultatOffset0.periode).toEqual(derniereComplete);
+    expect(resultatOffset0.periodeEnCours).toBe(false);
+    expect(resultatOffset1.periode).toEqual(encoreAvant);
+    expect(resultatOffset1.periodeEnCours).toBe(false);
+  });
+
+  it('`offset -1` renvoie la Période en cours, marquée incomplète', async () => {
+    const equipe = Equipe.creer('e1', 'Équipe A', 'ent1').valeur;
+    const referentiel = Referentiel.vide();
+    const scoring = new ScoringV1();
+    const periodeEnCoursAttendue = scoring.periodeContenant(new Date(), 3);
+
+    const sessions = new SessionRepositoryFake();
+    const uneJourneeMs = 24 * 60 * 60 * 1000;
+    sessions.sessions.push(
+      sessionFermee(
+        's1',
+        'e1',
+        new Date(periodeEnCoursAttendue.debut.getTime() + uneJourneeMs),
+        [],
+      ),
+    );
+
+    const useCase = new ObtenirProfilEquipe(
+      new EquipeRepositoryFake([equipe]),
+      sessions,
+      new ReferentielRepositoryFake(referentiel),
+      new EtatToursQueryFake({}),
+      new ReponseRepositoryFake([]),
+      scoring,
+      60,
+      3,
+    );
+
+    const resultat = await useCase.executer('e1', -1);
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') return;
+    expect(resultat.periode).toEqual(periodeEnCoursAttendue);
+    expect(resultat.periodeEnCours).toBe(true);
+  });
+
+  it('`aPeriodePrecedente` est faux quand aucune Session close n’existe avant la Période affichée', async () => {
+    const equipe = Equipe.creer('e1', 'Équipe A', 'ent1').valeur;
+    const useCase = new ObtenirProfilEquipe(
+      new EquipeRepositoryFake([equipe]),
+      new SessionRepositoryFake(),
+      new ReferentielRepositoryFake(Referentiel.vide()),
+      new EtatToursQueryFake({}),
+      new ReponseRepositoryFake([]),
+      new ScoringV1(),
+      60,
+      3,
+    );
+
+    const resultat = await useCase.executer('e1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') return;
+    expect(resultat.aPeriodePrecedente).toBe(false);
   });
 });

@@ -169,6 +169,10 @@ L'écart entre les Réponses à une même Question - le désaccord de l'Équipe 
 **Tendance**:
 La suite des Paliers d'une Équipe ou d'une Entité, une Période de calcul après l'autre. Une Période sans Réponse y laisse un trou, jamais le report du dernier Palier connu.
 
+**Évolution**:
+Le mouvement d'un Palier (par Thème ou global) entre la Période de calcul affichée et la Période immédiatement précédente : hausse, baisse ou stable. Distinct de la Tendance (qui porte sur la suite complète des Paliers) - l'Évolution ne compare que deux Périodes consécutives, prend `null` s'il n'y a pas de Palier des deux côtés. À Palier identique, ne s'arrête pas là : compare le Taux d'approche (ou, au Palier 4, la Marge avant descente) pour détecter un mouvement à l'intérieur du Palier, avec une marge de tolérance de 10 points (un écart de 10 points ou moins reste stable, pas une égalité stricte).
+_Avoid_: Tendance (réservé à la suite complète des Paliers période après période)
+
 **Mur de badges**:
 La vue comparant les Badges de plusieurs Équipes entre elles, sans classement chiffré.
 

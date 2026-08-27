@@ -104,9 +104,17 @@ describe('OrganisationService', () => {
   it('obtient le Profil d’une Équipe via GET /api/organisation/equipes/:id/profil', () => {
     service.obtenirProfil('eq1').subscribe();
 
-    const req = httpMock.expectOne('/api/organisation/equipes/eq1/profil');
+    const req = httpMock.expectOne('/api/organisation/equipes/eq1/profil?offset=0');
     expect(req.request.method).toBe('GET');
     req.flush({ periodeDebut: '2026-04-01T00:00:00.000Z', periodeFin: '2026-07-01T00:00:00.000Z', themes: [] });
+  });
+
+  it('obtient le Profil d’une Équipe à un `offset` de Période donné', () => {
+    service.obtenirProfil('eq1', 2).subscribe();
+
+    const req = httpMock.expectOne('/api/organisation/equipes/eq1/profil?offset=2');
+    expect(req.request.method).toBe('GET');
+    req.flush({ periodeDebut: '2025-10-01T00:00:00.000Z', periodeFin: '2026-01-01T00:00:00.000Z', themes: [] });
   });
 
   it('modifie un Membre via PATCH /api/organisation/equipes/:id/membres/:membreId', () => {

@@ -55,6 +55,26 @@
   font-family: var(--font-family-mono);
 }
 
+// Jamais de vert (la charte n'a pas de teinte "succès") ni de rouge (Règle du Rouge Dédié) pour la
+// hausse : le sens vient d'abord de la direction de la flèche (icônes `rise`/`fall`, déjà à 45°).
+// Icône glissée dans le badge (pas un élément séparé) : elle qualifie le Palier affiché, elle ne
+// s'en détache jamais visuellement — et hérite donc par défaut de la couleur du badge, déjà
+// garantie lisible sur son propre fond (blanc sur badge--2/3/4, navy sur badge--1).
+.palier-theme__evolution {
+  display: inline-flex;
+  margin-left: var(--space-1);
+  vertical-align: middle;
+}
+
+// La baisse reprend le rôle « attention » (or) déjà utilisé par .palier-theme__alerte ci-dessous
+// — même "à regarder de près", pas une erreur — mais seulement sur badge--1 (fond clair, texte
+// navy) : cet or foncé (`--color-attention`) n'offre qu'un contraste ≈1,9:1 sur les fonds bleu
+// pleins de badge--2/3/4 (bien sous le minimum WCAG de 3:1 pour une icône), où la flèche doit donc
+// rester blanche (héritée du badge) plutôt que reprendre cette teinte.
+.palier-theme__badge--1 .palier-theme__evolution--baisse {
+  color: var(--color-attention);
+}
+
 .palier-theme__jauge {
   display: inline-flex;
   align-items: center;

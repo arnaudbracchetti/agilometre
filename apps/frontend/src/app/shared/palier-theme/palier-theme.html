@@ -1,6 +1,15 @@
 @if (palier() !== null) {
   <span class="palier-theme__badge" [class]="'palier-theme__badge--' + palier()">
     Palier <span class="palier-theme__valeur">{{ palier() }}</span>
+    @if (iconeEvolution(); as icone) {
+      <span
+        class="palier-theme__evolution"
+        [class]="'palier-theme__evolution--' + evolution()"
+        [attr.aria-label]="libelleEvolution()"
+      >
+        <span nz-icon [nzType]="icone" nzTheme="outline" aria-hidden="true"></span>
+      </span>
+    }
   </span>
 } @else {
   <span class="palier-theme__badge palier-theme__badge--vide">{{ libelleVide() }}</span>

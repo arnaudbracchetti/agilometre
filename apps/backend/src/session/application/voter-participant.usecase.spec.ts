@@ -38,6 +38,9 @@ class SessionRepositoryFake implements SessionRepository {
   existeCodeOuvert(): Promise<boolean> {
     return Promise.resolve(false);
   }
+  existeFermeeAvant(): Promise<boolean> {
+    return Promise.resolve(false);
+  }
 }
 
 class TourDeVoteRepositoryFake implements TourDeVoteRepository {

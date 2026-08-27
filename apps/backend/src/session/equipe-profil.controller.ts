@@ -1,4 +1,13 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  DefaultValuePipe,
+  Get,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  Query,
+} from '@nestjs/common';
 import { ProfilEquipeDto } from '@agilometre/shared';
 import { ObtenirProfilEquipe } from './application/obtenir-profil-equipe.usecase';
 import { versProfilEquipeDto } from './profil-equipe.mapper';
@@ -14,8 +23,14 @@ export class EquipeProfilController {
   constructor(private readonly obtenirProfilEquipe: ObtenirProfilEquipe) {}
 
   @Get(':id/profil')
-  async profil(@Param('id') id: string): Promise<ProfilEquipeDto> {
-    const resultat = await this.obtenirProfilEquipe.executer(id);
+  async profil(
+    @Param('id') id: string,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
+  ): Promise<ProfilEquipeDto> {
+    if (offset < -1) {
+      throw new BadRequestException('offset ne peut pas être inférieur à -1');
+    }
+    const resultat = await this.obtenirProfilEquipe.executer(id, offset);
     if (resultat.type === 'introuvable') {
       throw new NotFoundException(`Équipe ${id} introuvable`);
     }
@@ -25,6 +40,10 @@ export class EquipeProfilController {
       resultat.seuilPalier,
       resultat.themes,
       resultat.global,
+      resultat.aPeriodePrecedente,
+      resultat.periodeEnCours,
+      resultat.evolutionGlobale,
+      resultat.evolutionsParTheme,
     );
   }
 }

@@ -122,6 +122,12 @@ export interface SyntheseQuestionDto {
   repartition: RepartitionVotesDto;
 }
 
+/**
+ * Le mouvement d'un Palier entre la Période affichée et la Période immédiatement précédente —
+ * distinct de la Tendance (la suite complète des Paliers, cf. CONTEXT.md).
+ */
+export type Evolution = 'hausse' | 'baisse' | 'stable';
+
 export interface SyntheseThemeDto {
   themeId: string;
   libelle: string;
@@ -136,6 +142,8 @@ export interface SyntheseThemeDto {
   margeAvantDescente: number | null;
   effectif: number;
   questions: SyntheseQuestionDto[];
+  /** Absent pour la Synthèse de séance (pas de Période précédente) ; toujours fourni pour le Profil d'Équipe. */
+  evolution?: Evolution | null;
 }
 
 export interface SyntheseSessionDto {

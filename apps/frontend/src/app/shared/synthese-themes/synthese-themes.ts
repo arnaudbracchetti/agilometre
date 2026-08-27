@@ -1,7 +1,7 @@
 import { Component, computed, input, signal } from '@angular/core';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { SyntheseThemeDto } from '@agilometre/shared';
+import { Evolution, SyntheseThemeDto } from '@agilometre/shared';
 import { CranConsensus } from '../cran-consensus/cran-consensus';
 import { MoyenneGraduee } from '../moyenne-graduee/moyenne-graduee';
 import { PalierTheme } from '../palier-theme/palier-theme';
@@ -41,6 +41,8 @@ export class SyntheseThemes {
   /** Message affiché à la place de la liste quand `themes` est vide — propre à chaque écran hôte
    * (une séance vs. une Équipe sur une Période). */
   readonly messageVide = input('Aucune réponse enregistrée.');
+  /** `null` ou absent (Synthèse de séance) : aucune flèche d'Évolution sur le Palier global. */
+  readonly evolutionGlobale = input<Evolution | null>(null);
 
   protected readonly themesTries = computed(() =>
     [...this.themes()].sort((a, b) => {

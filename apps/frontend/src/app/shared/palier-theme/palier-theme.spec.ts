@@ -1,7 +1,13 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
-import { WarningOutline } from '@ant-design/icons-angular/icons';
+import {
+  ArrowRightOutline,
+  FallOutline,
+  RiseOutline,
+  WarningOutline,
+} from '@ant-design/icons-angular/icons';
+import { Evolution } from '@agilometre/shared';
 import { PalierTheme } from './palier-theme';
 
 @Component({
@@ -11,6 +17,7 @@ import { PalierTheme } from './palier-theme';
       [palier]="palier"
       [tauxApproche]="tauxApproche"
       [margeAvantDescente]="margeAvantDescente"
+      [evolution]="evolution"
     />
   `,
 })
@@ -18,13 +25,16 @@ class HoteDeTest {
   palier: 1 | 2 | 3 | 4 | null = 2;
   tauxApproche: number | null = null;
   margeAvantDescente: number | null = null;
+  evolution: Evolution | null = null;
 }
 
 describe('PalierTheme', () => {
   beforeEach(() => {
     // Sans ça, nz-icon tente de récupérer le SVG via HTTP (assets/outline/warning.svg) — même
     // pattern que pilotage-page.spec.ts.
-    TestBed.configureTestingModule({ providers: [provideNzIcons([WarningOutline])] });
+    TestBed.configureTestingModule({
+      providers: [provideNzIcons([WarningOutline, RiseOutline, FallOutline, ArrowRightOutline])],
+    });
   });
 
   function creer() {
@@ -102,5 +112,30 @@ describe('PalierTheme', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.palier-theme__alerte')).toBeNull();
+  });
+
+  it('n’affiche aucune flèche d’Évolution quand `evolution` est null', () => {
+    const fixture = TestBed.createComponent(HoteDeTest);
+    fixture.componentInstance.evolution = null;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.palier-theme__evolution')).toBeNull();
+  });
+
+  it.each([
+    ['hausse', 'En hausse par rapport à la Période précédente'],
+    ['baisse', 'En baisse par rapport à la Période précédente'],
+    ['stable', 'Stable par rapport à la Période précédente'],
+  ] as const)('affiche la flèche d’Évolution « %s » avec son libellé accessible', (evolution, libelle) => {
+    const fixture = TestBed.createComponent(HoteDeTest);
+    fixture.componentInstance.evolution = evolution;
+    fixture.detectChanges();
+
+    const fleche = fixture.nativeElement.querySelector(
+      '.palier-theme__evolution',
+    ) as HTMLElement;
+    expect(fleche).not.toBeNull();
+    expect(fleche.classList).toContain(`palier-theme__evolution--${evolution}`);
+    expect(fleche.getAttribute('aria-label')).toBe(libelle);
   });
 });

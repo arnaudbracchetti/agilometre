@@ -43,9 +43,39 @@
     margin: 0;
   }
 
+  &__carrousel-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  // DESIGN.md (Buttons > Text/Link) : les actions à icône seule s'affichent en Bleu Profond —
+  // `nzType="text"` ne porte aucune teinte de marque par défaut chez ng-zorro (même règle déjà
+  // appliquée à `bibliotheque-page`). L'état désactivé (borne du carrousel) reste géré par le
+  // style natif d'ant-design, plus atténué que ce bleu.
+  &__carrousel-bouton {
+    color: var(--color-primary);
+
+    &:hover,
+    &:focus {
+      color: var(--color-primary-hover);
+    }
+  }
+
   &__periode {
     font-size: var(--font-size-sm);
     color: var(--color-ink-muted);
+  }
+
+  &__badge-incomplete {
+    display: inline-block;
+    margin-left: var(--space-2);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-attention);
+    background: var(--color-attention-subtle);
   }
 
   &__etat-vide {
