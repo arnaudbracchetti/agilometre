@@ -5,7 +5,7 @@ import { ContexteSyntheseSession } from './application/obtenir-synthese-session.
 import { STATUT_VERS_DTO } from './statut-session.mapper';
 
 /** Champs plats communs à un Palier de Thème et au Palier global — `effectif: 0` → tout `null`. */
-function versChampsPalierDto(resultatPalier: ResultatPalier): {
+export function versChampsPalierDto(resultatPalier: ResultatPalier): {
   palier: 1 | 2 | 3 | 4 | null;
   tauxApproche: number | null;
   margeAvantDescente: number | null;

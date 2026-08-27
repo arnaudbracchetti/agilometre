@@ -1,0 +1,49 @@
+<div class="arbre-organisation">
+  <div class="arbre-organisation__recherche">
+    <span nz-icon nzType="search" class="arbre-organisation__recherche-icone" aria-hidden="true"></span>
+    <input
+      nz-input
+      type="search"
+      class="arbre-organisation__recherche-champ"
+      placeholder="Rechercher une Entité, une Équipe, un Membre…"
+      aria-label="Rechercher dans l’organisation"
+      [ngModel]="filtre()"
+      (ngModelChange)="onFiltreChange($event)"
+    />
+  </div>
+
+  @if (aucunResultat()) {
+    <p class="arbre-organisation__recherche-vide">Aucun résultat pour « {{ filtre().trim() }} ».</p>
+  } @else {
+    <nz-tree
+      class="arbre-organisation__tree"
+      [nzData]="treeData()"
+      [nzSelectedKeys]="selectedKeys()"
+      [nzExpandedKeys]="expandedKeys()"
+      [nzTreeTemplate]="noeudTemplate"
+      (nzExpandChange)="onNodeExpand($event)"
+      (nzClick)="onNodeClick($event)"
+      nzBlockNode
+    ></nz-tree>
+  }
+
+  <ng-template #noeudTemplate let-node>
+    <span class="arbre-organisation__noeud">
+      @switch (node.origin.type) {
+        @case ('entite') {
+          <span nz-icon nzType="apartment" class="arbre-organisation__noeud-icone" aria-hidden="true"></span>
+        }
+        @case ('equipe') {
+          <span nz-icon nzType="team" class="arbre-organisation__noeud-icone" aria-hidden="true"></span>
+        }
+        @case ('membre') {
+          <span nz-icon nzType="user" class="arbre-organisation__noeud-icone" aria-hidden="true"></span>
+        }
+      }
+      <span
+        class="arbre-organisation__noeud-titre"
+        [class.arbre-organisation__noeud-titre--correspond]="estCorrespondanceDirecte(node.title)"
+      >{{ node.title }}</span>
+    </span>
+  </ng-template>
+</div>

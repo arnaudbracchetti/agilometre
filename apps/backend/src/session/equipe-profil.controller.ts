@@ -19,6 +19,12 @@ export class EquipeProfilController {
     if (resultat.type === 'introuvable') {
       throw new NotFoundException(`Équipe ${id} introuvable`);
     }
-    return versProfilEquipeDto(resultat.periode, resultat.themes);
+    return versProfilEquipeDto(
+      resultat.periode,
+      resultat.equipeNom,
+      resultat.seuilPalier,
+      resultat.themes,
+      resultat.global,
+    );
   }
 }

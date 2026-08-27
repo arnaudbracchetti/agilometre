@@ -212,10 +212,12 @@ describe('ObtenirProfilEquipe', () => {
       themeB,
     ]);
 
-    // ObtenirProfilEquipe calcule la Période courante à partir de "maintenant" (pas de port
-    // horloge dans ce codebase, cf. Session.ouvrir()) : on la recalcule ici de la même façon.
+    // ObtenirProfilEquipe calcule la dernière Période complète (celle précédant la Période
+    // courante à partir de "maintenant" — pas de port horloge dans ce codebase, cf.
+    // Session.ouvrir()) : on la recalcule ici de la même façon.
     const scoring = new ScoringV1();
-    const periode = scoring.periodeContenant(new Date(), 3);
+    const periodeEnCours = scoring.periodeContenant(new Date(), 3);
+    const periode = scoring.periodePrecedente(periodeEnCours, 3);
     const uneJourneeMs = 24 * 60 * 60 * 1000;
 
     const sessionDansPeriode = sessionFermee(
@@ -278,6 +280,14 @@ describe('ObtenirProfilEquipe', () => {
       position: 1,
       resultatPalier: { effectif: 0 },
       questions: [],
+    });
+    expect(resultat.equipeNom).toBe('Équipe A');
+    expect(resultat.seuilPalier).toBe(0.6);
+    expect(resultat.global).toEqual({
+      effectif: 1,
+      palier: 3,
+      tauxApproche: 0,
+      margeAvantDescente: 1,
     });
   });
 });

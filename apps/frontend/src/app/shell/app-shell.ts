@@ -19,5 +19,6 @@ export class AppShell {
       ],
     },
     { label: 'Sessions', routerLink: '/sessions' },
+    { label: 'Profil d’équipe', routerLink: '/profil-equipe' },
   ];
 }

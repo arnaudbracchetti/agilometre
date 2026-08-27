@@ -2,53 +2,7 @@
   <section class="organisation__arbre">
     <h2 class="organisation__titre">Organisation</h2>
 
-    <div class="organisation__recherche">
-      <span nz-icon nzType="search" class="organisation__recherche-icone" aria-hidden="true"></span>
-      <input
-        nz-input
-        type="search"
-        class="organisation__recherche-champ"
-        placeholder="Rechercher une Entité, une Équipe, un Membre…"
-        aria-label="Rechercher dans l’organisation"
-        [ngModel]="filtre()"
-        (ngModelChange)="onFiltreChange($event)"
-      />
-    </div>
-
-    @if (aucunResultat()) {
-      <p class="organisation__recherche-vide">Aucun résultat pour « {{ filtre().trim() }} ».</p>
-    } @else {
-      <nz-tree
-        class="organisation__tree"
-        [nzData]="treeData()"
-        [nzSelectedKeys]="selectedKeys()"
-        [nzExpandedKeys]="expandedKeys()"
-        [nzTreeTemplate]="noeudTemplate"
-        (nzExpandChange)="onNodeExpand($event)"
-        (nzClick)="onNodeClick($event)"
-        nzBlockNode
-      ></nz-tree>
-    }
-
-    <ng-template #noeudTemplate let-node>
-      <span class="organisation__noeud">
-        @switch (node.origin.type) {
-          @case ('entite') {
-            <span nz-icon nzType="apartment" class="organisation__noeud-icone" aria-hidden="true"></span>
-          }
-          @case ('equipe') {
-            <span nz-icon nzType="team" class="organisation__noeud-icone" aria-hidden="true"></span>
-          }
-          @case ('membre') {
-            <span nz-icon nzType="user" class="organisation__noeud-icone" aria-hidden="true"></span>
-          }
-        }
-        <span
-          class="organisation__noeud-titre"
-          [class.organisation__noeud-titre--correspond]="estCorrespondanceDirecte(node.title)"
-        >{{ node.title }}</span>
-      </span>
-    </ng-template>
+    <app-arbre-organisation />
   </section>
 
   <section class="organisation__detail">
@@ -114,7 +68,7 @@
         nz-button
         nzType="default"
         class="organisation__voir-profil"
-        [routerLink]="['/organisation/equipes', equipe.id, 'profil']"
+        [routerLink]="['/profil-equipe', equipe.id]"
       >
         Voir le profil
       </a>
@@ -230,7 +184,7 @@
         </button>
       </div>
     } @else {
-      <h2 class="organisation__titre">{{ entites().length === 0 ? 'Aucune Entité pour l’instant' : 'Entités' }}</h2>
+      <h2 class="organisation__titre">{{ arbre().aucuneEntite() ? 'Aucune Entité pour l’instant' : 'Entités' }}</h2>
 
       <form class="organisation__formulaire" (ngSubmit)="creerEntite()">
         <label for="nouveauNomEntite">Nom de l’Entité</label>
@@ -248,7 +202,7 @@
       </form>
 
       <p class="organisation__etat-vide">
-        @if (entites().length === 0) {
+        @if (arbre().aucuneEntite()) {
           Créez votre première Entité ci-dessus pour commencer.
         } @else {
           Sélectionnez une Entité, une Équipe ou un Membre dans l’arbre pour la gérer.

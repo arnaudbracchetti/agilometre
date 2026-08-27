@@ -90,14 +90,9 @@ describe('AppBreadcrumb (routes réelles de l’application)', () => {
     ]);
   });
 
-  it('accumule les niveaux jusqu’à /organisation/equipes/:id/profil/:themeId', async () => {
-    const harness = await RouterTestingHarness.create('/organisation/equipes/e1/profil/t1');
+  it('n’affiche « Profil d’équipe » qu’une seule fois sur /profil-equipe/:id (pas de doublon malgré l’héritage de data)', async () => {
+    const harness = await RouterTestingHarness.create('/profil-equipe/eq1');
 
-    expect(libelles(harness)).toEqual([
-      'Accueil',
-      'Organisation',
-      'Profil de l’Équipe',
-      'Lecture fine',
-    ]);
+    expect(libelles(harness)).toEqual(['Accueil', 'Profil d’équipe']);
   });
 });

@@ -20,7 +20,13 @@ export interface EquipeDto {
 }
 
 export interface ProfilEquipeDto {
+  equipeNom: string;
   periodeDebut: string; // ISO
   periodeFin: string; // ISO
+  seuilPalier: number;
   themes: SyntheseThemeDto[];
+  palierGlobal: 1 | 2 | 3 | 4 | null;
+  tauxApprocheGlobal: number | null;
+  margeAvantDescenteGlobal: number | null;
+  effectifGlobal: number;
 }

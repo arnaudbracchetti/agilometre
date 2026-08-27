@@ -1,7 +1,7 @@
 import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
 import { EquipeRepository } from '../../organisation/domain/equipe.repository';
 import { ReponseRepository } from '../../reponse/domain/reponse.repository';
-import { Periode, Scoring } from '../../scoring/domain/scoring';
+import { Periode, ResultatPalier, Scoring } from '../../scoring/domain/scoring';
 import { CalculerSyntheseScoring } from '../../scoring/application/calculer-synthese-scoring';
 import { EtatToursQuery } from '../domain/etat-tours.query';
 import { SessionRepository } from '../domain/session.repository';
@@ -13,12 +13,20 @@ import { SourceReponsesScorablesPeriodeEquipe } from './source-reponses-scorable
 
 export type ResultatObtenirProfilEquipe =
   | { type: 'introuvable' }
-  | { type: 'ok'; periode: Periode; themes: SyntheseThemeAvecLibelle[] };
+  | {
+      type: 'ok';
+      periode: Periode;
+      equipeNom: string;
+      seuilPalier: number;
+      themes: SyntheseThemeAvecLibelle[];
+      global: ResultatPalier;
+    };
 
 /**
  * Assemble le Profil par Thème d'une Équipe (#53) : Portée périodique du moteur de scoring
- * (ADR-0014), Réponses agrégées sur les Sessions closes de l'Équipe sur la Période de calcul en
- * cours (ADR-0018), Thèmes/Questions actifs du Référentiel seulement (ADR-0015).
+ * (ADR-0014), Réponses agrégées sur les Sessions closes de l'Équipe sur la dernière Période de
+ * calcul complète (celle précédant la Période en cours — une Période encore en cours serait
+ * partielle et donc trompeuse), Thèmes/Questions actifs du Référentiel seulement (ADR-0015).
  */
 export class ObtenirProfilEquipe {
   constructor(
@@ -38,8 +46,12 @@ export class ObtenirProfilEquipe {
       return { type: 'introuvable' };
     }
 
-    const periode = this.scoring.periodeContenant(
+    const periodeEnCours = this.scoring.periodeContenant(
       new Date(),
+      this.dureePeriodeMois,
+    );
+    const periode = this.scoring.periodePrecedente(
+      periodeEnCours,
       this.dureePeriodeMois,
     );
     const sessionsFermees = await this.sessions.findFermeesParEquipeEtPeriode(
@@ -57,7 +69,7 @@ export class ObtenirProfilEquipe {
       this.seuilPalierPourcentage,
     );
 
-    const { themes: resultatsParTheme } =
+    const { themes: resultatsParTheme, global } =
       await CalculerSyntheseScoring.executer(
         this.scoring,
         source,
@@ -73,6 +85,13 @@ export class ObtenirProfilEquipe {
       questions,
     );
 
-    return { type: 'ok', periode, themes };
+    return {
+      type: 'ok',
+      periode,
+      equipeNom: equipe.nom,
+      seuilPalier: seuil,
+      themes,
+      global,
+    };
   }
 }

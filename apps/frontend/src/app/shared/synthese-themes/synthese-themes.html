@@ -1,0 +1,91 @@
+@if (themes().length > 0) {
+  <div class="synthese__stats-globales">
+    <div class="synthese__stat synthese__stat--global">
+      <app-palier-theme
+        taille="grande"
+        [palier]="palierGlobal()"
+        [tauxApproche]="tauxApprocheGlobal()"
+        [margeAvantDescente]="margeAvantDescenteGlobal()"
+      />
+      <span class="synthese__stat-libelle">Palier global</span>
+    </div>
+    <div class="synthese__stat">
+      <span class="synthese__stat-valeur">{{ totalQuestionsRepondues() }}</span>
+      <span class="synthese__stat-libelle">Questions répondues</span>
+    </div>
+    <div class="synthese__stat">
+      <span class="synthese__stat-valeur">{{ totalReponses() }}</span>
+      <span class="synthese__stat-libelle">Réponses totales</span>
+    </div>
+  </div>
+
+  <ul class="synthese__themes">
+    @for (theme of themesTries(); track theme.themeId) {
+      <li class="synthese__theme">
+        <div
+          class="synthese__theme-entete"
+          role="button"
+          tabindex="0"
+          [attr.aria-expanded]="estOuvert(theme.themeId)"
+          (click)="toggleTheme(theme.themeId)"
+          (keydown.enter)="toggleTheme(theme.themeId)"
+          (keydown.space)="toggleTheme(theme.themeId); $event.preventDefault()"
+          [style.background]="couleurThemeFond(theme.position)"
+        >
+          <span
+            nz-icon
+            nzType="right"
+            nzTheme="outline"
+            class="synthese__theme-chevron"
+            [class.synthese__theme-chevron--ouvert]="estOuvert(theme.themeId)"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="synthese__theme-pastille"
+            [style.background]="couleurTheme(theme.position)"
+          ></span>
+          <span class="synthese__theme-libelle">{{ theme.libelle }}</span>
+          <app-palier-theme
+            [palier]="theme.palier"
+            [tauxApproche]="theme.tauxApproche"
+            [margeAvantDescente]="theme.margeAvantDescente"
+          />
+          <span class="synthese__theme-compte">
+            {{ theme.questions.length }} {{ pluriel(theme.questions.length, 'question') }}
+            · {{ theme.effectif }} {{ pluriel(theme.effectif, 'réponse') }}
+          </span>
+        </div>
+
+        @if (estOuvert(theme.themeId)) {
+          @if (theme.palier !== null) {
+            <nz-collapse class="synthese__questions" nzGhost>
+              @for (question of theme.questions; track question.questionId) {
+                <nz-collapse-panel [nzHeader]="enteteQuestion">
+                  <ng-template #enteteQuestion>
+                    <div class="synthese__question-entete">
+                      <span class="synthese__question-libelle">{{ question.libelle }}</span>
+                      <span class="synthese__question-moyenne">
+                        Moyenne
+                        <app-moyenne-graduee [moyenne]="question.moyenne" />
+                      </span>
+                      <app-cran-consensus [consensus]="question.consensus" />
+                    </div>
+                  </ng-template>
+
+                  <app-repartition-niveaux
+                    [repartition]="question.repartition"
+                    [effectif]="question.effectif"
+                  />
+                </nz-collapse-panel>
+              }
+            </nz-collapse>
+          } @else {
+            <p class="synthese__theme-vide">Aucune réponse enregistrée sur ce Thème.</p>
+          }
+        }
+      </li>
+    }
+  </ul>
+} @else {
+  <p class="synthese__vide">{{ messageVide() }}</p>
+}

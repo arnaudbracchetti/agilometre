@@ -1,0 +1,54 @@
+.profil-equipe {
+  display: grid;
+  grid-template-columns: minmax(192px, 256px) 1fr;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  font-family: var(--font-family-base);
+  color: var(--color-ink);
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    padding: var(--space-4);
+  }
+
+  &__arbre {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-5);
+  }
+
+  &__titre {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    margin: 0 0 var(--space-4);
+  }
+
+  &__detail {
+    max-width: 86rem;
+  }
+
+  &__entete {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin-bottom: var(--space-5);
+  }
+
+  &__titre-detail {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    margin: 0;
+  }
+
+  &__periode {
+    font-size: var(--font-size-sm);
+    color: var(--color-ink-muted);
+  }
+
+  &__etat-vide {
+    color: var(--color-ink-muted);
+  }
+}
