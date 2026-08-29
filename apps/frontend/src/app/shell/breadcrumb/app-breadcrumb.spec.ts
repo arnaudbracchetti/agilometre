@@ -90,8 +90,14 @@ describe('AppBreadcrumb (routes réelles de l’application)', () => {
     ]);
   });
 
-  it('n’affiche « Profil d’équipe » qu’une seule fois sur /profil-equipe/:id (pas de doublon malgré l’héritage de data)', async () => {
-    const harness = await RouterTestingHarness.create('/profil-equipe/eq1');
+  it('n’affiche « Profil d’équipe » qu’une seule fois sur /profil/equipe/:id (pas de doublon malgré l’héritage de data)', async () => {
+    const harness = await RouterTestingHarness.create('/profil/equipe/eq1');
+
+    expect(libelles(harness)).toEqual(['Accueil', 'Profil d’équipe']);
+  });
+
+  it('n’affiche « Profil d’équipe » qu’une seule fois sur /profil/entite/:id (pas de doublon malgré l’héritage de data)', async () => {
+    const harness = await RouterTestingHarness.create('/profil/entite/e1');
 
     expect(libelles(harness)).toEqual(['Accueil', 'Profil d’équipe']);
   });

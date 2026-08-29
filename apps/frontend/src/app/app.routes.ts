@@ -31,27 +31,29 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'profil-equipe',
+        path: 'profil',
         data: { breadcrumb: 'Profil d’équipe' },
+        loadComponent: () =>
+          import('./organisation/profil-page/profil-page').then((m) => m.ProfilPage),
         children: [
           {
-            path: '',
-            pathMatch: 'full',
+            path: 'equipe/:id',
+            // Pas de son propre `breadcrumb` (délibérément vide, pas absent) : sans ce garde,
+            // `paramsInheritanceStrategy: 'always'` fait hériter le `breadcrumb` du parent
+            // `profil` jusqu'ici, et `buildBreadcrumbs` (voir breadcrumbs.ts) le pousserait une
+            // seconde fois — doublon "Profil d’équipe > Profil d’équipe" dans le fil d'Ariane.
+            data: { breadcrumb: '' },
             loadComponent: () =>
               import('./organisation/profil-equipe-page/profil-equipe-page').then(
                 (m) => m.ProfilEquipePage,
               ),
           },
           {
-            path: ':id',
-            // Pas de son propre `breadcrumb` (délibérément vide, pas absent) : sans ce garde,
-            // `paramsInheritanceStrategy: 'always'` fait hériter le `breadcrumb` du parent
-            // `profil-equipe` jusqu'ici, et `buildBreadcrumbs` (voir breadcrumbs.ts) le pousserait
-            // une seconde fois — doublon "Profil d’équipe > Profil d’équipe" dans le fil d'Ariane.
+            path: 'entite/:id',
             data: { breadcrumb: '' },
             loadComponent: () =>
-              import('./organisation/profil-equipe-page/profil-equipe-page').then(
-                (m) => m.ProfilEquipePage,
+              import('./organisation/profil-entite-page/profil-entite-page').then(
+                (m) => m.ProfilEntitePage,
               ),
           },
         ],

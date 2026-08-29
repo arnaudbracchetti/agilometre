@@ -1,0 +1,13 @@
+<div class="profil">
+  <section class="profil__arbre">
+    <h2 class="profil__titre">Organisation</h2>
+    <app-arbre-organisation />
+  </section>
+
+  <section class="profil__detail">
+    @if (!enfantActif()) {
+      <p class="profil__etat-vide">Sélectionnez une Équipe ou une Entité dans l’arbre pour voir son Profil.</p>
+    }
+    <router-outlet (activate)="onActivate()" (deactivate)="onDeactivate()" />
+  </section>
+</div>

@@ -5,6 +5,7 @@ import { OrganisationModule } from '../organisation/organisation.module';
 import { ReponseModule } from '../reponse/reponse.module';
 import { PrismaReferentielRepository } from '../referentiel/infrastructure/prisma-referentiel.repository';
 import { PrismaEquipeRepository } from '../organisation/infrastructure/prisma-equipe.repository';
+import { PrismaEntiteRepository } from '../organisation/infrastructure/prisma-entite.repository';
 import { PrismaReponseRepository } from '../reponse/infrastructure/prisma-reponse.repository';
 import { ScoringV1 } from '../scoring/domain/scoring-v1';
 import { CreerModeleSession } from './application/creer-modele-session.usecase';
@@ -32,6 +33,7 @@ import { ObtenirProjectionSession } from './application/obtenir-projection-sessi
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
 import { ObtenirSyntheseSession } from './application/obtenir-synthese-session.usecase';
 import { ObtenirProfilEquipe } from './application/obtenir-profil-equipe.usecase';
+import { ObtenirProfilEntite } from './application/obtenir-profil-entite.usecase';
 import { PasserQuestionSuivanteSession } from './application/passer-question-suivante-session.usecase';
 import { RejoindreSession } from './application/rejoindre-session.usecase';
 import { OuvrirTourDeVote } from './application/ouvrir-tour-de-vote.usecase';
@@ -57,6 +59,7 @@ import { SessionAnimeeController } from './session-animee.controller';
 import { ProjectionController } from './projection.controller';
 import { ParticipantController } from './participant.controller';
 import { EquipeProfilController } from './equipe-profil.controller';
+import { EntiteProfilController } from './entite-profil.controller';
 import { JetonParticipantGuard } from './jeton-participant.guard';
 
 @Module({
@@ -67,6 +70,7 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
     ProjectionController,
     ParticipantController,
     EquipeProfilController,
+    EntiteProfilController,
   ],
   providers: [
     PrismaModeleSessionRepository,
@@ -341,6 +345,38 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
           config.get<number>('SCORING_DUREE_PERIODE_MOIS')!,
         ),
       inject: [
+        PrismaEquipeRepository,
+        PrismaSessionRepository,
+        PrismaReferentielRepository,
+        PrismaEtatToursQuery,
+        PrismaReponseRepository,
+        ConfigService,
+      ],
+    },
+    {
+      provide: ObtenirProfilEntite,
+      useFactory: (
+        entites: PrismaEntiteRepository,
+        equipes: PrismaEquipeRepository,
+        sessions: PrismaSessionRepository,
+        referentiel: PrismaReferentielRepository,
+        etatTours: PrismaEtatToursQuery,
+        reponses: PrismaReponseRepository,
+        config: ConfigService,
+      ) =>
+        new ObtenirProfilEntite(
+          entites,
+          equipes,
+          sessions,
+          referentiel,
+          etatTours,
+          reponses,
+          new ScoringV1(),
+          config.get<number>('SCORING_SEUIL_PALIER')!,
+          config.get<number>('SCORING_DUREE_PERIODE_MOIS')!,
+        ),
+      inject: [
+        PrismaEntiteRepository,
         PrismaEquipeRepository,
         PrismaSessionRepository,
         PrismaReferentielRepository,

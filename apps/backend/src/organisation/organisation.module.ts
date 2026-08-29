@@ -15,7 +15,7 @@ import { OrganisationController } from './organisation.controller';
 
 @Module({
   controllers: [OrganisationController],
-  exports: [PrismaEquipeRepository],
+  exports: [PrismaEquipeRepository, PrismaEntiteRepository],
   providers: [
     PrismaEntiteRepository,
     PrismaEquipeRepository,

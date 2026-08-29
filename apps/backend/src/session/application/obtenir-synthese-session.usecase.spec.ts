@@ -47,6 +47,12 @@ class SessionRepositoryFake implements SessionRepository {
   existeFermeeAvant(): Promise<boolean> {
     return Promise.resolve(false);
   }
+  findFermeesParEquipesEtPeriode(): Promise<Session[]> {
+    return Promise.resolve([]);
+  }
+  existeFermeeAvantPourEquipes(): Promise<boolean> {
+    return Promise.resolve(false);
+  }
 }
 
 class EquipeRepositoryFake implements EquipeRepository {

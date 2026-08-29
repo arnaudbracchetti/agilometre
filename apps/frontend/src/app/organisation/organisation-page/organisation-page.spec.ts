@@ -220,7 +220,7 @@ describe('OrganisationPage', () => {
     cliquer(fixture, noeudEquipe('eq1'));
     fixture.detectChanges();
 
-    const lien = fixture.nativeElement.querySelector('a[href="/profil-equipe/eq1"]');
+    const lien = fixture.nativeElement.querySelector('a[href="/profil/equipe/eq1"]');
     expect(lien).toBeTruthy();
     expect(lien.textContent).toContain('Voir le profil');
   });

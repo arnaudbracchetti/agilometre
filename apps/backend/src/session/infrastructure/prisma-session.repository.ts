@@ -77,6 +77,21 @@ export class PrismaSessionRepository implements SessionRepository {
     return rows.map((row) => this.versDomaine(row));
   }
 
+  async findFermeesParEquipesEtPeriode(
+    equipeIds: string[],
+    periode: Periode,
+  ): Promise<Session[]> {
+    const rows = await this.prisma.session.findMany({
+      where: {
+        equipeId: { in: equipeIds },
+        statut: 'CLOTUREE',
+        date: { gte: periode.debut, lt: periode.fin },
+      },
+      include: PrismaSessionRepository.AVEC_SELECTION,
+    });
+    return rows.map((row) => this.versDomaine(row));
+  }
+
   async save(session: Session): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       await tx.session.upsert({
@@ -153,6 +168,20 @@ export class PrismaSessionRepository implements SessionRepository {
   async existeFermeeAvant(equipeId: string, date: Date): Promise<boolean> {
     const count = await this.prisma.session.count({
       where: { equipeId, statut: 'CLOTUREE', date: { lt: date } },
+    });
+    return count > 0;
+  }
+
+  async existeFermeeAvantPourEquipes(
+    equipeIds: string[],
+    date: Date,
+  ): Promise<boolean> {
+    const count = await this.prisma.session.count({
+      where: {
+        equipeId: { in: equipeIds },
+        statut: 'CLOTUREE',
+        date: { lt: date },
+      },
     });
     return count > 0;
   }

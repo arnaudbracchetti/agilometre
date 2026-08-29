@@ -1,4 +1,4 @@
-.profil-equipe {
+.profil-entite {
   max-width: 86rem;
   font-family: var(--font-family-base);
   color: var(--color-ink);
@@ -24,9 +24,8 @@
   }
 
   // DESIGN.md (Buttons > Text/Link) : les actions à icône seule s'affichent en Bleu Profond —
-  // `nzType="text"` ne porte aucune teinte de marque par défaut chez ng-zorro (même règle déjà
-  // appliquée à `bibliotheque-page`). L'état désactivé (borne du carrousel) reste géré par le
-  // style natif d'ant-design, plus atténué que ce bleu.
+  // `nzType="text"` ne porte aucune teinte de marque par défaut chez ng-zorro, comme sur
+  // profil-equipe-page.
   &__carrousel-bouton {
     color: var(--color-primary);
 
@@ -50,5 +49,24 @@
     font-weight: var(--font-weight-medium);
     color: var(--color-attention);
     background: var(--color-attention-subtle);
+  }
+
+  &__etat-vide {
+    color: var(--color-ink-muted);
+  }
+
+  &__stat-global {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-surface-alt);
+    border-radius: var(--radius-sm);
+  }
+
+  &__stat-libelle {
+    font-size: var(--font-size-sm);
+    color: var(--color-ink-muted);
   }
 }

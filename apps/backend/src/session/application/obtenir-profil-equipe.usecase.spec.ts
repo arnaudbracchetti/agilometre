@@ -39,6 +39,9 @@ class SessionRepositoryFake implements SessionRepository {
       ),
     );
   }
+  findFermeesParEquipesEtPeriode(): Promise<Session[]> {
+    return Promise.resolve([]);
+  }
   findByCode(): Promise<Session | null> {
     return Promise.resolve(null);
   }
@@ -59,6 +62,9 @@ class SessionRepositoryFake implements SessionRepository {
           s.equipeId === equipeId && s.statut === 'CLOTUREE' && s.date < date,
       ),
     );
+  }
+  existeFermeeAvantPourEquipes(): Promise<boolean> {
+    return Promise.resolve(false);
   }
 }
 
