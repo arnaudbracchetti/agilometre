@@ -33,10 +33,17 @@ COPY --from=build /repo/apps/backend/package.json apps/backend/package.json
 COPY --from=build /repo/apps/backend/node_modules apps/backend/node_modules
 COPY --from=build /repo/apps/backend/dist apps/backend/dist
 COPY --from=build /repo/apps/backend/prisma apps/backend/prisma
+COPY --from=build /repo/apps/backend/prisma.config.ts apps/backend/prisma.config.ts
 COPY --from=build /repo/packages/shared/package.json packages/shared/package.json
 COPY --from=build /repo/packages/shared/dist packages/shared/dist
 COPY --from=build /repo/apps/frontend/dist/frontend/browser apps/backend/public
 
 WORKDIR /repo/apps/backend
+USER node
 EXPOSE 3000
-CMD ["node", "dist/src/main.js"]
+HEALTHCHECK --interval=5s --timeout=5s --start-period=30s --retries=5 \
+  CMD node -e "require('http').get('http://localhost:3000/api/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+
+# npx prisma migrate deploy nécessite node_modules complet : le CLI prisma est une devDependency,
+# présente ici uniquement parce que ce stage recopie node_modules tel quel depuis le stage build.
+CMD ["sh", "-c", "npx prisma migrate deploy && exec node dist/src/main.js"]

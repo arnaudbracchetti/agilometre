@@ -1,0 +1,18 @@
+__PUBLIC_DOMAIN__ {
+    encode gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        X-Frame-Options "DENY"
+        -Server
+    }
+
+    reverse_proxy agilometre-app:3000 {
+        # ÉCRASE (et non ajoute) X-Forwarded-For/X-Real-IP avec la vraie IP du visiteur -
+        # nécessaire car ce même process gère aussi bien l'API que les fichiers statiques.
+        header_up X-Forwarded-For {http.request.remote.host}
+        header_up X-Real-IP {http.request.remote.host}
+    }
+}
