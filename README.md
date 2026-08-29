@@ -45,7 +45,7 @@ packages/shared Types partagés (rôles, scoring)
   l'application si l'aperçu détecte des erreurs ou si la confirmation est refusée. Flags :
   `--apercu-only` (aperçu seul, jamais d'écriture) ou `-y` (bypasse la confirmation, applique
   directement). Exemple :
-  `scripts/import-referentiel.sh -y "apps/backend/referentiel_questions/questions Axe1.yaml"`.
+  `scripts/import-referentiel.sh -y apps/backend/referentiel_questions/question_axe_1-4.yaml`.
 
 ## Déploiement
 

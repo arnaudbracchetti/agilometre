@@ -30,17 +30,26 @@ if [[ ! -f "$fichier" ]]; then
   exit 1
 fi
 
+if [[ -n "${2:-}" && ! "$url_base" =~ ^https?:// ]]; then
+  echo "url_base doit inclure le schéma (http:// ou https://) : reçu '$url_base'" >&2
+  exit 1
+fi
+
 # Affiche le corps JSON (pretty-print si python3 dispo) et isole le champ résumé donné en 2e arg.
 afficher_reponse() {
   local corps="$1"
   local cle_resume="$2"
 
   if command -v python3 >/dev/null 2>&1; then
-    echo "$corps" | python3 -c '
+    if ! echo "$corps" | python3 -c '
 import json
 import sys
 
-corps = json.load(sys.stdin)
+try:
+    corps = json.load(sys.stdin)
+except json.JSONDecodeError:
+    sys.exit(1)
+
 print(json.dumps(corps, indent=2, ensure_ascii=False))
 
 cle_resume = sys.argv[1]
@@ -50,7 +59,10 @@ if cle_resume:
         print()
         print("--- Résumé ---")
         print(resume)
-' "$cle_resume"
+' "$cle_resume"; then
+      echo "(réponse non-JSON, affichée telle quelle - vérifier l'URL et le schéma http(s))" >&2
+      echo "$corps"
+    fi
   else
     echo "$corps"
   fi
