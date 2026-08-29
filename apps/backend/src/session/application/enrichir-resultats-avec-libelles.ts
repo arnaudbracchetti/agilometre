@@ -5,6 +5,7 @@ export interface QuestionAvecLibelles {
   libelleQuestion: string;
   themeId: string;
   libelleTheme: string;
+  positionTheme: number;
 }
 
 export interface SyntheseQuestionAvecLibelle {
@@ -19,6 +20,8 @@ export interface SyntheseQuestionAvecLibelle {
 export interface SyntheseThemeAvecLibelle {
   themeId: string;
   libelle: string;
+  /** Rang du Thème dans le Référentiel — pilote sa couleur catégorielle, stable d'un écran à l'autre. */
+  position: number;
   resultatPalier: SyntheseThemeResultat['resultatPalier'];
   questions: SyntheseQuestionAvecLibelle[];
 }
@@ -32,12 +35,16 @@ export class EnrichirResultatsAvecLibelles {
     const libelleTheme = new Map(
       questions.map((q) => [q.themeId, q.libelleTheme] as const),
     );
+    const positionTheme = new Map(
+      questions.map((q) => [q.themeId, q.positionTheme] as const),
+    );
     const libelleQuestion = new Map(
       questions.map((q) => [q.questionId, q.libelleQuestion] as const),
     );
     return resultatsParTheme.map((theme) => ({
       themeId: theme.themeId,
       libelle: libelleTheme.get(theme.themeId)!,
+      position: positionTheme.get(theme.themeId)!,
       resultatPalier: theme.resultatPalier,
       questions: theme.questions.map((question) => ({
         ...question,

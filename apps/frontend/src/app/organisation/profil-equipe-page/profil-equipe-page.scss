@@ -1,0 +1,84 @@
+.profil-equipe {
+  display: grid;
+  grid-template-columns: minmax(192px, 256px) 1fr;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  font-family: var(--font-family-base);
+  color: var(--color-ink);
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    padding: var(--space-4);
+  }
+
+  &__arbre {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-5);
+  }
+
+  &__titre {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    margin: 0 0 var(--space-4);
+  }
+
+  &__detail {
+    max-width: 86rem;
+  }
+
+  &__entete {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin-bottom: var(--space-5);
+  }
+
+  &__titre-detail {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    margin: 0;
+  }
+
+  &__carrousel-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  // DESIGN.md (Buttons > Text/Link) : les actions à icône seule s'affichent en Bleu Profond —
+  // `nzType="text"` ne porte aucune teinte de marque par défaut chez ng-zorro (même règle déjà
+  // appliquée à `bibliotheque-page`). L'état désactivé (borne du carrousel) reste géré par le
+  // style natif d'ant-design, plus atténué que ce bleu.
+  &__carrousel-bouton {
+    color: var(--color-primary);
+
+    &:hover,
+    &:focus {
+      color: var(--color-primary-hover);
+    }
+  }
+
+  &__periode {
+    font-size: var(--font-size-sm);
+    color: var(--color-ink-muted);
+  }
+
+  &__badge-incomplete {
+    display: inline-block;
+    margin-left: var(--space-2);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-attention);
+    background: var(--color-attention-subtle);
+  }
+
+  &__etat-vide {
+    color: var(--color-ink-muted);
+  }
+}

@@ -1,0 +1,11 @@
+@if (positionsGlyphe(); as positions) {
+  <span class="cran-consensus__pastille" [class]="classeCran()">
+    <svg class="cran-consensus__glyphe" viewBox="0 0 24 8" aria-hidden="true">
+      <line x1="1" y1="4" x2="23" y2="4" class="cran-consensus__axe" />
+      @for (position of positions; track position) {
+        <circle [attr.cx]="position" cy="4" r="1.6" class="cran-consensus__point" />
+      }
+    </svg>
+    <span class="cran-consensus__libelle">{{ libelle() }}</span>
+  </span>
+}

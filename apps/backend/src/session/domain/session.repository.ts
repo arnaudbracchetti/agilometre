@@ -18,4 +18,6 @@ export interface SessionRepository {
   remove(id: string): Promise<void>;
   /** Unicité du Code parmi les Sessions OUVERTE. */
   existeCodeOuvert(code: string): Promise<boolean>;
+  /** Existe-t-il une Session CLOTUREE de l'Équipe strictement avant `date` ? */
+  existeFermeeAvant(equipeId: string, date: Date): Promise<boolean>;
 }

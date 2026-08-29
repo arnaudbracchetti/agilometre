@@ -39,6 +39,9 @@ class SessionRepositoryFake implements SessionRepository {
       this.sessions.some((s) => s.code === code && s.statut === 'OUVERTE'),
     );
   }
+  existeFermeeAvant(): Promise<boolean> {
+    return Promise.resolve(false);
+  }
 }
 
 class EquipeRepositoryFake implements EquipeRepository {

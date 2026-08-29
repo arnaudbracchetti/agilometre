@@ -1,9 +1,11 @@
 import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
+import { EquipeRepository } from '../../organisation/domain/equipe.repository';
 import { ReponseRepository } from '../../reponse/domain/reponse.repository';
-import { Scoring } from '../../scoring/domain/scoring';
+import { ResultatPalier, Scoring } from '../../scoring/domain/scoring';
 import { CalculerSyntheseScoring } from '../../scoring/application/calculer-synthese-scoring';
 import { EtatToursQuery } from '../domain/etat-tours.query';
 import { SessionRepository } from '../domain/session.repository';
+import { StatutSession } from '../domain/session';
 import {
   EnrichirResultatsAvecLibelles,
   SyntheseThemeAvecLibelle,
@@ -11,8 +13,23 @@ import {
 import { ResoudreQuestionsScorables } from './resoudre-questions-scorables';
 import { SourceReponsesScorablesSession } from './source-reponses-scorables-session';
 
+export interface ContexteSyntheseSession {
+  equipeNom: string;
+  date: Date;
+  code: string | null;
+  statut: StatutSession;
+  /** Seuil de Palier de l'instance, en fraction (0-1). */
+  seuilPalier: number;
+}
+
 export type ResultatObtenirSyntheseSession =
-  { type: 'introuvable' } | { type: 'ok'; themes: SyntheseThemeAvecLibelle[] };
+  | { type: 'introuvable' }
+  | {
+      type: 'ok';
+      contexte: ContexteSyntheseSession;
+      themes: SyntheseThemeAvecLibelle[];
+      palierGlobal: ResultatPalier;
+    };
 
 /**
  * Assemble la synthèse de fin de Session (#52) : `ResoudreQuestionsScorables` résout la Sélection
@@ -24,6 +41,7 @@ export type ResultatObtenirSyntheseSession =
 export class ObtenirSyntheseSession {
   constructor(
     private readonly sessions: SessionRepository,
+    private readonly equipes: EquipeRepository,
     private readonly referentiel: ReferentielRepository,
     private readonly etatTours: EtatToursQuery,
     private readonly reponses: ReponseRepository,
@@ -34,6 +52,11 @@ export class ObtenirSyntheseSession {
   async executer(id: string): Promise<ResultatObtenirSyntheseSession> {
     const session = await this.sessions.findById(id);
     if (!session || session.statut === 'PREPAREE') {
+      return { type: 'introuvable' };
+    }
+
+    const equipe = await this.equipes.findById(session.equipeId);
+    if (!equipe) {
       return { type: 'introuvable' };
     }
 
@@ -51,18 +74,33 @@ export class ObtenirSyntheseSession {
       this.seuilPalierPourcentage,
     );
 
-    const resultatsParTheme = await CalculerSyntheseScoring.executer(
-      this.scoring,
-      source,
-      questions.map((q) => ({ questionId: q.questionId, themeId: q.themeId })),
-      seuil,
-    );
+    const { themes: resultatsParTheme, global: palierGlobal } =
+      await CalculerSyntheseScoring.executer(
+        this.scoring,
+        source,
+        questions.map((q) => ({
+          questionId: q.questionId,
+          themeId: q.themeId,
+        })),
+        seuil,
+      );
 
     const themes = EnrichirResultatsAvecLibelles.executer(
       resultatsParTheme,
       questions,
     );
 
-    return { type: 'ok', themes };
+    return {
+      type: 'ok',
+      contexte: {
+        equipeNom: equipe.nom,
+        date: session.date,
+        code: session.code,
+        statut: session.statut,
+        seuilPalier: seuil,
+      },
+      themes,
+      palierGlobal,
+    };
   }
 }

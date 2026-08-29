@@ -1,6 +1,6 @@
 .organisation {
   display: grid;
-  grid-template-columns: minmax(240px, 320px) 1fr;
+  grid-template-columns: minmax(192px, 256px) 1fr;
   gap: var(--space-6);
   padding: var(--space-6);
   font-family: var(--font-family-base);
@@ -9,11 +9,6 @@
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
     padding: var(--space-4);
-
-    &__tree {
-      max-height: 50vh;
-      overflow-y: auto;
-    }
   }
 
   &__titre {
@@ -29,54 +24,6 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: var(--space-5);
-  }
-
-  &__recherche {
-    position: relative;
-    margin-bottom: var(--space-4);
-
-    &-icone {
-      position: absolute;
-      top: 50%;
-      left: var(--space-3);
-      transform: translateY(-50%);
-      color: var(--color-ink-muted);
-      pointer-events: none;
-    }
-
-    &-champ {
-      padding-left: calc(var(--space-3) * 2 + var(--space-2));
-    }
-  }
-
-  &__recherche-vide {
-    color: var(--color-ink-muted);
-    padding: var(--space-4) 0;
-  }
-
-  &__tree {
-    ::ng-deep .ant-tree-node-selected {
-      background: var(--color-primary-subtle);
-      font-weight: var(--font-weight-medium);
-    }
-  }
-
-  &__noeud {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  &__noeud-icone {
-    color: var(--color-ink-muted);
-    flex-shrink: 0;
-  }
-
-  // Distingue, pendant une recherche, la correspondance elle-même des nœuds parents affichés
-  // seulement pour donner le contexte — sans ça les deux se confondent visuellement.
-  &__noeud-titre--correspond {
-    color: var(--color-accent);
-    font-weight: var(--font-weight-medium);
   }
 
   &__entete {

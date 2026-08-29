@@ -1,4 +1,4 @@
-import { SyntheseThemeDto } from './session';
+import { Evolution, SyntheseThemeDto } from './session';
 
 export interface EntiteDto {
   id: string;
@@ -20,7 +20,18 @@ export interface EquipeDto {
 }
 
 export interface ProfilEquipeDto {
+  equipeNom: string;
   periodeDebut: string; // ISO
   periodeFin: string; // ISO
+  seuilPalier: number;
   themes: SyntheseThemeDto[];
+  palierGlobal: 1 | 2 | 3 | 4 | null;
+  tauxApprocheGlobal: number | null;
+  margeAvantDescenteGlobal: number | null;
+  effectifGlobal: number;
+  aPeriodePrecedente: boolean;
+  /** Période encore ouverte : le calcul ne porte que sur les Sessions déjà closes à ce jour. */
+  periodeEnCours: boolean;
+  /** Mouvement du Palier global vs. la Période immédiatement précédente. */
+  evolutionGlobale: Evolution | null;
 }

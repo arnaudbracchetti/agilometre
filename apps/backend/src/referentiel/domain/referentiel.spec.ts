@@ -634,18 +634,21 @@ describe('Referentiel.questionsActives', () => {
         libelleQuestion: 'Libellé q1',
         themeId: 't1',
         libelleTheme: 'Thème A',
+        positionTheme: 0,
       },
       {
         questionId: 'q2',
         libelleQuestion: 'Libellé q2',
         themeId: 't1',
         libelleTheme: 'Thème A',
+        positionTheme: 0,
       },
       {
         questionId: 'q3',
         libelleQuestion: 'Libellé q3',
         themeId: 't2',
         libelleTheme: 'Thème B',
+        positionTheme: 1,
       },
     ]);
   });
@@ -667,6 +670,7 @@ describe('Referentiel.questionsActives', () => {
         libelleQuestion: 'Libellé q2',
         themeId: 't2',
         libelleTheme: 'Thème actif',
+        positionTheme: 0,
       },
     ]);
   });

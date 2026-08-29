@@ -1,174 +1,35 @@
-import { Component, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { NzFormatEmitEvent, NzTreeModule, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
-import { EntiteDto, EquipeDto, MembreDto } from '@agilometre/shared';
+import { MembreDto } from '@agilometre/shared';
+import { ArbreOrganisation } from '../arbre-organisation/arbre-organisation';
 import { OrganisationService } from '../organisation.service';
 
-type TypeNoeud = 'racine' | 'entite' | 'equipe' | 'membre';
-
-interface NoeudOrganisation extends NzTreeNodeOptions {
-  type: TypeNoeud;
-}
-
-interface Selection {
-  type: TypeNoeud;
-  id: string;
-}
-
 /**
- * Clé du nœud racine factice, toujours présent en tête de l'arbre. Le sélectionner bascule le
- * panneau contextuel en mode "créer une Entité" — sans lui, revenir à ce mode nécessitait de
- * re-cliquer sur le nœud déjà sélectionné pour le désélectionner, un geste peu découvrable.
+ * Gestion CRUD de l'organisation (Entités/Équipes/Membres) : l'arbre de navigation/sélection vit
+ * dans `ArbreOrganisation` (réutilisé aussi par `ProfilEquipePage`) ; cet écran ne porte plus que
+ * le panneau contextuel de droite, piloté par la sélection résolue en DTO qu'expose l'arbre
+ * (`selectionActuelle`) et par son API impérative (`ajouterEntite`, `remplacerEquipe`, …) pour
+ * répercuter les mutations CRUD sans dupliquer l'état de l'arbre ici.
  */
-const RACINE_KEY = '__racine__';
-
-const RACINE_SELECTIONNEE: Selection = { type: 'racine', id: RACINE_KEY };
-
-function racineVersNoeud(
-  entites: EntiteDto[],
-  equipesParEntite: Record<string, EquipeDto[]>,
-): NoeudOrganisation {
-  return {
-    title: 'Organisation',
-    key: RACINE_KEY,
-    type: 'racine',
-    isLeaf: false,
-    children: entites.map((entite) => entiteVersNoeud(entite, equipesParEntite[entite.id])),
-  };
-}
-
-function entiteVersNoeud(entite: EntiteDto, equipes: EquipeDto[] | undefined): NoeudOrganisation {
-  return {
-    title: entite.nom,
-    key: entite.id,
-    type: 'entite',
-    isLeaf: false,
-    children: equipes?.map(equipeVersNoeud),
-  };
-}
-
-function equipeVersNoeud(equipe: EquipeDto): NoeudOrganisation {
-  return {
-    title: equipe.nom,
-    key: equipe.id,
-    type: 'equipe',
-    isLeaf: false,
-    children: equipe.membres.map(membreVersNoeud),
-  };
-}
-
-function membreVersNoeud(membre: MembreDto): NoeudOrganisation {
-  return {
-    title: `${membre.nom} — ${membre.email}`,
-    key: membre.id,
-    type: 'membre',
-    isLeaf: true,
-  };
-}
-
-function texteCorrespond(texte: string, terme: string): boolean {
-  return texte.toLowerCase().includes(terme);
-}
-
-function membreCorrespond(membre: MembreDto, terme: string): boolean {
-  return texteCorrespond(membre.nom, terme) || texteCorrespond(membre.email, terme);
-}
-
-function equipeCorrespond(equipe: EquipeDto, terme: string): boolean {
-  return texteCorrespond(equipe.nom, terme) || equipe.membres.some((membre) => membreCorrespond(membre, terme));
-}
-
-function entiteCorrespond(entite: EntiteDto, equipes: EquipeDto[], terme: string): boolean {
-  return texteCorrespond(entite.nom, terme) || equipes.some((equipe) => equipeCorrespond(equipe, terme));
-}
-
-/**
- * Arbre filtré par terme de recherche : une Entité/Équipe reste affichée si elle correspond
- * elle-même, ou si l'un de ses enfants correspond. Une Entité/Équipe qui correspond directement
- * affiche tous ses enfants (pas de double filtrage) — chercher "DSI" montre bien toutes les
- * Équipes de l'Entité DSI, pas seulement celles dont le nom contient aussi "DSI".
- */
-function racineFiltreeVersNoeud(
-  entites: EntiteDto[],
-  equipesParEntite: Record<string, EquipeDto[]>,
-  terme: string,
-): NoeudOrganisation {
-  const entitesCorrespondantes = entites.filter((entite) =>
-    entiteCorrespond(entite, equipesParEntite[entite.id] ?? [], terme),
-  );
-  return {
-    title: 'Organisation',
-    key: RACINE_KEY,
-    type: 'racine',
-    isLeaf: false,
-    children: entitesCorrespondantes.map((entite) =>
-      entiteFiltreeVersNoeud(entite, equipesParEntite[entite.id] ?? [], terme),
-    ),
-  };
-}
-
-function entiteFiltreeVersNoeud(entite: EntiteDto, equipes: EquipeDto[], terme: string): NoeudOrganisation {
-  const equipesAffichees = texteCorrespond(entite.nom, terme)
-    ? equipes
-    : equipes.filter((equipe) => equipeCorrespond(equipe, terme));
-  return {
-    title: entite.nom,
-    key: entite.id,
-    type: 'entite',
-    isLeaf: false,
-    children: equipesAffichees.map((equipe) => equipeFiltreeVersNoeud(equipe, terme)),
-  };
-}
-
-function equipeFiltreeVersNoeud(equipe: EquipeDto, terme: string): NoeudOrganisation {
-  const membresAffiches = texteCorrespond(equipe.nom, terme)
-    ? equipe.membres
-    : equipe.membres.filter((membre) => membreCorrespond(membre, terme));
-  return {
-    title: equipe.nom,
-    key: equipe.id,
-    type: 'equipe',
-    isLeaf: false,
-    children: membresAffiches.map(membreVersNoeud),
-  };
-}
-
-function collecterCles(noeuds: NoeudOrganisation[]): string[] {
-  return noeuds.flatMap((noeud) => [noeud.key as string, ...collecterCles((noeud.children as NoeudOrganisation[]) ?? [])]);
-}
-
 @Component({
   selector: 'app-organisation-page',
-  imports: [
-    RouterLink,
-    FormsModule,
-    NzButtonModule,
-    NzIconModule,
-    NzInputModule,
-    NzPopconfirmModule,
-    NzTreeModule,
-  ],
+  imports: [RouterLink, FormsModule, NzButtonModule, NzInputModule, NzPopconfirmModule, ArbreOrganisation],
   templateUrl: './organisation-page.html',
   styleUrl: './organisation-page.scss',
 })
-export class OrganisationPage implements OnInit {
+export class OrganisationPage {
   private readonly organisationService = inject(OrganisationService);
   private readonly message = inject(NzMessageService);
 
-  protected readonly entites = signal<EntiteDto[]>([]);
-  protected readonly equipesParEntite = signal<Record<string, EquipeDto[]>>({});
-  private readonly manuallyExpandedKeys = signal<string[]>([RACINE_KEY]);
-  private readonly manuallySelectedKeys = signal<string[]>([RACINE_KEY]);
-  private readonly selection = signal<Selection>(RACINE_SELECTIONNEE);
+  protected readonly arbre = viewChild.required(ArbreOrganisation);
+  protected readonly selection = computed(() => this.arbre().selectionActuelle());
 
-  protected readonly filtre = signal('');
   private readonly champNouvelleEntite = viewChild<ElementRef<HTMLInputElement>>('champNouvelleEntite');
   private readonly champNouvelleEquipe = viewChild<ElementRef<HTMLInputElement>>('champNouvelleEquipe');
   private readonly champNouveauMembre = viewChild<ElementRef<HTMLInputElement>>('champNouveauMembre');
@@ -189,96 +50,29 @@ export class OrganisationPage implements OnInit {
   protected readonly ajoutMembreEnCours = signal(false);
   protected readonly modificationMembreEnCours = signal(false);
 
-  protected readonly treeData = computed<NoeudOrganisation[]>(() => {
-    const terme = this.filtre().trim().toLowerCase();
-    if (terme.length === 0) {
-      return [racineVersNoeud(this.entites(), this.equipesParEntite())];
-    }
-    return [racineFiltreeVersNoeud(this.entites(), this.equipesParEntite(), terme)];
-  });
-
-  protected readonly aucunResultat = computed<boolean>(() => {
-    if (this.filtre().trim().length === 0) {
-      return false;
-    }
-    return (this.treeData()[0].children as NoeudOrganisation[] | undefined)?.length === 0;
-  });
-
-  /**
-   * nz-tree réinitialise son état d'expansion/de sélection interne à chaque changement de
-   * `nzData` sauf si `nzExpandedKeys`/`nzSelectedKeys` reçoivent eux aussi une référence de
-   * tableau différente sur le même cycle de détection de changements (vérifié en lisant
-   * `renderTreeProperties` dans `ng-zorro-antd/tree` : sans ça, `newExpandedKeys` — et le
-   * mécanisme équivalent pour la sélection — retombent sur l'état interne déjà remis à zéro par
-   * le rebuild de `nzData`, collapsant/désélectionnant silencieusement l'arbre à chaque
-   * création/modification/suppression). D'où ces deux `computed` qui dépendent des mêmes signaux
-   * que `treeData`, pour produire un nouveau tableau à chaque fois que l'arbre change, même quand
-   * le set manuel sous-jacent est inchangé.
-   *
-   * Pendant une recherche active, toutes les branches affichées (déjà filtrées à ne garder que
-   * les correspondances) sont dépliées de force — sans ça une Équipe/un Membre trouvé resterait
-   * caché sous une Entité repliée.
-   */
-  protected readonly expandedKeys = computed<string[]>(() => {
-    if (this.filtre().trim().length > 0) {
-      return collecterCles(this.treeData());
-    }
-    this.entites();
-    this.equipesParEntite();
-    return [...this.manuallyExpandedKeys()];
-  });
-
-  protected readonly selectedKeys = computed<string[]>(() => {
-    this.entites();
-    this.equipesParEntite();
-    return [...this.manuallySelectedKeys()];
-  });
-
-  protected readonly entiteSelectionnee = computed<EntiteDto | null>(() => {
+  protected readonly entiteSelectionnee = computed(() => {
     const selection = this.selection();
-    if (selection.type !== 'entite') {
-      return null;
-    }
-    return this.entites().find((entite) => entite.id === selection.id) ?? null;
+    return selection.type === 'entite' ? selection.entite : null;
   });
 
-  protected readonly equipeSelectionnee = computed<EquipeDto | null>(() => {
+  protected readonly equipeSelectionnee = computed(() => {
     const selection = this.selection();
-    if (selection.type !== 'equipe') {
-      return null;
-    }
-    return this.trouverEquipe(selection.id);
+    return selection.type === 'equipe' ? selection.equipe : null;
   });
 
   protected readonly nombreEquipesEntiteSelectionnee = computed<number | null>(() => {
-    const entite = this.entiteSelectionnee();
-    if (!entite) {
-      return null;
-    }
-    return this.equipesParEntite()[entite.id]?.length ?? null;
+    const selection = this.selection();
+    return selection.type === 'entite' ? selection.nombreEquipes : null;
   });
 
   protected readonly nombreMembresEquipeSelectionnee = computed<number | null>(
     () => this.equipeSelectionnee()?.membres.length ?? null,
   );
 
-  protected readonly membreSelectionne = computed<{ membre: MembreDto; equipeId: string } | null>(
-    () => {
-      const selection = this.selection();
-      if (selection.type !== 'membre') {
-        return null;
-      }
-      for (const equipes of Object.values(this.equipesParEntite())) {
-        for (const equipe of equipes) {
-          const membre = equipe.membres.find((m) => m.id === selection.id);
-          if (membre) {
-            return { membre, equipeId: equipe.id };
-          }
-        }
-      }
-      return null;
-    },
-  );
+  protected readonly membreSelectionne = computed<{ membre: MembreDto; equipeId: string } | null>(() => {
+    const selection = this.selection();
+    return selection.type === 'membre' ? { membre: selection.membre, equipeId: selection.equipeId } : null;
+  });
 
   protected readonly renommageEntitePossible = computed(() => {
     const entite = this.entiteSelectionnee();
@@ -310,163 +104,24 @@ export class OrganisationPage implements OnInit {
     );
   });
 
-  ngOnInit(): void {
-    this.organisationService.listerEntites().subscribe((entites) => this.entites.set(entites));
-  }
-
-  /**
-   * Le filtrage se fait côté client sur les données déjà en cache : dès qu'une recherche
-   * démarre, on charge d'un coup les Équipes de toutes les Entités pas encore dépliées (au plus
-   * une dizaine d'appels à cette échelle) pour que le filtre porte aussi sur les Équipes/Membres
-   * des Entités jamais dépliées manuellement. `chargerEquipes` ne refait pas de requête pour une
-   * Entité déjà en cache.
-   */
-  protected onFiltreChange(valeur: string): void {
-    this.filtre.set(valeur);
-    if (valeur.trim().length > 0) {
-      for (const entite of this.entites()) {
-        this.chargerEquipes(entite.id);
+  constructor() {
+    // Réinitialise les champs du panneau contextuel à chaque changement de sélection dans
+    // l'arbre — qu'il soit déclenché par un clic utilisateur ou par une mutation CRUD (ex.
+    // `supprimerEquipe` qui reporte la sélection sur l'Entité parente).
+    effect(() => {
+      const selection = this.selection();
+      if (selection.type === 'entite') {
+        this.nomRenommeEntite.set(selection.entite.nom);
+        this.nouveauNomEquipe.set('');
+      } else if (selection.type === 'equipe') {
+        this.nomRenommeEquipe.set(selection.equipe.nom);
+        this.nouveauMembreNom.set('');
+        this.nouveauMembreEmail.set('');
+      } else if (selection.type === 'membre') {
+        this.nomModifieMembre.set(selection.membre.nom);
+        this.emailModifieMembre.set(selection.membre.email);
       }
-    }
-  }
-
-  /**
-   * Distingue un nœud qui correspond lui-même au terme recherché d'un nœud affiché seulement
-   * comme contexte (ancêtre d'une correspondance, ou enfant d'une Entité/Équipe qui correspond
-   * directement — voir `entiteFiltreeVersNoeud`/`equipeFiltreeVersNoeud`). `node.title` porte déjà
-   * `nom` seul (Entité/Équipe) ou `nom — email` (Membre), donc une correspondance sur l'un ou
-   * l'autre reste détectable par une simple sous-chaîne sur le titre affiché.
-   */
-  protected estCorrespondanceDirecte(titre: string): boolean {
-    const terme = this.filtre().trim().toLowerCase();
-    return terme.length > 0 && titre.toLowerCase().includes(terme);
-  }
-
-  /**
-   * Synchronise le dépli/repli manuel de l'utilisateur. nz-tree n'émet PAS (nzExpandedKeysChange)
-   * quand on clique sur la flèche d'un nœud (vérifié dans `eventTriggerChanged` du composant
-   * `NzTreeComponent` : le cas `'expand'` ne fait que ré-émettre `(nzExpandChange)`) — seul ce
-   * dernier événement nous dit qu'un dépli/repli manuel a eu lieu. Sans cette mise à jour de
-   * `manuallyExpandedKeys` ici, le premier clic sur la flèche déplie le nœud dans l'état interne
-   * de nz-tree (mutation directe, indépendante d'Angular) pendant que `chargerEquipes` charge en
-   * arrière-plan ; puis quand la réponse arrive, notre `[nzExpandedKeys]` contrôlé — toujours sans
-   * la clé de ce nœud — écrase silencieusement cet état et referme le nœud pile au moment où ses
-   * Équipes arrivent. Un second clic « collait » seulement parce que les données étaient déjà en
-   * cache et ne déclenchaient plus ce recalcul. Cliquer sur le nom (sélection) passe par
-   * `selectionnerEntite`/`selectionnerEquipe`, qui alimentent déjà `manuallyExpandedKeys` — ce
-   * handler aligne le comportement de la flèche sur celui du nom.
-   */
-  protected onNodeExpand(event: NzFormatEmitEvent): void {
-    const node = event.node;
-    if (!node) {
-      return;
-    }
-    this.manuallyExpandedKeys.update((keys) =>
-      node.isExpanded
-        ? keys.includes(node.key)
-          ? keys
-          : [...keys, node.key]
-        : keys.filter((key) => key !== node.key),
-    );
-    const origin = node.origin as NoeudOrganisation;
-    if (node.isExpanded && origin.type === 'entite') {
-      this.chargerEquipes(node.key);
-    }
-  }
-
-  private trouverEquipe(id: string): EquipeDto | null {
-    for (const equipes of Object.values(this.equipesParEntite())) {
-      const trouvee = equipes.find((equipe) => equipe.id === id);
-      if (trouvee) {
-        return trouvee;
-      }
-    }
-    return null;
-  }
-
-  private trouverMembre(id: string): MembreDto | null {
-    for (const equipes of Object.values(this.equipesParEntite())) {
-      for (const equipe of equipes) {
-        const trouve = equipe.membres.find((membre) => membre.id === id);
-        if (trouve) {
-          return trouve;
-        }
-      }
-    }
-    return null;
-  }
-
-  private chargerEquipes(entiteId: string): void {
-    if (this.equipesParEntite()[entiteId]) {
-      return;
-    }
-    this.organisationService.listerEquipesParEntite(entiteId).subscribe((equipes) => {
-      this.equipesParEntite.update((map) => ({ ...map, [entiteId]: equipes }));
     });
-  }
-
-  protected onNodeClick(event: NzFormatEmitEvent): void {
-    const node = event.node;
-    if (!node) {
-      return;
-    }
-    const origin = node.origin as NoeudOrganisation;
-
-    if (origin.type === 'racine') {
-      this.selectionnerRacine();
-      return;
-    }
-
-    const actuelle = this.selection();
-    if (actuelle.type === origin.type && actuelle.id === node.key) {
-      this.selectionnerRacine();
-      return;
-    }
-
-    if (origin.type === 'entite') {
-      this.selectionnerEntite(node.key);
-      this.chargerEquipes(node.key);
-    } else if (origin.type === 'equipe') {
-      this.selectionnerEquipe(node.key);
-    } else if (origin.type === 'membre') {
-      this.selection.set({ type: 'membre', id: node.key });
-      this.manuallySelectedKeys.set([node.key]);
-      this.manuallyExpandedKeys.update((keys) =>
-        keys.includes(node.key) ? keys : [...keys, node.key],
-      );
-      const membre = this.trouverMembre(node.key);
-      this.nomModifieMembre.set(membre?.nom ?? '');
-      this.emailModifieMembre.set(membre?.email ?? '');
-    }
-  }
-
-  /** Sélectionne le nœud racine factice — bascule le panneau contextuel en mode création d'Entité. */
-  private selectionnerRacine(): void {
-    this.selection.set(RACINE_SELECTIONNEE);
-    this.manuallySelectedKeys.set([RACINE_KEY]);
-  }
-
-  private selectionnerEntite(entiteId: string): void {
-    this.selection.set({ type: 'entite', id: entiteId });
-    this.manuallySelectedKeys.set([entiteId]);
-    this.manuallyExpandedKeys.update((keys) =>
-      keys.includes(entiteId) ? keys : [...keys, entiteId],
-    );
-    const entite = this.entites().find((e) => e.id === entiteId);
-    this.nomRenommeEntite.set(entite?.nom ?? '');
-    this.nouveauNomEquipe.set('');
-  }
-
-  private selectionnerEquipe(equipeId: string): void {
-    this.selection.set({ type: 'equipe', id: equipeId });
-    this.manuallySelectedKeys.set([equipeId]);
-    this.manuallyExpandedKeys.update((keys) =>
-      keys.includes(equipeId) ? keys : [...keys, equipeId],
-    );
-    const equipe = this.trouverEquipe(equipeId);
-    this.nomRenommeEquipe.set(equipe?.nom ?? '');
-    this.nouveauMembreNom.set('');
-    this.nouveauMembreEmail.set('');
   }
 
   protected creerEntite(): void {
@@ -477,7 +132,7 @@ export class OrganisationPage implements OnInit {
     this.creationEntiteEnCours.set(true);
     this.organisationService.creerEntite(nom).subscribe({
       next: (entite) => {
-        this.entites.update((entites) => [...entites, entite]);
+        this.arbre().ajouterEntite(entite);
         this.nouveauNomEntite.set('');
         this.creationEntiteEnCours.set(false);
         this.champNouvelleEntite()?.nativeElement.focus();
@@ -500,9 +155,7 @@ export class OrganisationPage implements OnInit {
     this.renommageEntiteEnCours.set(true);
     this.organisationService.renommerEntite(entite.id, nom).subscribe({
       next: (entiteRenommee) => {
-        this.entites.update((entites) =>
-          entites.map((e) => (e.id === entiteRenommee.id ? entiteRenommee : e)),
-        );
+        this.arbre().remplacerEntite(entiteRenommee);
         this.renommageEntiteEnCours.set(false);
         this.message.success('Entité renommée.');
       },
@@ -524,10 +177,7 @@ export class OrganisationPage implements OnInit {
     this.creationEquipeEnCours.set(true);
     this.organisationService.creerEquipe(nom, entite.id).subscribe({
       next: (equipe) => {
-        this.equipesParEntite.update((map) => ({
-          ...map,
-          [entite.id]: [...(map[entite.id] ?? []), equipe].sort((a, b) => a.nom.localeCompare(b.nom)),
-        }));
+        this.arbre().ajouterEquipe(entite.id, equipe);
         this.nouveauNomEquipe.set('');
         this.creationEquipeEnCours.set(false);
         this.champNouvelleEquipe()?.nativeElement.focus();
@@ -550,7 +200,7 @@ export class OrganisationPage implements OnInit {
     this.renommageEquipeEnCours.set(true);
     this.organisationService.renommerEquipe(equipe.id, nom).subscribe({
       next: (equipeRenommee) => {
-        this.remplacerEquipe(equipeRenommee);
+        this.arbre().remplacerEquipe(equipeRenommee);
         this.renommageEquipeEnCours.set(false);
         this.message.success('Équipe renommée.');
       },
@@ -570,11 +220,8 @@ export class OrganisationPage implements OnInit {
     }
     this.organisationService.supprimerEquipe(equipe.id).subscribe({
       next: () => {
-        this.equipesParEntite.update((map) => ({
-          ...map,
-          [equipe.entiteId]: (map[equipe.entiteId] ?? []).filter((e) => e.id !== equipe.id),
-        }));
-        this.selectionnerEntite(equipe.entiteId);
+        this.arbre().retirerEquipe(equipe.entiteId, equipe.id);
+        this.arbre().selectionnerEntite(equipe.entiteId);
         this.message.success('Équipe supprimée.');
       },
       error: () => {
@@ -593,7 +240,7 @@ export class OrganisationPage implements OnInit {
     this.ajoutMembreEnCours.set(true);
     this.organisationService.ajouterMembre(equipe.id, nom, email).subscribe({
       next: (equipeMiseAJour) => {
-        this.remplacerEquipe(equipeMiseAJour);
+        this.arbre().remplacerEquipe(equipeMiseAJour);
         this.nouveauMembreNom.set('');
         this.nouveauMembreEmail.set('');
         this.ajoutMembreEnCours.set(false);
@@ -622,7 +269,7 @@ export class OrganisationPage implements OnInit {
       .modifierMembre(selection.equipeId, selection.membre.id, nom, email)
       .subscribe({
         next: (equipeMiseAJour) => {
-          this.remplacerEquipe(equipeMiseAJour);
+          this.arbre().remplacerEquipe(equipeMiseAJour);
           this.modificationMembreEnCours.set(false);
           this.message.success('Membre modifié.');
         },
@@ -644,20 +291,13 @@ export class OrganisationPage implements OnInit {
     }
     this.organisationService.retirerMembre(selection.equipeId, selection.membre.id).subscribe({
       next: (equipeMiseAJour) => {
-        this.remplacerEquipe(equipeMiseAJour);
-        this.selectionnerEquipe(selection.equipeId);
+        this.arbre().remplacerEquipe(equipeMiseAJour);
+        this.arbre().selectionnerEquipe(selection.equipeId);
         this.message.success('Membre retiré du roster.');
       },
       error: () => {
         this.message.error('Impossible de retirer ce Membre.');
       },
     });
-  }
-
-  private remplacerEquipe(equipe: EquipeDto): void {
-    this.equipesParEntite.update((map) => ({
-      ...map,
-      [equipe.entiteId]: (map[equipe.entiteId] ?? []).map((e) => (e.id === equipe.id ? equipe : e)),
-    }));
   }
 }

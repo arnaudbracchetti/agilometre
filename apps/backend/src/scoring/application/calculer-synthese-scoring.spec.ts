@@ -36,8 +36,8 @@ describe('CalculerSyntheseScoring', () => {
       0.6,
     );
 
-    expect(resultat).toHaveLength(2);
-    const [theme, themeSansReponse] = resultat;
+    expect(resultat.themes).toHaveLength(2);
+    const [theme, themeSansReponse] = resultat.themes;
     expect(theme.themeId).toBe('t1');
     expect(theme.resultatPalier).toEqual({
       effectif: 6,
@@ -69,6 +69,40 @@ describe('CalculerSyntheseScoring', () => {
     ]);
   });
 
+  it('calcule le Palier global en regroupant les Niveaux de tous les Thèmes en une seule population', async () => {
+    const source = new SourceReponsesScorablesFake([
+      { questionId: 'q1', niveau: 1 },
+      { questionId: 'q1', niveau: 2 },
+      { questionId: 'q2', niveau: 3 },
+      { questionId: 'q2', niveau: 4 },
+    ]);
+
+    const resultat = await CalculerSyntheseScoring.executer(
+      scoring,
+      source,
+      [
+        { questionId: 'q1', themeId: 't1' },
+        { questionId: 'q2', themeId: 't2' },
+      ],
+      0.6,
+    );
+
+    expect(resultat.global).toEqual(scoring.calculerPalier([1, 2, 3, 4], 0.6));
+  });
+
+  it('sans aucune Réponse, renvoie un Palier global avec un effectif nul', async () => {
+    const source = new SourceReponsesScorablesFake([]);
+
+    const resultat = await CalculerSyntheseScoring.executer(
+      scoring,
+      source,
+      [{ questionId: 'q1', themeId: 't1' }],
+      0.6,
+    );
+
+    expect(resultat.global).toEqual({ effectif: 0 });
+  });
+
   it("exclut du Thème une Question qui n'a reçu aucune Réponse", async () => {
     const source = new SourceReponsesScorablesFake([
       { questionId: 'q1', niveau: 2 },
@@ -84,8 +118,10 @@ describe('CalculerSyntheseScoring', () => {
       0.6,
     );
 
-    expect(resultat).toHaveLength(1);
-    expect(resultat[0].questions.map((q) => q.questionId)).toEqual(['q1']);
+    expect(resultat.themes).toHaveLength(1);
+    expect(resultat.themes[0].questions.map((q) => q.questionId)).toEqual([
+      'q1',
+    ]);
   });
 
   it('sans aucune Réponse, renvoie le Thème avec un effectif nul', async () => {
@@ -98,7 +134,7 @@ describe('CalculerSyntheseScoring', () => {
       0.6,
     );
 
-    expect(resultat).toEqual([
+    expect(resultat.themes).toEqual([
       { themeId: 't1', resultatPalier: { effectif: 0 }, questions: [] },
     ]);
   });
@@ -119,6 +155,6 @@ describe('CalculerSyntheseScoring', () => {
       0.6,
     );
 
-    expect(resultat.map((t) => t.themeId)).toEqual(['t1', 't2']);
+    expect(resultat.themes.map((t) => t.themeId)).toEqual(['t1', 't2']);
   });
 });

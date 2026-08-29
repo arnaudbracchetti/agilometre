@@ -16,12 +16,11 @@ import {
   PilotageSessionDto,
   SelectionQuestionDto,
   SessionDto,
-  StatutSession as StatutSessionDto,
   SyntheseSessionDto,
 } from '@agilometre/shared';
 import { Question } from '../referentiel/domain/question';
 import { Theme } from '../referentiel/domain/theme';
-import { Session, StatutSession } from './domain/session';
+import { Session } from './domain/session';
 import { LigneListeSession } from './domain/session-liste.query';
 import { CreerSession } from './application/creer-session.usecase';
 import { AjouterQuestionSession } from './application/ajouter-question-session.usecase';
@@ -54,6 +53,7 @@ import {
   versTourOuvertDto,
 } from './question-courante.mapper';
 import { versSyntheseDto } from './synthese.mapper';
+import { STATUT_VERS_DTO } from './statut-session.mapper';
 import {
   AjouterQuestionSessionDto,
   AjouterThemeSessionDto,
@@ -62,13 +62,6 @@ import {
   ModifierInfosSessionDto,
   ReordonnerQuestionSessionDto,
 } from './session.dto';
-
-/** Le domaine ignore délibérément `@agilometre/shared` (frontière API) — mapping explicite ici. */
-const STATUT_VERS_DTO: Record<StatutSession, StatutSessionDto> = {
-  PREPAREE: StatutSessionDto.Preparee,
-  OUVERTE: StatutSessionDto.Ouverte,
-  CLOTUREE: StatutSessionDto.Cloturee,
-};
 
 /**
  * `selectionEnrichie` porte déjà les Questions actives dans l'ordre de la Sélection
@@ -199,7 +192,11 @@ export class SessionAnimeeController {
         `Aucune synthèse accessible pour la Session ${id}`,
       );
     }
-    return versSyntheseDto(resultat.themes);
+    return versSyntheseDto(
+      resultat.contexte,
+      resultat.themes,
+      resultat.palierGlobal,
+    );
   }
 
   @Post(':id/passer-question-suivante')

@@ -58,12 +58,14 @@ describe('ResoudreQuestionsScorables', () => {
         libelleQuestion: 'Libellé q3',
         themeId: 't2',
         libelleTheme: 'Thème B',
+        positionTheme: 1,
       },
       {
         questionId: 'q1',
         libelleQuestion: 'Libellé q1',
         themeId: 't1',
         libelleTheme: 'Thème A',
+        positionTheme: 0,
       },
     ]);
   });
@@ -86,6 +88,7 @@ describe('ResoudreQuestionsScorables', () => {
         libelleQuestion: 'Libellé q1',
         themeId: 't1',
         libelleTheme: 'Thème archivé',
+        positionTheme: 0,
       },
     ]);
   });
@@ -120,6 +123,7 @@ describe('ResoudreQuestionsScorables', () => {
         libelleQuestion: 'Libellé q1',
         themeId: 't1',
         libelleTheme: 'Thème A',
+        positionTheme: 0,
       },
     ]);
   });

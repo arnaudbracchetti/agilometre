@@ -20,6 +20,11 @@
   sans-serif; // --font-family-base
 @shadow-color: rgba(15, 65, 122, 0.16); // teinté bleu comme --shadow-note, jamais noir pur
 
+// nz-collapse (organisation/session, écrans de restitution) : le gris par défaut d'Ant
+// (@background-color-light, #fafafa) n'existe dans aucun token de la charte — aligné sur
+// --color-surface-alt.
+@collapse-header-bg: #f5f6f8; // --color-surface-alt
+
 // Boîtes de dialogue (NzModalService) : bandeau et masque repris du bleu foncé des surfaces
 // "vécues en salle" (en-tête, pied de page, écran de vote/projection) plutôt que le blanc/gris
 // neutre par défaut d'Ant Design — voir styles.scss pour le reste du traitement (ombre, bande de

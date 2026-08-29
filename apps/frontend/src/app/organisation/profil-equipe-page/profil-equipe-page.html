@@ -1,0 +1,72 @@
+<div class="profil-equipe">
+  <section class="profil-equipe__arbre">
+    <h2 class="profil-equipe__titre">Organisation</h2>
+    <app-arbre-organisation />
+  </section>
+
+  <section class="profil-equipe__detail">
+    @if (!equipeId()) {
+      <p class="profil-equipe__etat-vide">Sélectionnez une Équipe dans l’arbre pour voir son Profil.</p>
+    } @else if (chargementEnCours()) {
+      <app-chargement />
+    } @else if (inaccessible()) {
+      <app-error-message message="Ce Profil d’Équipe n’est pas accessible." taille="page" />
+    } @else if (profil(); as profil) {
+      <header class="profil-equipe__entete">
+        <h1 class="profil-equipe__titre-detail">Profil de l’Équipe {{ profil.equipeNom }}</h1>
+        <div class="profil-equipe__carrousel-nav">
+          <button
+            type="button"
+            nz-button
+            nzType="text"
+            nzShape="circle"
+            class="profil-equipe__carrousel-bouton"
+            (click)="periodePrecedente()"
+            [disabled]="!profil.aPeriodePrecedente || chargementPeriode()"
+            aria-label="Période précédente"
+          >
+            <span nz-icon nzType="left" nzTheme="outline" aria-hidden="true"></span>
+          </button>
+          <span class="profil-equipe__periode">
+            @if (profil.periodeEnCours) {
+              Période en cours : du {{ profil.periodeDebut | date: 'dd/MM/yyyy' }} au
+              {{ profil.periodeFin | date: 'dd/MM/yyyy' }}
+              <span class="profil-equipe__badge-incomplete">Incomplète</span>
+            } @else if (offset() === 0) {
+              Dernière période complète : du {{ profil.periodeDebut | date: 'dd/MM/yyyy' }} au
+              {{ profil.periodeFin | date: 'dd/MM/yyyy' }}
+            } @else {
+              Période : du {{ profil.periodeDebut | date: 'dd/MM/yyyy' }} au
+              {{ profil.periodeFin | date: 'dd/MM/yyyy' }}
+            }
+          </span>
+          <button
+            type="button"
+            nz-button
+            nzType="text"
+            nzShape="circle"
+            class="profil-equipe__carrousel-bouton"
+            (click)="periodeSuivante()"
+            [disabled]="offset() === -1 || chargementPeriode()"
+            aria-label="Période suivante"
+          >
+            <span nz-icon nzType="right" nzTheme="outline" aria-hidden="true"></span>
+          </button>
+        </div>
+      </header>
+
+      @if (chargementPeriode()) {
+        <app-chargement />
+      } @else {
+        <app-synthese-themes
+          [themes]="profil.themes"
+          [palierGlobal]="profil.palierGlobal"
+          [tauxApprocheGlobal]="profil.tauxApprocheGlobal"
+          [margeAvantDescenteGlobal]="profil.margeAvantDescenteGlobal"
+          [evolutionGlobale]="profil.evolutionGlobale"
+          messageVide="Aucune réponse enregistrée sur cette Période."
+        />
+      }
+    }
+  </section>
+</div>

@@ -25,36 +25,34 @@ export const routes: Routes = [
       {
         path: 'organisation',
         data: { breadcrumb: 'Organisation' },
+        loadComponent: () =>
+          import('./organisation/organisation-page/organisation-page').then(
+            (m) => m.OrganisationPage,
+          ),
+      },
+      {
+        path: 'profil-equipe',
+        data: { breadcrumb: 'Profil d’équipe' },
         children: [
           {
             path: '',
             pathMatch: 'full',
             loadComponent: () =>
-              import('./organisation/organisation-page/organisation-page').then(
-                (m) => m.OrganisationPage,
+              import('./organisation/profil-equipe-page/profil-equipe-page').then(
+                (m) => m.ProfilEquipePage,
               ),
           },
           {
-            path: 'equipes/:id/profil',
-            data: { breadcrumb: 'Profil de l’Équipe' },
-            children: [
-              {
-                path: '',
-                pathMatch: 'full',
-                loadComponent: () =>
-                  import('./organisation/profil-page/profil-page').then(
-                    (m) => m.ProfilPage,
-                  ),
-              },
-              {
-                path: ':themeId',
-                data: { breadcrumb: 'Lecture fine' },
-                loadComponent: () =>
-                  import('./organisation/lecture-fine-page/lecture-fine-page').then(
-                    (m) => m.LectureFinePage,
-                  ),
-              },
-            ],
+            path: ':id',
+            // Pas de son propre `breadcrumb` (délibérément vide, pas absent) : sans ce garde,
+            // `paramsInheritanceStrategy: 'always'` fait hériter le `breadcrumb` du parent
+            // `profil-equipe` jusqu'ici, et `buildBreadcrumbs` (voir breadcrumbs.ts) le pousserait
+            // une seconde fois — doublon "Profil d’équipe > Profil d’équipe" dans le fil d'Ariane.
+            data: { breadcrumb: '' },
+            loadComponent: () =>
+              import('./organisation/profil-equipe-page/profil-equipe-page').then(
+                (m) => m.ProfilEquipePage,
+              ),
           },
         ],
       },

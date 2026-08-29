@@ -296,6 +296,7 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
       provide: ObtenirSyntheseSession,
       useFactory: (
         sessions: PrismaSessionRepository,
+        equipes: PrismaEquipeRepository,
         referentiel: PrismaReferentielRepository,
         etatTours: PrismaEtatToursQuery,
         reponses: PrismaReponseRepository,
@@ -303,6 +304,7 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
       ) =>
         new ObtenirSyntheseSession(
           sessions,
+          equipes,
           referentiel,
           etatTours,
           reponses,
@@ -311,6 +313,7 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
         ),
       inject: [
         PrismaSessionRepository,
+        PrismaEquipeRepository,
         PrismaReferentielRepository,
         PrismaEtatToursQuery,
         PrismaReponseRepository,

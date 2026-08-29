@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgModel } from '@angular/forms';
 import { provideHttpClient } from '@angular/common/http';
@@ -10,6 +10,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzFormatEmitEvent } from 'ng-zorro-antd/tree';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import { ApartmentOutline, SearchOutline, TeamOutline, UserOutline } from '@ant-design/icons-angular/icons';
+import { ArbreOrganisation } from '../arbre-organisation/arbre-organisation';
 import { OrganisationPage } from './organisation-page';
 
 /**
@@ -20,18 +21,22 @@ import { OrganisationPage } from './organisation-page';
  * de ng-zorro-antd, alors que viewToModelUpdate déclenche exactement la même chaîne
  * (ngModelChange → mise à jour du signal) que le ferait un DefaultValueAccessor réel.
  */
-function saisir(fixture: ReturnType<typeof TestBed.createComponent>, selecteur: string, valeur: string): void {
+function saisir(fixture: ComponentFixture<OrganisationPage>, selecteur: string, valeur: string): void {
   const debug = fixture.debugElement.query(By.css(selecteur));
   debug.injector.get(NgModel).viewToModelUpdate(valeur);
   fixture.detectChanges();
 }
 
+function arbreComponent(fixture: ComponentFixture<OrganisationPage>): ArbreOrganisation {
+  return fixture.debugElement.query(By.directive(ArbreOrganisation)).componentInstance;
+}
+
 /**
- * Simule un clic sur un nœud de l'arbre en invoquant directement le handler du composant plutôt
- * qu'en simulant un clic DOM réel : nz-tree gère lui-même le déclenchement de (nzClick) via sa
- * propre arborescence interne de composants, hors du périmètre à tester ici (même logique que
- * `saisir()` ci-dessus pour NgModel — on teste notre propre logique, pas le câblage interne de la
- * bibliothèque tierce).
+ * Simule un clic sur un nœud de l'arbre en invoquant directement le handler du composant
+ * `ArbreOrganisation` monté par `OrganisationPage`, plutôt qu'en simulant un clic DOM réel :
+ * nz-tree gère lui-même le déclenchement de (nzClick) via sa propre arborescence interne de
+ * composants, hors du périmètre à tester ici (même logique que `saisir()` ci-dessus pour NgModel
+ * — on teste notre propre logique, pas le câblage interne de la bibliothèque tierce).
  */
 function noeudEntite(key: string): NzFormatEmitEvent {
   return { eventName: 'click', node: { key, origin: { type: 'entite' } } } as unknown as NzFormatEmitEvent;
@@ -52,17 +57,8 @@ function noeudRacine(): NzFormatEmitEvent {
   } as unknown as NzFormatEmitEvent;
 }
 
-function cliquer(component: OrganisationPage, event: NzFormatEmitEvent): void {
-  (component as unknown as { onNodeClick(e: NzFormatEmitEvent): void }).onNodeClick(event);
-}
-
-/** Simule un clic sur la flèche d'expansion d'un nœud Entité (distinct d'un clic sur son nom). */
-function deplierNoeudEntite(component: OrganisationPage, key: string): void {
-  const event = {
-    eventName: 'expand',
-    node: { key, isExpanded: true, origin: { type: 'entite' } },
-  } as unknown as NzFormatEmitEvent;
-  (component as unknown as { onNodeExpand(e: NzFormatEmitEvent): void }).onNodeExpand(event);
+function cliquer(fixture: ComponentFixture<OrganisationPage>, event: NzFormatEmitEvent): void {
+  (arbreComponent(fixture) as unknown as { onNodeClick(e: NzFormatEmitEvent): void }).onNodeClick(event);
 }
 
 describe('OrganisationPage', () => {
@@ -84,21 +80,6 @@ describe('OrganisationPage', () => {
 
   afterEach(() => {
     httpMock.verify();
-  });
-
-  it('charge et affiche les Entités dans l’arbre au démarrage', () => {
-    const fixture = TestBed.createComponent(OrganisationPage);
-    fixture.detectChanges();
-
-    httpMock.expectOne('/api/organisation/entites').flush([
-      { id: 'e1', nom: 'DSI' },
-      { id: 'e2', nom: 'Marketing' },
-    ]);
-    fixture.detectChanges();
-
-    const arbre: HTMLElement = fixture.nativeElement.querySelector('.organisation__tree');
-    expect(arbre.textContent).toContain('DSI');
-    expect(arbre.textContent).toContain('Marketing');
   });
 
   it('affiche par défaut le formulaire de création d’Entité', () => {
@@ -127,18 +108,17 @@ describe('OrganisationPage', () => {
     req.flush({ id: 'e3', nom: 'Achats' });
     fixture.detectChanges();
 
-    const arbre: HTMLElement = fixture.nativeElement.querySelector('.organisation__tree');
+    const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
     expect(arbre.textContent).toContain('Achats');
   });
 
   it('sélectionner une Entité charge ses Équipes et affiche le panneau contextuel', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
 
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
 
     const req = httpMock.expectOne('/api/organisation/entites/e1/equipes');
@@ -152,32 +132,13 @@ describe('OrganisationPage', () => {
     expect(fixture.debugElement.query(By.css('#nouveauNomEquipe'))).toBeTruthy();
   });
 
-  it('déplier une Entité via la flèche charge ses Équipes, comme un clic sur son nom', () => {
-    const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
-    fixture.detectChanges();
-    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
-    fixture.detectChanges();
-
-    deplierNoeudEntite(component, 'e1');
-    fixture.detectChanges();
-
-    const req2 = httpMock.expectOne('/api/organisation/entites/e1/equipes');
-    req2.flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
-    fixture.detectChanges();
-
-    const arbre: HTMLElement = fixture.nativeElement.querySelector('.organisation__tree');
-    expect(arbre.textContent).toContain('Alpha');
-  });
-
   it('renomme l’Entité sélectionnée après soumission du formulaire de renommage', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
 
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([]);
     fixture.detectChanges();
@@ -192,18 +153,17 @@ describe('OrganisationPage', () => {
     req.flush({ id: 'e1', nom: 'Direction des Systèmes d’Information' });
     fixture.detectChanges();
 
-    const arbre: HTMLElement = fixture.nativeElement.querySelector('.organisation__tree');
+    const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
     expect(arbre.textContent).toContain('Direction des Systèmes d’Information');
   });
 
   it('crée une Équipe depuis le panneau d’une Entité sélectionnée', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
 
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([]);
     fixture.detectChanges();
@@ -218,25 +178,24 @@ describe('OrganisationPage', () => {
     req.flush({ id: 'eq1', nom: 'Équipe Alpha', entiteId: 'e1', membres: [] });
     fixture.detectChanges();
 
-    const arbre: HTMLElement = fixture.nativeElement.querySelector('.organisation__tree');
+    const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
     expect(arbre.textContent).toContain('Équipe Alpha');
   });
 
   it('sélectionner une Équipe affiche le panneau d’ajout de Membre, sans requête réseau supplémentaire', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
 
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
     httpMock
       .expectOne('/api/organisation/entites/e1/equipes')
       .flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
     fixture.detectChanges();
 
-    cliquer(component, noeudEquipe('eq1'));
+    cliquer(fixture, noeudEquipe('eq1'));
     fixture.detectChanges();
 
     httpMock.verify();
@@ -249,39 +208,35 @@ describe('OrganisationPage', () => {
 
   it('affiche un lien vers le Profil de l’Équipe sélectionnée', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
     httpMock
       .expectOne('/api/organisation/entites/e1/equipes')
       .flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
     fixture.detectChanges();
-    cliquer(component, noeudEquipe('eq1'));
+    cliquer(fixture, noeudEquipe('eq1'));
     fixture.detectChanges();
 
-    const lien = fixture.nativeElement.querySelector(
-      'a[href="/organisation/equipes/eq1/profil"]',
-    );
+    const lien = fixture.nativeElement.querySelector('a[href="/profil-equipe/eq1"]');
     expect(lien).toBeTruthy();
     expect(lien.textContent).toContain('Voir le profil');
   });
 
   it('ajoute un Membre au roster depuis le panneau d’une Équipe sélectionnée', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
     httpMock
       .expectOne('/api/organisation/entites/e1/equipes')
       .flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
     fixture.detectChanges();
-    cliquer(component, noeudEquipe('eq1'));
+    cliquer(fixture, noeudEquipe('eq1'));
     fixture.detectChanges();
 
     saisir(fixture, '#nouveauMembreNom', 'Jean Dupont');
@@ -300,17 +255,16 @@ describe('OrganisationPage', () => {
     });
     fixture.detectChanges();
 
-    const arbre: HTMLElement = fixture.nativeElement.querySelector('.organisation__tree');
+    const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
     expect(arbre.textContent).toContain('Jean Dupont');
   });
 
   it('retire un Membre sélectionné du roster', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([
       {
@@ -322,7 +276,7 @@ describe('OrganisationPage', () => {
     ]);
     fixture.detectChanges();
 
-    cliquer(component, noeudMembre('m1'));
+    cliquer(fixture, noeudMembre('m1'));
     fixture.detectChanges();
 
     const bouton = fixture.debugElement
@@ -335,7 +289,7 @@ describe('OrganisationPage', () => {
     req.flush({ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] });
     fixture.detectChanges();
 
-    const arbre: HTMLElement = fixture.nativeElement.querySelector('.organisation__tree');
+    const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
     expect(arbre.textContent).not.toContain('Jean Dupont');
 
     const detailTitre: HTMLElement = fixture.nativeElement.querySelector(
@@ -347,11 +301,10 @@ describe('OrganisationPage', () => {
 
   it('modifie le nom et l’email d’un Membre sélectionné', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([
       {
@@ -363,9 +316,9 @@ describe('OrganisationPage', () => {
     ]);
     fixture.detectChanges();
 
-    cliquer(component, noeudEquipe('eq1'));
+    cliquer(fixture, noeudEquipe('eq1'));
     fixture.detectChanges();
-    cliquer(component, noeudMembre('m1'));
+    cliquer(fixture, noeudMembre('m1'));
     fixture.detectChanges();
 
     saisir(fixture, '#nomModifieMembre', 'Jean D.');
@@ -384,24 +337,23 @@ describe('OrganisationPage', () => {
     });
     fixture.detectChanges();
 
-    const arbre: HTMLElement = fixture.nativeElement.querySelector('.organisation__tree');
+    const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
     expect(arbre.textContent).toContain('Jean D.');
     expect(arbre.textContent).toContain('jean.d@example.com');
   });
 
   it('supprimer une Équipe sélectionne son Entité parente plutôt que de perdre la sélection', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
     httpMock
       .expectOne('/api/organisation/entites/e1/equipes')
       .flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
     fixture.detectChanges();
-    cliquer(component, noeudEquipe('eq1'));
+    cliquer(fixture, noeudEquipe('eq1'));
     fixture.detectChanges();
 
     const bouton = fixture.debugElement
@@ -421,16 +373,15 @@ describe('OrganisationPage', () => {
 
   it('cliquer sur la racine de l’arbre repasse en mode création d’Entité', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([]);
     fixture.detectChanges();
 
-    cliquer(component, noeudRacine());
+    cliquer(fixture, noeudRacine());
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('#nouveauNomEntite'))).toBeTruthy();
@@ -438,11 +389,10 @@ describe('OrganisationPage', () => {
 
   it('la sélection reste visuellement surlignée après une action qui modifie l’arbre', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([]);
     fixture.detectChanges();
@@ -483,17 +433,16 @@ describe('OrganisationPage', () => {
 
   it('affiche un message dédié en cas de doublon (409) à l’ajout d’un Membre', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
     fixture.detectChanges();
-    cliquer(component, noeudEntite('e1'));
+    cliquer(fixture, noeudEntite('e1'));
     fixture.detectChanges();
     httpMock
       .expectOne('/api/organisation/entites/e1/equipes')
       .flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
     fixture.detectChanges();
-    cliquer(component, noeudEquipe('eq1'));
+    cliquer(fixture, noeudEquipe('eq1'));
     fixture.detectChanges();
 
     const message = TestBed.inject(NzMessageService);
@@ -511,62 +460,6 @@ describe('OrganisationPage', () => {
     );
 
     expect(erreurSpy).toHaveBeenCalledWith('Un Membre porte déjà cet email dans cette Équipe.');
-  });
-
-  it('le filtre de recherche ne garde que les Entités correspondantes, en chargeant les Équipes des autres Entités pour pouvoir filtrer dessus', () => {
-    const fixture = TestBed.createComponent(OrganisationPage);
-    fixture.detectChanges();
-    httpMock.expectOne('/api/organisation/entites').flush([
-      { id: 'e1', nom: 'DSI' },
-      { id: 'e2', nom: 'Marketing' },
-    ]);
-    fixture.detectChanges();
-
-    saisir(fixture, '.organisation__recherche-champ', 'dsi');
-    httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([]);
-    httpMock.expectOne('/api/organisation/entites/e2/equipes').flush([]);
-    fixture.detectChanges();
-
-    const arbre: HTMLElement = fixture.nativeElement.querySelector('.organisation__tree');
-    expect(arbre.textContent).toContain('DSI');
-    expect(arbre.textContent).not.toContain('Marketing');
-  });
-
-  it('surligne uniquement les nœuds qui correspondent directement au terme recherché, pas leurs ancêtres affichés pour le contexte', () => {
-    const fixture = TestBed.createComponent(OrganisationPage);
-    fixture.detectChanges();
-    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
-    fixture.detectChanges();
-
-    saisir(fixture, '.organisation__recherche-champ', 'alpha');
-    httpMock
-      .expectOne('/api/organisation/entites/e1/equipes')
-      .flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
-    fixture.detectChanges();
-
-    const titres = Array.from(
-      fixture.nativeElement.querySelectorAll('.organisation__noeud-titre'),
-    ) as HTMLElement[];
-    const titreDsi = titres.find((t) => t.textContent?.includes('DSI'))!;
-    const titreAlpha = titres.find((t) => t.textContent?.includes('Alpha'))!;
-
-    expect(titreDsi.classList).not.toContain('organisation__noeud-titre--correspond');
-    expect(titreAlpha.classList).toContain('organisation__noeud-titre--correspond');
-  });
-
-  it('affiche un message dédié quand la recherche ne trouve rien', () => {
-    const fixture = TestBed.createComponent(OrganisationPage);
-    fixture.detectChanges();
-    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
-    fixture.detectChanges();
-
-    saisir(fixture, '.organisation__recherche-champ', 'introuvable');
-    httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([]);
-    fixture.detectChanges();
-
-    const message: HTMLElement = fixture.nativeElement.querySelector('.organisation__recherche-vide');
-    expect(message.textContent).toContain('introuvable');
-    expect(fixture.nativeElement.querySelector('.organisation__tree')).toBeFalsy();
   });
 
   it('replace le focus sur le champ de création d’Entité après une création, pour enchaîner les créations', () => {

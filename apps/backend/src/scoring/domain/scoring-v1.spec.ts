@@ -1,5 +1,5 @@
 import { ScoringV1 } from './scoring-v1';
-import { Periode } from './scoring';
+import { Periode, ResultatPalier } from './scoring';
 
 describe('ScoringV1', () => {
   let scoring: ScoringV1;
@@ -224,6 +224,103 @@ describe('ScoringV1', () => {
   describe('pourcentageVersFraction', () => {
     it('convertit un pourcentage entier en fraction', () => {
       expect(scoring.pourcentageVersFraction(60)).toBe(0.6);
+    });
+  });
+
+  describe('comparerEvolution', () => {
+    function palier(
+      palier: 1 | 2 | 3 | 4,
+      tauxApproche: number | null,
+      margeAvantDescente: number,
+    ): ResultatPalier {
+      return { effectif: 1, palier, tauxApproche, margeAvantDescente };
+    }
+
+    it('renvoie hausse quand le Palier a augmenté', () => {
+      expect(
+        scoring.comparerEvolution(palier(3, 0.5, 0.5), palier(2, 0.5, 0.5)),
+      ).toBe('hausse');
+    });
+
+    it('renvoie baisse quand le Palier a diminué', () => {
+      expect(
+        scoring.comparerEvolution(palier(2, 0.5, 0.5), palier(3, 0.5, 0.5)),
+      ).toBe('baisse');
+    });
+
+    it('à Palier identique < 4, suit le Taux d’approche en hausse', () => {
+      expect(
+        scoring.comparerEvolution(palier(2, 0.6, 0.5), palier(2, 0.4, 0.5)),
+      ).toBe('hausse');
+    });
+
+    it('à Palier identique < 4, suit le Taux d’approche en baisse', () => {
+      expect(
+        scoring.comparerEvolution(palier(2, 0.3, 0.5), palier(2, 0.6, 0.5)),
+      ).toBe('baisse');
+    });
+
+    it('à Palier identique < 4 et Taux d’approche égal, renvoie stable', () => {
+      expect(
+        scoring.comparerEvolution(palier(2, 0.5, 0.3), palier(2, 0.5, 0.9)),
+      ).toBe('stable');
+    });
+
+    it('un écart de Taux d’approche de 10 points pile reste dans la marge de tolérance (stable)', () => {
+      expect(
+        scoring.comparerEvolution(palier(2, 0.6, 0.5), palier(2, 0.5, 0.5)),
+      ).toBe('stable');
+      expect(
+        scoring.comparerEvolution(palier(2, 0.4, 0.5), palier(2, 0.5, 0.5)),
+      ).toBe('stable');
+    });
+
+    it('un écart de Taux d’approche de plus de 10 points sort de la marge de tolérance', () => {
+      expect(
+        scoring.comparerEvolution(palier(2, 0.61, 0.5), palier(2, 0.5, 0.5)),
+      ).toBe('hausse');
+      expect(
+        scoring.comparerEvolution(palier(2, 0.39, 0.5), palier(2, 0.5, 0.5)),
+      ).toBe('baisse');
+    });
+
+    it('au Palier 4 (sans Taux d’approche), suit la Marge avant descente en hausse', () => {
+      expect(
+        scoring.comparerEvolution(palier(4, null, 0.8), palier(4, null, 0.4)),
+      ).toBe('hausse');
+    });
+
+    it('au Palier 4, suit la Marge avant descente en baisse', () => {
+      expect(
+        scoring.comparerEvolution(palier(4, null, 0.4), palier(4, null, 0.8)),
+      ).toBe('baisse');
+    });
+
+    it('au Palier 4 et Marge avant descente égale, renvoie stable', () => {
+      expect(
+        scoring.comparerEvolution(palier(4, null, 0.6), palier(4, null, 0.6)),
+      ).toBe('stable');
+    });
+
+    it('au Palier 4, la même marge de tolérance de 10 points s’applique à la Marge avant descente', () => {
+      expect(
+        scoring.comparerEvolution(palier(4, null, 0.6), palier(4, null, 0.5)),
+      ).toBe('stable');
+      expect(
+        scoring.comparerEvolution(palier(4, null, 0.61), palier(4, null, 0.5)),
+      ).toBe('hausse');
+    });
+
+    it('renvoie null quand la Période actuelle n’a pas de Palier', () => {
+      expect(
+        scoring.comparerEvolution({ effectif: 0 }, palier(2, 0.5, 0.5)),
+      ).toBeNull();
+    });
+
+    it('renvoie null quand la Période précédente n’a pas de Palier', () => {
+      expect(
+        scoring.comparerEvolution(palier(2, 0.5, 0.5), { effectif: 0 }),
+      ).toBeNull();
     });
   });
 });

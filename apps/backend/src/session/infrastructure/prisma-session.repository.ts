@@ -149,4 +149,11 @@ export class PrismaSessionRepository implements SessionRepository {
     });
     return count > 0;
   }
+
+  async existeFermeeAvant(equipeId: string, date: Date): Promise<boolean> {
+    const count = await this.prisma.session.count({
+      where: { equipeId, statut: 'CLOTUREE', date: { lt: date } },
+    });
+    return count > 0;
+  }
 }

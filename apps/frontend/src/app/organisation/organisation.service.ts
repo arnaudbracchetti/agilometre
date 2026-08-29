@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { EntiteDto, EquipeDto, ProfilEquipeDto } from '@agilometre/shared';
 
@@ -60,9 +60,10 @@ export class OrganisationService {
     );
   }
 
-  obtenirProfil(equipeId: string): Observable<ProfilEquipeDto> {
+  obtenirProfil(equipeId: string, offset = 0): Observable<ProfilEquipeDto> {
     return this.http.get<ProfilEquipeDto>(
       `${this.baseUrl}/equipes/${equipeId}/profil`,
+      { params: new HttpParams().set('offset', offset) },
     );
   }
 

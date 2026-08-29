@@ -27,6 +27,7 @@ export interface QuestionActive {
   libelleQuestion: string;
   themeId: string;
   libelleTheme: string;
+  positionTheme: number;
 }
 
 export class Referentiel {
@@ -71,14 +72,34 @@ export class Referentiel {
       );
   }
 
+  /**
+   * Rang d'affichage de chaque Thème, **Thèmes actifs d'abord** dans l'ordre du Référentiel, puis
+   * les archivés. C'est l'index qui pilote la couleur catégorielle d'un Thème côté frontend, et
+   * DESIGN.md impose qu'un Thème garde la même couleur sur tous les écrans où il apparaît.
+   *
+   * Les actifs passent en premier parce que le composeur de session ne connaît que ceux-là
+   * (`ObtenirReferentielActif`) et les indexe dans leur ordre : mettre les archivés dans le lot
+   * décalerait les couleurs du composeur dès le premier archivage. Les archivés gardent malgré
+   * tout un rang, car une synthèse de Session inclut les Thèmes archivés depuis (ADR-0015).
+   */
+  positionsThemes(): Map<string, number> {
+    const actifs = this._themes.filter((theme) => theme.retireLe === null);
+    const archives = this._themes.filter((theme) => theme.retireLe !== null);
+    return new Map(
+      [...actifs, ...archives].map((theme, index) => [theme.id, index]),
+    );
+  }
+
   /** Couples Question/Thème des Thèmes actifs (themesActifs()), aplatis avec leurs libellés. */
   questionsActives(): QuestionActive[] {
+    const positions = this.positionsThemes();
     return this.themesActifs().flatMap((theme) =>
       theme.questions.map((question) => ({
         questionId: question.id,
         libelleQuestion: question.libelle,
         themeId: theme.id,
         libelleTheme: theme.libelle,
+        positionTheme: positions.get(theme.id)!,
       })),
     );
   }

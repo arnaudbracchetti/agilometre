@@ -6,6 +6,7 @@ export interface QuestionScorableEnrichie {
   libelleQuestion: string;
   themeId: string;
   libelleTheme: string;
+  positionTheme: number;
 }
 
 /**
@@ -20,9 +21,15 @@ export class ResoudreQuestionsScorables {
     session: Session,
     referentielCharge: Referentiel,
   ): QuestionScorableEnrichie[] {
+    const positions = referentielCharge.positionsThemes();
     const parQuestionId = new Map<
       string,
-      { themeId: string; libelleTheme: string; libelleQuestion: string }
+      {
+        themeId: string;
+        libelleTheme: string;
+        libelleQuestion: string;
+        positionTheme: number;
+      }
     >();
     for (const theme of referentielCharge.themes) {
       for (const question of theme.questions) {
@@ -30,6 +37,7 @@ export class ResoudreQuestionsScorables {
           themeId: theme.id,
           libelleTheme: theme.libelle,
           libelleQuestion: question.libelle,
+          positionTheme: positions.get(theme.id)!,
         });
       }
     }

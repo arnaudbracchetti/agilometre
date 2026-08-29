@@ -1,0 +1,112 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+// Rampe séquentielle à 4 crans (bleu pâle → navy) plutôt qu'un binaire haut/bas : le Palier est
+// une position sur une échelle de mesure, la teinte progresse avec lui au lieu de sauter d'un
+// seul palier à l'autre (--haut à partir de 3 seulement, avant ce changement).
+.palier-theme__badge {
+  display: inline-block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2);
+
+  &--1 {
+    color: var(--color-blue-900);
+    background: var(--color-blue-100);
+  }
+
+  &--2 {
+    color: var(--color-on-primary);
+    background: var(--color-blue-500);
+  }
+
+  &--3 {
+    color: var(--color-on-primary);
+    background: var(--color-primary);
+  }
+
+  &--4 {
+    color: var(--color-on-primary);
+    background: var(--color-primary-emphasis);
+  }
+
+  &--vide {
+    color: var(--color-ink-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+}
+
+// Même rampe de couleur, même vocabulaire de badge — seule la taille change, à l'échelle du
+// code de séance sur pilotage-page (le seul autre chiffre-titre d'un écran Operate).
+:host(.palier-theme--grande) .palier-theme__badge {
+  font-size: var(--font-size-2xl);
+  padding: var(--space-2) var(--space-4);
+}
+
+// Le chiffre de Palier est une mesure calibrée (Règle du Chiffre Mono) — jamais Plex Sans, même
+// dans un badge où le mot « Palier » qui l'entoure reste en Plex Sans.
+.palier-theme__valeur {
+  font-family: var(--font-family-mono);
+}
+
+// Jamais de vert (la charte n'a pas de teinte "succès") ni de rouge (Règle du Rouge Dédié) pour la
+// hausse : le sens vient d'abord de la direction de la flèche (icônes `rise`/`fall`, déjà à 45°).
+// Icône glissée dans le badge (pas un élément séparé) : elle qualifie le Palier affiché, elle ne
+// s'en détache jamais visuellement — et hérite donc par défaut de la couleur du badge, déjà
+// garantie lisible sur son propre fond (blanc sur badge--2/3/4, navy sur badge--1).
+.palier-theme__evolution {
+  display: inline-flex;
+  margin-left: var(--space-1);
+  vertical-align: middle;
+}
+
+// La baisse reprend le rôle « attention » (or) déjà utilisé par .palier-theme__alerte ci-dessous
+// — même "à regarder de près", pas une erreur — mais seulement sur badge--1 (fond clair, texte
+// navy) : cet or foncé (`--color-attention`) n'offre qu'un contraste ≈1,9:1 sur les fonds bleu
+// pleins de badge--2/3/4 (bien sous le minimum WCAG de 3:1 pour une icône), où la flèche doit donc
+// rester blanche (héritée du badge) plutôt que reprendre cette teinte.
+.palier-theme__badge--1 .palier-theme__evolution--baisse {
+  color: var(--color-attention);
+}
+
+.palier-theme__jauge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-ink-muted);
+}
+
+.palier-theme__jauge-libelle {
+  white-space: nowrap;
+}
+
+.palier-theme__jauge-barre {
+  min-width: 5rem;
+}
+
+.palier-theme__jauge-valeur {
+  font-family: var(--font-family-mono);
+  min-width: 3em;
+  text-align: right;
+}
+
+// Jamais --color-danger ni --color-accent (Règle du Rouge Dédié : un Palier bas ou fragile n'est
+// pas une erreur) — le rôle « attention » (or) porte ce signal ailleurs sur l'écran (cran de
+// consensus faible) et le porte aussi ici, pour qu'un coach reconnaisse le même « à regarder de
+// près » aux deux endroits. L'icône + le texte restent le canal qui porte réellement le sens : la
+// couleur ne fait que le renforcer, jamais le seul vecteur.
+.palier-theme__alerte {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-attention);
+}
