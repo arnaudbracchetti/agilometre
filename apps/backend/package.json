@@ -16,6 +16,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "bootstrap:coach": "ts-node -r tsconfig-paths/register src/bootstrap-coach.ts",
+    "import-referentiel:cli": "ts-node -r tsconfig-paths/register src/import-referentiel-cli.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",

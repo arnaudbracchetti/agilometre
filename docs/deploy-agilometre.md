@@ -23,7 +23,7 @@ donc qu'un seul service applicatif exposé à Caddy.
 | Fichier de site Caddy | `agilometre.caddy` (racine du dépôt) → `/opt/edge/sites/agilometre.caddy` |
 | Alias sur `edge_net` | `agilometre-app` |
 | Réseau DB interne | `agilometre_db_net` |
-| Script de mise à jour | `deploy-agilometre.sh` (racine du dépôt, à copier sur le serveur) |
+| Script de mise à jour | `deploy-agilometre.sh` (racine du dépôt) → `~/deploy-agilometre.sh` sur le serveur, **à la racine du compte `deploy`**, jamais dans `/opt/agilometre` (le script y fait lui-même `cd`, peu importe d'où il est appelé) |
 | Workflow CI de publication | `.github/workflows/publish.yml`, déclenché sur tag `v*.*.*` |
 
 Points de comportement propres à cette application, à connaître avant toute intervention :
@@ -55,8 +55,13 @@ rien à refaire ici).
 3. **Copier les fichiers**, depuis la racine du dépôt en local :
    ```bash
    scp docker-compose.prod.yml deploy@<ip-serveur>:/opt/agilometre/
-   scp deploy-agilometre.sh deploy@<ip-serveur>:/opt/agilometre/
-   ssh deploy@<ip-serveur> "chmod +x /opt/agilometre/deploy-agilometre.sh"
+
+   # deploy-agilometre.sh va À LA RACINE DU COMPTE deploy (~), jamais dans /opt/agilometre :
+   # le script fait lui-même `cd /opt/agilometre` en première ligne, donc peu importe d'où il
+   # est invoqué - le garder dans le home du compte le rend disponible partout, y compris avant
+   # que /opt/agilometre n'existe.
+   scp deploy-agilometre.sh deploy@<ip-serveur>:~/
+   ssh deploy@<ip-serveur> "chmod +x ~/deploy-agilometre.sh"
 
    sed "s/__PUBLIC_DOMAIN__/agilometre.nekbet.fr/" agilometre.caddy \
      | ssh deploy@<ip-serveur> "cat > /opt/edge/sites/agilometre.caddy"
@@ -90,19 +95,40 @@ rien à refaire ici).
      caddy reload --config /etc/caddy/Caddyfile
    ```
 
-8. **Importer le référentiel initial** : un agilomètre fraîchement déployé n'a aucune Question -
-   sans cette étape, aucune équipe ne peut voter. `apps/backend/referentiel_questions/` est le seul
-   fichier YAML canonique du Référentiel (les autres fragments/versions précédentes doivent être
-   supprimés du répertoire, jamais laissés à côté - voir l'avertissement ci-dessous). Depuis votre
-   machine locale, à la racine du dépôt :
+8. **Amorcer le premier compte Coach** : un agilomètre fraîchement déployé n'a aucun compte —
+   toutes les routes (hors écran d'accueil et parcours participants) exigent désormais une
+   connexion (issue #59). Ce premier compte naît d'une commande explicite, jamais d'un seed
+   automatique au démarrage. Le menu étant interactif (saisie du mot de passe), se connecter
+   d'abord plutôt que de l'invoquer en une seule commande `ssh` distante (qui n'alloue pas de
+   pseudo-terminal par défaut) :
    ```bash
-   scripts/import-referentiel.sh \
-     apps/backend/referentiel_questions/question_axe_1-4.yaml \
-     https://agilometre.nekbet.fr
+   ssh deploy@<ip-serveur>
+   ~/deploy-agilometre.sh   # menu → option 3, "Amorcer un compte Coach"
    ```
-   Le script affiche d'abord un aperçu (`ChangeSet`) et demande une confirmation avant d'écrire
-   quoi que ce soit - ne pas ajouter `-y` pour ce premier import, pour relire l'aperçu avant de
-   valider.
+   Le menu demande email/prénom/nom, puis le mot de passe deux fois (jamais affiché en clair) —
+   voir le détail dans `deploy-agilometre.sh` (`action_amorcer_coach`, appelle
+   `docker compose exec app node dist/src/bootstrap-coach.js` : aucun appel réseau). Conserver
+   l'email et le mot de passe : le Coach n'a aucun moyen de réinitialiser son propre compte sans un
+   accès existant (tranche 2, mot de passe oublié, pas encore livrée à ce stade).
+
+9. **Importer le référentiel initial** : sans cette étape, aucune équipe ne peut voter.
+   `apps/backend/referentiel_questions/` est le seul fichier YAML canonique du Référentiel (les
+   autres fragments/versions précédentes doivent être supprimés du répertoire, jamais laissés à
+   côté - voir l'avertissement ci-dessous). Copier le fichier dans le home du compte `deploy` (pas
+   besoin qu'il soit dans `/opt/agilometre` - le menu en demande le chemin), puis :
+   ```bash
+   scp apps/backend/referentiel_questions/question_axe_1-4.yaml deploy@<ip-serveur>:~/referentiel.yaml
+   ssh deploy@<ip-serveur>
+   ~/deploy-agilometre.sh   # menu → option 2, "Importer le Referentiel"
+   ```
+   Le menu demande le chemin du fichier, affiche l'aperçu (`ChangeSet`) puis demande confirmation
+   avant d'écrire quoi que ce soit (`action_importer_referentiel`, appelle
+   `docker compose exec app node dist/src/import-referentiel-cli.js` directement — aucun appel
+   HTTP, aucun jeton Coach nécessaire).
+
+   Import depuis un poste **sans accès SSH** au serveur : `scripts/import-referentiel.sh` reste
+   disponible séparément, par HTTP, avec un jeton Coach obtenu via `POST /api/auth/login` — voir
+   l'en-tête de ce script pour l'usage exact.
 
    ⚠️ **Chaque appel remplace tout le Référentiel, il ne le complète jamais.**
    `Referentiel.calculerChangements` archive toute Question absente du fichier importé - importer
@@ -112,12 +138,7 @@ rien à refaire ici).
    Un import répété du même fichier plus tard (ex. lors d'une mise à jour, §3) est sans effet tant
    que son contenu n'a pas changé.
 
-   ⚠️ Ces deux routes (`/api/referentiel/import/apercu` et `/application`) ne sont protégées par
-   aucune authentification à ce jour - n'importe qui connaissant l'URL peut réécrire le
-   Référentiel. Accepté pour l'instant, mais à traiter avant une exposition publique durable
-   (sujet de conception à part, hors périmètre de ce document).
-
-9. **Vérifications** (cf. `docs/deploy-generic.md` §3.4) :
+10. **Vérifications** (cf. `docs/deploy-generic.md` §3.4) :
    - `docker compose exec app id` → utilisateur non-root
    - `curl -I http://agilometre.nekbet.fr` → `308`
    - `curl -I https://agilometre.nekbet.fr` → en-têtes de sécurité + certificat Let's Encrypt valide
@@ -130,12 +151,17 @@ rien à refaire ici).
 git tag vX.Y.Z && git push origin vX.Y.Z    # déclenche publish.yml
 ```
 
-Vérifier que la CI réussit, puis sur le serveur :
+Vérifier que la CI réussit, puis sur le serveur (`deploy-agilometre.sh` vit à la racine du compte
+`deploy`, pas dans `/opt/agilometre` - le script y fait lui-même `cd`) :
 
 ```bash
-cd /opt/agilometre
-./deploy-agilometre.sh vX.Y.Z
+ssh deploy@<ip-serveur>
+~/deploy-agilometre.sh vX.Y.Z
 ```
+
+Sans argument, `~/deploy-agilometre.sh` ouvre un menu (déployer / importer le Référentiel /
+amorcer un compte Coach, voir étapes 8 et 9 ci-dessus) — son option 1 demande le tag puis fait
+exactement la même chose que `~/deploy-agilometre.sh vX.Y.Z`.
 
 Le script fait tout le reste automatiquement :
 - met à jour `IMAGE_TAG` dans `.env` (garde une sauvegarde `.env.bak` le temps du déploiement),

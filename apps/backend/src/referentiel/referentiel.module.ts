@@ -28,8 +28,14 @@ import { ReferentielController } from './referentiel.controller';
       inject: [PrismaReferentielRepository],
     },
   ],
-  // Exporté pour que SessionModule puisse résoudre le Référentiel actif lors de la lecture d'un
-  // Modèle de session enrichi (ObtenirModeleSessionDetail) — dépendance inter-module explicite.
-  exports: [PrismaReferentielRepository],
+  // PrismaReferentielRepository : exporté pour que SessionModule puisse résoudre le Référentiel
+  // actif lors de la lecture d'un Modèle de session enrichi (ObtenirModeleSessionDetail).
+  // Preview/ApplyImportReferentiel : exportés pour import-referentiel-cli.ts, qui les résout via
+  // NestFactory.createApplicationContext(AppModule) sans passer par ReferentielController.
+  exports: [
+    PrismaReferentielRepository,
+    PreviewImportReferentiel,
+    ApplyImportReferentiel,
+  ],
 })
 export class ReferentielModule {}

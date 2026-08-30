@@ -2,11 +2,15 @@
 set -euo pipefail
 
 # ============================================================
-# Script de deploiement - Agilometre (VPS production)
+# Script d'exploitation - Agilometre (VPS production)
 #
-# Usage : ./deploy-agilometre.sh <tag>          (ex. ./deploy-agilometre.sh v0.1.1)
+# Usage :
+#   ./deploy-agilometre.sh <tag>   deploiement direct (ex. ./deploy-agilometre.sh v0.1.1)
+#   ./deploy-agilometre.sh         menu interactif (deployer / importer le Referentiel /
+#                                  amorcer un compte Coach)
 #
-# Automatise la procedure documentee dans docs/deploy-generic.md #4 :
+# Deploiement (option 1 du menu, ou usage direct avec un tag), automatise la procedure
+# documentee dans docs/deploy-generic.md #4 :
 #   1. Memorise le tag actuellement deploye (pour un rollback eventuel)
 #   2. Met a jour IMAGE_TAG dans /opt/agilometre/.env
 #   3. Pull la nouvelle image de l'app (et postgres, sans changement de version)
@@ -23,6 +27,10 @@ set -euo pipefail
 # Ne declenche pas de "caddy reload" : la config Caddy elle-meme ne change
 # pas a chaque mise a jour applicative (uniquement necessaire pour un
 # premier deploiement ou un changement du fichier .caddy, cf. doc).
+#
+# Import du Referentiel et amorcage du Coach (options 2 et 3 du menu) appellent des scripts Node
+# deja presents dans l'image (dist/src/import-referentiel-cli.js, dist/src/bootstrap-coach.js) via
+# "docker compose exec" - aucun appel HTTP, aucun jeton necessaire (issue #59).
 # ============================================================
 
 APP_DIR="/opt/agilometre"
@@ -37,37 +45,12 @@ ok()   { echo -e "${GREEN}   OK : $1${NC}"; }
 err()  { echo -e "${RED}   ERREUR : $1${NC}"; }
 warn() { echo -e "${YELLOW}   ATTENTION : $1${NC}"; }
 
-# ── 1. Validation des arguments et de l'environnement ──────────────
-if [ $# -ne 1 ]; then
-  err "Usage : $0 <tag>  (ex. $0 v0.1.1)"
-  exit 1
-fi
-NEW_TAG="$1"
-
-if [[ ! "$NEW_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  err "Le tag doit suivre le format vX.Y.Z (recu : '$NEW_TAG')"
-  exit 1
-fi
-
+# ── 0. Verifications d'environnement, communes aux 3 actions ───────
 cd "$APP_DIR" 2>/dev/null || { err "Repertoire $APP_DIR introuvable"; exit 1; }
 [ -f "$ENV_FILE" ] || { err "$ENV_FILE introuvable"; exit 1; }
 [ -f "$COMPOSE_FILE" ] || { err "$COMPOSE_FILE introuvable dans $APP_DIR"; exit 1; }
 
-# ── 2. Memoriser le tag actuellement deploye (cible du rollback) ───
-PREVIOUS_TAG="$(grep -oP '^IMAGE_TAG=\K.*' "$ENV_FILE" || true)"
-if [ -z "$PREVIOUS_TAG" ]; then
-  warn "Aucun IMAGE_TAG trouve dans $ENV_FILE - rollback automatique indisponible si l'etape suivante echoue"
-fi
-
-if [ "$NEW_TAG" == "$PREVIOUS_TAG" ]; then
-  warn "Le tag $NEW_TAG est deja celui actuellement deploye."
-  read -rp "Continuer quand meme (pull/up force) ? [o/N] " CONFIRM
-  [[ "$CONFIRM" =~ ^[oO]$ ]] || { echo "Annule."; exit 0; }
-fi
-
-step "Deploiement de $NEW_TAG (version actuelle : ${PREVIOUS_TAG:-inconnue})"
-
-# ── 3. Fonctions reutilisables (deploiement direct ET rollback) ────
+# ── Fonctions reutilisables (deploiement direct ET rollback) ───────
 deploy_tag() {
   local tag="$1"
   cp "$ENV_FILE" "$ENV_FILE.bak"
@@ -97,38 +80,146 @@ wait_healthy() {
   return 1
 }
 
-# ── 4. Deploiement de la nouvelle version + verification ───────────
-deploy_tag "$NEW_TAG"
+# ── Action 1 : deployer une version ─────────────────────────────────
+action_deployer() {
+  local new_tag="${1:-}"
+  if [ -z "$new_tag" ]; then
+    read -rp "Tag a deployer (ex: v1.2.3) : " new_tag
+  fi
 
-step "Attente du healthcheck (max ${HEALTH_TIMEOUT}s)"
-if wait_healthy; then
-  ok "Tous les conteneurs sont healthy - deploiement de $NEW_TAG reussi"
-  rm -f "$ENV_FILE.bak"
-  exit 0
-fi
+  if [[ ! "$new_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    err "Le tag doit suivre le format vX.Y.Z (recu : '$new_tag')"
+    return 1
+  fi
 
-# ── 5. Echec : rollback automatique vers la version precedente ─────
-err "Healthcheck en echec apres ${HEALTH_TIMEOUT}s pour $NEW_TAG"
-echo ""
-echo "----- Dernieres lignes de logs (app) -----"
-docker compose -f "$COMPOSE_FILE" logs --tail=50 app || true
-echo "---------------------------------------------------------"
+  local previous_tag
+  previous_tag="$(grep -oP '^IMAGE_TAG=\K.*' "$ENV_FILE" || true)"
+  if [ -z "$previous_tag" ]; then
+    warn "Aucun IMAGE_TAG trouve dans $ENV_FILE - rollback automatique indisponible si l'etape suivante echoue"
+  fi
 
-if [ -z "$PREVIOUS_TAG" ]; then
-  err "Pas de tag precedent connu - rollback automatique impossible."
-  err "Intervention manuelle requise sur le VPS (verifier IMAGE_TAG et les logs ci-dessus)."
-  exit 1
-fi
+  if [ "$new_tag" == "$previous_tag" ]; then
+    warn "Le tag $new_tag est deja celui actuellement deploye."
+    local confirm
+    read -rp "Continuer quand meme (pull/up force) ? [o/N] " confirm
+    [[ "$confirm" =~ ^[oO]$ ]] || { echo "Annule."; return 0; }
+  fi
 
-warn "Rollback automatique vers la version precedente : $PREVIOUS_TAG"
-deploy_tag "$PREVIOUS_TAG"
+  step "Deploiement de $new_tag (version actuelle : ${previous_tag:-inconnue})"
+  deploy_tag "$new_tag"
 
-if wait_healthy; then
-  ok "Rollback vers $PREVIOUS_TAG reussi - le service est de nouveau sain"
-  err "Le deploiement de $NEW_TAG a echoue et a ete annule. Voir les logs ci-dessus avant de reessayer."
-  exit 1
+  step "Attente du healthcheck (max ${HEALTH_TIMEOUT}s)"
+  if wait_healthy; then
+    ok "Tous les conteneurs sont healthy - deploiement de $new_tag reussi"
+    rm -f "$ENV_FILE.bak"
+    return 0
+  fi
+
+  err "Healthcheck en echec apres ${HEALTH_TIMEOUT}s pour $new_tag"
+  echo ""
+  echo "----- Dernieres lignes de logs (app) -----"
+  docker compose -f "$COMPOSE_FILE" logs --tail=50 app || true
+  echo "---------------------------------------------------------"
+
+  if [ -z "$previous_tag" ]; then
+    err "Pas de tag precedent connu - rollback automatique impossible."
+    err "Intervention manuelle requise sur le VPS (verifier IMAGE_TAG et les logs ci-dessus)."
+    return 1
+  fi
+
+  warn "Rollback automatique vers la version precedente : $previous_tag"
+  deploy_tag "$previous_tag"
+
+  if wait_healthy; then
+    ok "Rollback vers $previous_tag reussi - le service est de nouveau sain"
+    err "Le deploiement de $new_tag a echoue et a ete annule. Voir les logs ci-dessus avant de reessayer."
+    return 1
+  else
+    err "CRITIQUE : le rollback vers $previous_tag a lui aussi echoue son healthcheck."
+    err "Intervention manuelle requise IMMEDIATEMENT sur le VPS."
+    return 2
+  fi
+}
+
+# ── Action 2 : importer le Referentiel (hors HTTP, aucun jeton) ────
+action_importer_referentiel() {
+  local fichier_yaml
+  read -rp "Chemin du fichier YAML a importer : " fichier_yaml
+  if [ ! -f "$fichier_yaml" ]; then
+    err "Fichier introuvable : $fichier_yaml"
+    return 1
+  fi
+
+  step "Apercu du Referentiel ($fichier_yaml)"
+  if ! docker compose -f "$COMPOSE_FILE" exec -T app node dist/src/import-referentiel-cli.js \
+    --apercu-only < "$fichier_yaml"; then
+    err "Apercu rejete - YAML invalide, voir le detail ci-dessus. Import non applique."
+    return 1
+  fi
+
+  echo ""
+  warn "Chaque import remplace tout le Referentiel : toute Question absente de ce fichier sera archivee."
+  local confirm
+  read -rp "Appliquer ces changements ? [o/N] " confirm
+  if [[ ! "$confirm" =~ ^[oO]$ ]]; then
+    echo "Annule, aucune ecriture."
+    return 0
+  fi
+
+  step "Application du Referentiel"
+  docker compose -f "$COMPOSE_FILE" exec -T app node dist/src/import-referentiel-cli.js \
+    < "$fichier_yaml"
+  ok "Referentiel importe."
+}
+
+# ── Action 3 : amorcer le premier compte Coach ──────────────────────
+action_amorcer_coach() {
+  local email prenom nom mot_de_passe mot_de_passe_confirmation
+  read -rp "Email du Coach : " email
+  read -rp "Prenom : " prenom
+  read -rp "Nom : " nom
+  read -rsp "Mot de passe : " mot_de_passe
+  echo ""
+  read -rsp "Confirmer le mot de passe : " mot_de_passe_confirmation
+  echo ""
+
+  if [ "$mot_de_passe" != "$mot_de_passe_confirmation" ]; then
+    err "Les deux mots de passe ne correspondent pas."
+    return 1
+  fi
+
+  step "Amorcage du compte Coach ($email)"
+  docker compose -f "$COMPOSE_FILE" exec -T app node dist/src/bootstrap-coach.js \
+    --email="$email" --prenom="$prenom" --nom="$nom" --mot-de-passe="$mot_de_passe"
+}
+
+# ── Menu interactif ──────────────────────────────────────────────────
+afficher_menu() {
+  while true; do
+    echo ""
+    echo "=== Agilometre - exploitation ($APP_DIR) ==="
+    echo "  1) Deployer une version"
+    echo "  2) Importer le Referentiel"
+    echo "  3) Amorcer un compte Coach"
+    echo "  4) Quitter"
+    local choix
+    read -rp "Choix : " choix
+    # "|| true" indispensable sous "set -e" : sans lui, un retour non nul d'une action (tag
+    # invalide, fichier introuvable, mots de passe non concordants, healthcheck en echec...)
+    # ferait sortir tout le script au lieu de revenir au menu.
+    case "$choix" in
+      1) action_deployer || true ;;
+      2) action_importer_referentiel || true ;;
+      3) action_amorcer_coach || true ;;
+      4) exit 0 ;;
+      *) warn "Choix invalide." ;;
+    esac
+  done
+}
+
+# ── Point d'entree ───────────────────────────────────────────────────
+if [ $# -ge 1 ]; then
+  action_deployer "$1"
 else
-  err "CRITIQUE : le rollback vers $PREVIOUS_TAG a lui aussi echoue son healthcheck."
-  err "Intervention manuelle requise IMMEDIATEMENT sur le VPS."
-  exit 2
+  afficher_menu
 fi
