@@ -176,16 +176,12 @@ risque d'une déconnexion en pleine animation.
 
 ## Application des droits à l'exécution
 
-Quatre pièces, volontairement minimales :
-
-1. **`AuthGuard` JWT global**, posé une fois (`APP_GUARD`), **fail-closed** : toute route exige un
-   compte valide par défaut. Une route nouvelle est donc protégée sans que personne ait à y penser.
-2. **`@Public()`** sur les seules routes ouvertes : login, invitation, mot de passe oublié, les
-   parcours participants existants (qui gardent leur `JetonParticipantGuard` propre, inchangé), et
-   l'écran d'accueil, vitrine publique de l'instance portant le point d'entrée « Se connecter ».
-3. **`@Roles(...)`**, lu par ce même guard - un guard, pas deux mécanismes séparés.
-4. **Un service `PerimetreUtilisateur`** (`peutVoirEquipe(id)` / `peutVoirEntite(id)`), appelé par
-   les contrôleurs qui reçoivent un identifiant d'Équipe ou d'Entité.
+Deux natures de connaissance séparées - quel Rôle a accès à quel écran/action (statique), et quelle
+ressource précise (dynamique, dépend des Habilitations/du roster) - chacune appliquée par un guard
+fail-closed, plutôt que des vérifications reproduites au fil des cartes. Mécanique complète, guards,
+décorateurs et test de non-régression unique : voir
+[politique-des-droits.md](../../../docs/design/agregat-politique-des-droits.md), qui porte le **comment** ;
+cette annexe reste focalisée sur le **quoi** (la matrice ci-dessus).
 
 **Pas de read model dupliqué par Rôle, pas de DTO à amputer en sortie.** La restriction de détail
 existe déjà par construction : `apps/backend/src/session/entite-profil.controller.ts` et
