@@ -103,13 +103,21 @@ Une fonction unique, appelée par toutes les vues. Entrée : un ensemble de rép
 ## 9. Restitutions et droits
 
 Principe : plus on s'éloigne de la pièce où la conversation a eu lieu, moins on voit de détail.
+Détail complet du cycle de vie des comptes et de l'application de ces droits à l'exécution :
+[annexe Gestion des droits](annexes/gestion-des-droits.md).
 
 | Rôle | Accès |
 |---|---|
-| Membre | Paliers de son équipe par thème, score global, badges des autres équipes, répartition détaillée des sessions auxquelles il a participé |
+| Membre | Paliers de son équipe par thème, score global, badges des autres équipes, répartition détaillée de toutes les sessions de son équipe - voir divergence ci-dessous |
 | Coach | Tout sur ses équipes : répartitions brutes, tours de vote, historique des sessions, taux de participation au pouls, comparaison entre ses équipes (mur de badges) |
-| Manager d'équipe | Paliers par thème, taux d'approche, tendance. Ni répartition brute, ni détail question par question. Pouls en agrégats glissants uniquement |
-| Direction | Paliers par thème agrégés au niveau entité, tendance de l'entité. Pas de mur de badges par équipe — voir divergence ci-dessous |
+| Manager d'équipe | Paliers par thème, taux d'approche, tendance. Ni répartition brute, ni détail question par question. Pouls en agrégats glissants uniquement - **différé, voir §10** |
+| Direction | Paliers par thème agrégés au niveau entité, tendance de l'entité. Pas de mur de badges par équipe - voir divergence ci-dessous |
+
+**Divergence assumée (Membre).** Le filtre « des sessions auxquelles il a participé » est abandonné :
+il est infaisable sans violer l'anonymat structurel du §5, qui garantit qu'aucune réponse ne
+référence le membre ni le jeton qui l'a produite. Le Membre voit donc la répartition détaillée de
+**toutes** les sessions de son équipe, sans distinction - voir
+[annexe Gestion des droits](annexes/gestion-des-droits.md).
 
 **Trois vues à concevoir**
 
@@ -129,7 +137,13 @@ Principe : plus on s'éloigne de la pièce où la conversation a eu lieu, moins 
 
 **Temps réel en séance** : sondage HTTP toutes les deux secondes plutôt que websockets. Moins élégant, mais robuste derrière les proxies d'entreprise dont on ne maîtrise pas la configuration. Deux secondes de latence sur un compteur de votes sont invisibles en atelier.
 
-**Authentification** : comptes locaux en v1 pour coach, manager et direction ; jeton éphémère pour les participants en séance ; lien à jeton sans mot de passe pour le pouls. SSO client dans un second temps.
+**Authentification** : comptes locaux en v1 pour coach, direction et membre d'équipe ; jeton éphémère
+pour les participants en séance ; lien à jeton sans mot de passe pour le pouls. SSO client dans un
+second temps. **Écart assumé par rapport à la version précédente de ce paragraphe** : le membre
+d'équipe reçoit un compte (pour consulter le résultat de son équipe - un membre qui vote sans jamais
+voir de résultat menace le critère de succès n°1 du §11), le manager d'équipe est différé faute de
+porteur identifié chez les clients. Détail complet :
+[annexe Gestion des droits](annexes/gestion-des-droits.md).
 
 **Import du référentiel** : fichier structuré chargé au déploiement.
 

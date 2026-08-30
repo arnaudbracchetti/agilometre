@@ -47,17 +47,24 @@ _Avoid_: BU (synonyme utilisé dans le PRD - Entité est le terme retenu)
 Le regroupement de Membres auquel sont rattachées les Sessions et les Campagnes de pouls.
 
 **Membre**:
-Une personne recensée dans le roster d'une Équipe ; référence au plus un Utilisateur, optionnellement - un Membre n'a pas besoin de compte pour répondre à une Session ou un Pouls (voir Code, Jeton). Quand un Utilisateur est référencé, il porte toujours le Rôle Membre d'équipe. Supprimé en cascade avec son Équipe.
+Une personne recensée dans le roster d'une Équipe ; référence au plus un Utilisateur, optionnellement - un Membre n'a pas besoin de compte pour répondre à une Session ou un Pouls (voir Code, Jeton). Quand un Utilisateur est référencé, il porte toujours le Rôle Membre d'équipe, et devient l'autorité sur les informations du Membre (voir Propagation descendante) - le Membre passe alors en lecture seule sur ces champs. Supprimé en cascade avec son Équipe.
 _Avoid_: seul, pour désigner le Rôle "Membre d'équipe" - dans ce sens précis toujours écrire "Membre d'équipe" en entier, pour ne pas le confondre avec ce sens générique.
+
+**Propagation descendante**:
+La règle par laquelle toute modification du prénom, du nom ou de l'email d'un Utilisateur est reportée sur chaque Membre qui le référence, dans toutes les Équipes où il figure au roster. Retenue plutôt qu'une simple éclipse à l'affichage pour que l'email du Membre reste toujours à jour et fasse autorité pour tout ce qui le consomme, notamment l'envoi des Sollicitations de pouls. Un changement d'email créant un doublon dans l'un des rosters concernés est rejeté en bloc, jamais propagé partiellement.
 
 **Utilisateur**:
 Un compte de connexion à l'Organisation, portant un Rôle unique et, selon ce Rôle, une ou plusieurs Habilitations. Un Utilisateur Membre d'équipe est celui qu'un Membre référence pour se connecter et consulter les résultats de son Équipe.
 
+**Jeton de compte**:
+Un jeton à usage unique, valable 7 jours, émis à un Utilisateur pour définir son mot de passe - à l'invitation initiale comme lors d'une réinitialisation, même mécanisme pour les deux usages, sans fonction de renvoi distincte. Distinct du Jeton de session (Session animée, anonyme, portée toute la Session) et du Jeton de Sollicitation (Pouls, usage unique et nominatif) : celui-ci authentifie un accès de connexion, pas une participation.
+
 **Habilitation**:
-Le rattachement d'un Utilisateur Manager d'équipe (à une ou plusieurs Équipes) ou Direction (à une ou plusieurs Entités) qui détermine sa portée d'accès. Distinct de Membre : une pure autorisation, sans lien avec le roster d'une Équipe ni l'anonymat des Réponses. Un Utilisateur Coach n'a aucune Habilitation - son accès est transversal, déterminé par son Rôle seul.
+Le rattachement d'un Utilisateur Direction (à une ou plusieurs Entités) qui détermine sa portée d'accès - de même pour un futur Utilisateur Manager d'équipe (à une ou plusieurs Équipes), Rôle porté par l'enum mais différé, aucun compte n'étant pour l'instant créable avec. Distinct de Membre : une pure autorisation, sans lien avec le roster d'une Équipe ni l'anonymat des Réponses. Un Utilisateur Coach n'a aucune Habilitation - son accès est transversal, déterminé par son Rôle seul. Un Utilisateur Membre d'équipe n'en a pas non plus : sa portée d'accès est dérivée du roster (les Équipes où il est référencé comme Membre), jamais portée par une Habilitation - les deux mécanismes divergeraient dès qu'on le retire d'un roster sans en retirer l'Habilitation.
 
 **Rôle**:
-Une des quatre valeurs portées par un Utilisateur, qui détermine ce qu'il voit et peut faire : Coach (transversal, aucune Habilitation), Membre d'équipe (consulte les résultats des Équipes où il est référencé comme Membre), Manager d'équipe (Habilitation sur une ou plusieurs Équipes), Direction (Habilitation sur une ou plusieurs Entités).
+Une des quatre valeurs portées par un Utilisateur, qui détermine ce qu'il voit et peut faire : Coach (transversal, aucune Habilitation), Membre d'équipe (consulte les résultats des Équipes où il est référencé comme Membre, portée dérivée du roster), Manager d'équipe (Habilitation sur une ou plusieurs Équipes - Rôle différé, aucun compte créable actuellement), Direction (Habilitation sur une ou plusieurs Entités).
+_Avoid_: Management, pour désigner le Rôle Direction - vocabulaire oral rencontré en séance de cadrage, jamais retenu au glossaire.
 
 ### Session animée
 

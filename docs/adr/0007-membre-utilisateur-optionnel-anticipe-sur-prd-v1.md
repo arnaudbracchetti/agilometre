@@ -18,3 +18,7 @@ fonctionnalité (déjà anticipée par le métier, voir échanges Epic #6) sera 
 **Conséquence.** Le PRD lui-même n'est pas corrigé - cet ADR documente l'écart assumé entre le
 modèle de données (qui anticipe le besoin) et le périmètre fonctionnel v1 (qui ne l'implémente
 pas encore).
+
+**Suivi.** [ADR-0021](0021-comptes-membre-equipe-en-perimetre-suivi-adr-0007.md) referme cet écart :
+le Rôle Membre d'équipe entre en périmètre et le PRD §10 est corrigé en conséquence. Cet ADR reste
+`accepted` : il documente toujours pourquoi le champ existait par anticipation avant cette décision.
