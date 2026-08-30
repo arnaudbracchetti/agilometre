@@ -15,11 +15,13 @@ import {
 } from '@agilometre/shared';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { jetonCoachDeTest } from './support/jeton-coach';
 import { configureReferentielImportBodyParser } from './../src/referentiel/configure-import-body-parser';
 
 describe('Participant — jointure par Code (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let jetonCoach: string;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -33,6 +35,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       new ValidationPipe({ whitelist: true, transform: true }),
     );
     await app.init();
+    jetonCoach = await jetonCoachDeTest(app);
 
     prisma = app.get(PrismaService);
     await nettoyer();
@@ -85,6 +88,7 @@ describe('Participant — jointure par Code (e2e)', () => {
   async function importer(questionIds: string[]): Promise<void> {
     await request(app.getHttpServer())
       .post('/api/referentiel/import/application')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send(yamlAvecQuestions(questionIds))
       .expect(201);
@@ -93,6 +97,7 @@ describe('Participant — jointure par Code (e2e)', () => {
   async function creerEntite(nom: string): Promise<EntiteDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
     return reponse.body as EntiteDto;
@@ -104,6 +109,7 @@ describe('Participant — jointure par Code (e2e)', () => {
   ): Promise<EquipeDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom, entiteId })
       .expect(201);
     return reponse.body as EquipeDto;
@@ -112,6 +118,7 @@ describe('Participant — jointure par Code (e2e)', () => {
   async function creerModele(nom: string): Promise<ModeleSessionDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/modeles-session')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
     return reponse.body as ModeleSessionDto;
@@ -130,10 +137,12 @@ describe('Participant — jointure par Code (e2e)', () => {
     const modele = await creerModele(`Diagnostic${suffixe}`);
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: [questionId] })
       .expect(201);
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -147,6 +156,7 @@ describe('Participant — jointure par Code (e2e)', () => {
     const session = await sessionPreparee(suffixe);
     const reponse = await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/ouvrir`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     return reponse.body as SessionDto;
   }
@@ -160,10 +170,12 @@ describe('Participant — jointure par Code (e2e)', () => {
     const modele = await creerModele(`Diagnostic ${suffixe}`);
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: [`qa${suffixe}`, `qb${suffixe}`] })
       .expect(201);
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -215,10 +227,12 @@ describe('Participant — jointure par Code (e2e)', () => {
     const modele = await creerModele(`Diagnostic ${suffixe}`);
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds })
       .expect(201);
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -289,9 +303,11 @@ describe('Participant — jointure par Code (e2e)', () => {
     const session = await sessionOuverte(suffixe);
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/passer-question-suivante`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/ouvrir-tour`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     return session;
   }
@@ -348,6 +364,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(409);
     });
 
@@ -355,6 +372,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionOuverte();
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const jeton = await rejoindre(session.code as string);
 
@@ -407,16 +425,19 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionOuverte();
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const jeton = await rejoindre(session.code as string);
 
       const pilotageAvant = await request(app.getHttpServer())
         .get(`/api/sessions/${session.id}/pilotage`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(200);
       expect((pilotageAvant.body as PilotageSessionDto).tourOuvert).toBeNull();
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const moi = await request(app.getHttpServer())
@@ -430,6 +451,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       const pilotage = await request(app.getHttpServer())
         .get(`/api/sessions/${session.id}/pilotage`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(200);
       expect((pilotage.body as PilotageSessionDto).tourOuvert).toEqual({
         numero: 1,
@@ -442,6 +464,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(409);
     });
 
@@ -460,6 +483,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       const pilotageApresVote = await request(app.getHttpServer())
         .get(`/api/sessions/${session.id}/pilotage`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(200);
       expect(
         (pilotageApresVote.body as PilotageSessionDto).tourOuvert?.nbVotants,
@@ -474,6 +498,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       const pilotageApresRevote = await request(app.getHttpServer())
         .get(`/api/sessions/${session.id}/pilotage`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(200);
       expect(
         (pilotageApresRevote.body as PilotageSessionDto).tourOuvert?.nbVotants,
@@ -512,6 +537,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const moi = await request(app.getHttpServer())
@@ -522,6 +548,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       const pilotage = await request(app.getHttpServer())
         .get(`/api/sessions/${session.id}/pilotage`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(200);
       expect((pilotage.body as PilotageSessionDto).tourOuvert).toBeNull();
     });
@@ -530,10 +557,12 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionOuverte();
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(409);
     });
 
@@ -541,10 +570,12 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionEnVote();
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const reouverture = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       expect((reouverture.body as PilotageSessionDto).tourOuvert).toEqual({
@@ -579,6 +610,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const projection = await request(app.getHttpServer())
@@ -603,6 +635,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const moi = await request(app.getHttpServer())
@@ -633,6 +666,7 @@ describe('Participant — jointure par Code (e2e)', () => {
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const toursApresPremiereCloture = await prisma.tourDeVote.findMany({
@@ -650,6 +684,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       const reouverture = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       expect((reouverture.body as PilotageSessionDto).tourOuvert).toEqual({
         numero: 2,
@@ -669,6 +704,7 @@ describe('Participant — jointure par Code (e2e)', () => {
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const toursApresRevote = await prisma.tourDeVote.findMany({
@@ -720,6 +756,7 @@ describe('Participant — jointure par Code (e2e)', () => {
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const projectionApresPremierTour = await request(app.getHttpServer())
@@ -735,6 +772,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       // Revote avec une répartition différente du 1er Tour (tous sur le Niveau 4).
       await request(app.getHttpServer())
@@ -754,6 +792,7 @@ describe('Participant — jointure par Code (e2e)', () => {
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const projectionApresRevote = await request(app.getHttpServer())
@@ -769,6 +808,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       const pilotageApresRevote = await request(app.getHttpServer())
         .get(`/api/sessions/${session.id}/pilotage`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(200);
       expect(
         (pilotageApresRevote.body as PilotageSessionDto).dernierTourClos,
@@ -782,10 +822,12 @@ describe('Participant — jointure par Code (e2e)', () => {
       const modele = await creerModele('Diagnostic E1');
       await request(app.getHttpServer())
         .post(`/api/modeles-session/${modele.id}/themes`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .send({ questionIds: ['qa', 'qb'] })
         .expect(201);
       const creation = await request(app.getHttpServer())
         .post('/api/sessions')
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .send({
           equipeId: equipe.id,
           date: '2026-04-01',
@@ -795,23 +837,29 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = creation.body as SessionDto;
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // salle d'attente -> qa courante
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // qa résolue -> qb courante
 
       const reouverture = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const pilotage = reouverture.body as PilotageSessionDto;
       expect(pilotage.questionCourante?.questionId).toBe('qb');
@@ -831,6 +879,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       const pilotage = await request(app.getHttpServer())
         .get(`/api/sessions/${session.id}/pilotage`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(200);
 
       expect((pilotage.body as PilotageSessionDto).historique).toEqual([]);
@@ -843,10 +892,12 @@ describe('Participant — jointure par Code (e2e)', () => {
       const modele = await creerModele('Diagnostic E2');
       await request(app.getHttpServer())
         .post(`/api/modeles-session/${modele.id}/themes`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .send({ questionIds: ['qa', 'qb'] })
         .expect(201);
       const creation = await request(app.getHttpServer())
         .post('/api/sessions')
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .send({
           equipeId: equipe.id,
           date: '2026-04-01',
@@ -856,10 +907,12 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = creation.body as SessionDto;
       const ouverture = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const code = (ouverture.body as SessionDto).code as string;
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // salle d'attente -> qa courante
 
       const jetonA = await rejoindre(code);
@@ -868,6 +921,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       // qa, Tour 1 : 2 votes Niveau 1 ({ 1: 2, 2: 0, 3: 0, 4: 0 }).
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post('/api/participant/voter')
@@ -881,11 +935,13 @@ describe('Participant — jointure par Code (e2e)', () => {
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       // qa, Tour 2 (revote) : 2 votes Niveau 4 ({ 1: 0, 2: 0, 3: 0, 4: 2 }).
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post('/api/participant/voter')
@@ -899,15 +955,18 @@ describe('Participant — jointure par Code (e2e)', () => {
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // qa résolue -> qb courante
 
       // qb, Tour 1 : 1 vote Niveau 2 ({ 1: 0, 2: 1, 3: 0, 4: 0 }).
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post('/api/participant/voter')
@@ -916,10 +975,12 @@ describe('Participant — jointure par Code (e2e)', () => {
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const pilotage = await request(app.getHttpServer())
         .get(`/api/sessions/${session.id}/pilotage`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(200);
 
       expect((pilotage.body as PilotageSessionDto).historique).toEqual([
@@ -950,15 +1011,18 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionADeuxQuestions('F2a');
       const ouverture = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const code = (ouverture.body as SessionDto).code as string;
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // salle d'attente -> qaF2a courante
 
       const jeton = await rejoindre(code);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post('/api/participant/voter')
@@ -968,6 +1032,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       const saut = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/qaF2a/sauter`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const pilotageApresSaut = saut.body as PilotageSessionDto;
       expect(pilotageApresSaut.progression).toEqual([
@@ -993,6 +1058,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       const pilotage = await request(app.getHttpServer())
         .get(`/api/sessions/${session.id}/pilotage`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(200);
       expect((pilotage.body as PilotageSessionDto).historique).toEqual([]);
     });
@@ -1001,13 +1067,16 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionADeuxQuestions('F2b');
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // salle d'attente -> qaF2b courante
 
       const saut = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/qbF2b/sauter`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const pilotage = saut.body as PilotageSessionDto;
       expect(pilotage.progression).toEqual([
@@ -1031,6 +1100,7 @@ describe('Participant — jointure par Code (e2e)', () => {
     it('POST /api/sessions/:id/questions/:questionId/sauter — 404 si la Session est inconnue', async () => {
       await request(app.getHttpServer())
         .post('/api/sessions/inconnue/questions/qa/sauter')
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(404);
     });
 
@@ -1039,6 +1109,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/q1F2c/sauter`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(409);
     });
 
@@ -1047,6 +1118,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/inconnue/sauter`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(404);
     });
 
@@ -1054,10 +1126,12 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionOuverte('F2e');
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/q1F2e/sauter`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/q1F2e/sauter`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(409);
     });
   });
@@ -1067,16 +1141,20 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionADeuxQuestions('Ra');
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // salle d'attente -> qaRa courante
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/qbRa/sauter`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // qbRa sautée par anticipation, toujours devant indexCourant
 
       const reactivation = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/qbRa/reactiver`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const pilotage = reactivation.body as PilotageSessionDto;
       expect(pilotage.progression).toEqual([
@@ -1099,16 +1177,20 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionADeuxQuestions('Rb');
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // salle d'attente -> qaRb courante
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/qaRb/sauter`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // qaRb sautée en tant que courante -> indexCourant avance à qbRb
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/qaRb/reactiver`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(409);
     });
 
@@ -1117,12 +1199,14 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/q1Rc/reactiver`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(409);
     });
 
     it('POST /api/sessions/:id/questions/:questionId/reactiver — 404 si la Session est inconnue', async () => {
       await request(app.getHttpServer())
         .post('/api/sessions/inconnue/questions/qa/reactiver')
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(404);
     });
 
@@ -1131,6 +1215,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/inconnue/reactiver`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(404);
     });
 
@@ -1139,6 +1224,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/questions/q1Re/reactiver`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(409);
     });
   });
@@ -1148,10 +1234,12 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionADeuxQuestions('F3a');
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const reponse = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const pilotage = reponse.body as PilotageSessionDto;
       expect(pilotage.progression).toEqual([
@@ -1177,15 +1265,18 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionATroisQuestions('F3b');
       const ouverture = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const code = (ouverture.body as SessionDto).code as string;
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // salle d'attente -> qaF3b courante
 
       const jeton = await rejoindre(code);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post('/api/participant/voter')
@@ -1195,6 +1286,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       const reponse = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const pilotage = reponse.body as PilotageSessionDto;
       expect(pilotage.progression).toEqual([
@@ -1227,22 +1319,28 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionATroisQuestions('F3c');
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // salle d'attente -> qaF3c courante
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/clore-tour`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // qaF3c traitée
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/passer-question-suivante`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201); // qaF3c résolue -> qbF3c courante
 
       const reponse = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const pilotage = reponse.body as PilotageSessionDto;
       expect(pilotage.progression).toEqual([
@@ -1270,6 +1368,7 @@ describe('Participant — jointure par Code (e2e)', () => {
     it('POST /api/sessions/:id/terminer-prematurement — 404 si la Session est inconnue', async () => {
       await request(app.getHttpServer())
         .post('/api/sessions/inconnue/terminer-prematurement')
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(404);
     });
 
@@ -1278,6 +1377,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(409);
     });
 
@@ -1285,13 +1385,16 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionADeuxQuestions('F3e');
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const reponse = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       const pilotage = reponse.body as PilotageSessionDto;
       expect(pilotage.progression.every((p) => p.statut === 'SAUTEE')).toBe(
@@ -1304,6 +1407,7 @@ describe('Participant — jointure par Code (e2e)', () => {
     it('POST /api/sessions/:id/terminer — 404 si la Session est inconnue', async () => {
       await request(app.getHttpServer())
         .post('/api/sessions/inconnue/terminer')
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(404);
     });
 
@@ -1312,6 +1416,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(409);
     });
 
@@ -1319,10 +1424,12 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionOuverte('G1b');
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(409);
     });
 
@@ -1331,6 +1438,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       const reponse = await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const pilotage = reponse.body as PilotageSessionDto;
@@ -1341,21 +1449,26 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionADeuxQuestions('G1d');
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/ouvrir`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer-prematurement`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const avantCloture = await request(app.getHttpServer())
         .get(`/api/sessions/${session.id}/pilotage`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(200);
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       const apresCloture = await request(app.getHttpServer())
         .get(`/api/sessions/${session.id}/pilotage`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(200);
       const pilotage = apresCloture.body as PilotageSessionDto;
       expect(pilotage.statut).toBe('CLOTUREE');
@@ -1372,6 +1485,7 @@ describe('Participant — jointure par Code (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       await request(app.getHttpServer())
@@ -1383,6 +1497,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionOuverte('G1f');
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       await request(app.getHttpServer())
@@ -1398,6 +1513,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       const jeton = await rejoindre(session.code as string);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       await request(app.getHttpServer())
@@ -1411,6 +1527,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       const jeton = await rejoindre(session.code as string);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       await request(app.getHttpServer())
@@ -1424,6 +1541,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       const jeton = await rejoindre(session.code as string);
       await request(app.getHttpServer())
         .post(`/api/sessions/${session.id}/terminer`)
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .expect(201);
 
       await request(app.getHttpServer())
@@ -1468,9 +1586,9 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionOuverte('H1c');
 
       await verifierAucunThrottle(() =>
-        request(app.getHttpServer()).get(
-          `/api/sessions/${session.id}/pilotage`,
-        ),
+        request(app.getHttpServer())
+          .get(`/api/sessions/${session.id}/pilotage`)
+          .set('Authorization', `Bearer ${jetonCoach}`),
       );
     });
 
@@ -1503,9 +1621,9 @@ describe('Participant — jointure par Code (e2e)', () => {
       const session = await sessionOuverte('H1f');
 
       await verifierEtagEt304((etagAPresenter) => {
-        const requete = request(app.getHttpServer()).get(
-          `/api/sessions/${session.id}/pilotage`,
-        );
+        const requete = request(app.getHttpServer())
+          .get(`/api/sessions/${session.id}/pilotage`)
+          .set('Authorization', `Bearer ${jetonCoach}`);
         if (etagAPresenter) requete.set('If-None-Match', etagAPresenter);
         return requete;
       });

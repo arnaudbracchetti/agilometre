@@ -4,10 +4,18 @@
 # N'appelle jamais l'application si l'aperçu échoue (YAML invalide) ni si l'utilisateur refuse
 # la confirmation — voir apps/backend/src/referentiel/.
 #
-# Usage: scripts/import-referentiel.sh [--apercu-only|-y] <fichier.yaml> [url_base]
+# Usage: AGILOMETRE_TOKEN=<jeton> scripts/import-referentiel.sh [--apercu-only|-y] <fichier.yaml> [url_base]
 #   --apercu-only  n'affiche que l'aperçu, n'écrit jamais en base
 #   -y             saute la confirmation interactive, applique directement après l'aperçu
+#
+# AGILOMETRE_TOKEN : jeton Coach obtenu via POST /api/auth/login (issue #59 — ces deux routes
+# exigent désormais un compte, voir docs/deploy-agilometre.md).
 set -euo pipefail
+
+if [[ -z "${AGILOMETRE_TOKEN:-}" ]]; then
+  echo "AGILOMETRE_TOKEN manquant — obtenir un jeton Coach via POST /api/auth/login" >&2
+  exit 1
+fi
 
 apercu_seulement=false
 bypasser_confirmation=false
@@ -77,6 +85,7 @@ appeler_endpoint() {
   local reponse
   reponse=$(curl -sS -w '\n%{http_code}' -X POST "$url_base$chemin" \
     -H 'Content-Type: text/plain' \
+    -H "Authorization: Bearer $AGILOMETRE_TOKEN" \
     --data-binary "@$fichier")
 
   statut="${reponse##*$'\n'}"

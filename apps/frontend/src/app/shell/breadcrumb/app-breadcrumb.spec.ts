@@ -8,6 +8,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideNzNativeDateAdapter } from 'ng-zorro-antd/core/time';
 import { AppBreadcrumb } from './app-breadcrumb';
 import { routes } from '../../app.routes';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({ selector: 'app-stub', template: 'stub' })
 class StubPage {}
@@ -54,6 +55,9 @@ describe('AppBreadcrumb (routes réelles de l’application)', () => {
         provideHttpClientTesting(),
         provideNoopAnimations(),
         provideNzNativeDateAdapter(),
+        // Toutes ces routes vivent sous AppShell, protégée par authGuard depuis la carte #59 —
+        // ce test porte sur le fil d'Ariane, pas sur l'authentification.
+        { provide: AuthService, useValue: { estConnecte: () => true } },
       ],
     });
   });

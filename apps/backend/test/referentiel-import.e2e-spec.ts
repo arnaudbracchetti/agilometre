@@ -4,6 +4,8 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { jetonCoachDeTest } from './support/jeton-coach';
+
 import { configureReferentielImportBodyParser } from './../src/referentiel/configure-import-body-parser';
 
 interface ChangeSetReponse {
@@ -19,6 +21,7 @@ interface ApercuReponse {
 describe('Référentiel — import (aperçu + application) (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let jetonCoach: string;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -29,6 +32,7 @@ describe('Référentiel — import (aperçu + application) (e2e)', () => {
     configureReferentielImportBodyParser(app);
     app.setGlobalPrefix('api');
     await app.init();
+    jetonCoach = await jetonCoachDeTest(app);
 
     prisma = app.get(PrismaService);
     await prisma.option.deleteMany();
@@ -62,6 +66,7 @@ describe('Référentiel — import (aperçu + application) (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .post('/api/referentiel/import/apercu')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send(yaml)
       .expect(201);
@@ -84,6 +89,7 @@ describe('Référentiel — import (aperçu + application) (e2e)', () => {
   it('POST /api/referentiel/import/apercu — YAML mal formé → 400', async () => {
     await request(app.getHttpServer())
       .post('/api/referentiel/import/apercu')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send('themes: [ not: valid')
       .expect(400);
@@ -106,12 +112,14 @@ describe('Référentiel — import (aperçu + application) (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/referentiel/import/apercu')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send(yaml)
       .expect(201);
 
     const reponseApplication = await request(app.getHttpServer())
       .post('/api/referentiel/import/application')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send(yaml)
       .expect(201);
@@ -136,6 +144,7 @@ describe('Référentiel — import (aperçu + application) (e2e)', () => {
 
     const reponseApercu2 = await request(app.getHttpServer())
       .post('/api/referentiel/import/apercu')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send(yaml)
       .expect(201);
@@ -150,6 +159,7 @@ describe('Référentiel — import (aperçu + application) (e2e)', () => {
   it('POST /api/referentiel/import/application — YAML mal formé → 400, base inchangée', async () => {
     await request(app.getHttpServer())
       .post('/api/referentiel/import/application')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send('themes: [ not: valid')
       .expect(400);

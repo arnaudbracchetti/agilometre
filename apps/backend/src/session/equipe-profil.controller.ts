@@ -11,6 +11,7 @@ import {
 import { ProfilEquipeDto } from '@agilometre/shared';
 import { ObtenirProfilEquipe } from './application/obtenir-profil-equipe.usecase';
 import { versProfilEquipeDto } from './profil-equipe.mapper';
+import { Requiert } from '../auth/decorators/requiert.decorator';
 
 /**
  * Route `organisation/equipes/:id/profil`, mais vit dans `session/` (câblé dans `SessionModule`)
@@ -18,6 +19,7 @@ import { versProfilEquipeDto } from './profil-equipe.mapper';
  * et `ReponseModule` (ADR-0018, session/ porte l'implémentation du port de scoring) — l'inverse
  * créerait un import circulaire entre modules Nest.
  */
+@Requiert('voirProfilEquipe')
 @Controller('organisation/equipes')
 export class EquipeProfilController {
   constructor(private readonly obtenirProfilEquipe: ObtenirProfilEquipe) {}

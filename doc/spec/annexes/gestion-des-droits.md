@@ -210,6 +210,7 @@ n'étant créable avec ce Rôle, aucun écran ne lui est pour l'instant destiné
 | Mon compte (changer son mot de passe) | Accessible | Accessible | Accessible |
 | Comptes (créer, modifier, désactiver, Habilitations) | Total | Aucun accès | Aucun accès |
 | Organisation (CRUD Entité/Équipe, gestion du roster) | Total | Aucun accès | Aucun accès |
+| Référentiel (consultation, import) | Total | Aucun accès | Aucun accès |
 | Arbre de navigation Entité → Équipe | Total, dépliable | Réduit à ses Entités habilitées, non dépliable, aucune Équipe visible | N/A - pas d'arbre, une liste "mes Équipes" |
 | Profil d'une Entité (Palier agrégé, tendance) | Total | Restreint à ses Entités habilitées | Aucun accès |
 | Profil d'une Équipe (Palier par Thème, lecture fine) | Total, sur toute l'Organisation | Aucun accès (détail d'Équipe hors de sa portée) | Restreint à ses Équipes (roster) |

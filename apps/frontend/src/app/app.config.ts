@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withRouterConfig } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideNzI18n, fr_FR } from 'ng-zorro-antd/i18n';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
@@ -41,6 +41,7 @@ import { registerLocaleData } from '@angular/common';
 import fr from '@angular/common/locales/fr';
 
 import { routes } from './app.routes';
+import { authInterceptor } from './auth/auth.interceptor';
 
 registerLocaleData(fr);
 
@@ -52,7 +53,7 @@ export const appConfig: ApplicationConfig = {
     // que via un enfant à chemin vide ('emptyOnly') — 'pilotage'/'synthese'/':themeId' sont des
     // chemins non vides et perdraient sinon le `:id`/`:id` porté par leur route parente.
     provideRouter(routes, withRouterConfig({ paramsInheritanceStrategy: 'always' })),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideAnimationsAsync(),
     provideNzI18n(fr_FR),
     provideNzNativeDateAdapter(),

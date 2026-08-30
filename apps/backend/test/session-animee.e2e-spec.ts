@@ -13,11 +13,13 @@ import {
 } from '@agilometre/shared';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { jetonCoachDeTest } from './support/jeton-coach';
 import { configureReferentielImportBodyParser } from './../src/referentiel/configure-import-body-parser';
 
 describe('Session animée (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let jetonCoach: string;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -31,6 +33,7 @@ describe('Session animée (e2e)', () => {
       new ValidationPipe({ whitelist: true, transform: true }),
     );
     await app.init();
+    jetonCoach = await jetonCoachDeTest(app);
 
     prisma = app.get(PrismaService);
     await nettoyer();
@@ -79,6 +82,7 @@ describe('Session animée (e2e)', () => {
   async function importer(questionIds: string[]): Promise<void> {
     await request(app.getHttpServer())
       .post('/api/referentiel/import/application')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send(yamlAvecQuestions(questionIds))
       .expect(201);
@@ -87,6 +91,7 @@ describe('Session animée (e2e)', () => {
   async function creerEntite(nom: string): Promise<EntiteDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
     return reponse.body as EntiteDto;
@@ -98,6 +103,7 @@ describe('Session animée (e2e)', () => {
   ): Promise<EquipeDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom, entiteId })
       .expect(201);
     return reponse.body as EquipeDto;
@@ -106,6 +112,7 @@ describe('Session animée (e2e)', () => {
   async function creerModele(nom: string): Promise<ModeleSessionDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/modeles-session')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
     return reponse.body as ModeleSessionDto;
@@ -121,10 +128,12 @@ describe('Session animée (e2e)', () => {
     const modele = await creerModele('Diagnostic');
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1', 'q2'] })
       .expect(201);
     const modeleAvecSelection = await request(app.getHttpServer())
       .get(`/api/modeles-session/${modele.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     return { equipe, modele: modeleAvecSelection.body as ModeleSessionDto };
   }
@@ -134,6 +143,7 @@ describe('Session animée (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -153,6 +163,7 @@ describe('Session animée (e2e)', () => {
 
     const detail = await request(app.getHttpServer())
       .get(`/api/sessions/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect((detail.body as SessionDto).id).toBe(session.id);
   });
@@ -161,6 +172,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const reponse = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -172,10 +184,12 @@ describe('Session animée (e2e)', () => {
     // Modification du Modèle après coup (ADR-0009) : aucune répercussion sur la Session déjà créée.
     await request(app.getHttpServer())
       .delete(`/api/modeles-session/${modele.id}/questions/q1`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
 
     const detail = await request(app.getHttpServer())
       .get(`/api/sessions/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(
       (detail.body as SessionDto).selection.map((q) => q.questionId),
@@ -187,6 +201,7 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: 'inconnue',
         date: '2026-04-01',
@@ -200,6 +215,7 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -212,6 +228,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -223,6 +240,7 @@ describe('Session animée (e2e)', () => {
 
     const apresAjout = await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/questions`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionId: 'q3' })
       .expect(201);
     expect(
@@ -231,6 +249,7 @@ describe('Session animée (e2e)', () => {
 
     const apresReordre = await request(app.getHttpServer())
       .patch(`/api/sessions/${session.id}/questions/q3`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ position: 0 })
       .expect(200);
     expect(
@@ -239,6 +258,7 @@ describe('Session animée (e2e)', () => {
 
     const apresRetrait = await request(app.getHttpServer())
       .delete(`/api/sessions/${session.id}/questions/q1`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(
       (apresRetrait.body as SessionDto).selection.map((q) => q.questionId),
@@ -249,6 +269,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -263,6 +284,7 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .delete(`/api/sessions/${session.id}/questions/q1`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(409);
   });
 
@@ -270,6 +292,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -279,6 +302,7 @@ describe('Session animée (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .get('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     const lignes = reponse.body as LigneListeSessionDto[];
 
@@ -296,6 +320,7 @@ describe('Session animée (e2e)', () => {
     const autreEquipe = await creerEquipe('Équipe Beta', equipe.entiteId);
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -306,6 +331,7 @@ describe('Session animée (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .patch(`/api/sessions/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ equipeId: autreEquipe.id, date: '2026-05-01' })
       .expect(200);
     expect(reponse.body).toMatchObject({
@@ -316,6 +342,7 @@ describe('Session animée (e2e)', () => {
     // Vérifie que PrismaSessionRepository.save persiste bien equipeId/date à la mise à jour.
     const detail = await request(app.getHttpServer())
       .get(`/api/sessions/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect((detail.body as SessionDto).equipeId).toBe(autreEquipe.id);
     expect((detail.body as SessionDto).date.slice(0, 10)).toBe('2026-05-01');
@@ -325,6 +352,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -335,6 +363,7 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch(`/api/sessions/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ equipeId: 'inconnue', date: '2026-05-01' })
       .expect(404);
   });
@@ -343,6 +372,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -357,6 +387,7 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch(`/api/sessions/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ equipeId: equipe.id, date: '2026-05-01' })
       .expect(409);
   });
@@ -366,10 +397,12 @@ describe('Session animée (e2e)', () => {
     const autreModele = await creerModele('Suivi');
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${autreModele.id}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q3'] })
       .expect(201);
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -380,11 +413,13 @@ describe('Session animée (e2e)', () => {
     // Ajustement manuel avant le changement de Modèle : doit être perdu par la réinitialisation.
     await request(app.getHttpServer())
       .patch(`/api/sessions/${session.id}/questions/q1`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ position: 1 })
       .expect(200);
 
     const reponse = await request(app.getHttpServer())
       .patch(`/api/sessions/${session.id}/modele`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ modeleSessionId: autreModele.id })
       .expect(200);
     const sessionModifiee = reponse.body as SessionDto;
@@ -394,6 +429,7 @@ describe('Session animée (e2e)', () => {
 
     const detail = await request(app.getHttpServer())
       .get(`/api/sessions/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect((detail.body as SessionDto).modeleSessionId).toBe(autreModele.id);
   });
@@ -402,6 +438,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -412,6 +449,7 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch(`/api/sessions/${session.id}/modele`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ modeleSessionId: 'inconnu' })
       .expect(404);
   });
@@ -421,6 +459,7 @@ describe('Session animée (e2e)', () => {
     const autreModele = await creerModele('Suivi');
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -435,6 +474,7 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch(`/api/sessions/${session.id}/modele`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ modeleSessionId: autreModele.id })
       .expect(409);
   });
@@ -443,6 +483,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -453,16 +494,19 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .delete(`/api/sessions/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
 
     await request(app.getHttpServer())
       .get(`/api/sessions/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(404);
   });
 
   it('DELETE /api/sessions/:id — 404 si la Session est inconnue', async () => {
     await request(app.getHttpServer())
       .delete('/api/sessions/inconnue')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(404);
   });
 
@@ -470,6 +514,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -484,6 +529,7 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .delete(`/api/sessions/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(409);
   });
 
@@ -491,6 +537,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -505,6 +552,7 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .delete(`/api/sessions/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(409);
   });
 
@@ -512,6 +560,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -522,6 +571,7 @@ describe('Session animée (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/ouvrir`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     const sessionOuverte = reponse.body as SessionDto;
 
@@ -532,6 +582,7 @@ describe('Session animée (e2e)', () => {
     // Sélection verrouillée dès l'ouverture (ADR-0010) : ajouter une Question est refusé.
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/questions`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionId: 'q3' })
       .expect(409);
   });
@@ -539,6 +590,7 @@ describe('Session animée (e2e)', () => {
   it('POST /api/sessions/:id/ouvrir — 404 si la Session est inconnue', async () => {
     await request(app.getHttpServer())
       .post('/api/sessions/inconnue/ouvrir')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(404);
   });
 
@@ -546,6 +598,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -555,10 +608,12 @@ describe('Session animée (e2e)', () => {
     const session = creation.body as SessionDto;
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/ouvrir`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
 
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/ouvrir`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(409);
   });
 
@@ -566,6 +621,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -575,16 +631,19 @@ describe('Session animée (e2e)', () => {
     const session = creation.body as SessionDto;
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/ouvrir`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
 
     const pilotageSalleAttente = await request(app.getHttpServer())
       .get(`/api/sessions/${session.id}/pilotage`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(
       (pilotageSalleAttente.body as PilotageSessionDto).questionCourante,
     ).toBeNull();
     const projectionSalleAttente = await request(app.getHttpServer())
       .get(`/api/projection/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(
       (projectionSalleAttente.body as ProjectionSessionDto).questionCourante,
@@ -592,6 +651,7 @@ describe('Session animée (e2e)', () => {
 
     const avance = await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/passer-question-suivante`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     expect((avance.body as PilotageSessionDto).questionCourante).toMatchObject({
       questionId: 'q1',
@@ -611,6 +671,7 @@ describe('Session animée (e2e)', () => {
 
     const projectionApresAvance = await request(app.getHttpServer())
       .get(`/api/projection/${session.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(
       (projectionApresAvance.body as ProjectionSessionDto).questionCourante
@@ -620,17 +681,20 @@ describe('Session animée (e2e)', () => {
     // Aucun mécanisme de Tour dans cette carte : q1 n'a ni Tour clos ni marquage Sautée.
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/passer-question-suivante`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(409);
   });
 
   it('POST /api/sessions/:id/passer-question-suivante — 404 si la Session est inconnue, 409 si non OUVERTE', async () => {
     await request(app.getHttpServer())
       .post('/api/sessions/inconnue/passer-question-suivante')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(404);
 
     const { equipe, modele } = await contexte();
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -641,6 +705,7 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/passer-question-suivante`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(409);
   });
 
@@ -648,6 +713,7 @@ describe('Session animée (e2e)', () => {
     const { equipe, modele } = await contexte();
     await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -657,10 +723,12 @@ describe('Session animée (e2e)', () => {
 
     await request(app.getHttpServer())
       .delete(`/api/modeles-session/${modele.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
 
     const reponse = await request(app.getHttpServer())
       .get('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     const lignes = reponse.body as LigneListeSessionDto[];
     expect(lignes[0].modeleSessionNom).toBeNull();

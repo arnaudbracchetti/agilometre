@@ -1,10 +1,16 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
     loadComponent: () => import('./home/home').then((m) => m.Home),
+  },
+  {
+    path: 'connexion',
+    loadComponent: () =>
+      import('./auth/login/login-page').then((m) => m.LoginPage),
   },
   {
     path: 'projection/:sessionId',
@@ -20,6 +26,7 @@ export const routes: Routes = [
   },
   {
     path: '',
+    canActivate: [authGuard],
     loadComponent: () => import('./shell/app-shell').then((m) => m.AppShell),
     children: [
       {

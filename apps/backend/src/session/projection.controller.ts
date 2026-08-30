@@ -10,6 +10,7 @@ import {
   versTourClosDto,
   versTourOuvertDto,
 } from './question-courante.mapper';
+import { Public } from '../auth/decorators/public.decorator';
 
 /**
  * Contrôleur séparé de SessionAnimeeController : route publique, sans compte, accessible tant que
@@ -22,6 +23,7 @@ export class ProjectionController {
     private readonly obtenirProjectionSession: ObtenirProjectionSession,
   ) {}
 
+  @Public()
   @Get(':sessionId')
   @SkipThrottle()
   async obtenir(

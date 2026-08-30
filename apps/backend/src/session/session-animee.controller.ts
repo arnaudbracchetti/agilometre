@@ -62,6 +62,7 @@ import {
   ModifierInfosSessionDto,
   ReordonnerQuestionSessionDto,
 } from './session.dto';
+import { Requiert } from '../auth/decorators/requiert.decorator';
 
 /**
  * `selectionEnrichie` porte déjà les Questions actives dans l'ordre de la Sélection
@@ -99,6 +100,7 @@ function versSessionDto(
   };
 }
 
+@Requiert('gererSessions')
 @Controller('sessions')
 export class SessionAnimeeController {
   constructor(
@@ -183,6 +185,7 @@ export class SessionAnimeeController {
     return this.rechargerPilotage(id);
   }
 
+  @Requiert('voirSyntheseSession')
   @Get(':id/synthese')
   @SkipThrottle()
   async synthese(@Param('id') id: string): Promise<SyntheseSessionDto> {

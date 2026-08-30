@@ -94,6 +94,22 @@ model Membre {
   utilisateurId String?
 }
 
+// Compte de connexion (issue #59, doc/spec/annexes/gestion-des-droits.md). Unicité de `email`
+// (insensible à la casse) garantie par un index fonctionnel sur LOWER(email), ajouté par une
+// migration SQL brute (même limitation que Entite.nom) — voir la migration
+// utilisateur_email_unique_ci et docs/design/agregat-politique-des-droits.md. Pas d'Habilitation
+// à ce stade (tranche 3, #61) ni de relation Prisma vers Membre (Membre.utilisateurId reste une
+// chaîne simple, voir le commentaire de Membre ci-dessus).
+model Utilisateur {
+  id             String  @id @default(uuid())
+  email          String
+  prenom         String
+  nom            String
+  motDePasseHash String
+  actif          Boolean @default(true)
+  role           Role
+}
+
 // --- Session animée (§4, §7) ---
 
 // Bibliothèque globale de Sélections de Questions nommées et réutilisables (ADR-0008), sans

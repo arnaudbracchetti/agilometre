@@ -15,7 +15,7 @@
     the verdict, DESIGN.md, and every shipping raster carrying its provenance.
   -->
   <app-header [liens]="liensNav">
-    <button nz-button nzType="primary">Se connecter</button>
+    <button nz-button nzType="primary" routerLink="/connexion">Se connecter</button>
   </app-header>
 
   <section class="home__hero">
@@ -36,7 +36,9 @@
           suivre la progression de vos équipes dans la durée.
         </p>
         <div class="home__cta">
-          <button nz-button nzType="primary" nzSize="large">Se connecter</button>
+          <button nz-button nzType="primary" nzSize="large" routerLink="/connexion">
+            Se connecter
+          </button>
           <button nz-button nzType="default" nzGhost nzSize="large" class="home__cta-ghost">
             Voir comment ça marche
           </button>

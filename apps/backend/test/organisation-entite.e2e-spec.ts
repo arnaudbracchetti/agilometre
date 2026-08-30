@@ -5,10 +5,12 @@ import { App } from 'supertest/types';
 import { EntiteDto } from '@agilometre/shared';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { jetonCoachDeTest } from './support/jeton-coach';
 
 describe('Organisation — Entité (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let jetonCoach: string;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -21,6 +23,7 @@ describe('Organisation — Entité (e2e)', () => {
       new ValidationPipe({ whitelist: true, transform: true }),
     );
     await app.init();
+    jetonCoach = await jetonCoachDeTest(app);
 
     prisma = app.get(PrismaService);
     await prisma.entite.deleteMany();
@@ -34,6 +37,7 @@ describe('Organisation — Entité (e2e)', () => {
   it('POST /api/organisation/entites — crée puis GET la retrouve', async () => {
     const creation = await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Direction Numérique' })
       .expect(201);
     const entiteCreee = creation.body as EntiteDto;
@@ -43,6 +47,7 @@ describe('Organisation — Entité (e2e)', () => {
 
     const liste = await request(app.getHttpServer())
       .get('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
 
     expect(liste.body).toEqual([
@@ -53,6 +58,7 @@ describe('Organisation — Entité (e2e)', () => {
   it('POST /api/organisation/entites — 400 pour un nom vide', () => {
     return request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: '' })
       .expect(400);
   });
@@ -60,17 +66,20 @@ describe('Organisation — Entité (e2e)', () => {
   it('PATCH /api/organisation/entites/:id — renomme puis GET recharge le nouveau nom', async () => {
     const creation = await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'DSI' })
       .expect(201);
     const entiteCreee = creation.body as EntiteDto;
 
     await request(app.getHttpServer())
       .patch(`/api/organisation/entites/${entiteCreee.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Direction des Systèmes d’Information' })
       .expect(200);
 
     const liste = await request(app.getHttpServer())
       .get('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
 
     expect(liste.body).toEqual([
@@ -81,6 +90,7 @@ describe('Organisation — Entité (e2e)', () => {
   it('PATCH /api/organisation/entites/:id — 404 pour un id inconnu', () => {
     return request(app.getHttpServer())
       .patch('/api/organisation/entites/inconnu')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'X' })
       .expect(404);
   });
@@ -88,16 +98,19 @@ describe('Organisation — Entité (e2e)', () => {
   it('POST /api/organisation/entites — 409 si le nom existe déjà (insensible à la casse)', async () => {
     await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'DSI' })
       .expect(201);
 
     await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'dsi' })
       .expect(409);
 
     const liste = await request(app.getHttpServer())
       .get('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(liste.body).toHaveLength(1);
   });
@@ -105,16 +118,19 @@ describe('Organisation — Entité (e2e)', () => {
   it('PATCH /api/organisation/entites/:id — 409 si une autre Entité porte déjà ce nom', async () => {
     await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'DSI' })
       .expect(201);
     const marketing = await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Marketing' })
       .expect(201);
     const entiteMarketing = marketing.body as EntiteDto;
 
     await request(app.getHttpServer())
       .patch(`/api/organisation/entites/${entiteMarketing.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'dsi' })
       .expect(409);
   });
@@ -122,12 +138,14 @@ describe('Organisation — Entité (e2e)', () => {
   it('PATCH /api/organisation/entites/:id — autorise à garder son propre nom (à la casse près)', async () => {
     const creation = await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'DSI' })
       .expect(201);
     const entiteCreee = creation.body as EntiteDto;
 
     await request(app.getHttpServer())
       .patch(`/api/organisation/entites/${entiteCreee.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'dsi' })
       .expect(200);
   });
@@ -136,9 +154,11 @@ describe('Organisation — Entité (e2e)', () => {
     const [premiere, seconde] = await Promise.all([
       request(app.getHttpServer())
         .post('/api/organisation/entites')
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .send({ nom: 'Concurrence' }),
       request(app.getHttpServer())
         .post('/api/organisation/entites')
+        .set('Authorization', `Bearer ${jetonCoach}`)
         .send({ nom: 'Concurrence' }),
     ]);
 
@@ -147,6 +167,7 @@ describe('Organisation — Entité (e2e)', () => {
 
     const liste = await request(app.getHttpServer())
       .get('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(liste.body).toHaveLength(1);
   });

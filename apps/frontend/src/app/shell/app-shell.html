@@ -1,5 +1,7 @@
 <div class="shell">
-  <app-header [liens]="liensNav" />
+  <app-header [liens]="liensNav">
+    <button nz-button (click)="deconnecter()">Se déconnecter</button>
+  </app-header>
 
   <app-breadcrumb />
 

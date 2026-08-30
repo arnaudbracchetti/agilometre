@@ -5,11 +5,13 @@ import { App } from 'supertest/types';
 import { ReferentielDto } from '@agilometre/shared';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { jetonCoachDeTest } from './support/jeton-coach';
 import { configureReferentielImportBodyParser } from './../src/referentiel/configure-import-body-parser';
 
 describe('Référentiel — lecture (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let jetonCoach: string;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -20,6 +22,7 @@ describe('Référentiel — lecture (e2e)', () => {
     configureReferentielImportBodyParser(app);
     app.setGlobalPrefix('api');
     await app.init();
+    jetonCoach = await jetonCoachDeTest(app);
 
     prisma = app.get(PrismaService);
     await prisma.option.deleteMany();
@@ -39,6 +42,7 @@ describe('Référentiel — lecture (e2e)', () => {
   async function importer(yaml: string): Promise<void> {
     await request(app.getHttpServer())
       .post('/api/referentiel/import/application')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send(yaml)
       .expect(201);
@@ -47,6 +51,7 @@ describe('Référentiel — lecture (e2e)', () => {
   it('GET /api/referentiel — base vide → aucun Thème', async () => {
     const reponse = await request(app.getHttpServer())
       .get('/api/referentiel')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
 
     expect((reponse.body as ReferentielDto).themes).toEqual([]);
@@ -92,6 +97,7 @@ describe('Référentiel — lecture (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .get('/api/referentiel')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
 
     const { themes } = reponse.body as ReferentielDto;

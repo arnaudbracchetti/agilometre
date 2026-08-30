@@ -12,11 +12,13 @@ import {
 } from '@agilometre/shared';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { jetonCoachDeTest } from './support/jeton-coach';
 import { configureReferentielImportBodyParser } from './../src/referentiel/configure-import-body-parser';
 
 describe('Synthèse de fin de Session (e2e) — carte #52', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let jetonCoach: string;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -30,6 +32,7 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
       new ValidationPipe({ whitelist: true, transform: true }),
     );
     await app.init();
+    jetonCoach = await jetonCoachDeTest(app);
 
     prisma = app.get(PrismaService);
     await nettoyer();
@@ -61,6 +64,7 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
   async function importer(): Promise<void> {
     await request(app.getHttpServer())
       .post('/api/referentiel/import/application')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send(
         [
@@ -83,6 +87,7 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
   async function creerEntite(nom: string): Promise<EntiteDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
     return reponse.body as EntiteDto;
@@ -94,6 +99,7 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
   ): Promise<EquipeDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom, entiteId })
       .expect(201);
     return reponse.body as EquipeDto;
@@ -102,6 +108,7 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
   async function creerModele(nom: string): Promise<ModeleSessionDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/modeles-session')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
     return reponse.body as ModeleSessionDto;
@@ -114,10 +121,12 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
     const modele = await creerModele('Diagnostic');
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1'] })
       .expect(201);
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -127,13 +136,16 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
     const sessionPreparee = creation.body as SessionDto;
     const ouverture = await request(app.getHttpServer())
       .post(`/api/sessions/${sessionPreparee.id}/ouvrir`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     const session = ouverture.body as SessionDto;
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/passer-question-suivante`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/ouvrir-tour`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     return session;
   }
@@ -164,20 +176,24 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
     await voter(jetonB, 0);
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/clore-tour`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
 
     // Revote : Tour 2 sur la même Question, deux votes au Niveau 4 (optionIndex 3).
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/ouvrir-tour`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     await voter(jetonA, 3);
     await voter(jetonB, 3);
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/clore-tour`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
 
     const reponse = await request(app.getHttpServer())
       .get(`/api/sessions/${session.id}/synthese`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     const synthese = reponse.body as SyntheseSessionDto;
 
@@ -200,10 +216,12 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
     const modele = await creerModele('Diagnostic 2');
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1'] })
       .expect(201);
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
@@ -214,6 +232,7 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
 
     await request(app.getHttpServer())
       .get(`/api/sessions/${session.id}/synthese`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(404);
   });
 });

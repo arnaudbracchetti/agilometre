@@ -22,6 +22,7 @@ import { RejoindreSessionDto, VoterParticipantDto } from './session.dto';
 import { versQuestionCouranteDto } from './question-courante.mapper';
 import { JetonParticipantGuard } from './jeton-participant.guard';
 import type { RequeteAvecJetonParticipant } from './jeton-participant.guard';
+import { Public } from '../auth/decorators/public.decorator';
 
 /**
  * Contrôleur séparé de SessionAnimeeController/ProjectionController : routes publiques du
@@ -32,6 +33,7 @@ import type { RequeteAvecJetonParticipant } from './jeton-participant.guard';
  * les lectures de sondage, pas ces écritures — le rate-limit global reste la seule protection
  * contre un essai de Codes/votes en force brute.
  */
+@Public()
 @Controller('participant')
 export class ParticipantController {
   constructor(

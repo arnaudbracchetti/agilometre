@@ -1,0 +1,39 @@
+<div class="login">
+  <form class="login__card" (ngSubmit)="seConnecter()">
+    <h1 class="login__titre">Se connecter</h1>
+
+    <label class="login__champ">
+      <span>Email</span>
+      <input
+        nz-input
+        type="email"
+        name="email"
+        autocomplete="username"
+        required
+        [ngModel]="email()"
+        (ngModelChange)="email.set($event)"
+      />
+    </label>
+
+    <label class="login__champ">
+      <span>Mot de passe</span>
+      <input
+        nz-input
+        type="password"
+        name="motDePasse"
+        autocomplete="current-password"
+        required
+        [ngModel]="motDePasse()"
+        (ngModelChange)="motDePasse.set($event)"
+      />
+    </label>
+
+    @if (erreur()) {
+      <p class="login__erreur">{{ erreur() }}</p>
+    }
+
+    <button nz-button nzType="primary" nzBlock [nzLoading]="enCours()" type="submit">
+      Se connecter
+    </button>
+  </form>
+</div>

@@ -12,12 +12,14 @@ import {
 } from '@agilometre/shared';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { jetonCoachDeTest } from './support/jeton-coach';
 import { configureReferentielImportBodyParser } from './../src/referentiel/configure-import-body-parser';
 import { ScoringV1 } from './../src/scoring/domain/scoring-v1';
 
 describe('Palier agrégé d’une Entité (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let jetonCoach: string;
 
   // Même durée par défaut que SCORING_DUREE_PERIODE_MOIS (env.validation.ts), non surchargée par
   // .env.test — recalculée ici pour construire des Sessions dedans/dehors de la dernière Période
@@ -42,6 +44,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
       new ValidationPipe({ whitelist: true, transform: true }),
     );
     await app.init();
+    jetonCoach = await jetonCoachDeTest(app);
 
     prisma = app.get(PrismaService);
     await nettoyer();
@@ -73,6 +76,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
   async function importer(): Promise<void> {
     await request(app.getHttpServer())
       .post('/api/referentiel/import/application')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send(
         [
@@ -95,6 +99,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
   async function creerEntite(nom: string): Promise<EntiteDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
     return reponse.body as EntiteDto;
@@ -106,6 +111,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
   ): Promise<EquipeDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom, entiteId })
       .expect(201);
     return reponse.body as EquipeDto;
@@ -114,6 +120,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
   async function creerModele(nom: string): Promise<ModeleSessionDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/modeles-session')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
     return reponse.body as ModeleSessionDto;
@@ -128,18 +135,22 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
   ): Promise<SessionDto> {
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ equipeId, date, modeleSessionId: modeleId })
       .expect(201);
     const sessionPreparee = creation.body as SessionDto;
     const ouverture = await request(app.getHttpServer())
       .post(`/api/sessions/${sessionPreparee.id}/ouvrir`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     const session = ouverture.body as SessionDto;
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/passer-question-suivante`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/ouvrir-tour`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     const jetonReponse = await request(app.getHttpServer())
       .post('/api/participant/rejoindre')
@@ -153,9 +164,11 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
       .expect(201);
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/clore-tour`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     await request(app.getHttpServer())
       .post(`/api/sessions/${session.id}/terminer`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     return session;
   }
@@ -163,6 +176,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
   async function ajouterThemeAuModele(modeleId: string): Promise<void> {
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modeleId}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1'] })
       .expect(201);
   }
@@ -191,6 +205,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .get(`/api/organisation/entites/${entite.id}/profil`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     const profil = reponse.body as ProfilEntiteDto;
 
@@ -213,6 +228,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .get(`/api/organisation/entites/${entite.id}/profil`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     const profil = reponse.body as ProfilEntiteDto;
 
@@ -223,6 +239,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
   it('renvoie 404 pour une Entité inconnue', async () => {
     await request(app.getHttpServer())
       .get('/api/organisation/entites/inconnue/profil')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(404);
   });
 
@@ -231,6 +248,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
 
     await request(app.getHttpServer())
       .get(`/api/organisation/entites/${entite.id}/profil?offset=-2`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(400);
   });
 
@@ -275,6 +293,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .get(`/api/organisation/entites/${entite.id}/profil`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     const profil = reponse.body as ProfilEntiteDto;
 
@@ -301,6 +320,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .get(`/api/organisation/entites/${entite.id}/profil?offset=-1`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     const profil = reponse.body as ProfilEntiteDto;
 

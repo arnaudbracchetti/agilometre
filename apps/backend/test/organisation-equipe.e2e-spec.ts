@@ -5,10 +5,12 @@ import { App } from 'supertest/types';
 import { EntiteDto, EquipeDto } from '@agilometre/shared';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { jetonCoachDeTest } from './support/jeton-coach';
 
 describe('Organisation — Équipe (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let jetonCoach: string;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -21,6 +23,7 @@ describe('Organisation — Équipe (e2e)', () => {
       new ValidationPipe({ whitelist: true, transform: true }),
     );
     await app.init();
+    jetonCoach = await jetonCoachDeTest(app);
 
     prisma = app.get(PrismaService);
     await prisma.equipe.deleteMany();
@@ -36,6 +39,7 @@ describe('Organisation — Équipe (e2e)', () => {
   async function creerEntite(nom: string): Promise<EntiteDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/organisation/entites')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
     return reponse.body as EntiteDto;
@@ -46,6 +50,7 @@ describe('Organisation — Équipe (e2e)', () => {
 
     const creation = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Équipe Alpha', entiteId: entite.id })
       .expect(201);
     const equipeCreee = creation.body as EquipeDto;
@@ -58,6 +63,7 @@ describe('Organisation — Équipe (e2e)', () => {
 
     const liste = await request(app.getHttpServer())
       .get(`/api/organisation/entites/${entite.id}/equipes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
 
     expect(liste.body).toEqual([equipeCreee]);
@@ -66,6 +72,7 @@ describe('Organisation — Équipe (e2e)', () => {
   it('POST /api/organisation/equipes — 404 si l’Entité est inconnue', () => {
     return request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Équipe Alpha', entiteId: 'inconnue' })
       .expect(404);
   });
@@ -75,6 +82,7 @@ describe('Organisation — Équipe (e2e)', () => {
 
     return request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: '', entiteId: entite.id })
       .expect(400);
   });
@@ -84,11 +92,13 @@ describe('Organisation — Équipe (e2e)', () => {
     const marketing = await creerEntite('Marketing');
     await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Alpha', entiteId: dsi.id })
       .expect(201);
 
     await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'alpha', entiteId: marketing.id })
       .expect(409);
   });
@@ -97,17 +107,20 @@ describe('Organisation — Équipe (e2e)', () => {
     const entite = await creerEntite('DSI');
     const creation = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Alpha', entiteId: entite.id })
       .expect(201);
     const equipe = creation.body as EquipeDto;
 
     await request(app.getHttpServer())
       .patch(`/api/organisation/equipes/${equipe.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Beta' })
       .expect(200);
 
     const liste = await request(app.getHttpServer())
       .get(`/api/organisation/entites/${entite.id}/equipes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect((liste.body as EquipeDto[])[0].nom).toBe('Beta');
   });
@@ -115,6 +128,7 @@ describe('Organisation — Équipe (e2e)', () => {
   it('PATCH /api/organisation/equipes/:id — 404 pour un id inconnu', () => {
     return request(app.getHttpServer())
       .patch('/api/organisation/equipes/inconnue')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'X' })
       .expect(404);
   });
@@ -123,12 +137,14 @@ describe('Organisation — Équipe (e2e)', () => {
     const entite = await creerEntite('DSI');
     const creationEquipe = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Alpha', entiteId: entite.id })
       .expect(201);
     const equipe = creationEquipe.body as EquipeDto;
 
     const ajout = await request(app.getHttpServer())
       .post(`/api/organisation/equipes/${equipe.id}/membres`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Jean Dupont', email: 'jean.dupont@example.com' })
       .expect(201);
     const equipeAvecMembre = ajout.body as EquipeDto;
@@ -142,6 +158,7 @@ describe('Organisation — Équipe (e2e)', () => {
 
     const retrait = await request(app.getHttpServer())
       .delete(`/api/organisation/equipes/${equipe.id}/membres/${membre.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect((retrait.body as EquipeDto).membres).toHaveLength(0);
   });
@@ -150,17 +167,20 @@ describe('Organisation — Équipe (e2e)', () => {
     const entite = await creerEntite('DSI');
     const creationEquipe = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Alpha', entiteId: entite.id })
       .expect(201);
     const equipe = creationEquipe.body as EquipeDto;
     const ajout = await request(app.getHttpServer())
       .post(`/api/organisation/equipes/${equipe.id}/membres`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Jean Dupont', email: 'jean.dupont@example.com' })
       .expect(201);
     const membre = (ajout.body as EquipeDto).membres[0];
 
     const modification = await request(app.getHttpServer())
       .patch(`/api/organisation/equipes/${equipe.id}/membres/${membre.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Jean D.', email: 'jean.d@example.com' })
       .expect(200);
 
@@ -174,12 +194,14 @@ describe('Organisation — Équipe (e2e)', () => {
     const entite = await creerEntite('DSI');
     const creationEquipe = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Alpha', entiteId: entite.id })
       .expect(201);
     const equipe = creationEquipe.body as EquipeDto;
 
     await request(app.getHttpServer())
       .patch(`/api/organisation/equipes/${equipe.id}/membres/inconnu`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Jean D.', email: 'jean.d@example.com' })
       .expect(404);
   });
@@ -188,15 +210,18 @@ describe('Organisation — Équipe (e2e)', () => {
     const entite = await creerEntite('DSI');
     const creationEquipe = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Alpha', entiteId: entite.id })
       .expect(201);
     const equipe = creationEquipe.body as EquipeDto;
     await request(app.getHttpServer())
       .post(`/api/organisation/equipes/${equipe.id}/membres`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Jean Dupont', email: 'jean.dupont@example.com' })
       .expect(201);
     const ajoutMarie = await request(app.getHttpServer())
       .post(`/api/organisation/equipes/${equipe.id}/membres`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Marie Curie', email: 'marie@example.com' })
       .expect(201);
     const marie = (ajoutMarie.body as EquipeDto).membres.find(
@@ -205,6 +230,7 @@ describe('Organisation — Équipe (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch(`/api/organisation/equipes/${equipe.id}/membres/${marie.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Marie C.', email: 'jean.dupont@example.com' })
       .expect(409);
   });
@@ -213,17 +239,20 @@ describe('Organisation — Équipe (e2e)', () => {
     const entite = await creerEntite('DSI');
     const creationEquipe = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Alpha', entiteId: entite.id })
       .expect(201);
     const equipe = creationEquipe.body as EquipeDto;
 
     await request(app.getHttpServer())
       .post(`/api/organisation/equipes/${equipe.id}/membres`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Jean Dupont', email: 'jean.dupont@example.com' })
       .expect(201);
 
     await request(app.getHttpServer())
       .post(`/api/organisation/equipes/${equipe.id}/membres`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Jean D.', email: 'jean.dupont@example.com' })
       .expect(409);
   });
@@ -232,12 +261,14 @@ describe('Organisation — Équipe (e2e)', () => {
     const entite = await creerEntite('DSI');
     const creationEquipe = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Alpha', entiteId: entite.id })
       .expect(201);
     const equipe = creationEquipe.body as EquipeDto;
 
     await request(app.getHttpServer())
       .post(`/api/organisation/equipes/${equipe.id}/membres`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Jean Dupont', email: 'pas-un-email' })
       .expect(400);
   });
@@ -246,20 +277,24 @@ describe('Organisation — Équipe (e2e)', () => {
     const entite = await creerEntite('DSI');
     const creationEquipe = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Alpha', entiteId: entite.id })
       .expect(201);
     const equipe = creationEquipe.body as EquipeDto;
     await request(app.getHttpServer())
       .post(`/api/organisation/equipes/${equipe.id}/membres`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Jean Dupont', email: 'jean.dupont@example.com' })
       .expect(201);
 
     await request(app.getHttpServer())
       .delete(`/api/organisation/equipes/${equipe.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
 
     const liste = await request(app.getHttpServer())
       .get(`/api/organisation/entites/${entite.id}/equipes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(liste.body).toEqual([]);
 
@@ -272,6 +307,7 @@ describe('Organisation — Équipe (e2e)', () => {
   it('DELETE /api/organisation/equipes/:id — 404 pour un id inconnu', () => {
     return request(app.getHttpServer())
       .delete('/api/organisation/equipes/inconnue')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(404);
   });
 });

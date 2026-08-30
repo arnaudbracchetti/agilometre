@@ -31,6 +31,7 @@ import {
   ModifierMembreDto,
   RenommerEquipeDto,
 } from './equipe.dto';
+import { Requiert } from '../auth/decorators/requiert.decorator';
 
 function versEntiteDto(entite: Entite): EntiteDto {
   return { id: entite.id, nom: entite.nom };
@@ -54,6 +55,7 @@ function versMembreDto(membre: Membre): MembreDto {
   };
 }
 
+@Requiert('gererOrganisation')
 @Controller('organisation')
 export class OrganisationController {
   constructor(

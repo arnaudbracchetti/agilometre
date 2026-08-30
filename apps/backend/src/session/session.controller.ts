@@ -38,6 +38,7 @@ import {
   RenommerModeleSessionDto,
   ReordonnerQuestionModeleSessionDto,
 } from './modele-session.dto';
+import { Requiert } from '../auth/decorators/requiert.decorator';
 
 /**
  * `selectionEnrichie` porte déjà les Questions actives dans l'ordre de la Sélection
@@ -66,6 +67,7 @@ function versModeleSessionDto(
   };
 }
 
+@Requiert('gererModelesSession')
 @Controller('modeles-session')
 export class SessionController {
   constructor(

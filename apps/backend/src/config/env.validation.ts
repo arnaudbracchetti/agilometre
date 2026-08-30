@@ -44,6 +44,13 @@ class EnvironmentVariables {
   @IsInt()
   @Min(1)
   SCORING_DUREE_PERIODE_MOIS: number = 3; // Défaut : cadence trimestrielle.
+
+  // Session de connexion à renouvellement glissant (doc/spec/annexes/gestion-des-droits.md,
+  // "Authentification") : pas d'expiration agressive en pleine animation de séance. Défaut fixé
+  // par le spec, pas un choix produit ouvert comme les deux valeurs de scoring ci-dessus.
+  @IsInt()
+  @Min(1)
+  SESSION_DUREE_HEURES: number = 12;
 }
 
 // Échoue vite au démarrage si le SMTP ou l'URL Postgres manquent, plutôt qu'en

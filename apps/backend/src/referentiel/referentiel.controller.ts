@@ -10,6 +10,7 @@ import { Theme } from './domain/theme';
 import { ApplyImportReferentiel } from './application/apply-import-referentiel.usecase';
 import { PreviewImportReferentiel } from './application/preview-import-referentiel.usecase';
 import { ObtenirReferentielActif } from './application/obtenir-referentiel-actif.usecase';
+import { Requiert } from '../auth/decorators/requiert.decorator';
 
 function versThemeDto(theme: Theme): ThemeReferentielDto {
   return {
@@ -27,6 +28,7 @@ function versThemeDto(theme: Theme): ThemeReferentielDto {
   };
 }
 
+@Requiert('gererReferentiel')
 @Controller('referentiel')
 export class ReferentielController {
   constructor(

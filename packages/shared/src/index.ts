@@ -1,4 +1,6 @@
 export * from './roles';
+export * from './capacites';
+export * from './auth';
 export * from './scoring';
 export * from './organisation';
 export * from './referentiel';

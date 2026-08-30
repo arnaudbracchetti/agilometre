@@ -9,16 +9,24 @@ import { ListerEquipesParEntite } from './application/lister-equipes-par-entite.
 import { AjouterMembre } from './application/ajouter-membre.usecase';
 import { RetirerMembre } from './application/retirer-membre.usecase';
 import { ModifierMembre } from './application/modifier-membre.usecase';
+import { AmorcerPremierCoach } from './application/amorcer-premier-coach.usecase';
 import { PrismaEntiteRepository } from './infrastructure/prisma-entite.repository';
 import { PrismaEquipeRepository } from './infrastructure/prisma-equipe.repository';
+import { PrismaUtilisateurRepository } from './infrastructure/prisma-utilisateur.repository';
 import { OrganisationController } from './organisation.controller';
 
 @Module({
   controllers: [OrganisationController],
-  exports: [PrismaEquipeRepository, PrismaEntiteRepository],
+  exports: [
+    PrismaEquipeRepository,
+    PrismaEntiteRepository,
+    PrismaUtilisateurRepository,
+    AmorcerPremierCoach,
+  ],
   providers: [
     PrismaEntiteRepository,
     PrismaEquipeRepository,
+    PrismaUtilisateurRepository,
     {
       provide: CreerEntite,
       useFactory: (repository: PrismaEntiteRepository) =>
@@ -80,6 +88,12 @@ import { OrganisationController } from './organisation.controller';
       useFactory: (repository: PrismaEquipeRepository) =>
         new ModifierMembre(repository),
       inject: [PrismaEquipeRepository],
+    },
+    {
+      provide: AmorcerPremierCoach,
+      useFactory: (repository: PrismaUtilisateurRepository) =>
+        new AmorcerPremierCoach(repository),
+      inject: [PrismaUtilisateurRepository],
     },
   ],
 })

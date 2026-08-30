@@ -13,6 +13,9 @@ import { HealthModule } from './health/health.module';
 import { ReferentielModule } from './referentiel/referentiel.module';
 import { OrganisationModule } from './organisation/organisation.module';
 import { SessionModule } from './session/session.module';
+import { AuthModule } from './auth/auth.module';
+import { AuthGuard } from './auth/guards/auth.guard';
+import { PerimetreGuard } from './auth/guards/perimetre.guard';
 
 // Le build Docker copie le frontend Angular dans apps/backend/public (voir Dockerfile) ;
 // __dirname pointe ici vers dist/src, donc apps/backend/public = ../../public.
@@ -60,7 +63,14 @@ const publicDir = join(__dirname, '..', '..', 'public');
     ReferentielModule,
     OrganisationModule,
     SessionModule,
+    AuthModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Ordre significatif : AuthGuard doit s'exécuter avant PerimetreGuard, qui a besoin de
+    // `request.utilisateur` déjà posé par AuthGuard — docs/design/agregat-politique-des-droits.md.
+    { provide: APP_GUARD, useExisting: AuthGuard },
+    { provide: APP_GUARD, useExisting: PerimetreGuard },
+  ],
 })
 export class AppModule {}

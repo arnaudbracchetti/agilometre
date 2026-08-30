@@ -8,11 +8,13 @@ import {
 } from '@agilometre/shared';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { jetonCoachDeTest } from './support/jeton-coach';
 import { configureReferentielImportBodyParser } from './../src/referentiel/configure-import-body-parser';
 
 describe('Modèle de session (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let jetonCoach: string;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -26,6 +28,7 @@ describe('Modèle de session (e2e)', () => {
       new ValidationPipe({ whitelist: true, transform: true }),
     );
     await app.init();
+    jetonCoach = await jetonCoachDeTest(app);
 
     prisma = app.get(PrismaService);
     await prisma.selectionItem.deleteMany();
@@ -70,6 +73,7 @@ describe('Modèle de session (e2e)', () => {
   async function importer(questionIds: string[]): Promise<void> {
     await request(app.getHttpServer())
       .post('/api/referentiel/import/application')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .set('Content-Type', 'text/plain')
       .send(yamlAvecQuestions(questionIds))
       .expect(201);
@@ -78,6 +82,7 @@ describe('Modèle de session (e2e)', () => {
   async function creerModele(nom: string): Promise<ModeleSessionDto> {
     const reponse = await request(app.getHttpServer())
       .post('/api/modeles-session')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
     return reponse.body as ModeleSessionDto;
@@ -90,6 +95,7 @@ describe('Modèle de session (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .get(`/api/modeles-session/${modele.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(reponse.body).toMatchObject({
       nom: 'Diagnostic complet',
@@ -102,6 +108,7 @@ describe('Modèle de session (e2e)', () => {
 
     const reponse = await request(app.getHttpServer())
       .patch(`/api/modeles-session/${modele.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Beta' })
       .expect(200);
 
@@ -111,6 +118,7 @@ describe('Modèle de session (e2e)', () => {
   it('PATCH /api/modeles-session/:id — 404 sur un Modèle inconnu', async () => {
     await request(app.getHttpServer())
       .patch('/api/modeles-session/inconnu')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom: 'Beta' })
       .expect(404);
   });
@@ -121,11 +129,13 @@ describe('Modèle de session (e2e)', () => {
 
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/questions`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionId: 'q1' })
       .expect(201);
 
     const apresTheme = await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q2', 'q3'] })
       .expect(201);
     expect(
@@ -134,6 +144,7 @@ describe('Modèle de session (e2e)', () => {
 
     const apresReordre = await request(app.getHttpServer())
       .patch(`/api/modeles-session/${modele.id}/questions/q3`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ position: 0 })
       .expect(200);
     expect(
@@ -144,6 +155,7 @@ describe('Modèle de session (e2e)', () => {
 
     const apresRetrait = await request(app.getHttpServer())
       .delete(`/api/modeles-session/${modele.id}/questions/q1`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(
       (apresRetrait.body as ModeleSessionDto).selection.map(
@@ -157,11 +169,13 @@ describe('Modèle de session (e2e)', () => {
     const modele = await creerModele('Alpha');
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/questions`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionId: 'q1' })
       .expect(201);
 
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/questions`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionId: 'q1' })
       .expect(409);
   });
@@ -171,11 +185,13 @@ describe('Modèle de session (e2e)', () => {
     const modele = await creerModele('Alpha');
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1', 'q2'] })
       .expect(201);
 
     const reponse = await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/dupliquer`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(201);
     const copie = reponse.body as ModeleSessionDto;
 
@@ -186,9 +202,11 @@ describe('Modèle de session (e2e)', () => {
     // La copie est indépendante : retirer une Question de l'originale ne touche pas la copie.
     await request(app.getHttpServer())
       .delete(`/api/modeles-session/${modele.id}/questions/q1`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     const copieApres = await request(app.getHttpServer())
       .get(`/api/modeles-session/${copie.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(
       (copieApres.body as ModeleSessionDto).selection.map((q) => q.questionId),
@@ -200,10 +218,12 @@ describe('Modèle de session (e2e)', () => {
 
     await request(app.getHttpServer())
       .delete(`/api/modeles-session/${modele.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
 
     await request(app.getHttpServer())
       .get(`/api/modeles-session/${modele.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(404);
   });
 
@@ -212,11 +232,13 @@ describe('Modèle de session (e2e)', () => {
     const modele = await creerModele('Alpha');
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1', 'q2'] })
       .expect(201);
 
     const reponse = await request(app.getHttpServer())
       .get('/api/modeles-session')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     const lignes = reponse.body as LigneBibliothequeModeleSessionDto[];
 
@@ -235,6 +257,7 @@ describe('Modèle de session (e2e)', () => {
     const modele = await creerModele('Alpha');
     await request(app.getHttpServer())
       .post(`/api/modeles-session/${modele.id}/themes`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1', 'q2'] })
       .expect(201);
 
@@ -243,6 +266,7 @@ describe('Modèle de session (e2e)', () => {
 
     const detailApresArchivage = await request(app.getHttpServer())
       .get(`/api/modeles-session/${modele.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(
       (detailApresArchivage.body as ModeleSessionDto).selection.map(
@@ -255,6 +279,7 @@ describe('Modèle de session (e2e)', () => {
 
     const bibliothequeApresArchivage = await request(app.getHttpServer())
       .get('/api/modeles-session')
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(
       (
@@ -267,6 +292,7 @@ describe('Modèle de session (e2e)', () => {
 
     const detailApresReactivation = await request(app.getHttpServer())
       .get(`/api/modeles-session/${modele.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
       .expect(200);
     expect(
       (detailApresReactivation.body as ModeleSessionDto).selection.map(
