@@ -1,4 +1,5 @@
 .mon-compte {
+  max-width: 64rem;
   padding: var(--space-6);
   font-family: var(--font-family-base);
   color: var(--color-ink);
@@ -12,19 +13,37 @@
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-primary);
-  margin: 0 0 var(--space-5);
+  margin: 0 0 var(--space-6);
+}
+
+.mon-compte__grille {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-5);
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mon-compte__carte {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-5);
+
+  h3 {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-ink);
+    margin: 0 0 var(--space-4);
+  }
 }
 
 .mon-compte__informations {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 16rem));
-  gap: var(--space-4);
-  max-width: 34rem;
-  margin: 0 0 var(--space-6);
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 .mon-compte__information {
@@ -36,6 +55,8 @@
 
   dd {
     font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-ink);
     margin: 0;
   }
 }
@@ -44,7 +65,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  max-width: 22rem;
 }
 
 .mon-compte__champ {
@@ -52,6 +72,6 @@
   flex-direction: column;
   gap: var(--space-1);
   font-size: var(--font-size-sm);
-  color: var(--color-ink-muted);
+  color: var(--color-ink);
 }
 

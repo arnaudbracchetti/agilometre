@@ -1,77 +1,84 @@
 <div class="mon-compte">
   <h2 class="mon-compte__titre">Mon compte</h2>
 
-  @if (compte(); as compteCharge) {
-    <dl class="mon-compte__informations">
-      <div class="mon-compte__information">
-        <dt>Prénom</dt>
-        <dd>{{ compteCharge.prenom }}</dd>
-      </div>
-      <div class="mon-compte__information">
-        <dt>Nom</dt>
-        <dd>{{ compteCharge.nom }}</dd>
-      </div>
-      <div class="mon-compte__information">
-        <dt>Email</dt>
-        <dd>{{ compteCharge.email }}</dd>
-      </div>
-      <div class="mon-compte__information">
-        <dt>Rôle</dt>
-        <dd>{{ libelleRole(compteCharge.role) }}</dd>
-      </div>
-    </dl>
-  }
+  <div class="mon-compte__grille">
+    @if (compte(); as compteCharge) {
+      <section class="mon-compte__carte">
+        <h3>Informations du compte</h3>
+        <dl class="mon-compte__informations">
+          <div class="mon-compte__information">
+            <dt>Prénom</dt>
+            <dd>{{ compteCharge.prenom }}</dd>
+          </div>
+          <div class="mon-compte__information">
+            <dt>Nom</dt>
+            <dd>{{ compteCharge.nom }}</dd>
+          </div>
+          <div class="mon-compte__information">
+            <dt>Email</dt>
+            <dd>{{ compteCharge.email }}</dd>
+          </div>
+          <div class="mon-compte__information">
+            <dt>Rôle</dt>
+            <dd>{{ libelleRole(compteCharge.role) }}</dd>
+          </div>
+        </dl>
+      </section>
+    }
 
-  <form class="mon-compte__formulaire" (ngSubmit)="changer()">
-    <h3>Changer mon mot de passe</h3>
+    <section class="mon-compte__carte">
+      <h3>Changer le mot de passe</h3>
 
-    <label class="mon-compte__champ">
-      <span>Mot de passe actuel</span>
-      <input
-        nz-input
-        type="password"
-        name="motDePasseActuel"
-        autocomplete="current-password"
-        required
-        [ngModel]="motDePasseActuel()"
-        (ngModelChange)="motDePasseActuel.set($event)"
-      />
-    </label>
+      <form class="mon-compte__formulaire" (ngSubmit)="changer()">
+        <label class="mon-compte__champ">
+          <span>Mot de passe actuel</span>
+          <input
+            nz-input
+            type="password"
+            name="motDePasseActuel"
+            autocomplete="current-password"
+            required
+            [ngModel]="motDePasseActuel()"
+            (ngModelChange)="motDePasseActuel.set($event)"
+          />
+        </label>
 
-    <label class="mon-compte__champ">
-      <span>Nouveau mot de passe</span>
-      <input
-        nz-input
-        type="password"
-        name="nouveauMotDePasse"
-        autocomplete="new-password"
-        required
-        [ngModel]="nouveauMotDePasse()"
-        (ngModelChange)="nouveauMotDePasse.set($event)"
-      />
-    </label>
+        <label class="mon-compte__champ">
+          <span>Nouveau mot de passe</span>
+          <input
+            nz-input
+            type="password"
+            name="nouveauMotDePasse"
+            autocomplete="new-password"
+            required
+            [ngModel]="nouveauMotDePasse()"
+            (ngModelChange)="nouveauMotDePasse.set($event)"
+          />
+        </label>
 
-    <label class="mon-compte__champ">
-      <span>Confirmer le nouveau mot de passe</span>
-      <input
-        nz-input
-        type="password"
-        name="confirmation"
-        autocomplete="new-password"
-        required
-        [ngModel]="confirmation()"
-        (ngModelChange)="confirmation.set($event)"
-      />
-    </label>
+        <label class="mon-compte__champ">
+          <span>Confirmer le nouveau mot de passe</span>
+          <input
+            nz-input
+            type="password"
+            name="confirmation"
+            autocomplete="new-password"
+            required
+            [ngModel]="confirmation()"
+            (ngModelChange)="confirmation.set($event)"
+          />
+        </label>
 
-    <button
-      nz-button
-      nzType="primary"
-      [nzLoading]="enCours()"
-      [disabled]="!formulaireValide()"
-      type="submit"
-    >
-      Changer le mot de passe
-    </button>
-  </form>
+        <button
+          nz-button
+          nzType="primary"
+          [nzLoading]="enCours()"
+          [disabled]="!formulaireValide()"
+          type="submit"
+        >
+          Changer le mot de passe
+        </button>
+      </form>
+    </section>
+  </div>
 </div>
