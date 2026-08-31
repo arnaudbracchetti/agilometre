@@ -229,6 +229,16 @@
     font-size: var(--font-size-xl);
   }
 
+  &__note-lien {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover h3 {
+      text-decoration: underline;
+    }
+  }
+
   // ─── Fiche d'index (traitement volontairement distinct des notes) ──────
   &__index-card {
     max-width: 34rem;

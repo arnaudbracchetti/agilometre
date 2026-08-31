@@ -29,6 +29,7 @@ export class Home {
     titre: string;
     texte: string;
     couleur: CouleurStickyNote;
+    lien?: string;
   }[] = [
     {
       icone: 'schedule',
@@ -36,6 +37,7 @@ export class Home {
       texte:
         'Le coach projette les questions, ouvre la discussion, puis fait voter l’équipe en direct, sur plusieurs tours si besoin.',
       couleur: 'blue',
+      lien: '/sessions',
     },
     {
       icone: 'mail',
@@ -50,6 +52,7 @@ export class Home {
       texte:
         'Coach, manager et direction voient chacun un niveau de détail différent — jamais la répartition brute au-delà de l’équipe.',
       couleur: 'magenta',
+      lien: '/profil',
     },
   ];
 }

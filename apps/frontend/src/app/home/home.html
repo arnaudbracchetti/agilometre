@@ -67,9 +67,17 @@
     <div class="home__notes">
       @for (dispositif of dispositifs; track dispositif.titre) {
         <app-sticky-note [couleur]="dispositif.couleur" class="home__note">
-          <span nz-icon [nzType]="dispositif.icone" nzTheme="outline" class="home__note-icone"></span>
-          <h3>{{ dispositif.titre }}</h3>
-          <p>{{ dispositif.texte }}</p>
+          @if (dispositif.lien) {
+            <a [routerLink]="dispositif.lien" class="home__note-lien">
+              <span nz-icon [nzType]="dispositif.icone" nzTheme="outline" class="home__note-icone"></span>
+              <h3>{{ dispositif.titre }}</h3>
+              <p>{{ dispositif.texte }}</p>
+            </a>
+          } @else {
+            <span nz-icon [nzType]="dispositif.icone" nzTheme="outline" class="home__note-icone"></span>
+            <h3>{{ dispositif.titre }}</h3>
+            <p>{{ dispositif.texte }}</p>
+          }
         </app-sticky-note>
       }
     </div>
