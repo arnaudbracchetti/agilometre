@@ -6,6 +6,7 @@ import { Role } from './roles';
  */
 export type Capacite =
   | 'gererComptes'
+  | 'gererSonCompte'
   | 'gererOrganisation'
   | 'gererReferentiel'
   | 'voirProfilEntite'
@@ -16,11 +17,15 @@ export type Capacite =
   | 'gererModelesSession'
   | 'gererCampagnesPouls';
 
-// Chaque capacité ne liste ici que Role.Coach : Direction et Membre d'équipe n'ont encore ni
-// compte constructible ni PerimetreUtilisateur implémenté (issue #59, tranches 3/4 à venir — #61,
-// #62). Élargir cette liste au fil de ces tranches, jamais par anticipation.
+// La plupart des capacités ne listent que Role.Coach : Direction et Membre d'équipe n'ont encore
+// ni Habilitation/PerimetreUtilisateur implémenté (issue #59, tranches 3/4 à venir — #61, #62).
+// Élargir cette liste au fil de ces tranches, jamais par anticipation. `gererSonCompte` fait
+// exception dès #60 : "Mon compte (changer son mot de passe)" est accessible à tout Rôle porteur
+// d'un compte, sans dépendre d'une Habilitation ni d'un périmètre — c'est précisément ce que #60
+// rend possible pour Direction et Membre d'équipe.
 export const CAPACITES: Record<Capacite, Role[]> = {
   gererComptes: [Role.Coach],
+  gererSonCompte: [Role.Coach, Role.Direction, Role.Membre],
   gererOrganisation: [Role.Coach],
   gererReferentiel: [Role.Coach],
   voirProfilEntite: [Role.Coach],

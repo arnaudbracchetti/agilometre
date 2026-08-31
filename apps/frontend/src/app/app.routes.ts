@@ -13,6 +13,20 @@ export const routes: Routes = [
       import('./auth/login/login-page').then((m) => m.LoginPage),
   },
   {
+    path: 'mot-de-passe-oublie',
+    loadComponent: () =>
+      import('./auth/mot-de-passe-oublie/mot-de-passe-oublie-page').then(
+        (m) => m.MotDePasseOubliePage,
+      ),
+  },
+  {
+    path: 'definir-mot-de-passe',
+    loadComponent: () =>
+      import('./auth/definir-mot-de-passe/definir-mot-de-passe-page').then(
+        (m) => m.DefinirMotDePassePage,
+      ),
+  },
+  {
     path: 'projection/:sessionId',
     loadComponent: () =>
       import('./sessions/projection-page/projection-page').then(
@@ -29,6 +43,18 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./shell/app-shell').then((m) => m.AppShell),
     children: [
+      {
+        path: 'comptes',
+        data: { breadcrumb: 'Comptes' },
+        loadComponent: () =>
+          import('./comptes/comptes-page/comptes-page').then((m) => m.ComptesPage),
+      },
+      {
+        path: 'mon-compte',
+        data: { breadcrumb: 'Mon compte' },
+        loadComponent: () =>
+          import('./auth/mon-compte/mon-compte-page').then((m) => m.MonComptePage),
+      },
       {
         path: 'organisation',
         data: { breadcrumb: 'Organisation' },

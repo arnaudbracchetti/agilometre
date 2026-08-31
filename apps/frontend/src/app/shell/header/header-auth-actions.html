@@ -1,0 +1,6 @@
+@if (estConnecte()) {
+  <a nz-button nzType="text" routerLink="/mon-compte">Mon compte</a>
+  <button nz-button (click)="deconnecter()">Se déconnecter</button>
+} @else {
+  <button nz-button nzType="primary" routerLink="/connexion">Se connecter</button>
+}

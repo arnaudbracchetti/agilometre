@@ -1,0 +1,91 @@
+<div class="comptes">
+  <header class="comptes__entete">
+    <h2 class="comptes__titre">Comptes</h2>
+    <button nz-button nzType="primary" (click)="ouvrirCreation()">Créer un compte</button>
+  </header>
+
+  <div class="comptes__recherche">
+    <span nz-icon nzType="search" class="comptes__recherche-icone" aria-hidden="true"></span>
+    <input
+      nz-input
+      type="search"
+      class="comptes__recherche-champ"
+      placeholder="Rechercher un email, un prénom, un nom…"
+      aria-label="Rechercher dans les comptes"
+      [ngModel]="filtre()"
+      (ngModelChange)="filtre.set($event)"
+    />
+  </div>
+
+  <nz-table
+    #table
+    nzSize="middle"
+    [nzData]="comptesFiltres()"
+    [nzLoading]="chargementEnCours()"
+    [nzShowPagination]="false"
+    [nzNoResult]="filtre().trim().length > 0 ? 'Aucun résultat pour « ' + filtre().trim() + ' ».' : 'Aucun compte pour l’instant.'"
+  >
+    <thead>
+      <tr>
+        <th [nzSortFn]="trierParNom">Nom</th>
+        <th>Email</th>
+        <th [nzSortFn]="trierParRole">Rôle</th>
+        <th>Statut</th>
+        <th class="comptes__colonne-actions">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (compte of table.data; track compte.id) {
+        <tr>
+          <td>{{ compte.prenom }} {{ compte.nom }}</td>
+          <td nzEllipsis>{{ compte.email }}</td>
+          <td>{{ libelleRole(compte.role) }}</td>
+          <td>
+            <nz-tag [nzColor]="compte.actif ? 'blue' : 'default'">
+              {{ compte.actif ? 'Actif' : 'Désactivé' }}
+            </nz-tag>
+          </td>
+          <td class="comptes__actions">
+            <button
+              nz-button
+              nzType="text"
+              nzShape="circle"
+              class="comptes__action"
+              nz-tooltip
+              nzTooltipTitle="Modifier"
+              (click)="ouvrirModification(compte)"
+            >
+              <span nz-icon nzType="edit" nzTheme="outline"></span>
+            </button>
+            @if (compte.actif) {
+              <button
+                nz-button
+                nzType="text"
+                nzShape="circle"
+                nzDanger
+                class="comptes__action"
+                nz-tooltip
+                nzTooltipTitle="Désactiver"
+                (click)="confirmerDesactivation(compte)"
+              >
+                <span nz-icon nzType="stop" nzTheme="outline"></span>
+              </button>
+            } @else {
+              <button
+                nz-button
+                nzType="text"
+                nzShape="circle"
+                class="comptes__action"
+                nz-tooltip
+                nzTooltipTitle="Réactiver"
+                (click)="reactiver(compte)"
+              >
+                <span nz-icon nzType="check-circle" nzTheme="outline"></span>
+              </button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </nz-table>
+</div>

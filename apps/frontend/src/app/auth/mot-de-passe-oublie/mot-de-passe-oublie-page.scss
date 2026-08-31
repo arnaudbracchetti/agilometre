@@ -1,0 +1,41 @@
+.oubli {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-alt);
+}
+
+.oubli__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 22rem;
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-elevated);
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+}
+
+.oubli__titre {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-emphasis);
+}
+
+.oubli__champ {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-ink-muted);
+}

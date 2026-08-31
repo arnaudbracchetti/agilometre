@@ -1,4 +1,14 @@
 import { Evolution, SyntheseThemeDto } from './session';
+import { Role } from './roles';
+
+export interface UtilisateurDto {
+  id: string;
+  email: string;
+  prenom: string;
+  nom: string;
+  actif: boolean;
+  role: Role;
+}
 
 export interface EntiteDto {
   id: string;

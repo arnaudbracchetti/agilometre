@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
-import { JetonUtilisateurDto, Role } from '@agilometre/shared';
+import { JetonUtilisateurDto, Role, UtilisateurDto } from '@agilometre/shared';
 
 interface ChargeJeton {
   sub: string;
@@ -29,6 +29,25 @@ export class AuthService {
       tap((reponse) => this.stockerJeton(reponse.jeton)),
       map(() => undefined),
     );
+  }
+
+  demanderReinitialisation(email: string): Observable<void> {
+    return this.http.post<void>('/api/mot-de-passe/oubli', { email });
+  }
+
+  definirMotDePasse(jeton: string, motDePasse: string): Observable<void> {
+    return this.http.post<void>('/api/mot-de-passe/definir', { jeton, motDePasse });
+  }
+
+  changerMotDePasse(motDePasseActuel: string, nouveauMotDePasse: string): Observable<void> {
+    return this.http.post<void>('/api/mot-de-passe/changer', {
+      motDePasseActuel,
+      nouveauMotDePasse,
+    });
+  }
+
+  obtenirMonCompte(): Observable<UtilisateurDto> {
+    return this.http.get<UtilisateurDto>('/api/mon-compte');
   }
 
   logout(): void {

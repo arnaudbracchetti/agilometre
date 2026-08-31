@@ -15,6 +15,14 @@ class UtilisateurRepositoryFake implements UtilisateurRepository {
     );
   }
 
+  trouverParId(id: string): Promise<Utilisateur | null> {
+    return Promise.resolve(this.utilisateurs.find((u) => u.id === id) ?? null);
+  }
+
+  lister(): Promise<Utilisateur[]> {
+    return Promise.resolve(this.utilisateurs);
+  }
+
   save(utilisateur: Utilisateur): Promise<void> {
     this.utilisateurs.push(utilisateur);
     return Promise.resolve();
@@ -67,6 +75,21 @@ describe('AmorcerPremierCoach', () => {
 
     expect(resultat).toEqual({ type: 'email_deja_utilise' });
     expect(repository.utilisateurs).toHaveLength(1);
+  });
+
+  it('échoue si le mot de passe est trop court', async () => {
+    const repository = new UtilisateurRepositoryFake();
+    const useCase = new AmorcerPremierCoach(repository);
+
+    const resultat = await useCase.executer(
+      'coach@example.com',
+      'Ada',
+      'Lovelace',
+      'court',
+    );
+
+    expect(resultat).toEqual({ type: 'mot_de_passe_trop_court' });
+    expect(repository.utilisateurs).toHaveLength(0);
   });
 
   it('échoue avec une erreur de validation pour un email invalide', async () => {

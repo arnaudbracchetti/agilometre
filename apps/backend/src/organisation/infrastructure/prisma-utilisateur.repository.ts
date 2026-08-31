@@ -19,6 +19,18 @@ export class PrismaUtilisateurRepository implements UtilisateurRepository {
     return row ? this.versDomaine(row) : null;
   }
 
+  async trouverParId(id: string): Promise<Utilisateur | null> {
+    const row = await this.prisma.utilisateur.findUnique({ where: { id } });
+    return row ? this.versDomaine(row) : null;
+  }
+
+  async lister(): Promise<Utilisateur[]> {
+    const rows = await this.prisma.utilisateur.findMany({
+      orderBy: [{ nom: 'asc' }, { prenom: 'asc' }],
+    });
+    return rows.map((row) => this.versDomaine(row));
+  }
+
   async save(utilisateur: Utilisateur): Promise<void> {
     try {
       await this.prisma.utilisateur.upsert({

@@ -15,6 +15,10 @@ export class EmailUtilisateurDejaUtiliseError extends Error {
 export interface UtilisateurRepository {
   /** Recherche insensible à la casse — garde d'unicité et résolution au moment de la connexion. */
   trouverParEmail(email: string): Promise<Utilisateur | null>;
+  trouverParId(id: string): Promise<Utilisateur | null>;
+  /** Écran Comptes (Coach seul) — aucune pagination : le volume de comptes reste faible (une
+   * instance par client, un compte par personne habilitée). */
+  lister(): Promise<Utilisateur[]>;
   /** @throws {EmailUtilisateurDejaUtiliseError} si la contrainte d'unicité d'email est violée en base. */
   save(utilisateur: Utilisateur): Promise<void>;
 }

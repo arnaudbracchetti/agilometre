@@ -17,6 +17,14 @@ class UtilisateurRepositoryEnMemoire implements UtilisateurRepository {
     );
   }
 
+  trouverParId(): Promise<Utilisateur | null> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  lister(): Promise<Utilisateur[]> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
   save(): Promise<void> {
     return Promise.reject(new Error('non utilisé par ce test'));
   }

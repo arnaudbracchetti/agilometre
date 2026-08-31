@@ -46,6 +46,11 @@ async function main() {
       process.exitCode = 1;
       return;
     }
+    if (resultat.type === 'mot_de_passe_trop_court') {
+      console.error('Le mot de passe doit contenir au moins 8 caractères');
+      process.exitCode = 1;
+      return;
+    }
 
     console.log(`Compte Coach créé : ${resultat.utilisateur.email}`);
   } finally {

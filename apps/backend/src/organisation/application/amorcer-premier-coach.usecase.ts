@@ -6,10 +6,12 @@ import {
   EmailUtilisateurDejaUtiliseError,
   UtilisateurRepository,
 } from '../domain/utilisateur.repository';
+import { VerifierMotDePasseTropCourt } from './politique-mot-de-passe';
 
 export type ResultatAmorcerPremierCoach =
   | { type: 'invalide'; erreur: ErreurInvariantUtilisateur }
   | { type: 'email_deja_utilise' }
+  | { type: 'mot_de_passe_trop_court' }
   | { type: 'cree'; utilisateur: Utilisateur };
 
 /**
@@ -29,6 +31,9 @@ export class AmorcerPremierCoach {
     const existant = await this.repository.trouverParEmail(email);
     if (existant) {
       return { type: 'email_deja_utilise' };
+    }
+    if (VerifierMotDePasseTropCourt.executer(motDePasse)) {
+      return { type: 'mot_de_passe_trop_court' };
     }
 
     const motDePasseHash = await argon2.hash(motDePasse);

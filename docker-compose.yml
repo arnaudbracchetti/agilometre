@@ -32,6 +32,21 @@ services:
       timeout: 5s
       retries: 10
 
+  # Relais SMTP local (dev + e2e) : capture tout, ne laisse rien sortir — indispensable pour tester
+  # des invitations/réinitialisations de mot de passe sans arroser de vraies adresses (issue #60,
+  # doc/spec/annexes/gestion-des-droits.md). Pas de `profiles` : utilisé en dev *et* en test, comme
+  # `postgres`.
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    # Sans ce flag, Mailpit fait une résolution DNS inverse de l'IP connectante à chaque email —
+    # observé à ~8s par envoi sous WSL2 (résolveur DNS local lent), retardant d'autant chaque
+    # création de compte / demande de réinitialisation.
+    command: --smtp-disable-rdns
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Webmail / API REST
+
   app:
     build:
       context: .
@@ -44,6 +59,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-agilometre}:${POSTGRES_PASSWORD:-agilometre}@postgres:5432/${POSTGRES_DB:-agilometre}?schema=public
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET est requis}
+      APP_URL: ${APP_URL:?APP_URL est requis}
       SMTP_HOST: ${SMTP_HOST:?SMTP_HOST est requis}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_SECURE: ${SMTP_SECURE:-false}

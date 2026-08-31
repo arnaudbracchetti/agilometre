@@ -102,6 +102,107 @@ describe('Utilisateur', () => {
     );
   });
 
+  it('modifierProfil — succès, met à jour email/prénom/nom, jamais le mot de passe', () => {
+    const resultat = Utilisateur.creer(
+      'id-1',
+      'coach@example.com',
+      'Ada',
+      'Lovelace',
+      'hash-initial',
+      Role.Coach,
+    );
+    const utilisateur = resultat.valeur;
+
+    const modification = utilisateur.modifierProfil(
+      'ada@example.com',
+      'Grace',
+      'Hopper',
+    );
+
+    expect(modification.estSucces).toBe(true);
+    expect(utilisateur.email).toBe('ada@example.com');
+    expect(utilisateur.prenom).toBe('Grace');
+    expect(utilisateur.nom).toBe('Hopper');
+    expect(utilisateur.motDePasseHash).toBe('hash-initial');
+  });
+
+  it('modifierProfil — échoue avec un email invalide, ne modifie rien', () => {
+    const utilisateur = Utilisateur.creer(
+      'id-1',
+      'coach@example.com',
+      'Ada',
+      'Lovelace',
+      'hash',
+      Role.Coach,
+    ).valeur;
+
+    const modification = utilisateur.modifierProfil(
+      'pas-un-email',
+      'Grace',
+      'Hopper',
+    );
+
+    expect(modification.estEchec).toBe(true);
+    expect(modification.erreur).toBeInstanceOf(EmailUtilisateurInvalideError);
+    expect(utilisateur.email).toBe('coach@example.com');
+  });
+
+  it('definirMotDePasse — succès, remplace le hash', () => {
+    const utilisateur = Utilisateur.creer(
+      'id-1',
+      'coach@example.com',
+      'Ada',
+      'Lovelace',
+      'hash-initial',
+      Role.Coach,
+    ).valeur;
+
+    const resultat = utilisateur.definirMotDePasse('nouveau-hash');
+
+    expect(resultat.estSucces).toBe(true);
+    expect(utilisateur.motDePasseHash).toBe('nouveau-hash');
+  });
+
+  it('definirMotDePasse — échoue avec un hash vide, ne modifie rien', () => {
+    const utilisateur = Utilisateur.creer(
+      'id-1',
+      'coach@example.com',
+      'Ada',
+      'Lovelace',
+      'hash-initial',
+      Role.Coach,
+    ).valeur;
+
+    const resultat = utilisateur.definirMotDePasse('   ');
+
+    expect(resultat.estEchec).toBe(true);
+    expect(resultat.erreur).toBeInstanceOf(
+      MotDePasseHashUtilisateurInvalideError,
+    );
+    expect(utilisateur.motDePasseHash).toBe('hash-initial');
+  });
+
+  it('desactiver / reactiver — bascule actif, idempotent', () => {
+    const utilisateur = Utilisateur.creer(
+      'id-1',
+      'coach@example.com',
+      'Ada',
+      'Lovelace',
+      'hash',
+      Role.Coach,
+    ).valeur;
+
+    utilisateur.desactiver();
+    expect(utilisateur.actif).toBe(false);
+    utilisateur.desactiver();
+    expect(utilisateur.actif).toBe(false);
+
+    utilisateur.reactiver();
+    expect(utilisateur.actif).toBe(true);
+    utilisateur.reactiver();
+    expect(utilisateur.actif).toBe(true);
+  });
+
   it('reconstituer — ne revalide pas et restitue un compte désactivé tel quel', () => {
     const utilisateur = Utilisateur.reconstituer(
       'id-1',

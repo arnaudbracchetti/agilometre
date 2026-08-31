@@ -1,0 +1,57 @@
+.mon-compte {
+  padding: var(--space-6);
+  font-family: var(--font-family-base);
+  color: var(--color-ink);
+
+  @media (max-width: 640px) {
+    padding: var(--space-4);
+  }
+}
+
+.mon-compte__titre {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  margin: 0 0 var(--space-5);
+}
+
+.mon-compte__informations {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 16rem));
+  gap: var(--space-4);
+  max-width: 34rem;
+  margin: 0 0 var(--space-6);
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mon-compte__information {
+  dt {
+    font-size: var(--font-size-sm);
+    color: var(--color-ink-muted);
+    margin: 0 0 var(--space-1);
+  }
+
+  dd {
+    font-size: var(--font-size-base);
+    margin: 0;
+  }
+}
+
+.mon-compte__formulaire {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 22rem;
+}
+
+.mon-compte__champ {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-ink-muted);
+}
+

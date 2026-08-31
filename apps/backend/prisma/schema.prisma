@@ -101,13 +101,29 @@ model Membre {
 // à ce stade (tranche 3, #61) ni de relation Prisma vers Membre (Membre.utilisateurId reste une
 // chaîne simple, voir le commentaire de Membre ci-dessus).
 model Utilisateur {
-  id             String  @id @default(uuid())
+  id             String        @id @default(uuid())
   email          String
   prenom         String
   nom            String
   motDePasseHash String
-  actif          Boolean @default(true)
+  actif          Boolean       @default(true)
   role           Role
+  jetons         JetonCompte[]
+}
+
+// Jeton de compte (CONTEXT.md, issue #60) : usage unique, 7 jours, sert à la fois l'invitation
+// initiale et la réinitialisation de mot de passe — un seul mécanisme, pas de fonction de renvoi
+// distincte. Distinct de JetonSession (anonyme, portée toute la Session) et de
+// Sollicitation.tokenHash (Pouls, non implémenté). `tokenHash` : seul le hash est persisté, jamais
+// le jeton en clair (même précédent que Sollicitation.tokenHash).
+model JetonCompte {
+  id            String      @id @default(uuid())
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id])
+  utilisateurId String
+  tokenHash     String      @unique
+  creeLe        DateTime    @default(now())
+  expireLe      DateTime
+  consommeLe    DateTime?
 }
 
 // --- Session animée (§4, §7) ---

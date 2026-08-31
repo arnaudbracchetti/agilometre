@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CreerEntite } from './application/creer-entite.usecase';
 import { RenommerEntite } from './application/renommer-entite.usecase';
 import { ListerEntites } from './application/lister-entites.usecase';
@@ -10,13 +11,35 @@ import { AjouterMembre } from './application/ajouter-membre.usecase';
 import { RetirerMembre } from './application/retirer-membre.usecase';
 import { ModifierMembre } from './application/modifier-membre.usecase';
 import { AmorcerPremierCoach } from './application/amorcer-premier-coach.usecase';
+import { CreerUtilisateur } from './application/creer-utilisateur.usecase';
+import { ModifierUtilisateur } from './application/modifier-utilisateur.usecase';
+import { DesactiverUtilisateur } from './application/desactiver-utilisateur.usecase';
+import { ReactiverUtilisateur } from './application/reactiver-utilisateur.usecase';
+import { ListerUtilisateurs } from './application/lister-utilisateurs.usecase';
+import { DemanderReinitialisation } from './application/demander-reinitialisation.usecase';
+import { DefinirMotDePasse } from './application/definir-mot-de-passe.usecase';
+import { ChangerMotDePasse } from './application/changer-mot-de-passe.usecase';
+import { ObtenirMonCompte } from './application/obtenir-mon-compte.usecase';
+import { EmettreJetonCompte } from './application/emettre-jeton-compte';
 import { PrismaEntiteRepository } from './infrastructure/prisma-entite.repository';
 import { PrismaEquipeRepository } from './infrastructure/prisma-equipe.repository';
 import { PrismaUtilisateurRepository } from './infrastructure/prisma-utilisateur.repository';
+import { PrismaJetonCompteRepository } from './infrastructure/prisma-jeton-compte.repository';
 import { OrganisationController } from './organisation.controller';
+import { ComptesController } from './comptes.controller';
+import { MotDePasseController } from './mot-de-passe.controller';
+import { MonCompteController } from './mon-compte.controller';
+import { MailModule } from '../mail/mail.module';
+import { NodemailerMailSender } from '../mail/nodemailer-mail-sender';
 
 @Module({
-  controllers: [OrganisationController],
+  imports: [ConfigModule, MailModule],
+  controllers: [
+    OrganisationController,
+    ComptesController,
+    MotDePasseController,
+    MonCompteController,
+  ],
   exports: [
     PrismaEquipeRepository,
     PrismaEntiteRepository,
@@ -27,6 +50,7 @@ import { OrganisationController } from './organisation.controller';
     PrismaEntiteRepository,
     PrismaEquipeRepository,
     PrismaUtilisateurRepository,
+    PrismaJetonCompteRepository,
     {
       provide: CreerEntite,
       useFactory: (repository: PrismaEntiteRepository) =>
@@ -93,6 +117,84 @@ import { OrganisationController } from './organisation.controller';
       provide: AmorcerPremierCoach,
       useFactory: (repository: PrismaUtilisateurRepository) =>
         new AmorcerPremierCoach(repository),
+      inject: [PrismaUtilisateurRepository],
+    },
+    {
+      provide: EmettreJetonCompte,
+      useFactory: (
+        jetons: PrismaJetonCompteRepository,
+        mailSender: NodemailerMailSender,
+        config: ConfigService,
+      ) =>
+        new EmettreJetonCompte(
+          jetons,
+          mailSender,
+          config.get<string>('APP_URL')!,
+        ),
+      inject: [
+        PrismaJetonCompteRepository,
+        NodemailerMailSender,
+        ConfigService,
+      ],
+    },
+    {
+      provide: CreerUtilisateur,
+      useFactory: (
+        utilisateurs: PrismaUtilisateurRepository,
+        emettreJetonCompte: EmettreJetonCompte,
+      ) => new CreerUtilisateur(utilisateurs, emettreJetonCompte),
+      inject: [PrismaUtilisateurRepository, EmettreJetonCompte],
+    },
+    {
+      provide: ModifierUtilisateur,
+      useFactory: (repository: PrismaUtilisateurRepository) =>
+        new ModifierUtilisateur(repository),
+      inject: [PrismaUtilisateurRepository],
+    },
+    {
+      provide: DesactiverUtilisateur,
+      useFactory: (repository: PrismaUtilisateurRepository) =>
+        new DesactiverUtilisateur(repository),
+      inject: [PrismaUtilisateurRepository],
+    },
+    {
+      provide: ReactiverUtilisateur,
+      useFactory: (repository: PrismaUtilisateurRepository) =>
+        new ReactiverUtilisateur(repository),
+      inject: [PrismaUtilisateurRepository],
+    },
+    {
+      provide: ListerUtilisateurs,
+      useFactory: (repository: PrismaUtilisateurRepository) =>
+        new ListerUtilisateurs(repository),
+      inject: [PrismaUtilisateurRepository],
+    },
+    {
+      provide: DemanderReinitialisation,
+      useFactory: (
+        utilisateurs: PrismaUtilisateurRepository,
+        emettreJetonCompte: EmettreJetonCompte,
+      ) => new DemanderReinitialisation(utilisateurs, emettreJetonCompte),
+      inject: [PrismaUtilisateurRepository, EmettreJetonCompte],
+    },
+    {
+      provide: DefinirMotDePasse,
+      useFactory: (
+        jetons: PrismaJetonCompteRepository,
+        utilisateurs: PrismaUtilisateurRepository,
+      ) => new DefinirMotDePasse(jetons, utilisateurs),
+      inject: [PrismaJetonCompteRepository, PrismaUtilisateurRepository],
+    },
+    {
+      provide: ChangerMotDePasse,
+      useFactory: (utilisateurs: PrismaUtilisateurRepository) =>
+        new ChangerMotDePasse(utilisateurs),
+      inject: [PrismaUtilisateurRepository],
+    },
+    {
+      provide: ObtenirMonCompte,
+      useFactory: (utilisateurs: PrismaUtilisateurRepository) =>
+        new ObtenirMonCompte(utilisateurs),
       inject: [PrismaUtilisateurRepository],
     },
   ],

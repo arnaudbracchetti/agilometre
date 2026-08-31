@@ -86,4 +86,13 @@ describe('LoginPage', () => {
     expect(fixture.componentInstance['erreur']()).toBe('Email ou mot de passe incorrect.');
     expect(navigateSpy).not.toHaveBeenCalled();
   });
+
+  it('propose un lien vers « mot de passe oublié »', async () => {
+    const fixture = await creerFixture();
+    fixture.detectChanges();
+
+    const lien = fixture.nativeElement.querySelector('a[routerLink="/mot-de-passe-oublie"]');
+
+    expect(lien).toBeTruthy();
+  });
 });

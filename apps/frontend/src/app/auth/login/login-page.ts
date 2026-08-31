@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -8,7 +8,7 @@ import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-login-page',
-  imports: [FormsModule, NzButtonModule, NzInputModule],
+  imports: [FormsModule, NzButtonModule, NzInputModule, RouterLink],
   templateUrl: './login-page.html',
   styleUrl: './login-page.scss',
 })

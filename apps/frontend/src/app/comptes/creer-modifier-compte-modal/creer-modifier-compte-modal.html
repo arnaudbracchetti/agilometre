@@ -1,0 +1,57 @@
+<form class="creer-modifier" (ngSubmit)="enregistrer()">
+  <div class="creer-modifier__champ">
+    <label for="email">Email</label>
+    <input
+      nz-input
+      id="email"
+      name="email"
+      type="email"
+      required
+      [ngModel]="email()"
+      (ngModelChange)="email.set($event)"
+    />
+  </div>
+
+  <div class="creer-modifier__champ">
+    <label for="prenom">Prénom</label>
+    <input
+      nz-input
+      id="prenom"
+      name="prenom"
+      required
+      [ngModel]="prenom()"
+      (ngModelChange)="prenom.set($event)"
+    />
+  </div>
+
+  <div class="creer-modifier__champ">
+    <label for="nom">Nom</label>
+    <input
+      nz-input
+      id="nom"
+      name="nom"
+      required
+      [ngModel]="nom()"
+      (ngModelChange)="nom.set($event)"
+    />
+  </div>
+
+  @if (!data.compte) {
+    <div class="creer-modifier__champ">
+      <label for="role">Rôle</label>
+      <nz-select id="role" name="role" [ngModel]="role()" (ngModelChange)="role.set($event)">
+        @for (r of rolesCreables; track r) {
+          <nz-option [nzValue]="r" [nzLabel]="libelleRole(r)"></nz-option>
+        }
+      </nz-select>
+    </div>
+  }
+
+  <app-dialog-actions
+    [libelleAction]="data.compte ? 'Enregistrer' : 'Créer et envoyer l’invitation'"
+    [actionEnCours]="enCours()"
+    [actionDesactivee]="!formulaireValide()"
+    (annuler)="annuler()"
+    (action)="enregistrer()"
+  />
+</form>

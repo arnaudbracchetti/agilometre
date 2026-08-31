@@ -80,4 +80,31 @@ describe('AuthService', () => {
     expect(service.jetonActuel()).not.toBe(premierJeton);
     expect(service.estConnecte()).toBe(true);
   });
+
+  it('demanderReinitialisation POST /api/mot-de-passe/oubli avec l’email', () => {
+    service.demanderReinitialisation('ada@example.com').subscribe();
+
+    const req = httpMock.expectOne('/api/mot-de-passe/oubli');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'ada@example.com' });
+    req.flush(null);
+  });
+
+  it('definirMotDePasse POST /api/mot-de-passe/definir avec le jeton et le mot de passe', () => {
+    service.definirMotDePasse('jeton-brut', 'nouveau-mot-de-passe').subscribe();
+
+    const req = httpMock.expectOne('/api/mot-de-passe/definir');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ jeton: 'jeton-brut', motDePasse: 'nouveau-mot-de-passe' });
+    req.flush(null);
+  });
+
+  it('changerMotDePasse POST /api/mot-de-passe/changer avec l’ancien et le nouveau mot de passe', () => {
+    service.changerMotDePasse('ancien', 'nouveau').subscribe();
+
+    const req = httpMock.expectOne('/api/mot-de-passe/changer');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ motDePasseActuel: 'ancien', nouveauMotDePasse: 'nouveau' });
+    req.flush(null);
+  });
 });

@@ -8,8 +8,8 @@
   "packageManager": "pnpm@10.28.0",
   "scripts": {
     "dev": "pnpm run --parallel --filter backend --filter frontend dev",
-    "dev:db": "docker compose up postgres",
-    "dev:db:test": "docker compose --profile test up postgres-test",
+    "dev:db": "docker compose up postgres mailpit",
+    "dev:db:test": "docker compose --profile test up postgres-test mailpit",
     "build": "pnpm --filter shared build && pnpm --filter backend build && pnpm --filter frontend build",
     "lint": "pnpm -r run lint",
     "test": "pnpm -r run test",

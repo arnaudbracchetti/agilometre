@@ -97,19 +97,99 @@ export class Utilisateur {
     nom: string,
     motDePasseHash: string,
   ): Result<void, ErreurInvariantUtilisateur> {
+    const email_ = Utilisateur.validerEmail(email);
+    if (email_.estEchec) return Result.echec(email_.erreur);
+    const prenom_ = Utilisateur.validerPrenom(prenom);
+    if (prenom_.estEchec) return Result.echec(prenom_.erreur);
+    const nom_ = Utilisateur.validerNom(nom);
+    if (nom_.estEchec) return Result.echec(nom_.erreur);
+    const hash_ = Utilisateur.validerMotDePasseHash(motDePasseHash);
+    if (hash_.estEchec) return Result.echec(hash_.erreur);
+    return Result.succes(undefined);
+  }
+
+  private static validerEmail(
+    email: string,
+  ): Result<void, EmailUtilisateurInvalideError> {
     if (!FORMAT_EMAIL.test(email.trim())) {
       return Result.echec(new EmailUtilisateurInvalideError());
     }
+    return Result.succes(undefined);
+  }
+
+  private static validerPrenom(
+    prenom: string,
+  ): Result<void, PrenomUtilisateurInvalideError> {
     if (prenom.trim().length === 0) {
       return Result.echec(new PrenomUtilisateurInvalideError());
     }
+    return Result.succes(undefined);
+  }
+
+  private static validerNom(
+    nom: string,
+  ): Result<void, NomUtilisateurInvalideError> {
     if (nom.trim().length === 0) {
       return Result.echec(new NomUtilisateurInvalideError());
     }
+    return Result.succes(undefined);
+  }
+
+  private static validerMotDePasseHash(
+    motDePasseHash: string,
+  ): Result<void, MotDePasseHashUtilisateurInvalideError> {
     if (motDePasseHash.trim().length === 0) {
       return Result.echec(new MotDePasseHashUtilisateurInvalideError());
     }
     return Result.succes(undefined);
+  }
+
+  /**
+   * Coach : modifie prénom/nom/email d'un compte — jamais le mot de passe
+   * (doc/spec/annexes/gestion-des-droits.md, "Le Coach n'a aucun pouvoir sur le mot de passe
+   * d'autrui"). Réutilise les mêmes validations unitaires que `creer`.
+   */
+  modifierProfil(
+    email: string,
+    prenom: string,
+    nom: string,
+  ): Result<void, ErreurInvariantUtilisateur> {
+    const email_ = Utilisateur.validerEmail(email);
+    if (email_.estEchec) return Result.echec(email_.erreur);
+    const prenom_ = Utilisateur.validerPrenom(prenom);
+    if (prenom_.estEchec) return Result.echec(prenom_.erreur);
+    const nom_ = Utilisateur.validerNom(nom);
+    if (nom_.estEchec) return Result.echec(nom_.erreur);
+
+    this._email = email.trim();
+    this._prenom = prenom.trim();
+    this._nom = nom.trim();
+    return Result.succes(undefined);
+  }
+
+  /**
+   * Seul point d'entrée qui touche `_motDePasseHash` — consommé par `DefinirMotDePasse`
+   * (invitation/réinitialisation) et `ChangerMotDePasse` (self-service), jamais par le Coach pour
+   * le compte d'autrui.
+   */
+  definirMotDePasse(
+    motDePasseHash: string,
+  ): Result<void, MotDePasseHashUtilisateurInvalideError> {
+    const hash_ = Utilisateur.validerMotDePasseHash(motDePasseHash);
+    if (hash_.estEchec) return Result.echec(hash_.erreur);
+
+    this._motDePasseHash = motDePasseHash;
+    return Result.succes(undefined);
+  }
+
+  /** Réversible, jamais de suppression (gestion-des-droits.md, "Désactivation") — idempotent,
+   * aucun invariant à violer. */
+  desactiver(): void {
+    this._actif = false;
+  }
+
+  reactiver(): void {
+    this._actif = true;
   }
 
   get email(): string {

@@ -6,6 +6,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideNzNativeDateAdapter } from 'ng-zorro-antd/core/time';
+import { Role } from '@agilometre/shared';
 import { AppBreadcrumb } from './app-breadcrumb';
 import { routes } from '../../app.routes';
 import { AuthService } from '../../auth/auth.service';
@@ -56,8 +57,10 @@ describe('AppBreadcrumb (routes réelles de l’application)', () => {
         provideNoopAnimations(),
         provideNzNativeDateAdapter(),
         // Toutes ces routes vivent sous AppShell, protégée par authGuard depuis la carte #59 —
-        // ce test porte sur le fil d'Ariane, pas sur l'authentification.
-        { provide: AuthService, useValue: { estConnecte: () => true } },
+        // ce test porte sur le fil d'Ariane, pas sur l'authentification. `role: () => Role.Coach`
+        // est nécessaire depuis #60 : AppShell filtre son menu par capacité (DroitsService, qui
+        // lit `AuthService.role()`), Coach reste le seul Rôle qui les a toutes aujourd'hui.
+        { provide: AuthService, useValue: { estConnecte: () => true, role: () => Role.Coach } },
       ],
     });
   });

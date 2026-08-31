@@ -1,0 +1,57 @@
+<div class="definir">
+  <div class="definir__card">
+    @if (jetonInvalide()) {
+      <h1 class="definir__titre">Lien invalide ou expiré</h1>
+      <p>
+        Ce lien n’est plus valable — il a peut-être déjà été utilisé, ou a expiré. Demandez un
+        nouveau lien depuis l’écran « mot de passe oublié ».
+      </p>
+      <a routerLink="/mot-de-passe-oublie">Mot de passe oublié</a>
+    } @else {
+      <form (ngSubmit)="definir()">
+        <h1 class="definir__titre">Définir votre mot de passe</h1>
+
+        <label class="definir__champ">
+          <span>Nouveau mot de passe</span>
+          <input
+            nz-input
+            type="password"
+            name="motDePasse"
+            autocomplete="new-password"
+            required
+            [ngModel]="motDePasse()"
+            (ngModelChange)="motDePasse.set($event)"
+          />
+        </label>
+
+        <label class="definir__champ">
+          <span>Confirmer le mot de passe</span>
+          <input
+            nz-input
+            type="password"
+            name="confirmation"
+            autocomplete="new-password"
+            required
+            [ngModel]="confirmation()"
+            (ngModelChange)="confirmation.set($event)"
+          />
+        </label>
+
+        @if (erreur()) {
+          <p class="definir__erreur">{{ erreur() }}</p>
+        }
+
+        <button
+          nz-button
+          nzType="primary"
+          nzBlock
+          [nzLoading]="enCours()"
+          [disabled]="!formulaireValide()"
+          type="submit"
+        >
+          Définir le mot de passe
+        </button>
+      </form>
+    }
+  </div>
+</div>

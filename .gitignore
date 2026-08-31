@@ -19,3 +19,4 @@ coverage/
 .codex/
 .impeccable/
 apps/frontend/.impeccable/
+.playwright-mcp/

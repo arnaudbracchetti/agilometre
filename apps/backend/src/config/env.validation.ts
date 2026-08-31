@@ -1,7 +1,9 @@
-import { plainToInstance } from 'class-transformer';
+import { plainToInstance, Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsInt,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Max,
   Min,
@@ -32,6 +34,35 @@ class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   SMTP_FROM!: string;
+
+  // La plupart des relais SMTP (Brevo, Mailjet, SES...) exigent une authentification ; Mailpit
+  // (dev/e2e) n'en demande pas — optionnels, cf. doc/spec/annexes/gestion-des-droits.md.
+  @IsString()
+  @IsOptional()
+  SMTP_USER?: string;
+
+  @IsString()
+  @IsOptional()
+  SMTP_PASSWORD?: string;
+
+  // `enableImplicitConversion` convertit déjà la chaîne source en booléen (via `Boolean(value)`,
+  // donc "false" → true) avant que ce Transform ne s'exécute — `value` reçu ici est donc déjà
+  // corrompu. Relire la valeur brute via `obj` (l'objet source, non converti) contourne le
+  // problème.
+  @IsBoolean()
+  @IsOptional()
+  @Transform(({ obj }: { obj: Record<string, unknown> }) =>
+    typeof obj.SMTP_SECURE === 'string'
+      ? obj.SMTP_SECURE.toLowerCase() === 'true'
+      : obj.SMTP_SECURE,
+  )
+  SMTP_SECURE?: boolean;
+
+  // URL publique de cette instance, utilisée pour construire les liens dans les emails (Jeton de
+  // compte) — jamais déduite du header Host de la requête entrante, pour éviter une usurpation.
+  @IsString()
+  @IsNotEmpty()
+  APP_URL!: string;
 
   // Le Seuil de Palier (appelé Paramètre X dans le PRD) et la durée d'une Période de calcul sont
   // des points ouverts du PRD §12 : les défauts ci-dessous sont un choix produit, reconfigurable
