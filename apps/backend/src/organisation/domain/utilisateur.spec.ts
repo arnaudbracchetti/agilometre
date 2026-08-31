@@ -212,9 +212,221 @@ describe('Utilisateur', () => {
       'hash',
       false,
       Role.Direction,
+      [],
     );
 
     expect(utilisateur.actif).toBe(false);
     expect(utilisateur.role).toBe(Role.Direction);
+    expect(utilisateur.habilitations).toEqual([]);
+  });
+
+  describe('ajouterHabilitation', () => {
+    function creerDirection() {
+      return Utilisateur.creer(
+        'u1',
+        'direction@example.com',
+        'Ada',
+        'Lovelace',
+        'hash',
+        Role.Direction,
+      ).valeur;
+    }
+
+    it('accepte un entiteId pour une Direction', () => {
+      const utilisateur = creerDirection();
+
+      const resultat = utilisateur.ajouterHabilitation('h1', {
+        entiteId: 'e1',
+      });
+
+      expect(resultat.estSucces).toBe(true);
+      expect(utilisateur.habilitations).toHaveLength(1);
+      expect(utilisateur.habilitations[0].entiteId).toBe('e1');
+    });
+
+    it('rejette un equipeId pour une Direction', () => {
+      const utilisateur = creerDirection();
+
+      const resultat = utilisateur.ajouterHabilitation('h1', {
+        equipeId: 'eq1',
+      });
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe(
+        'HabilitationIncompatibleAvecRoleError',
+      );
+      expect(utilisateur.habilitations).toHaveLength(0);
+    });
+
+    it('rejette toute Habilitation pour un Coach', () => {
+      const utilisateur = Utilisateur.creer(
+        'u1',
+        'coach@example.com',
+        'Ada',
+        'Lovelace',
+        'hash',
+        Role.Coach,
+      ).valeur;
+
+      const resultat = utilisateur.ajouterHabilitation('h1', {
+        entiteId: 'e1',
+      });
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe(
+        'HabilitationIncompatibleAvecRoleError',
+      );
+    });
+
+    it('rejette toute Habilitation pour un Membre d’équipe (périmètre dérivé du roster)', () => {
+      const utilisateur = Utilisateur.creer(
+        'u1',
+        'membre@example.com',
+        'Ada',
+        'Lovelace',
+        'hash',
+        Role.Membre,
+      ).valeur;
+
+      const resultat = utilisateur.ajouterHabilitation('h1', {
+        entiteId: 'e1',
+      });
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe(
+        'HabilitationIncompatibleAvecRoleError',
+      );
+    });
+
+    it('accepte un equipeId pour un Manager d’équipe (invariant porté, non exploité)', () => {
+      const utilisateur = Utilisateur.creer(
+        'u1',
+        'manager@example.com',
+        'Ada',
+        'Lovelace',
+        'hash',
+        Role.Manager,
+      ).valeur;
+
+      const resultat = utilisateur.ajouterHabilitation('h1', {
+        equipeId: 'eq1',
+      });
+
+      expect(resultat.estSucces).toBe(true);
+    });
+
+    it('rejette un doublon sur la même Entité', () => {
+      const utilisateur = creerDirection();
+      utilisateur.ajouterHabilitation('h1', { entiteId: 'e1' });
+
+      const resultat = utilisateur.ajouterHabilitation('h2', {
+        entiteId: 'e1',
+      });
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('HabilitationEnDoublonError');
+      expect(utilisateur.habilitations).toHaveLength(1);
+    });
+
+    it('accepte plusieurs Habilitations sur des Entités différentes', () => {
+      const utilisateur = creerDirection();
+      utilisateur.ajouterHabilitation('h1', { entiteId: 'e1' });
+
+      const resultat = utilisateur.ajouterHabilitation('h2', {
+        entiteId: 'e2',
+      });
+
+      expect(resultat.estSucces).toBe(true);
+      expect(utilisateur.habilitations).toHaveLength(2);
+    });
+  });
+
+  describe('retirerHabilitation', () => {
+    it('retire une Habilitation existante', () => {
+      const utilisateur = Utilisateur.creer(
+        'u1',
+        'direction@example.com',
+        'Ada',
+        'Lovelace',
+        'hash',
+        Role.Direction,
+      ).valeur;
+      utilisateur.ajouterHabilitation('h1', { entiteId: 'e1' });
+
+      const resultat = utilisateur.retirerHabilitation('h1');
+
+      expect(resultat.estSucces).toBe(true);
+      expect(utilisateur.habilitations).toHaveLength(0);
+    });
+
+    it('rejette le retrait d’une Habilitation inconnue', () => {
+      const utilisateur = Utilisateur.creer(
+        'u1',
+        'direction@example.com',
+        'Ada',
+        'Lovelace',
+        'hash',
+        Role.Direction,
+      ).valeur;
+
+      const resultat = utilisateur.retirerHabilitation('inconnue');
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('HabilitationIntrouvableError');
+    });
+  });
+
+  describe('changerRole', () => {
+    it('change le Rôle quand aucune Habilitation n’existe', () => {
+      const utilisateur = Utilisateur.creer(
+        'u1',
+        'coach@example.com',
+        'Ada',
+        'Lovelace',
+        'hash',
+        Role.Coach,
+      ).valeur;
+
+      const resultat = utilisateur.changerRole(Role.Direction);
+
+      expect(resultat.estSucces).toBe(true);
+      expect(utilisateur.role).toBe(Role.Direction);
+    });
+
+    it('rejette le changement si une Habilitation existante devient incohérente', () => {
+      const utilisateur = Utilisateur.creer(
+        'u1',
+        'direction@example.com',
+        'Ada',
+        'Lovelace',
+        'hash',
+        Role.Direction,
+      ).valeur;
+      utilisateur.ajouterHabilitation('h1', { entiteId: 'e1' });
+
+      const resultat = utilisateur.changerRole(Role.Coach);
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('RoleIncoherentAvecHabilitationsError');
+      expect(utilisateur.role).toBe(Role.Direction);
+    });
+
+    it('autorise le changement une fois les Habilitations retirées', () => {
+      const utilisateur = Utilisateur.creer(
+        'u1',
+        'direction@example.com',
+        'Ada',
+        'Lovelace',
+        'hash',
+        Role.Direction,
+      ).valeur;
+      utilisateur.ajouterHabilitation('h1', { entiteId: 'e1' });
+      utilisateur.retirerHabilitation('h1');
+
+      const resultat = utilisateur.changerRole(Role.Coach);
+
+      expect(resultat.estSucces).toBe(true);
+      expect(utilisateur.role).toBe(Role.Coach);
+    });
   });
 });

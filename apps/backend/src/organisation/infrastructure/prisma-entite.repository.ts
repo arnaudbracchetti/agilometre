@@ -45,4 +45,16 @@ export class PrismaEntiteRepository implements EntiteRepository {
       throw erreur;
     }
   }
+
+  /**
+   * Nettoie les Habilitations `entiteId` orphelines dans la **même transaction Postgres** que la
+   * suppression (ADR-0006) — la garde (aucune Équipe rattachée) est déjà vérifiée en amont par le
+   * use case `SupprimerEntite`, cette méthode ne fait donc aucune gestion d'erreur FK.
+   */
+  async remove(id: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.habilitation.deleteMany({ where: { entiteId: id } });
+      await tx.entite.delete({ where: { id } });
+    });
+  }
 }

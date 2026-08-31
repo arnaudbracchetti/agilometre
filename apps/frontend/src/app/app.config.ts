@@ -38,6 +38,7 @@ import {
   RiseOutline,
   FallOutline,
   ArrowRightOutline,
+  SafetyCertificateOutline,
 } from '@ant-design/icons-angular/icons';
 import { registerLocaleData } from '@angular/common';
 import fr from '@angular/common/locales/fr';
@@ -93,6 +94,7 @@ export const appConfig: ApplicationConfig = {
       RiseOutline,
       FallOutline,
       ArrowRightOutline,
+      SafetyCertificateOutline,
     ]),
   ],
 };

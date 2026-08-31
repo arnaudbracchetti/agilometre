@@ -4,10 +4,10 @@ import { AppHeaderLink } from './header/app-header';
 
 /**
  * Menu applicatif filtré par capacité (docs/design/agregat-politique-des-droits.md §2), partagé
- * par `AppShell` (écrans authentifiés) et `Home` (page d'accueil) — un compte Direction/Membre
- * d'équipe sans capacité encore accordée (tranches #61/#62) reçoit un menu vide plutôt que des
- * liens qui échoueraient systématiquement en 403. `AppHeader` reste agnostique des droits, c'est
- * ce service qui décide quoi lui passer.
+ * par `AppShell` (écrans authentifiés) et `Home` (page d'accueil) — un compte Membre d'équipe sans
+ * capacité encore accordée (tranche #62) reçoit un menu vide plutôt que des liens qui
+ * échoueraient systématiquement en 403. `AppHeader` reste agnostique des droits, c'est ce service
+ * qui décide quoi lui passer.
  */
 @Injectable({ providedIn: 'root' })
 export class LiensNavService {
@@ -34,8 +34,11 @@ export class LiensNavService {
     if (this.droits.peut('gererSessions')) {
       liens.push({ label: 'Sessions', routerLink: '/sessions' });
     }
-    if (this.droits.peut('voirProfilEquipe')) {
-      liens.push({ label: 'Profil d’équipe', routerLink: '/profil' });
+    // Une seule page ('/profil', arbre de sélection) sert le Profil d'Équipe (Coach) et le Profil
+    // d'Entité (Coach + Direction, #61) — l'un ou l'autre droit suffit à y accéder, l'arbre lui-même
+    // se charge de restreindre ce qu'une Direction peut y sélectionner.
+    if (this.droits.peut('voirProfilEquipe') || this.droits.peut('voirProfilEntite')) {
+      liens.push({ label: 'Profil', routerLink: '/profil' });
     }
 
     return liens;

@@ -16,7 +16,7 @@ describe('LiensNavService', () => {
     expect(creerService(null).liens()).toEqual([]);
   });
 
-  it('un Coach voit Administration (avec ses trois sous-entrées), Sessions et Profil d’équipe', () => {
+  it('un Coach voit Administration (avec ses trois sous-entrées), Sessions et Profil', () => {
     const liens = creerService(Role.Coach).liens();
 
     expect(liens).toEqual([
@@ -29,12 +29,14 @@ describe('LiensNavService', () => {
         ],
       },
       { label: 'Sessions', routerLink: '/sessions' },
-      { label: 'Profil d’équipe', routerLink: '/profil' },
+      { label: 'Profil', routerLink: '/profil' },
     ]);
   });
 
-  it('une Direction (aucune capacité encore accordée) voit un menu vide', () => {
-    expect(creerService(Role.Direction).liens()).toEqual([]);
+  it('une Direction voit Profil (accès à ses Entités habilitées, #61), rien d’autre', () => {
+    expect(creerService(Role.Direction).liens()).toEqual([
+      { label: 'Profil', routerLink: '/profil' },
+    ]);
   });
 
   it('un Membre d’équipe (aucune capacité encore accordée) voit un menu vide', () => {

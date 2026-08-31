@@ -30,7 +30,12 @@ import { PerimetreGuard } from './guards/perimetre.guard';
   controllers: [AuthController],
   exports: [AuthGuard, PerimetreGuard],
   providers: [
-    PerimetreUtilisateur,
+    {
+      provide: PerimetreUtilisateur,
+      useFactory: (utilisateurs: PrismaUtilisateurRepository) =>
+        new PerimetreUtilisateur(utilisateurs),
+      inject: [PrismaUtilisateurRepository],
+    },
     AuthGuard,
     PerimetreGuard,
     {

@@ -4,6 +4,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzFormatEmitEvent, NzTreeModule, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
 import { EntiteDto, EquipeDto, MembreDto } from '@agilometre/shared';
+import { DroitsService } from '../../auth/droits.service';
 import { OrganisationService } from '../organisation.service';
 
 type TypeNoeud = 'racine' | 'entite' | 'equipe' | 'membre';
@@ -36,23 +37,35 @@ const RACINE_SELECTIONNEE: SelectionInterne = { type: 'racine', id: RACINE_KEY }
 function racineVersNoeud(
   entites: EntiteDto[],
   equipesParEntite: Record<string, EquipeDto[]>,
+  restreintADirection: boolean,
 ): NoeudOrganisation {
   return {
     title: 'Organisation',
     key: RACINE_KEY,
     type: 'racine',
     isLeaf: false,
-    children: entites.map((entite) => entiteVersNoeud(entite, equipesParEntite[entite.id])),
+    children: entites.map((entite) =>
+      entiteVersNoeud(entite, equipesParEntite[entite.id], restreintADirection),
+    ),
   };
 }
 
-function entiteVersNoeud(entite: EntiteDto, equipes: EquipeDto[] | undefined): NoeudOrganisation {
+/**
+ * `restreintADirection` réduit l'Entité à une feuille — jamais d'Équipe visible, ni dépliable
+ * (doc/spec/annexes/gestion-des-droits.md, matrice "Arbre de navigation Entité → Équipe" pour
+ * Direction). Sans `isLeaf: true`, la flèche d'expansion resterait affichée sur un nœud vide.
+ */
+function entiteVersNoeud(
+  entite: EntiteDto,
+  equipes: EquipeDto[] | undefined,
+  restreintADirection: boolean,
+): NoeudOrganisation {
   return {
     title: entite.nom,
     key: entite.id,
     type: 'entite',
-    isLeaf: false,
-    children: equipes?.map(equipeVersNoeud),
+    isLeaf: restreintADirection,
+    children: restreintADirection ? undefined : equipes?.map(equipeVersNoeud),
   };
 }
 
@@ -101,9 +114,12 @@ function racineFiltreeVersNoeud(
   entites: EntiteDto[],
   equipesParEntite: Record<string, EquipeDto[]>,
   terme: string,
+  restreintADirection: boolean,
 ): NoeudOrganisation {
   const entitesCorrespondantes = entites.filter((entite) =>
-    entiteCorrespond(entite, equipesParEntite[entite.id] ?? [], terme),
+    restreintADirection
+      ? texteCorrespond(entite.nom, terme)
+      : entiteCorrespond(entite, equipesParEntite[entite.id] ?? [], terme),
   );
   return {
     title: 'Organisation',
@@ -111,12 +127,25 @@ function racineFiltreeVersNoeud(
     type: 'racine',
     isLeaf: false,
     children: entitesCorrespondantes.map((entite) =>
-      entiteFiltreeVersNoeud(entite, equipesParEntite[entite.id] ?? [], terme),
+      entiteFiltreeVersNoeud(entite, equipesParEntite[entite.id] ?? [], terme, restreintADirection),
     ),
   };
 }
 
-function entiteFiltreeVersNoeud(entite: EntiteDto, equipes: EquipeDto[], terme: string): NoeudOrganisation {
+/**
+ * `restreintADirection` : la recherche ne porte jamais sur les Équipes/Membres, et ne les révèle
+ * jamais dans les résultats — la restriction porte sur la structure de l'arbre, pas seulement sur
+ * les routes atteignables (gestion-des-droits.md, "Application des droits à l'exécution").
+ */
+function entiteFiltreeVersNoeud(
+  entite: EntiteDto,
+  equipes: EquipeDto[],
+  terme: string,
+  restreintADirection: boolean,
+): NoeudOrganisation {
+  if (restreintADirection) {
+    return { title: entite.nom, key: entite.id, type: 'entite', isLeaf: true };
+  }
   const equipesAffichees = texteCorrespond(entite.nom, terme)
     ? equipes
     : equipes.filter((equipe) => equipeCorrespond(equipe, terme));
@@ -163,6 +192,14 @@ function collecterCles(noeuds: NoeudOrganisation[]): string[] {
 })
 export class ArbreOrganisation implements OnInit {
   private readonly organisationService = inject(OrganisationService);
+  private readonly droits = inject(DroitsService);
+
+  /**
+   * Proxy de "cette personne est une Direction restreinte à ses Entités habilitées" : `Coach` a
+   * `gererOrganisation`, `Direction` ne l'a jamais (matrice écran/Rôle) — pas de dépendance
+   * directe au Rôle ici, `DroitsService` reste l'unique source de vérité sur les capacités.
+   */
+  protected readonly restreintADirection = computed(() => !this.droits.peut('gererOrganisation'));
 
   private readonly entites = signal<EntiteDto[]>([]);
   private readonly equipesParEntite = signal<Record<string, EquipeDto[]>>({});
@@ -174,10 +211,11 @@ export class ArbreOrganisation implements OnInit {
 
   protected readonly treeData = computed<NoeudOrganisation[]>(() => {
     const terme = this.filtre().trim().toLowerCase();
+    const restreint = this.restreintADirection();
     if (terme.length === 0) {
-      return [racineVersNoeud(this.entites(), this.equipesParEntite())];
+      return [racineVersNoeud(this.entites(), this.equipesParEntite(), restreint)];
     }
-    return [racineFiltreeVersNoeud(this.entites(), this.equipesParEntite(), terme)];
+    return [racineFiltreeVersNoeud(this.entites(), this.equipesParEntite(), terme, restreint)];
   });
 
   protected readonly aucunResultat = computed<boolean>(() => {
@@ -337,8 +375,14 @@ export class ArbreOrganisation implements OnInit {
     return null;
   }
 
+  /**
+   * No-op pour une Direction restreinte : sans cette garde, la recherche (`onFiltreChange`)
+   * chargerait quand même les Équipes de toutes ses Entités en arrière-plan, même si l'arbre ne
+   * les affiche pas — la garantie doit être serveur (aucune requête n'aboutit, la Direction n'a de
+   * toute façon pas accès à cette route), pas seulement un masquage côté vue.
+   */
   private chargerEquipes(entiteId: string): void {
-    if (this.equipesParEntite()[entiteId]) {
+    if (this.restreintADirection() || this.equipesParEntite()[entiteId]) {
       return;
     }
     this.organisationService.listerEquipesParEntite(entiteId).subscribe((equipes) => {

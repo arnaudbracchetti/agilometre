@@ -112,6 +112,7 @@ describe('SeConnecter', () => {
       actif.motDePasseHash,
       false,
       actif.role,
+      [],
     );
     const seConnecter = new SeConnecter(
       new UtilisateurRepositoryEnMemoire([desactive]),

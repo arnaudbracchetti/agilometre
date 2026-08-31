@@ -86,6 +86,7 @@ describe('DemanderReinitialisation', () => {
       'hash',
       false,
       Role.Membre,
+      [],
     );
     const jetons = new JetonCompteRepositoryFake();
     const mail = new MailSenderFake();

@@ -14,6 +14,7 @@ const COMPTE: UtilisateurDto = {
   nom: 'Lovelace',
   role: Role.Direction,
   actif: true,
+  habilitations: [],
 };
 
 describe('MonComptePage', () => {

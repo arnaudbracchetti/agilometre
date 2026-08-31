@@ -65,16 +65,44 @@ export class CreerModifierCompteModal {
       : this.comptesService.creer(this.email(), this.prenom(), this.nom(), this.role());
 
     requete.subscribe({
-      next: (compte) => {
-        this.modalRef.close(compte);
-        this.message.success(compteExistant ? 'Compte modifié.' : 'Compte créé — email d’invitation envoyé.');
-      },
+      next: (compte) => this.apresEnregistrement(compte, compteExistant),
       error: (erreur: HttpErrorResponse) => {
         this.enCours.set(false);
         this.modal.error({
           nzTitle: 'Erreur',
           nzContent:
             erreur.status === 409 ? 'Un compte existe déjà avec cet email.' : 'Impossible d’enregistrer ce compte.',
+        });
+      },
+    });
+  }
+
+  /**
+   * Le changement de Rôle est une seconde requête, distincte de `modifier`/`creer` (route dédiée
+   * `PATCH /comptes/:id/role`, cohérence Rôle/Habilitations vérifiée côté domaine) — jamais
+   * envoyé à la création, où le Rôle est déjà celui choisi dans `creer(...)`.
+   */
+  private apresEnregistrement(compte: UtilisateurDto, compteExistant: UtilisateurDto | null): void {
+    const roleAChange = compteExistant !== null && compteExistant.role !== this.role();
+    if (!roleAChange) {
+      this.modalRef.close(compte);
+      this.message.success(compteExistant ? 'Compte modifié.' : 'Compte créé — email d’invitation envoyé.');
+      return;
+    }
+
+    this.comptesService.changerRole(compte.id, this.role()).subscribe({
+      next: (compteAJour) => {
+        this.modalRef.close(compteAJour);
+        this.message.success('Compte modifié.');
+      },
+      error: (erreur: HttpErrorResponse) => {
+        this.enCours.set(false);
+        this.modal.error({
+          nzTitle: 'Erreur',
+          nzContent:
+            erreur.status === 409
+              ? 'Ce Rôle est incompatible avec les Habilitations existantes — retirez-les d’abord.'
+              : 'Impossible de changer le Rôle de ce compte.',
         });
       },
     });

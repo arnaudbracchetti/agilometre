@@ -8,10 +8,11 @@ import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { NzTableModule, NzTableSortFn } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
-import { UtilisateurDto } from '@agilometre/shared';
+import { Role, UtilisateurDto } from '@agilometre/shared';
 import { ComptesService } from '../comptes.service';
 import { libelleRole } from '../role-libelle';
 import { CreerModifierCompteModal } from '../creer-modifier-compte-modal/creer-modifier-compte-modal';
+import { GererHabilitationsModal } from '../gerer-habilitations-modal/gerer-habilitations-modal';
 
 /** Écran Comptes, réservé au Coach (capacité `gererComptes`) —
  * doc/spec/annexes/gestion-des-droits.md, "Matrice écran / Rôle". */
@@ -36,6 +37,7 @@ export class ComptesPage implements OnInit {
   private readonly modal = inject(NzModalService);
 
   protected readonly libelleRole = libelleRole;
+  protected readonly Role = Role;
   protected readonly comptes = signal<UtilisateurDto[]>([]);
   protected readonly chargementEnCours = signal(false);
   protected readonly filtre = signal('');
@@ -108,6 +110,17 @@ export class ComptesPage implements OnInit {
           this.rafraichir();
         }
       });
+  }
+
+  protected ouvrirHabilitations(compte: UtilisateurDto): void {
+    this.modal
+      .create({
+        nzTitle: 'Gérer les Habilitations',
+        nzContent: GererHabilitationsModal,
+        nzData: { compte },
+        nzFooter: null,
+      })
+      .afterClose.subscribe(() => this.rafraichir());
   }
 
   /** Boîte de dialogue générique (NzModalService) plutôt qu'un popconfirm posé à côté du bouton —

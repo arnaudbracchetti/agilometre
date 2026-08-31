@@ -1,5 +1,6 @@
 import { Role } from '@agilometre/shared';
 import { Result } from '../../shared-kernel/result';
+import { Habilitation } from './habilitation';
 
 export class EmailUtilisateurInvalideError extends Error {
   constructor() {
@@ -35,6 +36,54 @@ export type ErreurInvariantUtilisateur =
   | NomUtilisateurInvalideError
   | MotDePasseHashUtilisateurInvalideError;
 
+/**
+ * Levée par `ajouterHabilitation` quand la cible (Entité/Équipe) n'est pas de la nature attendue
+ * pour le Rôle du porteur — doc/spec/annexes/gestion-des-droits.md, "Habilitations" : `entiteId`
+ * seul si `DIRECTION`, `equipeId` seul si `MANAGER`, aucune Habilitation si `COACH` ni `MEMBRE`
+ * (le périmètre d'un Membre est dérivé du roster, jamais d'une Habilitation).
+ */
+export class HabilitationIncompatibleAvecRoleError extends Error {
+  constructor() {
+    super(
+      'Cette Habilitation n’est pas compatible avec le Rôle de cet Utilisateur',
+    );
+    this.name = 'HabilitationIncompatibleAvecRoleError';
+  }
+}
+
+export class HabilitationEnDoublonError extends Error {
+  constructor() {
+    super('Cette Habilitation existe déjà pour cet Utilisateur');
+    this.name = 'HabilitationEnDoublonError';
+  }
+}
+
+export class HabilitationIntrouvableError extends Error {
+  constructor() {
+    super('Cette Habilitation n’existe pas pour cet Utilisateur');
+    this.name = 'HabilitationIntrouvableError';
+  }
+}
+
+/**
+ * Levée par `changerRole` : pas de vidage silencieux des Habilitations existantes devenues
+ * incohérentes avec le nouveau Rôle — l'opérateur doit les retirer explicitement d'abord
+ * (doc/spec/annexes/gestion-des-droits.md, "Habilitations").
+ */
+export class RoleIncoherentAvecHabilitationsError extends Error {
+  constructor() {
+    super(
+      'Ce changement de Rôle rendrait des Habilitations existantes incohérentes',
+    );
+    this.name = 'RoleIncoherentAvecHabilitationsError';
+  }
+}
+
+export type ErreurAjoutHabilitation =
+  HabilitationIncompatibleAvecRoleError | HabilitationEnDoublonError;
+
+type CibleHabilitation = { entiteId: string } | { equipeId: string };
+
 const FORMAT_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export class Utilisateur {
@@ -46,6 +95,7 @@ export class Utilisateur {
     private _motDePasseHash: string,
     private _actif: boolean,
     private _role: Role,
+    private readonly _habilitations: Habilitation[],
   ) {}
 
   static creer(
@@ -69,15 +119,16 @@ export class Utilisateur {
         motDePasseHash,
         true,
         role,
+        [],
       ),
     );
   }
 
   /**
-   * Recharge un Utilisateur depuis une source déjà validée (le repository Prisma, qui ne relit
-   * que des lignes déjà passées par `creer`) — ne revalide pas l'invariant volontairement,
-   * contrairement à `creer` (cf. CLAUDE.md sur la vigilance requise pour toute factory
-   * additionnelle d'une entité déjà validée ailleurs).
+   * Recharge un Utilisateur (avec ses Habilitations) depuis une source déjà validée (le repository
+   * Prisma, qui ne relit que des lignes déjà passées par `creer`/`ajouterHabilitation`) — ne
+   * revalide pas l'invariant volontairement, contrairement à `creer` (cf. CLAUDE.md sur la
+   * vigilance requise pour toute factory additionnelle d'une entité déjà validée ailleurs).
    */
   static reconstituer(
     id: string,
@@ -87,8 +138,18 @@ export class Utilisateur {
     motDePasseHash: string,
     actif: boolean,
     role: Role,
+    habilitations: Habilitation[],
   ): Utilisateur {
-    return new Utilisateur(id, email, prenom, nom, motDePasseHash, actif, role);
+    return new Utilisateur(
+      id,
+      email,
+      prenom,
+      nom,
+      motDePasseHash,
+      actif,
+      role,
+      habilitations,
+    );
   }
 
   private static valider(
@@ -214,5 +275,74 @@ export class Utilisateur {
 
   get role(): Role {
     return this._role;
+  }
+
+  get habilitations(): readonly Habilitation[] {
+    return [...this._habilitations];
+  }
+
+  /**
+   * Coach seul, réservé aux comptes `DIRECTION`/`MANAGER` — `COACH` et `MEMBRE` n'ont jamais
+   * d'Habilitation, leur périmètre respectif est transversal ou dérivé du roster
+   * (doc/spec/annexes/gestion-des-droits.md, "Habilitations").
+   */
+  ajouterHabilitation(
+    id: string,
+    cible: CibleHabilitation,
+  ): Result<void, ErreurAjoutHabilitation> {
+    if (!Utilisateur.cibleCoherenteAvecRole(cible, this._role)) {
+      return Result.echec(new HabilitationIncompatibleAvecRoleError());
+    }
+    const doublon = this._habilitations.some((habilitation) =>
+      'entiteId' in cible
+        ? habilitation.entiteId === cible.entiteId
+        : habilitation.equipeId === cible.equipeId,
+    );
+    if (doublon) {
+      return Result.echec(new HabilitationEnDoublonError());
+    }
+    this._habilitations.push(Habilitation.creer(id, cible));
+    return Result.succes(undefined);
+  }
+
+  retirerHabilitation(id: string): Result<void, HabilitationIntrouvableError> {
+    const index = this._habilitations.findIndex(
+      (habilitation) => habilitation.id === id,
+    );
+    if (index === -1) {
+      return Result.echec(new HabilitationIntrouvableError());
+    }
+    this._habilitations.splice(index, 1);
+    return Result.succes(undefined);
+  }
+
+  /**
+   * Pas de vidage silencieux : rejeté si une Habilitation existante ne serait plus cohérente avec
+   * le nouveau Rôle — l'opérateur doit d'abord la retirer explicitement.
+   */
+  changerRole(role: Role): Result<void, RoleIncoherentAvecHabilitationsError> {
+    const incoherente = this._habilitations.some(
+      (habilitation) =>
+        !Utilisateur.cibleCoherenteAvecRole(
+          habilitation.entiteId !== null
+            ? { entiteId: habilitation.entiteId }
+            : { equipeId: habilitation.equipeId! },
+          role,
+        ),
+    );
+    if (incoherente) {
+      return Result.echec(new RoleIncoherentAvecHabilitationsError());
+    }
+    this._role = role;
+    return Result.succes(undefined);
+  }
+
+  private static cibleCoherenteAvecRole(
+    cible: CibleHabilitation,
+    role: Role,
+  ): boolean {
+    return 'entiteId' in cible
+      ? role === Role.Direction
+      : role === Role.Manager;
   }
 }

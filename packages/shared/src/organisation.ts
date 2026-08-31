@@ -1,6 +1,12 @@
 import { Evolution, SyntheseThemeDto } from './session';
 import { Role } from './roles';
 
+export interface HabilitationDto {
+  id: string;
+  entiteId: string | null;
+  equipeId: string | null;
+}
+
 export interface UtilisateurDto {
   id: string;
   email: string;
@@ -8,6 +14,7 @@ export interface UtilisateurDto {
   nom: string;
   actif: boolean;
   role: Role;
+  habilitations: HabilitationDto[];
 }
 
 export interface EntiteDto {

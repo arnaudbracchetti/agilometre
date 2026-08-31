@@ -27,4 +27,18 @@ export class ComptesService {
   reactiver(id: string): Observable<UtilisateurDto> {
     return this.http.post<UtilisateurDto>(`${this.baseUrl}/${id}/reactiver`, {});
   }
+
+  changerRole(id: string, role: Role): Observable<UtilisateurDto> {
+    return this.http.patch<UtilisateurDto>(`${this.baseUrl}/${id}/role`, { role });
+  }
+
+  ajouterHabilitation(id: string, entiteId: string): Observable<UtilisateurDto> {
+    return this.http.post<UtilisateurDto>(`${this.baseUrl}/${id}/habilitations`, { entiteId });
+  }
+
+  retirerHabilitation(id: string, habilitationId: string): Observable<UtilisateurDto> {
+    return this.http.delete<UtilisateurDto>(
+      `${this.baseUrl}/${id}/habilitations/${habilitationId}`,
+    );
+  }
 }

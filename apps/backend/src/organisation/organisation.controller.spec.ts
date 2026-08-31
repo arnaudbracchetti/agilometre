@@ -4,11 +4,13 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
+import { Role } from '@agilometre/shared';
 import { Entite, NomEntiteInvalideError } from './domain/entite';
 import { Equipe, NomEquipeInvalideError } from './domain/equipe';
 import { EmailMembreInvalideError } from './domain/membre';
 import { CreerEntite } from './application/creer-entite.usecase';
 import { RenommerEntite } from './application/renommer-entite.usecase';
+import { SupprimerEntite } from './application/supprimer-entite.usecase';
 import { ListerEntites } from './application/lister-entites.usecase';
 import { CreerEquipe } from './application/creer-equipe.usecase';
 import { RenommerEquipe } from './application/renommer-equipe.usecase';
@@ -17,12 +19,18 @@ import { ListerEquipesParEntite } from './application/lister-equipes-par-entite.
 import { AjouterMembre } from './application/ajouter-membre.usecase';
 import { RetirerMembre } from './application/retirer-membre.usecase';
 import { ModifierMembre } from './application/modifier-membre.usecase';
+import type { RequeteAuthentifiee } from '../auth/guards/auth.guard';
 import { OrganisationController } from './organisation.controller';
+
+const REQUETE_COACH = {
+  utilisateur: { id: 'coach-1', email: 'coach@example.com', role: Role.Coach },
+} as RequeteAuthentifiee;
 
 describe('OrganisationController', () => {
   let controller: OrganisationController;
   let creerEntite: { executer: jest.Mock };
   let renommerEntite: { executer: jest.Mock };
+  let supprimerEntite: { executer: jest.Mock };
   let listerEntites: { executer: jest.Mock };
   let creerEquipe: { executer: jest.Mock };
   let renommerEquipe: { executer: jest.Mock };
@@ -35,6 +43,7 @@ describe('OrganisationController', () => {
   beforeEach(async () => {
     creerEntite = { executer: jest.fn() };
     renommerEntite = { executer: jest.fn() };
+    supprimerEntite = { executer: jest.fn() };
     listerEntites = { executer: jest.fn() };
     creerEquipe = { executer: jest.fn() };
     renommerEquipe = { executer: jest.fn() };
@@ -48,6 +57,7 @@ describe('OrganisationController', () => {
       providers: [
         { provide: CreerEntite, useValue: creerEntite },
         { provide: RenommerEntite, useValue: renommerEntite },
+        { provide: SupprimerEntite, useValue: supprimerEntite },
         { provide: ListerEntites, useValue: listerEntites },
         { provide: CreerEquipe, useValue: creerEquipe },
         { provide: RenommerEquipe, useValue: renommerEquipe },
@@ -68,7 +78,7 @@ describe('OrganisationController', () => {
         Entite.creer('e1', 'DSI').valeur,
       ]);
 
-      await expect(controller.lister()).resolves.toEqual([
+      await expect(controller.lister(REQUETE_COACH)).resolves.toEqual([
         { id: 'e1', nom: 'DSI' },
       ]);
     });

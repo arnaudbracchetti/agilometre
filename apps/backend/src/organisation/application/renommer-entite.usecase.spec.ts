@@ -20,6 +20,11 @@ class EntiteRepositoryFake implements EntiteRepository {
     );
   }
 
+  remove(id: string): Promise<void> {
+    this.entites = this.entites.filter((e) => e.id !== id);
+    return Promise.resolve();
+  }
+
   save(entite: Entite): Promise<void> {
     const index = this.entites.findIndex((e) => e.id === entite.id);
     if (index === -1) {

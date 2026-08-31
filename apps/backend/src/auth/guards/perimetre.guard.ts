@@ -26,7 +26,7 @@ export class PerimetreGuard implements CanActivate {
     private readonly perimetreUtilisateur: PerimetreUtilisateur,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const type = this.reflector.getAllAndOverride<
       TypeRessourcePerimetre | undefined
     >(CLE_PERIMETRE, [context.getHandler(), context.getClass()]);
@@ -38,8 +38,14 @@ export class PerimetreGuard implements CanActivate {
     const id = String(request.params.id);
     const autorise =
       type === 'entite'
-        ? this.perimetreUtilisateur.peutVoirEntite(request.utilisateur, id)
-        : this.perimetreUtilisateur.peutVoirEquipe(request.utilisateur, id);
+        ? await this.perimetreUtilisateur.peutVoirEntite(
+            request.utilisateur,
+            id,
+          )
+        : await this.perimetreUtilisateur.peutVoirEquipe(
+            request.utilisateur,
+            id,
+          );
 
     if (!autorise) {
       throw new ForbiddenException(

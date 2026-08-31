@@ -6,6 +6,7 @@ import { ListerEntites } from './application/lister-entites.usecase';
 import { CreerEquipe } from './application/creer-equipe.usecase';
 import { RenommerEquipe } from './application/renommer-equipe.usecase';
 import { SupprimerEquipe } from './application/supprimer-equipe.usecase';
+import { SupprimerEntite } from './application/supprimer-entite.usecase';
 import { ListerEquipesParEntite } from './application/lister-equipes-par-entite.usecase';
 import { AjouterMembre } from './application/ajouter-membre.usecase';
 import { RetirerMembre } from './application/retirer-membre.usecase';
@@ -16,6 +17,9 @@ import { ModifierUtilisateur } from './application/modifier-utilisateur.usecase'
 import { DesactiverUtilisateur } from './application/desactiver-utilisateur.usecase';
 import { ReactiverUtilisateur } from './application/reactiver-utilisateur.usecase';
 import { ListerUtilisateurs } from './application/lister-utilisateurs.usecase';
+import { AjouterHabilitation } from './application/ajouter-habilitation.usecase';
+import { RetirerHabilitation } from './application/retirer-habilitation.usecase';
+import { ChangerRoleUtilisateur } from './application/changer-role-utilisateur.usecase';
 import { DemanderReinitialisation } from './application/demander-reinitialisation.usecase';
 import { DefinirMotDePasse } from './application/definir-mot-de-passe.usecase';
 import { ChangerMotDePasse } from './application/changer-mot-de-passe.usecase';
@@ -25,6 +29,7 @@ import { PrismaEntiteRepository } from './infrastructure/prisma-entite.repositor
 import { PrismaEquipeRepository } from './infrastructure/prisma-equipe.repository';
 import { PrismaUtilisateurRepository } from './infrastructure/prisma-utilisateur.repository';
 import { PrismaJetonCompteRepository } from './infrastructure/prisma-jeton-compte.repository';
+import { PerimetreUtilisateur } from '../auth/domain/perimetre-utilisateur';
 import { OrganisationController } from './organisation.controller';
 import { ComptesController } from './comptes.controller';
 import { MotDePasseController } from './mot-de-passe.controller';
@@ -64,10 +69,17 @@ import { NodemailerMailSender } from '../mail/nodemailer-mail-sender';
       inject: [PrismaEntiteRepository],
     },
     {
+      // `PerimetreUtilisateur` instancié ici directement (pas injecté depuis `AuthModule`, qui
+      // importe déjà `OrganisationModule` pour `PrismaUtilisateurRepository`) : importer
+      // `AuthModule` ici créerait un cycle de modules Nest. C'est un simple import TS d'une classe
+      // de domaine sans framework, pas un `imports: [...]` de module — aucun cycle réel.
       provide: ListerEntites,
-      useFactory: (repository: PrismaEntiteRepository) =>
-        new ListerEntites(repository),
-      inject: [PrismaEntiteRepository],
+      useFactory: (
+        repository: PrismaEntiteRepository,
+        utilisateurs: PrismaUtilisateurRepository,
+      ) =>
+        new ListerEntites(repository, new PerimetreUtilisateur(utilisateurs)),
+      inject: [PrismaEntiteRepository, PrismaUtilisateurRepository],
     },
     {
       provide: CreerEquipe,
@@ -88,6 +100,14 @@ import { NodemailerMailSender } from '../mail/nodemailer-mail-sender';
       useFactory: (repository: PrismaEquipeRepository) =>
         new SupprimerEquipe(repository),
       inject: [PrismaEquipeRepository],
+    },
+    {
+      provide: SupprimerEntite,
+      useFactory: (
+        entites: PrismaEntiteRepository,
+        equipes: PrismaEquipeRepository,
+      ) => new SupprimerEntite(entites, equipes),
+      inject: [PrismaEntiteRepository, PrismaEquipeRepository],
     },
     {
       provide: ListerEquipesParEntite,
@@ -167,6 +187,24 @@ import { NodemailerMailSender } from '../mail/nodemailer-mail-sender';
       provide: ListerUtilisateurs,
       useFactory: (repository: PrismaUtilisateurRepository) =>
         new ListerUtilisateurs(repository),
+      inject: [PrismaUtilisateurRepository],
+    },
+    {
+      provide: AjouterHabilitation,
+      useFactory: (repository: PrismaUtilisateurRepository) =>
+        new AjouterHabilitation(repository),
+      inject: [PrismaUtilisateurRepository],
+    },
+    {
+      provide: RetirerHabilitation,
+      useFactory: (repository: PrismaUtilisateurRepository) =>
+        new RetirerHabilitation(repository),
+      inject: [PrismaUtilisateurRepository],
+    },
+    {
+      provide: ChangerRoleUtilisateur,
+      useFactory: (repository: PrismaUtilisateurRepository) =>
+        new ChangerRoleUtilisateur(repository),
       inject: [PrismaUtilisateurRepository],
     },
     {

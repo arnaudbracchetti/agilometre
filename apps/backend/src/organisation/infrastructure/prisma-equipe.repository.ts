@@ -101,9 +101,18 @@ export class PrismaEquipeRepository implements EquipeRepository {
     }
   }
 
+  /**
+   * Nettoie les Habilitations `equipeId` orphelines dans la **même transaction Postgres** que la
+   * suppression (ADR-0006) : si `equipe.delete` échoue (P2003, Équipe encore référencée), tout est
+   * annulé — y compris le `deleteMany` déjà exécuté — donc pas de fenêtre où l'Habilitation aurait
+   * disparu sans que l'Équipe ne le soit réellement.
+   */
   async remove(id: string): Promise<void> {
     try {
-      await this.prisma.equipe.delete({ where: { id } });
+      await this.prisma.$transaction(async (tx) => {
+        await tx.habilitation.deleteMany({ where: { equipeId: id } });
+        await tx.equipe.delete({ where: { id } });
+      });
     } catch (erreur) {
       if (
         erreur instanceof Prisma.PrismaClientKnownRequestError &&

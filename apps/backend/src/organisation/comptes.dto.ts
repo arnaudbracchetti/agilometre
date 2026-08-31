@@ -29,3 +29,14 @@ export class ModifierUtilisateurDto {
   @IsNotEmpty()
   nom!: string;
 }
+
+export class AjouterHabilitationDto {
+  @IsString()
+  @IsNotEmpty()
+  entiteId!: string;
+}
+
+export class ChangerRoleUtilisateurDto {
+  @IsEnum(Role)
+  role!: Role;
+}

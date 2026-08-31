@@ -97,18 +97,33 @@ model Membre {
 // Compte de connexion (issue #59, doc/spec/annexes/gestion-des-droits.md). Unicité de `email`
 // (insensible à la casse) garantie par un index fonctionnel sur LOWER(email), ajouté par une
 // migration SQL brute (même limitation que Entite.nom) — voir la migration
-// utilisateur_email_unique_ci et docs/design/agregat-politique-des-droits.md. Pas d'Habilitation
-// à ce stade (tranche 3, #61) ni de relation Prisma vers Membre (Membre.utilisateurId reste une
-// chaîne simple, voir le commentaire de Membre ci-dessus).
+// utilisateur_email_unique_ci et docs/design/agregat-politique-des-droits.md. Pas de relation
+// Prisma vers Membre (Membre.utilisateurId reste une chaîne simple, voir le commentaire de Membre
+// ci-dessus).
 model Utilisateur {
-  id             String        @id @default(uuid())
+  id             String         @id @default(uuid())
   email          String
   prenom         String
   nom            String
   motDePasseHash String
-  actif          Boolean       @default(true)
+  actif          Boolean        @default(true)
   role           Role
   jetons         JetonCompte[]
+  habilitations  Habilitation[]
+}
+
+// Entité enfant de Utilisateur (issue #61, docs/design/agregat-organisation.md §1) : borne le
+// périmètre d'une Direction à une Entité, ou (invariant porté, non exploité cette itération) d'un
+// Manager d'équipe à une Équipe. Exactement un des deux champs est renseigné — invariant porté par
+// `Utilisateur.ajouterHabilitation()`, pas par une contrainte de base. Pas de relation Prisma vers
+// Entite/Equipe (mêmes bounded contexts séparés qu'ADR-0005, même pattern que
+// Membre.utilisateurId) : `onDelete: Cascade` ne joue que côté Utilisateur.
+model Habilitation {
+  id            String      @id @default(uuid())
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  utilisateurId String
+  entiteId      String?
+  equipeId      String?
 }
 
 // Jeton de compte (CONTEXT.md, issue #60) : usage unique, 7 jours, sert à la fois l'invitation

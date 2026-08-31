@@ -9,12 +9,14 @@ import { provideNzIcons } from 'ng-zorro-antd/icon';
 import {
   CheckCircleOutline,
   EditOutline,
+  SafetyCertificateOutline,
   SearchOutline,
   StopOutline,
 } from '@ant-design/icons-angular/icons';
 import { Role, UtilisateurDto } from '@agilometre/shared';
 import { ComptesPage } from './comptes-page';
 import { CreerModifierCompteModal } from '../creer-modifier-compte-modal/creer-modifier-compte-modal';
+import { GererHabilitationsModal } from '../gerer-habilitations-modal/gerer-habilitations-modal';
 
 const COMPTE: UtilisateurDto = {
   id: 'u1',
@@ -23,6 +25,7 @@ const COMPTE: UtilisateurDto = {
   nom: 'Lovelace',
   role: Role.Direction,
   actif: true,
+  habilitations: [],
 };
 
 describe('ComptesPage', () => {
@@ -35,7 +38,7 @@ describe('ComptesPage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideNoopAnimations(),
-        provideNzIcons([SearchOutline, EditOutline, StopOutline, CheckCircleOutline]),
+        provideNzIcons([SearchOutline, EditOutline, StopOutline, CheckCircleOutline, SafetyCertificateOutline]),
       ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
@@ -90,6 +93,24 @@ describe('ComptesPage', () => {
     );
   });
 
+  it('« Gérer les Habilitations » ouvre GererHabilitationsModal pour une Direction', async () => {
+    const fixture = await creerFixture();
+    const modal = fixture.debugElement.injector.get(NzModalService);
+    const createSpy = vi
+      .spyOn(modal, 'create')
+      .mockReturnValue({ afterClose: of(undefined) } as ReturnType<NzModalService['create']>);
+
+    fixture.componentInstance['ouvrirHabilitations'](COMPTE);
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ nzContent: GererHabilitationsModal, nzData: { compte: COMPTE } }),
+    );
+    // La fermeture rafraîchit toujours la liste (les mutations d'Habilitations sont déjà
+    // persistées à chaque geste dans la modale, contrairement à Créer/Modifier) — cette requête
+    // doit être consommée pour ne pas polluer les tests suivants.
+    httpMock.expectOne('/api/comptes').flush([COMPTE]);
+  });
+
   it('« Désactiver » ouvre une boîte de dialogue de confirmation (modal.confirm), pas un popconfirm', async () => {
     const fixture = await creerFixture();
     const modal = fixture.debugElement.injector.get(NzModalService);
@@ -130,5 +151,26 @@ describe('ComptesPage', () => {
     expect(errorSpy).toHaveBeenCalledWith(
       expect.objectContaining({ nzContent: 'Impossible de désactiver ce compte.' }),
     );
+  });
+
+  it('n’affiche pas le bouton « Gérer les Habilitations » pour un compte Coach', async () => {
+    const coach = { ...COMPTE, role: Role.Coach };
+    await TestBed.configureTestingModule({
+      imports: [ComptesPage],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        provideNzIcons([SearchOutline, EditOutline, StopOutline, CheckCircleOutline, SafetyCertificateOutline]),
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(ComptesPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/comptes').flush([coach]);
+    fixture.detectChanges();
+
+    const icone = fixture.nativeElement.querySelector('span[nztype="safety-certificate"]');
+    expect(icone).toBeFalsy();
   });
 });

@@ -36,16 +36,14 @@
     />
   </div>
 
-  @if (!data.compte) {
-    <div class="creer-modifier__champ">
-      <label for="role">Rôle</label>
-      <nz-select id="role" name="role" [ngModel]="role()" (ngModelChange)="role.set($event)">
-        @for (r of rolesCreables; track r) {
-          <nz-option [nzValue]="r" [nzLabel]="libelleRole(r)"></nz-option>
-        }
-      </nz-select>
-    </div>
-  }
+  <div class="creer-modifier__champ">
+    <label for="role">Rôle</label>
+    <nz-select id="role" name="role" [ngModel]="role()" (ngModelChange)="role.set($event)">
+      @for (r of rolesCreables; track r) {
+        <nz-option [nzValue]="r" [nzLabel]="libelleRole(r)"></nz-option>
+      }
+    </nz-select>
+  </div>
 
   <app-dialog-actions
     [libelleAction]="data.compte ? 'Enregistrer' : 'Créer et envoyer l’invitation'"

@@ -9,6 +9,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
 import { EntiteDto, EquipeDto, MembreDto } from '@agilometre/shared';
 import { Entite } from './domain/entite';
@@ -16,6 +17,7 @@ import { Equipe } from './domain/equipe';
 import { Membre } from './domain/membre';
 import { CreerEntite } from './application/creer-entite.usecase';
 import { RenommerEntite } from './application/renommer-entite.usecase';
+import { SupprimerEntite } from './application/supprimer-entite.usecase';
 import { ListerEntites } from './application/lister-entites.usecase';
 import { CreerEquipe } from './application/creer-equipe.usecase';
 import { RenommerEquipe } from './application/renommer-equipe.usecase';
@@ -32,6 +34,7 @@ import {
   RenommerEquipeDto,
 } from './equipe.dto';
 import { Requiert } from '../auth/decorators/requiert.decorator';
+import type { RequeteAuthentifiee } from '../auth/guards/auth.guard';
 
 function versEntiteDto(entite: Entite): EntiteDto {
   return { id: entite.id, nom: entite.nom };
@@ -61,6 +64,7 @@ export class OrganisationController {
   constructor(
     private readonly creerEntite: CreerEntite,
     private readonly renommerEntite: RenommerEntite,
+    private readonly supprimerEntite: SupprimerEntite,
     private readonly listerEntites: ListerEntites,
     private readonly creerEquipe: CreerEquipe,
     private readonly renommerEquipe: RenommerEquipe,
@@ -71,9 +75,16 @@ export class OrganisationController {
     private readonly modifierMembre: ModifierMembre,
   ) {}
 
+  /**
+   * Capacité `voirProfilEntite` (Coach + Direction) plutôt que `gererOrganisation` (Coach seul,
+   * hérité par le reste de ce contrôleur) : cette liste alimente aussi l'arbre de navigation d'une
+   * Direction, filtré par périmètre dans le use case — `PerimetreGuard` ne couvre que les routes à
+   * ressource unique, jamais une collection (docs/design/agregat-politique-des-droits.md §3).
+   */
+  @Requiert('voirProfilEntite')
   @Get('entites')
-  async lister(): Promise<EntiteDto[]> {
-    const entites = await this.listerEntites.executer();
+  async lister(@Req() request: RequeteAuthentifiee): Promise<EntiteDto[]> {
+    const entites = await this.listerEntites.executer(request.utilisateur);
     return entites.map(versEntiteDto);
   }
 
@@ -105,6 +116,19 @@ export class OrganisationController {
       throw new ConflictException('Une Entité porte déjà ce nom');
     }
     return versEntiteDto(resultat.entite);
+  }
+
+  @Delete('entites/:id')
+  async supprimer(@Param('id') id: string): Promise<void> {
+    const resultat = await this.supprimerEntite.executer(id);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Entité ${id} introuvable`);
+    }
+    if (resultat.type === 'referencee') {
+      throw new ConflictException(
+        'Cette Entité a encore des Équipes rattachées et ne peut pas être supprimée',
+      );
+    }
   }
 
   @Get('entites/:entiteId/equipes')

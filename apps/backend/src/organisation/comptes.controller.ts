@@ -3,6 +3,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
@@ -15,7 +16,15 @@ import { ModifierUtilisateur } from './application/modifier-utilisateur.usecase'
 import { DesactiverUtilisateur } from './application/desactiver-utilisateur.usecase';
 import { ReactiverUtilisateur } from './application/reactiver-utilisateur.usecase';
 import { ListerUtilisateurs } from './application/lister-utilisateurs.usecase';
-import { CreerUtilisateurDto, ModifierUtilisateurDto } from './comptes.dto';
+import { AjouterHabilitation } from './application/ajouter-habilitation.usecase';
+import { RetirerHabilitation } from './application/retirer-habilitation.usecase';
+import { ChangerRoleUtilisateur } from './application/changer-role-utilisateur.usecase';
+import {
+  AjouterHabilitationDto,
+  ChangerRoleUtilisateurDto,
+  CreerUtilisateurDto,
+  ModifierUtilisateurDto,
+} from './comptes.dto';
 import { Requiert } from '../auth/decorators/requiert.decorator';
 import { VersUtilisateurDto } from './utilisateur.mapper';
 
@@ -32,6 +41,9 @@ export class ComptesController {
     private readonly modifierUtilisateur: ModifierUtilisateur,
     private readonly desactiverUtilisateur: DesactiverUtilisateur,
     private readonly reactiverUtilisateur: ReactiverUtilisateur,
+    private readonly ajouterHabilitation: AjouterHabilitation,
+    private readonly retirerHabilitation: RetirerHabilitation,
+    private readonly changerRoleUtilisateur: ChangerRoleUtilisateur,
   ) {}
 
   @Get()
@@ -101,6 +113,56 @@ export class ComptesController {
     const resultat = await this.reactiverUtilisateur.executer(id);
     if (resultat.type === 'introuvable') {
       throw new NotFoundException(`Compte ${id} introuvable`);
+    }
+    return VersUtilisateurDto.executer(resultat.utilisateur);
+  }
+
+  @Patch(':id/role')
+  async changerRole(
+    @Param('id') id: string,
+    @Body() dto: ChangerRoleUtilisateurDto,
+  ): Promise<UtilisateurDto> {
+    const resultat = await this.changerRoleUtilisateur.executer(id, dto.role);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Compte ${id} introuvable`);
+    }
+    if (resultat.type === 'invalide') {
+      throw new ConflictException(resultat.erreur.message);
+    }
+    return VersUtilisateurDto.executer(resultat.utilisateur);
+  }
+
+  @Post(':id/habilitations')
+  async ajouterHabilitationAction(
+    @Param('id') id: string,
+    @Body() dto: AjouterHabilitationDto,
+  ): Promise<UtilisateurDto> {
+    const resultat = await this.ajouterHabilitation.executer(id, {
+      entiteId: dto.entiteId,
+    });
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Compte ${id} introuvable`);
+    }
+    if (resultat.type === 'invalide') {
+      throw new ConflictException(resultat.erreur.message);
+    }
+    return VersUtilisateurDto.executer(resultat.utilisateur);
+  }
+
+  @Delete(':id/habilitations/:habilitationId')
+  async retirerHabilitationAction(
+    @Param('id') id: string,
+    @Param('habilitationId') habilitationId: string,
+  ): Promise<UtilisateurDto> {
+    const resultat = await this.retirerHabilitation.executer(
+      id,
+      habilitationId,
+    );
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Compte ${id} introuvable`);
+    }
+    if (resultat.type === 'habilitation_introuvable') {
+      throw new NotFoundException(`Habilitation ${habilitationId} introuvable`);
     }
     return VersUtilisateurDto.executer(resultat.utilisateur);
   }

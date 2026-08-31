@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './auth/auth.guard';
+import { droitGuard } from './auth/droit.guard';
 
 export const routes: Routes = [
   {
@@ -57,6 +58,7 @@ export const routes: Routes = [
       },
       {
         path: 'organisation',
+        canActivate: [droitGuard('gererOrganisation')],
         data: { breadcrumb: 'Organisation' },
         loadComponent: () =>
           import('./organisation/organisation-page/organisation-page').then(
@@ -65,7 +67,9 @@ export const routes: Routes = [
       },
       {
         path: 'profil',
-        data: { breadcrumb: 'Profil d’équipe' },
+        // Label neutre : cette page sert aussi bien le Profil d'Équipe (Coach) que le Profil
+        // d'Entité (Coach + Direction, #61) selon la sélection faite dans l'arbre.
+        data: { breadcrumb: 'Profil' },
         loadComponent: () =>
           import('./organisation/profil-page/profil-page').then((m) => m.ProfilPage),
         children: [
@@ -74,8 +78,9 @@ export const routes: Routes = [
             // Pas de son propre `breadcrumb` (délibérément vide, pas absent) : sans ce garde,
             // `paramsInheritanceStrategy: 'always'` fait hériter le `breadcrumb` du parent
             // `profil` jusqu'ici, et `buildBreadcrumbs` (voir breadcrumbs.ts) le pousserait une
-            // seconde fois — doublon "Profil d’équipe > Profil d’équipe" dans le fil d'Ariane.
+            // seconde fois — doublon "Profil > Profil" dans le fil d'Ariane.
             data: { breadcrumb: '' },
+            canActivate: [droitGuard('voirProfilEquipe')],
             loadComponent: () =>
               import('./organisation/profil-equipe-page/profil-equipe-page').then(
                 (m) => m.ProfilEquipePage,

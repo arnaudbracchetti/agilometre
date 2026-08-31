@@ -14,6 +14,7 @@ const COMPTE: UtilisateurDto = {
   nom: 'Lovelace',
   role: Role.Direction,
   actif: true,
+  habilitations: [],
 };
 
 describe('CreerModifierCompteModal', () => {
@@ -59,7 +60,7 @@ describe('CreerModifierCompteModal', () => {
     expect(modalRef.close).toHaveBeenCalledWith(COMPTE);
   });
 
-  it('mode modification — PATCH /api/comptes/:id, jamais le Rôle', async () => {
+  it('mode modification — PATCH /api/comptes/:id, jamais le Rôle si inchangé', async () => {
     const fixture = await creerFixture({ compte: COMPTE });
 
     expect(fixture.componentInstance['email']()).toBe('ada@example.com');
@@ -77,6 +78,42 @@ describe('CreerModifierCompteModal', () => {
     req.flush({ ...COMPTE, prenom: 'Ada M.' });
 
     expect(modalRef.close).toHaveBeenCalled();
+  });
+
+  it('mode modification — un Rôle changé déclenche un second appel PATCH /api/comptes/:id/role', async () => {
+    const fixture = await creerFixture({ compte: COMPTE });
+    fixture.componentInstance['role'].set(Role.Coach);
+
+    fixture.componentInstance['enregistrer']();
+
+    httpMock.expectOne('/api/comptes/u1').flush(COMPTE);
+    const requeteRole = httpMock.expectOne('/api/comptes/u1/role');
+    expect(requeteRole.request.method).toBe('PATCH');
+    expect(requeteRole.request.body).toEqual({ role: Role.Coach });
+    requeteRole.flush({ ...COMPTE, role: Role.Coach });
+
+    expect(modalRef.close).toHaveBeenCalledWith({ ...COMPTE, role: Role.Coach });
+  });
+
+  it('un changement de Rôle refusé (409, Habilitations incohérentes) s’affiche dans une boîte de dialogue', async () => {
+    const fixture = await creerFixture({ compte: COMPTE });
+    const modal = fixture.debugElement.injector.get(NzModalService);
+    const errorSpy = vi.spyOn(modal, 'error').mockReturnValue({} as ReturnType<NzModalService['error']>);
+    fixture.componentInstance['role'].set(Role.Coach);
+
+    fixture.componentInstance['enregistrer']();
+
+    httpMock.expectOne('/api/comptes/u1').flush(COMPTE);
+    httpMock
+      .expectOne('/api/comptes/u1/role')
+      .flush({ message: 'conflit' }, { status: 409, statusText: 'Conflict' });
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nzContent: 'Ce Rôle est incompatible avec les Habilitations existantes — retirez-les d’abord.',
+      }),
+    );
+    expect(modalRef.close).not.toHaveBeenCalled();
   });
 
   it('formulaire invalide si un champ requis est vide', async () => {

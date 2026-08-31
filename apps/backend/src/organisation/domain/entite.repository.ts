@@ -19,4 +19,8 @@ export interface EntiteRepository {
   trouverParNom(nom: string): Promise<Entite | null>;
   /** @throws {NomEntiteDejaUtiliseError} si la contrainte d'unicité de nom est violée en base. */
   save(entite: Entite): Promise<void>;
+  /** Appelé uniquement par le use case `SupprimerEntite`, après sa garde
+   * `EquipeRepository.compterParEntite(entiteId)` — aucune gestion d'erreur FK ici, cette garde
+   * est la seule protection voulue (docs/design/agregat-organisation.md §2). */
+  remove(id: string): Promise<void>;
 }

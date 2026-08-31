@@ -26,6 +26,11 @@ class EntiteRepositoryFake implements EntiteRepository {
     this.entites.push(entite);
     return Promise.resolve();
   }
+
+  remove(id: string): Promise<void> {
+    this.entites = this.entites.filter((e) => e.id !== id);
+    return Promise.resolve();
+  }
 }
 
 class EquipeRepositoryFake implements EquipeRepository {

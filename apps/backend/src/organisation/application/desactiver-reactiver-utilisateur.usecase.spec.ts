@@ -66,6 +66,7 @@ describe('DesactiverUtilisateur / ReactiverUtilisateur', () => {
       'hash',
       false,
       Role.Coach,
+      [],
     );
     repository.utilisateurs.push(utilisateur);
 

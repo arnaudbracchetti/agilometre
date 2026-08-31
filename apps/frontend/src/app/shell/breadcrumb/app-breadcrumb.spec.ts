@@ -97,15 +97,15 @@ describe('AppBreadcrumb (routes réelles de l’application)', () => {
     ]);
   });
 
-  it('n’affiche « Profil d’équipe » qu’une seule fois sur /profil/equipe/:id (pas de doublon malgré l’héritage de data)', async () => {
+  it('n’affiche « Profil » qu’une seule fois sur /profil/equipe/:id (pas de doublon malgré l’héritage de data)', async () => {
     const harness = await RouterTestingHarness.create('/profil/equipe/eq1');
 
-    expect(libelles(harness)).toEqual(['Accueil', 'Profil d’équipe']);
+    expect(libelles(harness)).toEqual(['Accueil', 'Profil']);
   });
 
-  it('n’affiche « Profil d’équipe » qu’une seule fois sur /profil/entite/:id (pas de doublon malgré l’héritage de data)', async () => {
+  it('n’affiche « Profil » qu’une seule fois sur /profil/entite/:id (pas de doublon malgré l’héritage de data)', async () => {
     const harness = await RouterTestingHarness.create('/profil/entite/e1');
 
-    expect(libelles(harness)).toEqual(['Accueil', 'Profil d’équipe']);
+    expect(libelles(harness)).toEqual(['Accueil', 'Profil']);
   });
 });

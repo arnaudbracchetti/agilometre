@@ -1,0 +1,51 @@
+<div class="gerer-habilitations">
+  <p class="gerer-habilitations__intro">
+    Entités sur lesquelles {{ compte().prenom }} {{ compte().nom }} est habilité·e.
+  </p>
+
+  <ul class="gerer-habilitations__liste">
+    @for (habilitation of habilitationsAffichees(); track habilitation.id) {
+      <li class="gerer-habilitations__item">
+        <span>{{ habilitation.nom }}</span>
+        <button
+          nz-button
+          nzType="text"
+          nzShape="circle"
+          nz-tooltip
+          nzTooltipTitle="Retirer"
+          (click)="retirer(habilitation.id)"
+        >
+          <span nz-icon nzType="delete" nzTheme="outline"></span>
+        </button>
+      </li>
+    } @empty {
+      <li class="gerer-habilitations__vide">Aucune Habilitation pour l’instant.</li>
+    }
+  </ul>
+
+  <div class="gerer-habilitations__ajout">
+    <nz-select
+      class="gerer-habilitations__select"
+      nzPlaceHolder="Choisir une Entité"
+      [ngModel]="entiteSelectionnee()"
+      (ngModelChange)="entiteSelectionnee.set($event)"
+    >
+      @for (entite of entitesDisponibles(); track entite.id) {
+        <nz-option [nzValue]="entite.id" [nzLabel]="entite.nom"></nz-option>
+      }
+    </nz-select>
+    <button
+      nz-button
+      nzType="primary"
+      [nzLoading]="enCours()"
+      [disabled]="!entiteSelectionnee()"
+      (click)="ajouter()"
+    >
+      Accorder
+    </button>
+  </div>
+
+  <div class="gerer-habilitations__fermer">
+    <button nz-button nzType="default" (click)="fermer()">Fermer</button>
+  </div>
+</div>

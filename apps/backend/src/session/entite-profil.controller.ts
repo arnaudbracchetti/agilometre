@@ -12,6 +12,7 @@ import { ProfilEntiteDto } from '@agilometre/shared';
 import { ObtenirProfilEntite } from './application/obtenir-profil-entite.usecase';
 import { versProfilEntiteDto } from './profil-entite.mapper';
 import { Requiert } from '../auth/decorators/requiert.decorator';
+import { Perimetre } from '../auth/decorators/perimetre.decorator';
 
 /**
  * Route `organisation/entites/:id/profil`, mais vit dans `session/` (câblé dans `SessionModule`)
@@ -24,6 +25,7 @@ import { Requiert } from '../auth/decorators/requiert.decorator';
 export class EntiteProfilController {
   constructor(private readonly obtenirProfilEntite: ObtenirProfilEntite) {}
 
+  @Perimetre('entite')
   @Get(':id/profil')
   async profil(
     @Param('id') id: string,

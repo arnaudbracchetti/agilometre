@@ -5,6 +5,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { NzFormatEmitEvent } from 'ng-zorro-antd/tree';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import { ApartmentOutline, SearchOutline, TeamOutline, UserOutline } from '@ant-design/icons-angular/icons';
+import { DroitsService } from '../../auth/droits.service';
 import { ArbreOrganisation } from './arbre-organisation';
 
 /**
@@ -59,6 +60,9 @@ describe('ArbreOrganisation', () => {
         provideHttpClientTesting(),
         provideNoopAnimations(),
         provideNzIcons([ApartmentOutline, TeamOutline, UserOutline, SearchOutline]),
+        // Comportement Coach (non restreint) par défaut — voir le describe dédié plus bas pour
+        // la restriction Direction (#61).
+        { provide: DroitsService, useValue: { peut: () => true } },
       ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
@@ -259,5 +263,73 @@ describe('ArbreOrganisation', () => {
     fixture.detectChanges();
 
     expect(component.selectionActuelle().type).toBe('racine');
+  });
+
+  describe('restreint à une Direction (#61)', () => {
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [ArbreOrganisation],
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideNoopAnimations(),
+          provideNzIcons([ApartmentOutline, TeamOutline, UserOutline, SearchOutline]),
+          { provide: DroitsService, useValue: { peut: () => false } },
+        ],
+      }).compileComponents();
+      httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    it('affiche les Entités sans flèche d’expansion, aucune Équipe visible', () => {
+      const fixture = TestBed.createComponent(ArbreOrganisation);
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+      fixture.detectChanges();
+
+      const racine = (component as unknown as { treeData(): { isLeaf: boolean; children?: unknown[] }[] }).treeData();
+      const noeudEntite = racine[0].children![0] as { isLeaf: boolean; children?: unknown[] };
+      expect(noeudEntite.isLeaf).toBe(true);
+      expect(noeudEntite.children).toBeUndefined();
+    });
+
+    it('ne charge aucune Équipe en dépliant une Entité', () => {
+      const fixture = TestBed.createComponent(ArbreOrganisation);
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+      fixture.detectChanges();
+
+      deplierNoeudEntite(component, 'e1');
+
+      httpMock.verify();
+    });
+
+    it('ne charge aucune Équipe en recherchant un terme', () => {
+      const fixture = TestBed.createComponent(ArbreOrganisation);
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+      fixture.detectChanges();
+
+      saisirFiltre(component, 'dsi');
+      fixture.detectChanges();
+
+      httpMock.verify();
+    });
+
+    it('sélectionner une Entité ne déclenche aucun appel réseau vers ses Équipes', () => {
+      const fixture = TestBed.createComponent(ArbreOrganisation);
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+      fixture.detectChanges();
+
+      cliquer(component, noeudEntite('e1'));
+      fixture.detectChanges();
+
+      httpMock.verify();
+    });
   });
 });

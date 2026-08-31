@@ -57,6 +57,19 @@
             >
               <span nz-icon nzType="edit" nzTheme="outline"></span>
             </button>
+            @if (compte.role === Role.Direction) {
+              <button
+                nz-button
+                nzType="text"
+                nzShape="circle"
+                class="comptes__action"
+                nz-tooltip
+                nzTooltipTitle="Gérer les Habilitations"
+                (click)="ouvrirHabilitations(compte)"
+              >
+                <span nz-icon nzType="safety-certificate" nzTheme="outline"></span>
+              </button>
+            }
             @if (compte.actif) {
               <button
                 nz-button

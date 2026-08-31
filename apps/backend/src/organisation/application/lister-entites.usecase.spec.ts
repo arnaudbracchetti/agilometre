@@ -1,5 +1,10 @@
+import { Role } from '@agilometre/shared';
+import { PerimetreUtilisateur } from '../../auth/domain/perimetre-utilisateur';
+import { UtilisateurConnecte } from '../../auth/jeton-utilisateur';
 import { Entite } from '../domain/entite';
 import { EntiteRepository } from '../domain/entite.repository';
+import { Utilisateur } from '../domain/utilisateur';
+import { UtilisateurRepository } from '../domain/utilisateur.repository';
 import { ListerEntites } from './lister-entites.usecase';
 
 class EntiteRepositoryFake implements EntiteRepository {
@@ -24,20 +29,86 @@ class EntiteRepositoryFake implements EntiteRepository {
     this.entites.push(entite);
     return Promise.resolve();
   }
+
+  remove(id: string): Promise<void> {
+    this.entites = this.entites.filter((e) => e.id !== id);
+    return Promise.resolve();
+  }
 }
 
+class UtilisateurRepositoryFake implements UtilisateurRepository {
+  constructor(private readonly utilisateurs: Utilisateur[] = []) {}
+
+  trouverParId(id: string): Promise<Utilisateur | null> {
+    return Promise.resolve(
+      this.utilisateurs.find((utilisateur) => utilisateur.id === id) ?? null,
+    );
+  }
+
+  trouverParEmail(): Promise<Utilisateur | null> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  lister(): Promise<Utilisateur[]> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  save(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+}
+
+const COACH: UtilisateurConnecte = {
+  id: 'coach-1',
+  email: 'coach@example.com',
+  role: Role.Coach,
+};
+
 describe('ListerEntites', () => {
-  it('renvoie les Entités triées par nom', async () => {
+  it('renvoie toutes les Entités triées par nom pour un Coach', async () => {
     const repository = new EntiteRepositoryFake();
     repository.entites.push(
       Entite.creer('e1', 'Marketing').valeur,
       Entite.creer('e2', 'DSI').valeur,
       Entite.creer('e3', 'Achats').valeur,
     );
-    const useCase = new ListerEntites(repository);
+    const useCase = new ListerEntites(
+      repository,
+      new PerimetreUtilisateur(new UtilisateurRepositoryFake()),
+    );
 
-    const resultat = await useCase.executer();
+    const resultat = await useCase.executer(COACH);
 
     expect(resultat.map((e) => e.nom)).toEqual(['Achats', 'DSI', 'Marketing']);
+  });
+
+  it('ne renvoie à une Direction que ses Entités habilitées', async () => {
+    const repository = new EntiteRepositoryFake();
+    repository.entites.push(
+      Entite.creer('e1', 'Marketing').valeur,
+      Entite.creer('e2', 'DSI').valeur,
+      Entite.creer('e3', 'Achats').valeur,
+    );
+    const direction = Utilisateur.creer(
+      'u2',
+      'direction@example.com',
+      'Ada',
+      'Lovelace',
+      'hash',
+      Role.Direction,
+    ).valeur;
+    direction.ajouterHabilitation('h1', { entiteId: 'e1' });
+    const useCase = new ListerEntites(
+      repository,
+      new PerimetreUtilisateur(new UtilisateurRepositoryFake([direction])),
+    );
+
+    const resultat = await useCase.executer({
+      id: 'u2',
+      email: 'direction@example.com',
+      role: Role.Direction,
+    });
+
+    expect(resultat.map((e) => e.id)).toEqual(['e1']);
   });
 });

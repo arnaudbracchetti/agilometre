@@ -10,6 +10,11 @@ export class VersUtilisateurDto {
       nom: utilisateur.nom,
       actif: utilisateur.actif,
       role: utilisateur.role,
+      habilitations: utilisateur.habilitations.map((habilitation) => ({
+        id: habilitation.id,
+        entiteId: habilitation.entiteId,
+        equipeId: habilitation.equipeId,
+      })),
     };
   }
 }

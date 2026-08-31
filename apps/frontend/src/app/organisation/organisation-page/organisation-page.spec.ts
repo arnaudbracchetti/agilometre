@@ -10,6 +10,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzFormatEmitEvent } from 'ng-zorro-antd/tree';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import { ApartmentOutline, SearchOutline, TeamOutline, UserOutline } from '@ant-design/icons-angular/icons';
+import { DroitsService } from '../../auth/droits.service';
 import { ArbreOrganisation } from '../arbre-organisation/arbre-organisation';
 import { OrganisationPage } from './organisation-page';
 
@@ -73,6 +74,10 @@ describe('OrganisationPage', () => {
         provideNoopAnimations(),
         provideRouter([]),
         provideNzIcons([ApartmentOutline, TeamOutline, UserOutline, SearchOutline]),
+        // Écran Coach seul (route gardée par `droitGuard('gererOrganisation')`) — ces tests
+        // exercent le comportement non restreint de l'arbre, pas la restriction Direction (voir
+        // arbre-organisation.spec.ts pour cette dernière).
+        { provide: DroitsService, useValue: { peut: () => true } },
       ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);

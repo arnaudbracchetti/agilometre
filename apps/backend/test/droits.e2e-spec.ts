@@ -16,6 +16,7 @@ import { Capacite, CAPACITES, Role } from '@agilometre/shared';
 import { AppModule } from './../src/app.module';
 import { CLE_PUBLIC } from './../src/auth/decorators/public.decorator';
 import { CLE_CAPACITE } from './../src/auth/decorators/requiert.decorator';
+import { CLE_PERIMETRE } from './../src/auth/decorators/perimetre.decorator';
 
 /**
  * Test e2e matriciel unique — docs/design/agregat-politique-des-droits.md §4. Parcourt toutes les
@@ -35,6 +36,7 @@ interface RouteDecouverte {
   chemin: string;
   estPublique: boolean;
   capacite: Capacite | undefined;
+  aUnPerimetre: boolean;
 }
 
 const METHODE_VERS_VERBE: Partial<
@@ -107,8 +109,18 @@ function decouvrirRoutes(
       const capacite =
         reflector.get<Capacite | undefined>(CLE_CAPACITE, handler) ??
         reflector.get<Capacite | undefined>(CLE_CAPACITE, metatype);
+      const aUnPerimetre = Boolean(
+        reflector.get(CLE_PERIMETRE, handler) ??
+        reflector.get(CLE_PERIMETRE, metatype),
+      );
 
-      routes.push({ methode: methodeHttp, chemin, estPublique, capacite });
+      routes.push({
+        methode: methodeHttp,
+        chemin,
+        estPublique,
+        capacite,
+        aUnPerimetre,
+      });
     }
   }
 
@@ -216,7 +228,13 @@ describe('Politique de droits — test matriciel (e2e)', () => {
         const autorise = rolesAutorises.includes(role);
         const rejeteParLeGuard =
           reponse.status === 401 || reponse.status === 403;
-        if (autorise && rejeteParLeGuard) {
+        // Une route à `@Perimetre(...)` peut légitimement renvoyer 403 à un Rôle autorisé par la
+        // capacité statique : `valeur-test` (l'id fictif substitué par `decouvrirRoutes`) n'est
+        // jamais une ressource réelle sur laquelle le Rôle a une Habilitation. Ce test ne couvre
+        // que la couche statique (docs/design/agregat-politique-des-droits.md §4) — le
+        // comportement de `PerimetreUtilisateur` par ressource est testé séparément
+        // (perimetre-utilisateur.spec.ts, perimetre.guard.spec.ts).
+        if (autorise && rejeteParLeGuard && !route.aUnPerimetre) {
           echecs.push(
             `${route.methode} ${route.chemin} — ${role} attendu autorisé, reçu ${reponse.status}`,
           );

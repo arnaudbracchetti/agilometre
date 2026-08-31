@@ -36,6 +36,9 @@ class EntiteRepositoryFake implements EntiteRepository {
   save(): Promise<void> {
     return Promise.resolve();
   }
+  remove(): Promise<void> {
+    return Promise.resolve();
+  }
 }
 
 class EquipeRepositoryFake implements EquipeRepository {

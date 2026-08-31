@@ -14,6 +14,7 @@ import {
   WarningOutline,
 } from '@ant-design/icons-angular/icons';
 import { vi } from 'vitest';
+import { DroitsService } from '../../auth/droits.service';
 import { ArbreOrganisation } from '../arbre-organisation/arbre-organisation';
 import { ProfilPage } from './profil-page';
 
@@ -28,6 +29,9 @@ describe('ProfilPage', () => {
         provideHttpClientTesting(),
         provideNoopAnimations(),
         provideNzIcons([ApartmentOutline, TeamOutline, UserOutline, SearchOutline, WarningOutline]),
+        // Comportement non restreint de l'arbre (sélection d'Équipe) — la restriction Direction
+        // est couverte séparément par arbre-organisation.spec.ts.
+        { provide: DroitsService, useValue: { peut: () => true } },
       ],
     })
       .compileComponents()
