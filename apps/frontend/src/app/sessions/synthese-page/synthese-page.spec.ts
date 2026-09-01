@@ -10,6 +10,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { WarningOutline } from '@ant-design/icons-angular/icons';
 import { vi } from 'vitest';
 import { PilotageSessionDto, StatutSession, SyntheseSessionDto, SyntheseThemeDto } from '@agilometre/shared';
+import { DroitsService } from '../../auth/droits.service';
 import { GlossaireSynthese } from './glossaire-synthese';
 import { SynthesePage } from './synthese-page';
 
@@ -72,6 +73,10 @@ describe('SynthesePage', () => {
         // (assets/outline/warning.svg), ce que HttpTestingController rejette comme requête non
         // attendue — même pattern que pilotage-page.spec.ts.
         provideNzIcons([WarningOutline]),
+        // Écran Coach seul pour les actions de gestion (`*aDroit="'gererSessions'"`, #62) — ces
+        // tests exercent l'écran tel que vu par un Coach, pas la restriction Membre d'équipe (qui
+        // atteint cette page en lecture seule depuis le Profil d'Équipe).
+        { provide: DroitsService, useValue: { peut: () => true } },
       ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
@@ -409,6 +414,17 @@ describe('SynthesePage', () => {
       fixture.detectChanges();
 
       expect(boutonTerminer()).toBeFalsy();
+    });
+
+    it('masque les actions de gestion (Terminer, Retour au pilotage) pour un Rôle sans `gererSessions` (#62)', () => {
+      vi.spyOn(TestBed.inject(DroitsService), 'peut').mockReturnValue(false);
+      fixture = TestBed.createComponent(SynthesePage);
+      fixture.detectChanges();
+      repondre({ statut: StatutSession.Ouverte });
+      fixture.detectChanges();
+
+      expect(boutonTerminer()).toBeFalsy();
+      expect(fixture.nativeElement.querySelector('a[href="/sessions/s1/pilotage"]')).toBeFalsy();
     });
 
     it('confirme la popconfirm : appelle terminerSession puis navigue vers l’écran de pilotage', () => {

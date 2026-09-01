@@ -5,6 +5,8 @@ import { Entite } from '../domain/entite';
 import { EntiteRepository } from '../domain/entite.repository';
 import { Utilisateur } from '../domain/utilisateur';
 import { UtilisateurRepository } from '../domain/utilisateur.repository';
+import { Equipe } from '../domain/equipe';
+import { EquipeRepository } from '../domain/equipe.repository';
 import { ListerEntites } from './lister-entites.usecase';
 
 class EntiteRepositoryFake implements EntiteRepository {
@@ -56,6 +58,48 @@ class UtilisateurRepositoryFake implements UtilisateurRepository {
   save(): Promise<void> {
     return Promise.reject(new Error('non utilisé par ce test'));
   }
+
+  sauvegarderEtPropager(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+}
+
+class EquipeRepositoryFake implements EquipeRepository {
+  findById(): Promise<Equipe | null> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  findByEntiteId(): Promise<Equipe[]> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  trouverParNom(): Promise<Equipe | null> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  save(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  remove(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  compterParEntite(): Promise<number> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  trouverParEmailMembre(): Promise<Equipe[]> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  estMembreDe(): Promise<boolean> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  aUneEquipeDansLEntite(): Promise<boolean> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
 }
 
 const COACH: UtilisateurConnecte = {
@@ -74,7 +118,10 @@ describe('ListerEntites', () => {
     );
     const useCase = new ListerEntites(
       repository,
-      new PerimetreUtilisateur(new UtilisateurRepositoryFake()),
+      new PerimetreUtilisateur(
+        new UtilisateurRepositoryFake(),
+        new EquipeRepositoryFake(),
+      ),
     );
 
     const resultat = await useCase.executer(COACH);
@@ -100,7 +147,10 @@ describe('ListerEntites', () => {
     direction.ajouterHabilitation('h1', { entiteId: 'e1' });
     const useCase = new ListerEntites(
       repository,
-      new PerimetreUtilisateur(new UtilisateurRepositoryFake([direction])),
+      new PerimetreUtilisateur(
+        new UtilisateurRepositoryFake([direction]),
+        new EquipeRepositoryFake(),
+      ),
     );
 
     const resultat = await useCase.executer({

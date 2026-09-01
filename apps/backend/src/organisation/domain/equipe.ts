@@ -134,4 +134,42 @@ export class Equipe {
     }
     return membre.modifier(nom, email);
   }
+
+  /**
+   * Rattache un Membre du roster à un Utilisateur (rattachement automatique par email, ou
+   * liaison explicite) — garde de collision locale à ce roster, même check que `modifierMembre`.
+   * La garde « en bloc » à travers plusieurs rosters (propagation d'une modification de profil
+   * Utilisateur) vit dans l'infrastructure, pas ici (voir `UtilisateurRepository.sauvegarderEtPropager`).
+   */
+  lierUtilisateur(
+    membreId: string,
+    utilisateurId: string,
+    prenom: string,
+    nom: string,
+    email: string,
+  ): Result<void, MembreIntrouvableError | EmailMembreDejaUtiliseError> {
+    const membre = this._membres.find((m) => m.id === membreId);
+    if (!membre) {
+      return Result.echec(new MembreIntrouvableError());
+    }
+    const emailRecherche = email.trim().toLowerCase();
+    const doublon = this._membres.some(
+      (autre) =>
+        autre.id !== membreId && autre.email.toLowerCase() === emailRecherche,
+    );
+    if (doublon) {
+      return Result.echec(new EmailMembreDejaUtiliseError());
+    }
+    membre.lierUtilisateur(utilisateurId, prenom, nom, email);
+    return Result.succes(undefined);
+  }
+
+  delierUtilisateur(membreId: string): Result<void, MembreIntrouvableError> {
+    const membre = this._membres.find((m) => m.id === membreId);
+    if (!membre) {
+      return Result.echec(new MembreIntrouvableError());
+    }
+    membre.delierUtilisateur();
+    return Result.succes(undefined);
+  }
 }

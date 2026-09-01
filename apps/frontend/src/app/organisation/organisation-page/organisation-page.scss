@@ -66,6 +66,28 @@
     margin: 0 0 var(--space-3);
   }
 
+  &__section p {
+    margin: 0 0 var(--space-3);
+    font-size: var(--font-size-sm);
+    color: var(--color-ink-muted);
+  }
+
+  &__lecture-seule {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-1) var(--space-3);
+    font-size: var(--font-size-sm);
+
+    dt {
+      color: var(--color-ink-muted);
+    }
+
+    dd {
+      margin: 0;
+    }
+  }
+
   &__formulaire {
     display: flex;
     flex-direction: column;

@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   LigneListeSession,
   SessionListeQuery,
 } from '../domain/session-liste.query';
+
+type SessionAvecEquipeEtCompteur = Prisma.SessionGetPayload<{
+  include: { equipe: true; _count: { select: { items: true } } };
+}>;
 
 @Injectable()
 export class PrismaSessionListeQuery implements SessionListeQuery {
@@ -19,6 +24,20 @@ export class PrismaSessionListeQuery implements SessionListeQuery {
     const sessions = await this.prisma.session.findMany({
       include: { equipe: true, _count: { select: { items: true } } },
     });
+    return this.versLignes(sessions);
+  }
+
+  async listerParEquipe(equipeId: string): Promise<LigneListeSession[]> {
+    const sessions = await this.prisma.session.findMany({
+      where: { equipeId, statut: { not: 'PREPAREE' } },
+      include: { equipe: true, _count: { select: { items: true } } },
+    });
+    return this.versLignes(sessions);
+  }
+
+  private async versLignes(
+    sessions: SessionAvecEquipeEtCompteur[],
+  ): Promise<LigneListeSession[]> {
     const modeleSessionIds = [
       ...new Set(sessions.map((s) => s.modeleSessionId)),
     ];

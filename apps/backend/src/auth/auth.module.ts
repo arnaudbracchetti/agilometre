@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { OrganisationModule } from '../organisation/organisation.module';
 import { PrismaUtilisateurRepository } from '../organisation/infrastructure/prisma-utilisateur.repository';
+import { PrismaEquipeRepository } from '../organisation/infrastructure/prisma-equipe.repository';
 import { PerimetreUtilisateur } from './domain/perimetre-utilisateur';
 import { SeConnecter } from './application/se-connecter.usecase';
 import { AuthController } from './auth.controller';
@@ -32,9 +33,11 @@ import { PerimetreGuard } from './guards/perimetre.guard';
   providers: [
     {
       provide: PerimetreUtilisateur,
-      useFactory: (utilisateurs: PrismaUtilisateurRepository) =>
-        new PerimetreUtilisateur(utilisateurs),
-      inject: [PrismaUtilisateurRepository],
+      useFactory: (
+        utilisateurs: PrismaUtilisateurRepository,
+        equipes: PrismaEquipeRepository,
+      ) => new PerimetreUtilisateur(utilisateurs, equipes),
+      inject: [PrismaUtilisateurRepository, PrismaEquipeRepository],
     },
     AuthGuard,
     PerimetreGuard,

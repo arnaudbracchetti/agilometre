@@ -13,6 +13,9 @@ import { DialogActions } from '../../shared/dialog-actions/dialog-actions';
 export interface DonneesCreerModifierCompte {
   /** `null` : création. Sinon : modification de ce compte (email/prénom/nom, jamais le Rôle). */
   compte: UtilisateurDto | null;
+  /** Préremplissage à la création depuis une ligne de roster (#62) — ignorés si `compte` non null. */
+  emailInitial?: string;
+  nomInitial?: string;
 }
 
 /** Le Rôle Manager d'équipe n'a aucun compte créable cette itération
@@ -35,9 +38,9 @@ export class CreerModifierCompteModal {
   protected readonly rolesCreables = ROLES_CREABLES;
   protected readonly libelleRole = libelleRole;
 
-  protected readonly email = signal(this.data.compte?.email ?? '');
+  protected readonly email = signal(this.data.compte?.email ?? this.data.emailInitial ?? '');
   protected readonly prenom = signal(this.data.compte?.prenom ?? '');
-  protected readonly nom = signal(this.data.compte?.nom ?? '');
+  protected readonly nom = signal(this.data.compte?.nom ?? this.data.nomInitial ?? '');
   protected readonly role = signal<Role>(this.data.compte?.role ?? Role.Membre);
   protected readonly enCours = signal(false);
 

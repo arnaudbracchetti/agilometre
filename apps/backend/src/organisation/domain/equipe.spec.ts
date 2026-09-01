@@ -190,6 +190,7 @@ describe('Equipe', () => {
       const membre = Membre.reconstituer(
         'm1',
         'Jean Dupont',
+        null,
         'jean@example.com',
         null,
       );
@@ -199,6 +200,82 @@ describe('Equipe', () => {
       expect(equipe.id).toBe('eq1');
       expect(equipe.membres).toHaveLength(1);
       expect(equipe.membres[0].id).toBe('m1');
+    });
+  });
+
+  describe('lierUtilisateur', () => {
+    it('lie le Membre trouvé au compte donné', () => {
+      const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
+      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+
+      const resultat = equipe.lierUtilisateur(
+        'm1',
+        'u1',
+        'Jean',
+        'Dupont',
+        'jean.dupont@compte.com',
+      );
+
+      expect(resultat.estSucces).toBe(true);
+      expect(equipe.membres[0].utilisateurId).toBe('u1');
+      expect(equipe.membres[0].nom).toBe('Dupont');
+      expect(equipe.membres[0].prenom).toBe('Jean');
+      expect(equipe.membres[0].email).toBe('jean.dupont@compte.com');
+    });
+
+    it('rejette la liaison d’un Membre inconnu', () => {
+      const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
+
+      const resultat = equipe.lierUtilisateur(
+        'inconnu',
+        'u1',
+        'Jean',
+        'Dupont',
+        'jean@compte.com',
+      );
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('MembreIntrouvableError');
+    });
+
+    it('rejette la liaison si l’email du compte entre en collision avec un autre Membre du roster', () => {
+      const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
+      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+      equipe.ajouterMembre('m2', 'Marie Curie', 'marie@example.com');
+
+      const resultat = equipe.lierUtilisateur(
+        'm1',
+        'u1',
+        'Jean',
+        'Dupont',
+        'marie@example.com',
+      );
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('EmailMembreDejaUtiliseError');
+      expect(equipe.membres[0].utilisateurId).toBeNull();
+    });
+  });
+
+  describe('delierUtilisateur', () => {
+    it('délie le Membre trouvé', () => {
+      const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
+      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+      equipe.lierUtilisateur('m1', 'u1', 'Jean', 'Dupont', 'jean@compte.com');
+
+      const resultat = equipe.delierUtilisateur('m1');
+
+      expect(resultat.estSucces).toBe(true);
+      expect(equipe.membres[0].utilisateurId).toBeNull();
+    });
+
+    it('rejette le déliage d’un Membre inconnu', () => {
+      const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
+
+      const resultat = equipe.delierUtilisateur('inconnu');
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('MembreIntrouvableError');
     });
   });
 });

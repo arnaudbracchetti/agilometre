@@ -3,6 +3,8 @@ import { EquipeRepository } from '../../organisation/domain/equipe.repository';
 import { ReponseRepository } from '../../reponse/domain/reponse.repository';
 import { ResultatPalier, Scoring } from '../../scoring/domain/scoring';
 import { CalculerSyntheseScoring } from '../../scoring/application/calculer-synthese-scoring';
+import { PerimetreUtilisateur } from '../../auth/domain/perimetre-utilisateur';
+import { UtilisateurConnecte } from '../../auth/jeton-utilisateur';
 import { EtatToursQuery } from '../domain/etat-tours.query';
 import { SessionRepository } from '../domain/session.repository';
 import { StatutSession } from '../domain/session';
@@ -24,6 +26,7 @@ export interface ContexteSyntheseSession {
 
 export type ResultatObtenirSyntheseSession =
   | { type: 'introuvable' }
+  | { type: 'interdit' }
   | {
       type: 'ok';
       contexte: ContexteSyntheseSession;
@@ -37,6 +40,11 @@ export type ResultatObtenirSyntheseSession =
  * fournit les Réponses au port de `scoring/` (ADR-0018), et `CalculerSyntheseScoring` calcule le
  * Palier par Thème et la lecture fine par Question. Même garde `PREPAREE` → introuvable que
  * `ObtenirPilotageSession` : l'écran n'existe qu'à partir de l'ouverture.
+ *
+ * Vérification de périmètre manuelle (#62), pas `@Perimetre('equipe')` : le `:id` de cette route
+ * est un id de Session, pas d'Équipe — le guard générique ne peut pas s'appliquer directement, même
+ * limite que documentée pour le filtrage de collection (docs/design/agregat-politique-des-droits.md
+ * §3), ici sur un id de nature différente plutôt que sur une collection.
  */
 export class ObtenirSyntheseSession {
   constructor(
@@ -47,9 +55,13 @@ export class ObtenirSyntheseSession {
     private readonly reponses: ReponseRepository,
     private readonly scoring: Scoring,
     private readonly seuilPalierPourcentage: number,
+    private readonly perimetre: PerimetreUtilisateur,
   ) {}
 
-  async executer(id: string): Promise<ResultatObtenirSyntheseSession> {
+  async executer(
+    id: string,
+    utilisateur: UtilisateurConnecte,
+  ): Promise<ResultatObtenirSyntheseSession> {
     const session = await this.sessions.findById(id);
     if (!session || session.statut === 'PREPAREE') {
       return { type: 'introuvable' };
@@ -58,6 +70,10 @@ export class ObtenirSyntheseSession {
     const equipe = await this.equipes.findById(session.equipeId);
     if (!equipe) {
       return { type: 'introuvable' };
+    }
+
+    if (!(await this.perimetre.peutVoirEquipe(utilisateur, equipe.id))) {
+      return { type: 'interdit' };
     }
 
     const referentielCharge = await this.referentiel.charger();

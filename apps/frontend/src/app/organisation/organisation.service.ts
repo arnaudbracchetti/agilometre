@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import {
   EntiteDto,
   EquipeDto,
+  LigneListeSessionDto,
   ProfilEntiteDto,
   ProfilEquipeDto,
 } from '@agilometre/shared';
@@ -23,6 +24,10 @@ export class OrganisationService {
 
   renommerEntite(id: string, nom: string): Observable<EntiteDto> {
     return this.http.patch<EntiteDto>(`${this.baseUrl}/entites/${id}`, { nom });
+  }
+
+  supprimerEntite(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/entites/${id}`);
   }
 
   listerEquipesParEntite(entiteId: string): Observable<EquipeDto[]> {
@@ -91,6 +96,18 @@ export class OrganisationService {
     return this.http.patch<EquipeDto>(
       `${this.baseUrl}/equipes/${equipeId}/membres/${membreId}`,
       { nom, email },
+    );
+  }
+
+  /** Rafraîchit une Équipe après une mutation dont la réponse HTTP n'est pas l'EquipeDto à jour —
+   * ex. créer un compte depuis une ligne de roster, dont la réponse est un UtilisateurDto. */
+  obtenirEquipe(id: string): Observable<EquipeDto> {
+    return this.http.get<EquipeDto>(`${this.baseUrl}/equipes/${id}`);
+  }
+
+  listerSessionsEquipe(equipeId: string): Observable<LigneListeSessionDto[]> {
+    return this.http.get<LigneListeSessionDto[]>(
+      `${this.baseUrl}/equipes/${equipeId}/sessions`,
     );
   }
 }

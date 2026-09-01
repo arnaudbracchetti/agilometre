@@ -37,7 +37,7 @@ const RACINE_SELECTIONNEE: SelectionInterne = { type: 'racine', id: RACINE_KEY }
 function racineVersNoeud(
   entites: EntiteDto[],
   equipesParEntite: Record<string, EquipeDto[]>,
-  restreintADirection: boolean,
+  entitesNonDepliables: boolean,
 ): NoeudOrganisation {
   return {
     title: 'Organisation',
@@ -45,27 +45,27 @@ function racineVersNoeud(
     type: 'racine',
     isLeaf: false,
     children: entites.map((entite) =>
-      entiteVersNoeud(entite, equipesParEntite[entite.id], restreintADirection),
+      entiteVersNoeud(entite, equipesParEntite[entite.id], entitesNonDepliables),
     ),
   };
 }
 
 /**
- * `restreintADirection` réduit l'Entité à une feuille — jamais d'Équipe visible, ni dépliable
+ * `entitesNonDepliables` réduit l'Entité à une feuille — jamais d'Équipe visible, ni dépliable
  * (doc/spec/annexes/gestion-des-droits.md, matrice "Arbre de navigation Entité → Équipe" pour
  * Direction). Sans `isLeaf: true`, la flèche d'expansion resterait affichée sur un nœud vide.
  */
 function entiteVersNoeud(
   entite: EntiteDto,
   equipes: EquipeDto[] | undefined,
-  restreintADirection: boolean,
+  entitesNonDepliables: boolean,
 ): NoeudOrganisation {
   return {
     title: entite.nom,
     key: entite.id,
     type: 'entite',
-    isLeaf: restreintADirection,
-    children: restreintADirection ? undefined : equipes?.map(equipeVersNoeud),
+    isLeaf: entitesNonDepliables,
+    children: entitesNonDepliables ? undefined : equipes?.map(equipeVersNoeud),
   };
 }
 
@@ -114,10 +114,10 @@ function racineFiltreeVersNoeud(
   entites: EntiteDto[],
   equipesParEntite: Record<string, EquipeDto[]>,
   terme: string,
-  restreintADirection: boolean,
+  entitesNonDepliables: boolean,
 ): NoeudOrganisation {
   const entitesCorrespondantes = entites.filter((entite) =>
-    restreintADirection
+    entitesNonDepliables
       ? texteCorrespond(entite.nom, terme)
       : entiteCorrespond(entite, equipesParEntite[entite.id] ?? [], terme),
   );
@@ -127,13 +127,13 @@ function racineFiltreeVersNoeud(
     type: 'racine',
     isLeaf: false,
     children: entitesCorrespondantes.map((entite) =>
-      entiteFiltreeVersNoeud(entite, equipesParEntite[entite.id] ?? [], terme, restreintADirection),
+      entiteFiltreeVersNoeud(entite, equipesParEntite[entite.id] ?? [], terme, entitesNonDepliables),
     ),
   };
 }
 
 /**
- * `restreintADirection` : la recherche ne porte jamais sur les Équipes/Membres, et ne les révèle
+ * `entitesNonDepliables` : la recherche ne porte jamais sur les Équipes/Membres, et ne les révèle
  * jamais dans les résultats — la restriction porte sur la structure de l'arbre, pas seulement sur
  * les routes atteignables (gestion-des-droits.md, "Application des droits à l'exécution").
  */
@@ -141,9 +141,9 @@ function entiteFiltreeVersNoeud(
   entite: EntiteDto,
   equipes: EquipeDto[],
   terme: string,
-  restreintADirection: boolean,
+  entitesNonDepliables: boolean,
 ): NoeudOrganisation {
-  if (restreintADirection) {
+  if (entitesNonDepliables) {
     return { title: entite.nom, key: entite.id, type: 'entite', isLeaf: true };
   }
   const equipesAffichees = texteCorrespond(entite.nom, terme)
@@ -195,11 +195,15 @@ export class ArbreOrganisation implements OnInit {
   private readonly droits = inject(DroitsService);
 
   /**
-   * Proxy de "cette personne est une Direction restreinte à ses Entités habilitées" : `Coach` a
-   * `gererOrganisation`, `Direction` ne l'a jamais (matrice écran/Rôle) — pas de dépendance
-   * directe au Rôle ici, `DroitsService` reste l'unique source de vérité sur les capacités.
+   * Proxy de "cette personne est une Direction restreinte à ses Entités habilitées" (matrice
+   * écran/Rôle : "non dépliable, aucune Équipe visible") : `Coach` a `gererOrganisation`, `Membre
+   * d'équipe` a `voirProfilEquipe` (son arbre reste dépliable, déjà filtré côté serveur à ses
+   * seules Équipes, #62) — Direction seule n'a ni l'un ni l'autre. Pas de dépendance directe au
+   * Rôle ici, `DroitsService` reste l'unique source de vérité sur les capacités.
    */
-  protected readonly restreintADirection = computed(() => !this.droits.peut('gererOrganisation'));
+  protected readonly entitesNonDepliables = computed(
+    () => !this.droits.peut('gererOrganisation') && !this.droits.peut('voirProfilEquipe'),
+  );
 
   private readonly entites = signal<EntiteDto[]>([]);
   private readonly equipesParEntite = signal<Record<string, EquipeDto[]>>({});
@@ -211,7 +215,7 @@ export class ArbreOrganisation implements OnInit {
 
   protected readonly treeData = computed<NoeudOrganisation[]>(() => {
     const terme = this.filtre().trim().toLowerCase();
-    const restreint = this.restreintADirection();
+    const restreint = this.entitesNonDepliables();
     if (terme.length === 0) {
       return [racineVersNoeud(this.entites(), this.equipesParEntite(), restreint)];
     }
@@ -377,12 +381,12 @@ export class ArbreOrganisation implements OnInit {
 
   /**
    * No-op pour une Direction restreinte : sans cette garde, la recherche (`onFiltreChange`)
-   * chargerait quand même les Équipes de toutes ses Entités en arrière-plan, même si l'arbre ne
-   * les affiche pas — la garantie doit être serveur (aucune requête n'aboutit, la Direction n'a de
-   * toute façon pas accès à cette route), pas seulement un masquage côté vue.
+   * déclencherait quand même un appel réseau par Entité en arrière-plan, même si l'arbre ne
+   * l'affiche jamais — la garantie de fond reste côté serveur (`ListerEquipesParEntite` renvoie une
+   * liste vide à une Direction, même appelée directement), cette garde n'évite qu'un appel inutile.
    */
   private chargerEquipes(entiteId: string): void {
-    if (this.restreintADirection() || this.equipesParEntite()[entiteId]) {
+    if (this.entitesNonDepliables() || this.equipesParEntite()[entiteId]) {
       return;
     }
     this.organisationService.listerEquipesParEntite(entiteId).subscribe((equipes) => {
@@ -471,5 +475,12 @@ export class ArbreOrganisation implements OnInit {
       ...map,
       [entiteId]: (map[entiteId] ?? []).filter((e) => e.id !== equipeId),
     }));
+  }
+
+  public retirerEntite(entiteId: string): void {
+    this.entites.update((entites) => entites.filter((e) => e.id !== entiteId));
+    this.equipesParEntite.update((map) =>
+      Object.fromEntries(Object.entries(map).filter(([id]) => id !== entiteId)),
+    );
   }
 }

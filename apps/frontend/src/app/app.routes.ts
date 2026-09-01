@@ -67,8 +67,10 @@ export const routes: Routes = [
       },
       {
         path: 'profil',
-        // Label neutre : cette page sert aussi bien le Profil d'Équipe (Coach) que le Profil
-        // d'Entité (Coach + Direction, #61) selon la sélection faite dans l'arbre.
+        // Label neutre : cette page sert le Profil d'Équipe (Coach + Membre d'équipe, #62) et le
+        // Profil d'Entité (Coach + Direction, #61) selon la sélection faite dans l'arbre — le même
+        // arbre pour les trois Rôles, filtré côté serveur à ce que chacun peut voir (#62 : Direction
+        // n'y déplie aucune Équipe, un Membre n'y voit que les siennes).
         data: { breadcrumb: 'Profil' },
         loadComponent: () =>
           import('./organisation/profil-page/profil-page').then((m) => m.ProfilPage),

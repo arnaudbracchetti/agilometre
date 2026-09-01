@@ -6,8 +6,10 @@ import { ReponseModule } from '../reponse/reponse.module';
 import { PrismaReferentielRepository } from '../referentiel/infrastructure/prisma-referentiel.repository';
 import { PrismaEquipeRepository } from '../organisation/infrastructure/prisma-equipe.repository';
 import { PrismaEntiteRepository } from '../organisation/infrastructure/prisma-entite.repository';
+import { PrismaUtilisateurRepository } from '../organisation/infrastructure/prisma-utilisateur.repository';
 import { PrismaReponseRepository } from '../reponse/infrastructure/prisma-reponse.repository';
 import { ScoringV1 } from '../scoring/domain/scoring-v1';
+import { PerimetreUtilisateur } from '../auth/domain/perimetre-utilisateur';
 import { CreerModeleSession } from './application/creer-modele-session.usecase';
 import { RenommerModeleSession } from './application/renommer-modele-session.usecase';
 import { AjouterQuestionModeleSession } from './application/ajouter-question-modele-session.usecase';
@@ -32,6 +34,7 @@ import { OuvrirSession } from './application/ouvrir-session.usecase';
 import { ObtenirProjectionSession } from './application/obtenir-projection-session.usecase';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
 import { ObtenirSyntheseSession } from './application/obtenir-synthese-session.usecase';
+import { ListerSessionsEquipe } from './application/lister-sessions-equipe.usecase';
 import { ObtenirProfilEquipe } from './application/obtenir-profil-equipe.usecase';
 import { ObtenirProfilEntite } from './application/obtenir-profil-entite.usecase';
 import { PasserQuestionSuivanteSession } from './application/passer-question-suivante-session.usecase';
@@ -297,6 +300,10 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
       ],
     },
     {
+      // `PerimetreUtilisateur` instancié ici directement, pas injecté depuis `AuthModule` : même
+      // contournement de cycle de modules que `OrganisationModule` pour `ListerEntites`
+      // (`SessionModule` importe déjà `OrganisationModule`, jamais `AuthModule`) — voir le
+      // commentaire équivalent dans organisation.module.ts.
       provide: ObtenirSyntheseSession,
       useFactory: (
         sessions: PrismaSessionRepository,
@@ -305,6 +312,7 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
         etatTours: PrismaEtatToursQuery,
         reponses: PrismaReponseRepository,
         config: ConfigService,
+        utilisateurs: PrismaUtilisateurRepository,
       ) =>
         new ObtenirSyntheseSession(
           sessions,
@@ -314,6 +322,7 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
           reponses,
           new ScoringV1(),
           config.get<number>('SCORING_SEUIL_PALIER')!,
+          new PerimetreUtilisateur(utilisateurs, equipes),
         ),
       inject: [
         PrismaSessionRepository,
@@ -322,7 +331,14 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
         PrismaEtatToursQuery,
         PrismaReponseRepository,
         ConfigService,
+        PrismaUtilisateurRepository,
       ],
+    },
+    {
+      provide: ListerSessionsEquipe,
+      useFactory: (query: PrismaSessionListeQuery) =>
+        new ListerSessionsEquipe(query),
+      inject: [PrismaSessionListeQuery],
     },
     {
       provide: ObtenirProfilEquipe,

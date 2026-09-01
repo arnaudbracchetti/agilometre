@@ -23,6 +23,7 @@ function versEquipe(row: {
       Membre.reconstituer(
         membre.id,
         membre.nom,
+        membre.prenom,
         membre.email,
         membre.utilisateurId,
       ),
@@ -78,12 +79,14 @@ export class PrismaEquipeRepository implements EquipeRepository {
             create: {
               id: membre.id,
               nom: membre.nom,
+              prenom: membre.prenom,
               email: membre.email,
               equipeId: equipe.id,
               utilisateurId: membre.utilisateurId,
             },
             update: {
               nom: membre.nom,
+              prenom: membre.prenom,
               email: membre.email,
               utilisateurId: membre.utilisateurId,
             },
@@ -126,5 +129,34 @@ export class PrismaEquipeRepository implements EquipeRepository {
 
   async compterParEntite(entiteId: string): Promise<number> {
     return this.prisma.equipe.count({ where: { entiteId } });
+  }
+
+  async trouverParEmailMembre(email: string): Promise<Equipe[]> {
+    const rows = await this.prisma.equipe.findMany({
+      where: {
+        membres: { some: { email: { equals: email, mode: 'insensitive' } } },
+      },
+      include: { membres: true },
+    });
+    return rows.map(versEquipe);
+  }
+
+  async estMembreDe(utilisateurId: string, equipeId: string): Promise<boolean> {
+    const membre = await this.prisma.membre.findFirst({
+      where: { utilisateurId, equipeId },
+      select: { id: true },
+    });
+    return membre !== null;
+  }
+
+  async aUneEquipeDansLEntite(
+    utilisateurId: string,
+    entiteId: string,
+  ): Promise<boolean> {
+    const membre = await this.prisma.membre.findFirst({
+      where: { utilisateurId, equipe: { entiteId } },
+      select: { id: true },
+    });
+    return membre !== null;
   }
 }

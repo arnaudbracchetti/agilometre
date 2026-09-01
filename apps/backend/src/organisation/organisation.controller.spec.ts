@@ -16,6 +16,7 @@ import { CreerEquipe } from './application/creer-equipe.usecase';
 import { RenommerEquipe } from './application/renommer-equipe.usecase';
 import { SupprimerEquipe } from './application/supprimer-equipe.usecase';
 import { ListerEquipesParEntite } from './application/lister-equipes-par-entite.usecase';
+import { ObtenirEquipe } from './application/obtenir-equipe.usecase';
 import { AjouterMembre } from './application/ajouter-membre.usecase';
 import { RetirerMembre } from './application/retirer-membre.usecase';
 import { ModifierMembre } from './application/modifier-membre.usecase';
@@ -36,6 +37,7 @@ describe('OrganisationController', () => {
   let renommerEquipe: { executer: jest.Mock };
   let supprimerEquipe: { executer: jest.Mock };
   let listerEquipesParEntite: { executer: jest.Mock };
+  let obtenirEquipe: { executer: jest.Mock };
   let ajouterMembre: { executer: jest.Mock };
   let retirerMembre: { executer: jest.Mock };
   let modifierMembre: { executer: jest.Mock };
@@ -49,6 +51,7 @@ describe('OrganisationController', () => {
     renommerEquipe = { executer: jest.fn() };
     supprimerEquipe = { executer: jest.fn() };
     listerEquipesParEntite = { executer: jest.fn() };
+    obtenirEquipe = { executer: jest.fn() };
     ajouterMembre = { executer: jest.fn() };
     retirerMembre = { executer: jest.fn() };
     modifierMembre = { executer: jest.fn() };
@@ -63,6 +66,7 @@ describe('OrganisationController', () => {
         { provide: RenommerEquipe, useValue: renommerEquipe },
         { provide: SupprimerEquipe, useValue: supprimerEquipe },
         { provide: ListerEquipesParEntite, useValue: listerEquipesParEntite },
+        { provide: ObtenirEquipe, useValue: obtenirEquipe },
         { provide: AjouterMembre, useValue: ajouterMembre },
         { provide: RetirerMembre, useValue: retirerMembre },
         { provide: ModifierMembre, useValue: modifierMembre },
@@ -166,7 +170,9 @@ describe('OrganisationController', () => {
       equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
       listerEquipesParEntite.executer.mockResolvedValue([equipe]);
 
-      await expect(controller.listerEquipes('e1')).resolves.toEqual([
+      await expect(
+        controller.listerEquipes('e1', REQUETE_COACH),
+      ).resolves.toEqual([
         {
           id: 'eq1',
           nom: 'Alpha',
@@ -175,6 +181,7 @@ describe('OrganisationController', () => {
             {
               id: 'm1',
               nom: 'Jean Dupont',
+              prenom: null,
               email: 'jean@example.com',
               utilisateurId: null,
             },
@@ -300,6 +307,7 @@ describe('OrganisationController', () => {
           {
             id: 'm1',
             nom: 'Jean Dupont',
+            prenom: null,
             email: 'jean@example.com',
             utilisateurId: null,
           },
@@ -370,6 +378,7 @@ describe('OrganisationController', () => {
           {
             id: 'm1',
             nom: 'Jean D.',
+            prenom: null,
             email: 'jean.d@example.com',
             utilisateurId: null,
           },

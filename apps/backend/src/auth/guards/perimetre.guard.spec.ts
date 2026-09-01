@@ -3,6 +3,8 @@ import { Reflector } from '@nestjs/core';
 import { Role } from '@agilometre/shared';
 import { Utilisateur } from '../../organisation/domain/utilisateur';
 import { UtilisateurRepository } from '../../organisation/domain/utilisateur.repository';
+import { Equipe } from '../../organisation/domain/equipe';
+import { EquipeRepository } from '../../organisation/domain/equipe.repository';
 import { PerimetreUtilisateur } from '../domain/perimetre-utilisateur';
 import { RequeteAuthentifiee } from './auth.guard';
 import { PerimetreGuard } from './perimetre.guard';
@@ -37,6 +39,48 @@ class UtilisateurRepositoryFake implements UtilisateurRepository {
   save(): Promise<void> {
     return Promise.reject(new Error('non utilisé par ce test'));
   }
+
+  sauvegarderEtPropager(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+}
+
+class EquipeRepositoryFake implements EquipeRepository {
+  findById(): Promise<Equipe | null> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  findByEntiteId(): Promise<Equipe[]> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  trouverParNom(): Promise<Equipe | null> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  save(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  remove(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  compterParEntite(): Promise<number> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  trouverParEmailMembre(): Promise<Equipe[]> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  estMembreDe(): Promise<boolean> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  aUneEquipeDansLEntite(): Promise<boolean> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
 }
 
 describe('PerimetreGuard', () => {
@@ -49,7 +93,10 @@ describe('PerimetreGuard', () => {
     } as unknown as Reflector;
     return new PerimetreGuard(
       reflector,
-      new PerimetreUtilisateur(new UtilisateurRepositoryFake(utilisateurs)),
+      new PerimetreUtilisateur(
+        new UtilisateurRepositoryFake(utilisateurs),
+        new EquipeRepositoryFake(),
+      ),
     );
   }
 

@@ -28,6 +28,18 @@ class EquipeRepositoryFake implements EquipeRepository {
   compterParEntite(): Promise<number> {
     return Promise.resolve(0);
   }
+
+  trouverParEmailMembre(): Promise<Equipe[]> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  estMembreDe(): Promise<boolean> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  aUneEquipeDansLEntite(): Promise<boolean> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
 }
 
 describe('ModifierMembre', () => {

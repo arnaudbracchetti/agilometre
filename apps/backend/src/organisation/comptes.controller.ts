@@ -96,6 +96,11 @@ export class ComptesController {
     if (resultat.type === 'email_deja_utilise') {
       throw new ConflictException('Un compte existe déjà avec cet email');
     }
+    if (resultat.type === 'doublon_roster') {
+      throw new ConflictException(
+        'Ce nouvel email créerait un doublon dans l’un des rosters de ce compte',
+      );
+    }
     return VersUtilisateurDto.executer(resultat.utilisateur);
   }
 

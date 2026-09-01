@@ -332,4 +332,73 @@ describe('ArbreOrganisation', () => {
       httpMock.verify();
     });
   });
+
+  describe('dépliable pour un Membre d’équipe, filtré côté serveur (#62)', () => {
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [ArbreOrganisation],
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideNoopAnimations(),
+          provideNzIcons([ApartmentOutline, TeamOutline, UserOutline, SearchOutline]),
+          // Membre d'équipe : `voirProfilEquipe` sans `gererOrganisation` — à la différence de la
+          // Direction (aucune des deux), son arbre reste dépliable ; le filtrage aux seules Équipes
+          // où il figure est déjà fait côté serveur (`ListerEquipesParEntite`), pas testé ici.
+          { provide: DroitsService, useValue: { peut: (c: string) => c === 'voirProfilEquipe' } },
+        ],
+      }).compileComponents();
+      httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    it('affiche les Entités avec flèche d’expansion, contrairement à la Direction', () => {
+      const fixture = TestBed.createComponent(ArbreOrganisation);
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+      fixture.detectChanges();
+
+      const racine = (component as unknown as { treeData(): { isLeaf: boolean; children?: unknown[] }[] }).treeData();
+      const noeudEntite = racine[0].children![0] as { isLeaf: boolean; children?: unknown[] };
+      // `isLeaf: false` est ce qui affiche la flèche d'expansion — `children` reste `undefined`
+      // tant que l'Entité n'a pas été dépliée (chargement à la demande, même comportement par
+      // défaut que pour un Coach), ce n'est pas un signe de restriction.
+      expect(noeudEntite.isLeaf).toBe(false);
+    });
+
+    it('déplier une Entité charge ses Équipes, déjà filtrées à son roster par le serveur', () => {
+      const fixture = TestBed.createComponent(ArbreOrganisation);
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+      fixture.detectChanges();
+
+      deplierNoeudEntite(component, 'e1');
+      httpMock
+        .expectOne('/api/organisation/entites/e1/equipes')
+        .flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
+      fixture.detectChanges();
+
+      const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
+      expect(arbre.textContent).toContain('Alpha');
+    });
+
+    it('la recherche révèle les Équipes correspondantes, contrairement à la Direction', () => {
+      const fixture = TestBed.createComponent(ArbreOrganisation);
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+      fixture.detectChanges();
+
+      saisirFiltre(component, 'alpha');
+      httpMock
+        .expectOne('/api/organisation/entites/e1/equipes')
+        .flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
+      fixture.detectChanges();
+
+      const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
+      expect(arbre.textContent).toContain('Alpha');
+    });
+  });
 });

@@ -36,4 +36,17 @@ export interface EquipeRepository {
   remove(id: string): Promise<void>;
   /** Nombre d'Équipes rattachées à une Entité — garde de suppression d'Entité (#25). */
   compterParEntite(entiteId: string): Promise<number>;
+  /** Équipes ayant au moins un Membre portant cet email (insensible à la casse) — rattachement
+   * automatique par email à la création d'un Utilisateur (#62), pas une recherche générale. */
+  trouverParEmailMembre(email: string): Promise<Equipe[]>;
+  /** Dérivation du périmètre Membre d'équipe (`PerimetreUtilisateur.peutVoirEquipe`, #62) — évite
+   * de charger l'agrégat Équipe complet pour une simple question d'appartenance au roster. */
+  estMembreDe(utilisateurId: string, equipeId: string): Promise<boolean>;
+  /** Dérivation du périmètre Membre d'équipe côté Entité (`PerimetreUtilisateur.peutVoirEntite`) :
+   * vrai si au moins une Équipe de cette Entité figure dans son roster — sert à afficher les noms
+   * d'Entités dans l'arbre de navigation, pas à charger quoi que ce soit de plus. */
+  aUneEquipeDansLEntite(
+    utilisateurId: string,
+    entiteId: string,
+  ): Promise<boolean>;
 }

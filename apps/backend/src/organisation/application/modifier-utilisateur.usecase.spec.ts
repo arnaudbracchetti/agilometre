@@ -1,6 +1,7 @@
 import { Role } from '@agilometre/shared';
 import { Utilisateur } from '../domain/utilisateur';
 import { UtilisateurRepository } from '../domain/utilisateur.repository';
+import { EmailMembreDejaUtiliseError } from '../domain/equipe';
 import { ModifierUtilisateur } from './modifier-utilisateur.usecase';
 
 class UtilisateurRepositoryFake implements UtilisateurRepository {
@@ -23,6 +24,10 @@ class UtilisateurRepositoryFake implements UtilisateurRepository {
   }
 
   save(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  sauvegarderEtPropager(): Promise<void> {
     return Promise.resolve();
   }
 }
@@ -123,5 +128,22 @@ describe('ModifierUtilisateur', () => {
     );
 
     expect(resultat.type).toBe('invalide');
+  });
+
+  it('renvoie "doublon_roster" si la propagation créerait un doublon dans un roster', async () => {
+    const repository = new UtilisateurRepositoryFake();
+    ajouter(repository, 'id-1', 'ada@example.com');
+    repository.sauvegarderEtPropager = () =>
+      Promise.reject(new EmailMembreDejaUtiliseError());
+    const useCase = new ModifierUtilisateur(repository);
+
+    const resultat = await useCase.executer(
+      'id-1',
+      'grace@example.com',
+      'Ada',
+      'Lovelace',
+    );
+
+    expect(resultat).toEqual({ type: 'doublon_roster' });
   });
 });

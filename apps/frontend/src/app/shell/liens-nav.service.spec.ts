@@ -39,7 +39,9 @@ describe('LiensNavService', () => {
     ]);
   });
 
-  it('un Membre d’équipe (aucune capacité encore accordée) voit un menu vide', () => {
-    expect(creerService(Role.Membre).liens()).toEqual([]);
+  it('un Membre d’équipe voit Profil (accès à ses Équipes via le roster, #62), rien d’autre', () => {
+    expect(creerService(Role.Membre).liens()).toEqual([
+      { label: 'Profil', routerLink: '/profil' },
+    ]);
   });
 });

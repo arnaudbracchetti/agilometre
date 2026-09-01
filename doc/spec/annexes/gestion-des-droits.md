@@ -211,14 +211,26 @@ n'étant créable avec ce Rôle, aucun écran ne lui est pour l'instant destiné
 | Comptes (créer, modifier, désactiver, Habilitations) | Total | Aucun accès | Aucun accès |
 | Organisation (CRUD Entité/Équipe, gestion du roster) | Total | Aucun accès | Aucun accès |
 | Référentiel (consultation, import) | Total | Aucun accès | Aucun accès |
-| Arbre de navigation Entité → Équipe | Total, dépliable | Réduit à ses Entités habilitées, non dépliable, aucune Équipe visible | N/A - pas d'arbre, une liste "mes Équipes" |
-| Profil d'une Entité (Palier agrégé, tendance) | Total | Restreint à ses Entités habilitées | Aucun accès |
+| Arbre de navigation Entité → Équipe | Total, dépliable | Réduit à ses Entités habilitées, non dépliable, aucune Équipe visible | Dépliable, réduit aux Entités et Équipes où il figure au roster (écart assumé, voir note ci-dessous) |
+| Profil d'une Entité (Palier agrégé, tendance) | Total | Restreint à ses Entités habilitées | Restreint aux Entités où il figure au roster d'au moins une Équipe (écart assumé, voir note ci-dessous) |
 | Profil d'une Équipe (Palier par Thème, lecture fine) | Total, sur toute l'Organisation | Aucun accès (détail d'Équipe hors de sa portée) | Restreint à ses Équipes (roster) |
 | Synthèse de fin de Session | Total | Aucun accès | Restreint à ses Équipes, toutes les Sessions sans filtre de participation |
 | Mur de badges (comparaison inter-Équipes) | Total | Aucun accès (ADR-0017) | Aucun accès |
 | Sessions (bibliothèque, pilotage, synthèse) | Total | Aucun accès | Aucun accès (lecture seule via le profil d'Équipe) |
 | Modèles de session | Total | Aucun accès | Aucun accès |
 | Campagnes de pouls (configuration) | Total | Aucun accès | Aucun accès |
+
+**Écart assumé (arbre de navigation et Profil d'Entité pour le Membre d'équipe).** Cette itération
+prévoyait initialement un écran "mes Équipes" séparé (liste plate, sans arbre) pour ne pas exposer la
+structure des Entités à un Rôle qui n'a aucune Habilitation dessus. Décision révisée en aparté de la
+carte #62 : le Membre d'équipe réutilise le même arbre que Coach/Direction (`ArbreOrganisation`),
+filtré côté serveur aux Entités et Équipes où il figure au roster (`PerimetreUtilisateur.
+peutVoirEntite`/`peutVoirEquipe`, dérivées du roster, jamais d'une Habilitation). Conséquence
+assumée : afficher le nom d'une Entité dans l'arbre implique de lui ouvrir aussi le Profil agrégé de
+cette Entité (même capacité `voirProfilEntite`, même garde `@Perimetre('entite')` que pour Direction)
+- un Palier qui mélange les résultats de toutes les Équipes de l'Entité, y compris celles où il ne
+figure pas. Accepté au nom de la réutilisation d'un seul composant d'arbre plutôt que d'un second
+mécanisme de navigation parallèle pour un seul Rôle.
 
 ## Bascule des routes existantes
 

@@ -60,6 +60,19 @@ describe('CreerModifierCompteModal', () => {
     expect(modalRef.close).toHaveBeenCalledWith(COMPTE);
   });
 
+  it('mode création préremplie depuis une ligne de roster — email/nom prérempli, Rôle par défaut Membre', async () => {
+    const fixture = await creerFixture({
+      compte: null,
+      emailInitial: 'jean@example.com',
+      nomInitial: 'Jean Dupont',
+    });
+
+    expect(fixture.componentInstance['email']()).toBe('jean@example.com');
+    expect(fixture.componentInstance['nom']()).toBe('Jean Dupont');
+    expect(fixture.componentInstance['prenom']()).toBe('');
+    expect(fixture.componentInstance['role']()).toBe(Role.Membre);
+  });
+
   it('mode modification — PATCH /api/comptes/:id, jamais le Rôle si inchangé', async () => {
     const fixture = await creerFixture({ compte: COMPTE });
 

@@ -130,4 +130,20 @@ describe('OrganisationService', () => {
       membres: [{ id: 'm1', nom: 'Jean D.', email: 'jean.d@example.com', utilisateurId: null }],
     });
   });
+
+  it('obtient une Équipe via GET /api/organisation/equipes/:id', () => {
+    service.obtenirEquipe('eq1').subscribe();
+
+    const req = httpMock.expectOne('/api/organisation/equipes/eq1');
+    expect(req.request.method).toBe('GET');
+    req.flush({ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] });
+  });
+
+  it('liste les Sessions d’une Équipe via GET /api/organisation/equipes/:id/sessions', () => {
+    service.listerSessionsEquipe('eq1').subscribe();
+
+    const req = httpMock.expectOne('/api/organisation/equipes/eq1/sessions');
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
 });

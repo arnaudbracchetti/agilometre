@@ -59,5 +59,26 @@
         messageVide="Aucune réponse enregistrée sur cette Période."
       />
     }
+
+    <section class="profil-equipe__sessions">
+      <h2 class="profil-equipe__sous-titre">Sessions</h2>
+      @if (sessions().length === 0) {
+        <p class="profil-equipe__sessions-vide">Aucune Session ouverte pour l’instant.</p>
+      } @else {
+        <ul class="profil-equipe__sessions-liste">
+          @for (session of sessions(); track session.id) {
+            <li>
+              <a [routerLink]="['/sessions', session.id, 'synthese']" class="profil-equipe__sessions-ligne">
+                <span class="profil-equipe__sessions-date">{{ session.date | date: 'dd/MM/yyyy' }}</span>
+                <nz-tag [nzColor]="session.statut === 'OUVERTE' ? 'blue' : 'default'">
+                  {{ session.statut === 'OUVERTE' ? 'Ouverte' : 'Clôturée' }}
+                </nz-tag>
+                <span class="profil-equipe__sessions-modele">{{ session.modeleSessionNom ?? 'Modèle supprimé' }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
   }
 </div>

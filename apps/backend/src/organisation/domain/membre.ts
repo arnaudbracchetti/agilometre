@@ -14,8 +14,22 @@ export class EmailMembreInvalideError extends Error {
   }
 }
 
+/**
+ * Levée par `modifier` : un Membre lié à un Utilisateur est en lecture seule sur nom/prénom/email,
+ * ces informations ne se modifient plus qu'en modifiant le compte (propagation descendante, voir
+ * doc/spec/annexes/gestion-des-droits.md, "Propagation descendante sur le Membre lié").
+ */
+export class MembreLieError extends Error {
+  constructor() {
+    super(
+      'Ce Membre est lié à un compte : modifiez le compte pour changer ces informations',
+    );
+    this.name = 'MembreLieError';
+  }
+}
+
 export type ErreurInvariantMembre =
-  NomMembreInvalideError | EmailMembreInvalideError;
+  NomMembreInvalideError | EmailMembreInvalideError | MembreLieError;
 
 const FORMAT_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,6 +37,7 @@ export class Membre {
   private constructor(
     readonly id: string,
     private _nom: string,
+    private _prenom: string | null,
     private _email: string,
     private _utilisateurId: string | null,
   ) {}
@@ -36,7 +51,9 @@ export class Membre {
     if (validation.estEchec) {
       return Result.echec(validation.erreur);
     }
-    return Result.succes(new Membre(id, nom.trim(), email.trim(), null));
+    // `prenom` reste `null` tant qu'aucun compte n'est lié — reçu uniquement par propagation
+    // (voir `lierUtilisateur`), jamais saisi à la création d'une ligne de roster.
+    return Result.succes(new Membre(id, nom.trim(), null, email.trim(), null));
   }
 
   /**
@@ -47,10 +64,11 @@ export class Membre {
   static reconstituer(
     id: string,
     nom: string,
+    prenom: string | null,
     email: string,
     utilisateurId: string | null,
   ): Membre {
-    return new Membre(id, nom, email, utilisateurId);
+    return new Membre(id, nom, prenom, email, utilisateurId);
   }
 
   private static valider(
@@ -70,6 +88,10 @@ export class Membre {
     return this._nom;
   }
 
+  get prenom(): string | null {
+    return this._prenom;
+  }
+
   get email(): string {
     return this._email;
   }
@@ -79,6 +101,9 @@ export class Membre {
   }
 
   modifier(nom: string, email: string): Result<void, ErreurInvariantMembre> {
+    if (this._utilisateurId !== null) {
+      return Result.echec(new MembreLieError());
+    }
     const validation = Membre.valider(nom, email);
     if (validation.estEchec) {
       return Result.echec(validation.erreur);
@@ -86,5 +111,31 @@ export class Membre {
     this._nom = nom.trim();
     this._email = email.trim();
     return Result.succes(undefined);
+  }
+
+  /**
+   * Rattachement (automatique par email, ou explicite) à un Utilisateur — les valeurs viennent
+   * d'un Utilisateur déjà validé par `Utilisateur.creer`/`modifierProfil`, pas de revalidation ici
+   * (même logique que `reconstituer`). Écrase nom/prénom/email : au rattachement, le compte fait
+   * autorité (gestion-des-droits.md, "Rattachement automatique").
+   */
+  lierUtilisateur(
+    utilisateurId: string,
+    prenom: string,
+    nom: string,
+    email: string,
+  ): void {
+    this._utilisateurId = utilisateurId;
+    this._prenom = prenom;
+    this._nom = nom;
+    this._email = email;
+  }
+
+  /**
+   * Rien à recopier : les valeurs sont déjà à jour par propagation descendante — le Membre
+   * redevient simplement éditable (gestion-des-droits.md, "le déliage n'a rien à recopier").
+   */
+  delierUtilisateur(): void {
+    this._utilisateurId = null;
   }
 }

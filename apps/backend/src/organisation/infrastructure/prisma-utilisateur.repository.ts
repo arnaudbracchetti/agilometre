@@ -8,6 +8,7 @@ import { Role } from '@agilometre/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Utilisateur } from '../domain/utilisateur';
 import { Habilitation } from '../domain/habilitation';
+import { EmailMembreDejaUtiliseError } from '../domain/equipe';
 import {
   EmailUtilisateurDejaUtiliseError,
   UtilisateurRepository,
@@ -112,6 +113,60 @@ export class PrismaUtilisateurRepository implements UtilisateurRepository {
             // Une Habilitation n'a pas de champ mutable une fois créée (voir habilitation.ts) —
             // l'upsert ne sert ici qu'à ne pas dupliquer une ligne déjà présente.
             update: {},
+          });
+        }
+      });
+    } catch (erreur) {
+      if (
+        erreur instanceof Prisma.PrismaClientKnownRequestError &&
+        erreur.code === 'P2002'
+      ) {
+        throw new EmailUtilisateurDejaUtiliseError();
+      }
+      throw erreur;
+    }
+  }
+
+  /**
+   * Transaction Prisma brute, directement en infrastructure — même patron que le nettoyage
+   * d'Habilitations orphelines d'ADR-0006 (`PrismaEquipeRepository.remove`) : un `throw` dans le
+   * callback `$transaction` annule tout ce qui a déjà été exécuté via `tx`, y compris la mise à
+   * jour de l'Utilisateur ci-dessous — c'est ce qui garantit le rejet « en bloc », pas une
+   * pré-vérification manuelle.
+   */
+  async sauvegarderEtPropager(utilisateur: Utilisateur): Promise<void> {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.utilisateur.update({
+          where: { id: utilisateur.id },
+          data: {
+            email: utilisateur.email,
+            prenom: utilisateur.prenom,
+            nom: utilisateur.nom,
+          },
+        });
+
+        const membresLies = await tx.membre.findMany({
+          where: { utilisateurId: utilisateur.id },
+        });
+        for (const membre of membresLies) {
+          const doublon = await tx.membre.findFirst({
+            where: {
+              equipeId: membre.equipeId,
+              id: { not: membre.id },
+              email: { equals: utilisateur.email, mode: 'insensitive' },
+            },
+          });
+          if (doublon) {
+            throw new EmailMembreDejaUtiliseError();
+          }
+          await tx.membre.update({
+            where: { id: membre.id },
+            data: {
+              nom: utilisateur.nom,
+              prenom: utilisateur.prenom,
+              email: utilisateur.email,
+            },
           });
         }
       });

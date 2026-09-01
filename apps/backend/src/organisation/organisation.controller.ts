@@ -23,6 +23,7 @@ import { CreerEquipe } from './application/creer-equipe.usecase';
 import { RenommerEquipe } from './application/renommer-equipe.usecase';
 import { SupprimerEquipe } from './application/supprimer-equipe.usecase';
 import { ListerEquipesParEntite } from './application/lister-equipes-par-entite.usecase';
+import { ObtenirEquipe } from './application/obtenir-equipe.usecase';
 import { AjouterMembre } from './application/ajouter-membre.usecase';
 import { RetirerMembre } from './application/retirer-membre.usecase';
 import { ModifierMembre } from './application/modifier-membre.usecase';
@@ -53,6 +54,7 @@ function versMembreDto(membre: Membre): MembreDto {
   return {
     id: membre.id,
     nom: membre.nom,
+    prenom: membre.prenom,
     email: membre.email,
     utilisateurId: membre.utilisateurId,
   };
@@ -70,6 +72,7 @@ export class OrganisationController {
     private readonly renommerEquipe: RenommerEquipe,
     private readonly supprimerEquipe: SupprimerEquipe,
     private readonly listerEquipesParEntite: ListerEquipesParEntite,
+    private readonly obtenirEquipe: ObtenirEquipe,
     private readonly ajouterMembre: AjouterMembre,
     private readonly retirerMembre: RetirerMembre,
     private readonly modifierMembre: ModifierMembre,
@@ -131,12 +134,37 @@ export class OrganisationController {
     }
   }
 
+  /**
+   * Capacité `voirProfilEntite` (Coach + Direction + Membre) plutôt que `gererOrganisation` (Coach
+   * seul) : cette liste alimente aussi l'arbre de navigation partagé, filtré par périmètre dans le
+   * use case (`ListerEquipesParEntite`, même patron que `lister()` ci-dessus pour les Entités) —
+   * une Direction n'y voit jamais aucune Équipe, un Membre n'y voit que les siennes.
+   */
+  @Requiert('voirProfilEntite')
   @Get('entites/:entiteId/equipes')
   async listerEquipes(
     @Param('entiteId') entiteId: string,
+    @Req() request: RequeteAuthentifiee,
   ): Promise<EquipeDto[]> {
-    const equipes = await this.listerEquipesParEntite.executer(entiteId);
+    const equipes = await this.listerEquipesParEntite.executer(
+      entiteId,
+      request.utilisateur,
+    );
     return equipes.map(versEquipeDto);
+  }
+
+  /**
+   * Récupère une seule Équipe par id — sert notamment à rafraîchir une ligne de roster côté front
+   * après création d'un compte depuis l'action "créer un compte" (#62), dont la réponse HTTP est
+   * un `UtilisateurDto` et non l'`EquipeDto` mis à jour par la propagation.
+   */
+  @Get('equipes/:id')
+  async obtenirEquipeAction(@Param('id') id: string): Promise<EquipeDto> {
+    const resultat = await this.obtenirEquipe.executer(id);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException(`Équipe ${id} introuvable`);
+    }
+    return versEquipeDto(resultat.equipe);
   }
 
   @Post('equipes')

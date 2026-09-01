@@ -19,4 +19,10 @@ export interface LigneListeSession {
  */
 export interface SessionListeQuery {
   lister(): Promise<LigneListeSession[]>;
+  /**
+   * Sessions d'une Équipe déjà ouvertes au moins une fois (exclut `PREPAREE`, même garde que
+   * `ObtenirSyntheseSession`) — pour "répartition détaillée des Sessions" d'un Membre d'équipe
+   * (#62), qui n'a jamais accès à la bibliothèque Coach (`lister()` ci-dessus, non filtrée).
+   */
+  listerParEquipe(equipeId: string): Promise<LigneListeSession[]>;
 }

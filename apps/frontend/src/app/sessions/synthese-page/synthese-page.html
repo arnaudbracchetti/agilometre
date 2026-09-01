@@ -13,7 +13,7 @@
         <h1 class="synthese__titre">Synthèse de la séance du {{ date() | date: 'dd/MM/yyyy' }}</h1>
         <span class="synthese__sous-titre">{{ equipeNom() }}</span>
       </div>
-      <div class="synthese__actions">
+      <div class="synthese__actions" *aDroit="'gererSessions'">
         <a nz-button nzType="default" [routerLink]="['/sessions', sessionId(), 'pilotage']">
           Retour au pilotage
         </a>

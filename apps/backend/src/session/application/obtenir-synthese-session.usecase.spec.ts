@@ -1,3 +1,4 @@
+import { Role } from '@agilometre/shared';
 import { Niveau } from '../../referentiel/domain/niveau';
 import { Option } from '../../referentiel/domain/option';
 import { Question } from '../../referentiel/domain/question';
@@ -7,14 +8,24 @@ import { Theme } from '../../referentiel/domain/theme';
 import { ScoringV1 } from '../../scoring/domain/scoring-v1';
 import { Equipe } from '../../organisation/domain/equipe';
 import { EquipeRepository } from '../../organisation/domain/equipe.repository';
+import { Utilisateur } from '../../organisation/domain/utilisateur';
+import { UtilisateurRepository } from '../../organisation/domain/utilisateur.repository';
 import { Reponse } from '../../reponse/domain/reponse';
 import { ReponseRepository } from '../../reponse/domain/reponse.repository';
+import { PerimetreUtilisateur } from '../../auth/domain/perimetre-utilisateur';
+import { UtilisateurConnecte } from '../../auth/jeton-utilisateur';
 import { EtatTour, Session } from '../domain/session';
 import { EtatToursQuery } from '../domain/etat-tours.query';
 import { GenerateurDeCode } from '../domain/generateur-de-code';
 import { Selection } from '../domain/selection';
 import { SessionRepository } from '../domain/session.repository';
 import { ObtenirSyntheseSession } from './obtenir-synthese-session.usecase';
+
+const COACH: UtilisateurConnecte = {
+  id: 'coach-1',
+  email: 'coach@example.com',
+  role: Role.Coach,
+};
 
 const generateurDeCode: GenerateurDeCode = {
   generer: () => Promise.resolve('AB12'),
@@ -56,7 +67,10 @@ class SessionRepositoryFake implements SessionRepository {
 }
 
 class EquipeRepositoryFake implements EquipeRepository {
-  constructor(private readonly equipes: Equipe[]) {}
+  constructor(
+    private readonly equipes: Equipe[],
+    private readonly acces: Set<string> = new Set(),
+  ) {}
   findById(id: string): Promise<Equipe | null> {
     return Promise.resolve(this.equipes.find((e) => e.id === id) ?? null);
   }
@@ -75,11 +89,45 @@ class EquipeRepositoryFake implements EquipeRepository {
   compterParEntite(): Promise<number> {
     return Promise.resolve(this.equipes.length);
   }
+  trouverParEmailMembre(): Promise<Equipe[]> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+  estMembreDe(utilisateurId: string, equipeId: string): Promise<boolean> {
+    return Promise.resolve(this.acces.has(`${utilisateurId}:${equipeId}`));
+  }
+  aUneEquipeDansLEntite(): Promise<boolean> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+}
+
+class UtilisateurRepositoryFake implements UtilisateurRepository {
+  trouverParEmail(): Promise<Utilisateur | null> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+  trouverParId(): Promise<Utilisateur | null> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+  lister(): Promise<Utilisateur[]> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+  save(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+  sauvegarderEtPropager(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
 }
 
 const equipeParDefaut = (): Equipe[] => [
   Equipe.creer('e1', 'Équipe A', 'ent1').valeur,
 ];
+
+function perimetre(equipes: Equipe[], acces: Set<string> = new Set()) {
+  return new PerimetreUtilisateur(
+    new UtilisateurRepositoryFake(),
+    new EquipeRepositoryFake(equipes, acces),
+  );
+}
 
 class ReferentielRepositoryFake implements ReferentielRepository {
   constructor(private readonly referentiel: Referentiel) {}
@@ -171,9 +219,10 @@ describe('ObtenirSyntheseSession', () => {
       new ReponseRepositoryFake([]),
       new ScoringV1(),
       60,
+      perimetre(equipeParDefaut()),
     );
 
-    const resultat = await useCase.executer('inconnue');
+    const resultat = await useCase.executer('inconnue', COACH);
 
     expect(resultat.type).toBe('introuvable');
   });
@@ -197,9 +246,10 @@ describe('ObtenirSyntheseSession', () => {
       new ReponseRepositoryFake([]),
       new ScoringV1(),
       60,
+      perimetre(equipeParDefaut()),
     );
 
-    const resultat = await useCase.executer('s1');
+    const resultat = await useCase.executer('s1', COACH);
 
     expect(resultat.type).toBe('introuvable');
   });
@@ -237,9 +287,10 @@ describe('ObtenirSyntheseSession', () => {
       reponses,
       new ScoringV1(),
       60,
+      perimetre(equipeParDefaut()),
     );
 
-    const resultat = await useCase.executer('s1');
+    const resultat = await useCase.executer('s1', COACH);
 
     expect(resultat.type).toBe('ok');
     if (resultat.type !== 'ok') return;
@@ -287,9 +338,10 @@ describe('ObtenirSyntheseSession', () => {
       reponses,
       new ScoringV1(),
       60,
+      perimetre(equipeParDefaut()),
     );
 
-    const resultat = await useCase.executer('s1');
+    const resultat = await useCase.executer('s1', COACH);
 
     expect(resultat.type).toBe('ok');
     if (resultat.type !== 'ok') return;
@@ -305,5 +357,62 @@ describe('ObtenirSyntheseSession', () => {
       resultatPalier: { effectif: 0 },
       questions: [],
     });
+  });
+
+  it('renvoie "interdit" pour un Membre absent du roster de l’Équipe de la Session', async () => {
+    const session = await creerSessionOuverte('s1', ['q1']);
+    const sessions = new SessionRepositoryFake();
+    sessions.sessions.push(session);
+    const useCase = new ObtenirSyntheseSession(
+      sessions,
+      new EquipeRepositoryFake(equipeParDefaut()),
+      new ReferentielRepositoryFake(Referentiel.vide()),
+      new EtatToursQueryFake([]),
+      new ReponseRepositoryFake([]),
+      new ScoringV1(),
+      60,
+      perimetre(equipeParDefaut()),
+    );
+
+    const resultat = await useCase.executer('s1', {
+      id: 'membre-1',
+      email: 'membre@example.com',
+      role: Role.Membre,
+    });
+
+    expect(resultat.type).toBe('interdit');
+  });
+
+  it('renvoie la synthèse pour un Membre présent au roster de l’Équipe de la Session', async () => {
+    const themeA = Theme.creer('t1', 'Thème A', [question('q1', 't1')]);
+    const referentiel = Referentiel.reconstituer(new Date('2026-01-01'), [
+      themeA,
+    ]);
+    const session = await creerSessionOuverte('s1', ['q1']);
+    const sessions = new SessionRepositoryFake();
+    sessions.sessions.push(session);
+    const etatTours = new EtatToursQueryFake([
+      { tourId: 't1', questionId: 'q1', numero: 1, clos: true },
+    ]);
+    const reponses = new ReponseRepositoryFake([reponse('r1', 'q1', 2, 't1')]);
+    const acces = new Set(['membre-1:e1']);
+    const useCase = new ObtenirSyntheseSession(
+      sessions,
+      new EquipeRepositoryFake(equipeParDefaut()),
+      new ReferentielRepositoryFake(referentiel),
+      etatTours,
+      reponses,
+      new ScoringV1(),
+      60,
+      perimetre(equipeParDefaut(), acces),
+    );
+
+    const resultat = await useCase.executer('s1', {
+      id: 'membre-1',
+      email: 'membre@example.com',
+      role: Role.Membre,
+    });
+
+    expect(resultat.type).toBe('ok');
   });
 });

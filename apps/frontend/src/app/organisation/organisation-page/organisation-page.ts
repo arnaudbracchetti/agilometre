@@ -5,10 +5,12 @@ import { FormsModule } from '@angular/forms';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { MembreDto } from '@agilometre/shared';
+import { MembreDto, UtilisateurDto } from '@agilometre/shared';
 import { ArbreOrganisation } from '../arbre-organisation/arbre-organisation';
 import { OrganisationService } from '../organisation.service';
+import { CreerModifierCompteModal } from '../../comptes/creer-modifier-compte-modal/creer-modifier-compte-modal';
 
 /**
  * Gestion CRUD de l'organisation (Entités/Équipes/Membres) : l'arbre de navigation/sélection vit
@@ -19,13 +21,22 @@ import { OrganisationService } from '../organisation.service';
  */
 @Component({
   selector: 'app-organisation-page',
-  imports: [RouterLink, FormsModule, NzButtonModule, NzInputModule, NzPopconfirmModule, ArbreOrganisation],
+  imports: [
+    RouterLink,
+    FormsModule,
+    NzButtonModule,
+    NzInputModule,
+    NzModalModule,
+    NzPopconfirmModule,
+    ArbreOrganisation,
+  ],
   templateUrl: './organisation-page.html',
   styleUrl: './organisation-page.scss',
 })
 export class OrganisationPage {
   private readonly organisationService = inject(OrganisationService);
   private readonly message = inject(NzMessageService);
+  private readonly modal = inject(NzModalService);
 
   protected readonly arbre = viewChild.required(ArbreOrganisation);
   protected readonly selection = computed(() => this.arbre().selectionActuelle());
@@ -139,9 +150,11 @@ export class OrganisationPage {
       },
       error: (erreur: HttpErrorResponse) => {
         this.creationEntiteEnCours.set(false);
-        this.message.error(
-          erreur.status === 409 ? 'Une Entité porte déjà ce nom.' : 'Impossible de créer cette Entité.',
-        );
+        this.modal.error({
+          nzTitle: 'Erreur',
+          nzContent:
+            erreur.status === 409 ? 'Une Entité porte déjà ce nom.' : 'Impossible de créer cette Entité.',
+        });
       },
     });
   }
@@ -161,9 +174,11 @@ export class OrganisationPage {
       },
       error: (erreur: HttpErrorResponse) => {
         this.renommageEntiteEnCours.set(false);
-        this.message.error(
-          erreur.status === 409 ? 'Une Entité porte déjà ce nom.' : 'Impossible de renommer cette Entité.',
-        );
+        this.modal.error({
+          nzTitle: 'Erreur',
+          nzContent:
+            erreur.status === 409 ? 'Une Entité porte déjà ce nom.' : 'Impossible de renommer cette Entité.',
+        });
       },
     });
   }
@@ -184,9 +199,11 @@ export class OrganisationPage {
       },
       error: (erreur: HttpErrorResponse) => {
         this.creationEquipeEnCours.set(false);
-        this.message.error(
-          erreur.status === 409 ? 'Une Équipe porte déjà ce nom.' : 'Impossible de créer cette Équipe.',
-        );
+        this.modal.error({
+          nzTitle: 'Erreur',
+          nzContent:
+            erreur.status === 409 ? 'Une Équipe porte déjà ce nom.' : 'Impossible de créer cette Équipe.',
+        });
       },
     });
   }
@@ -206,9 +223,11 @@ export class OrganisationPage {
       },
       error: (erreur: HttpErrorResponse) => {
         this.renommageEquipeEnCours.set(false);
-        this.message.error(
-          erreur.status === 409 ? 'Une Équipe porte déjà ce nom.' : 'Impossible de renommer cette Équipe.',
-        );
+        this.modal.error({
+          nzTitle: 'Erreur',
+          nzContent:
+            erreur.status === 409 ? 'Une Équipe porte déjà ce nom.' : 'Impossible de renommer cette Équipe.',
+        });
       },
     });
   }
@@ -224,8 +243,37 @@ export class OrganisationPage {
         this.arbre().selectionnerEntite(equipe.entiteId);
         this.message.success('Équipe supprimée.');
       },
-      error: () => {
-        this.message.error('Impossible de supprimer cette Équipe.');
+      error: (erreur: HttpErrorResponse) => {
+        this.modal.error({
+          nzTitle: 'Erreur',
+          nzContent:
+            erreur.status === 409
+              ? 'Cette Équipe est encore référencée par une Séance ou une campagne Pouls, elle ne peut pas être supprimée.'
+              : 'Impossible de supprimer cette Équipe.',
+        });
+      },
+    });
+  }
+
+  protected supprimerEntite(): void {
+    const entite = this.entiteSelectionnee();
+    if (!entite) {
+      return;
+    }
+    this.organisationService.supprimerEntite(entite.id).subscribe({
+      next: () => {
+        this.arbre().retirerEntite(entite.id);
+        this.arbre().selectionnerRacine();
+        this.message.success('Entité supprimée.');
+      },
+      error: (erreur: HttpErrorResponse) => {
+        this.modal.error({
+          nzTitle: 'Erreur',
+          nzContent:
+            erreur.status === 409
+              ? 'Cette Entité a encore des Équipes rattachées, elle ne peut pas être supprimée.'
+              : 'Impossible de supprimer cette Entité.',
+        });
       },
     });
   }
@@ -248,11 +296,13 @@ export class OrganisationPage {
       },
       error: (erreur: HttpErrorResponse) => {
         this.ajoutMembreEnCours.set(false);
-        this.message.error(
-          erreur.status === 409
-            ? 'Un Membre porte déjà cet email dans cette Équipe.'
-            : 'Impossible d’ajouter ce Membre.',
-        );
+        this.modal.error({
+          nzTitle: 'Erreur',
+          nzContent:
+            erreur.status === 409
+              ? 'Un Membre porte déjà cet email dans cette Équipe.'
+              : 'Impossible d’ajouter ce Membre.',
+        });
       },
     });
   }
@@ -275,11 +325,13 @@ export class OrganisationPage {
         },
         error: (erreur: HttpErrorResponse) => {
           this.modificationMembreEnCours.set(false);
-          this.message.error(
-            erreur.status === 409
-              ? 'Un Membre porte déjà cet email dans cette Équipe.'
-              : 'Impossible de modifier ce Membre.',
-          );
+          this.modal.error({
+            nzTitle: 'Erreur',
+            nzContent:
+              erreur.status === 409
+                ? 'Un Membre porte déjà cet email dans cette Équipe.'
+                : 'Impossible de modifier ce Membre.',
+          });
         },
       });
   }
@@ -296,8 +348,46 @@ export class OrganisationPage {
         this.message.success('Membre retiré du roster.');
       },
       error: () => {
-        this.message.error('Impossible de retirer ce Membre.');
+        this.modal.error({ nzTitle: 'Erreur', nzContent: 'Impossible de retirer ce Membre.' });
       },
     });
+  }
+
+  /**
+   * Créer un compte n'est pas nécessaire pour répondre à une Session ou un Pouls, seulement pour
+   * consulter — au choix du Coach ligne par ligne, jamais en masse
+   * (doc/spec/annexes/gestion-des-droits.md, "Comptes Membre d'équipe"). Le rattachement à cette
+   * ligne de roster est automatique côté serveur (email identique) ; ce composant se contente de
+   * rafraîchir l'Équipe affichée une fois le compte créé — la réponse HTTP de la création est un
+   * `UtilisateurDto`, pas l'`EquipeDto` mis à jour par la propagation.
+   */
+  protected creerCompteDepuisRoster(): void {
+    const selection = this.membreSelectionne();
+    if (!selection) {
+      return;
+    }
+    this.modal
+      .create({
+        nzTitle: 'Créer un compte',
+        nzContent: CreerModifierCompteModal,
+        nzData: {
+          compte: null,
+          emailInitial: selection.membre.email,
+          nomInitial: selection.membre.nom,
+        },
+        nzFooter: null,
+      })
+      .afterClose.subscribe((compte?: UtilisateurDto) => {
+        if (!compte) {
+          return;
+        }
+        this.organisationService.obtenirEquipe(selection.equipeId).subscribe((equipeMiseAJour) => {
+          // Pas de `selectionnerEquipe` : le Membre sélectionné existe toujours (même id), la
+          // sélection se re-résout automatiquement vers sa version à jour (désormais liée) — voir
+          // `ArbreOrganisation.selectionActuelle`, dérivée en direct de `equipesParEntite`.
+          this.arbre().remplacerEquipe(equipeMiseAJour);
+          this.message.success('Compte créé — le Membre y est désormais lié.');
+        });
+      });
   }
 }

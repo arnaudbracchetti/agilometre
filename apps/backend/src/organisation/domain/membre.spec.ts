@@ -81,18 +81,87 @@ describe('Membre', () => {
   });
 
   describe('reconstituer', () => {
-    it('recharge un Membre sans revalider, avec son utilisateurId', () => {
+    it('recharge un Membre sans revalider, avec son prénom et son utilisateurId', () => {
       const membre = Membre.reconstituer(
         'm1',
         'Jean Dupont',
+        'Jean',
         'jean.dupont@example.com',
         'u1',
       );
 
       expect(membre.id).toBe('m1');
       expect(membre.nom).toBe('Jean Dupont');
+      expect(membre.prenom).toBe('Jean');
       expect(membre.email).toBe('jean.dupont@example.com');
       expect(membre.utilisateurId).toBe('u1');
+    });
+  });
+
+  describe('lierUtilisateur', () => {
+    it('fixe utilisateurId et écrase nom/prénom/email avec les valeurs du compte', () => {
+      const membre = Membre.creer(
+        'm1',
+        'Jean Dupont',
+        'jean@example.com',
+      ).valeur;
+
+      membre.lierUtilisateur('u1', 'Jean', 'Dupont', 'jean.dupont@compte.com');
+
+      expect(membre.utilisateurId).toBe('u1');
+      expect(membre.nom).toBe('Dupont');
+      expect(membre.prenom).toBe('Jean');
+      expect(membre.email).toBe('jean.dupont@compte.com');
+    });
+
+    it('rend le Membre en lecture seule sur nom/email', () => {
+      const membre = Membre.creer(
+        'm1',
+        'Jean Dupont',
+        'jean@example.com',
+      ).valeur;
+      membre.lierUtilisateur('u1', 'Jean', 'Dupont', 'jean.dupont@compte.com');
+
+      const resultat = membre.modifier('Autre nom', 'autre@example.com');
+
+      expect(resultat.estEchec).toBe(true);
+      expect(resultat.erreur.name).toBe('MembreLieError');
+      expect(membre.nom).toBe('Dupont');
+      expect(membre.email).toBe('jean.dupont@compte.com');
+    });
+  });
+
+  describe('delierUtilisateur', () => {
+    it('remet utilisateurId à null sans toucher aux autres champs', () => {
+      const membre = Membre.creer(
+        'm1',
+        'Jean Dupont',
+        'jean@example.com',
+      ).valeur;
+      membre.lierUtilisateur('u1', 'Jean', 'Dupont', 'jean.dupont@compte.com');
+
+      membre.delierUtilisateur();
+
+      expect(membre.utilisateurId).toBeNull();
+      expect(membre.nom).toBe('Dupont');
+      expect(membre.prenom).toBe('Jean');
+      expect(membre.email).toBe('jean.dupont@compte.com');
+    });
+
+    it('rend le Membre de nouveau éditable', () => {
+      const membre = Membre.creer(
+        'm1',
+        'Jean Dupont',
+        'jean@example.com',
+      ).valeur;
+      membre.lierUtilisateur('u1', 'Jean', 'Dupont', 'jean.dupont@compte.com');
+      membre.delierUtilisateur();
+
+      const resultat = membre.modifier('Nouveau nom', 'nouveau@example.com');
+
+      expect(resultat.estSucces).toBe(true);
+      expect(membre.nom).toBe('Nouveau nom');
+      expect(membre.email).toBe('nouveau@example.com');
     });
   });
 });

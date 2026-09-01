@@ -3,11 +3,13 @@ import {
   EmailUtilisateurDejaUtiliseError,
   UtilisateurRepository,
 } from '../domain/utilisateur.repository';
+import { EmailMembreDejaUtiliseError } from '../domain/equipe';
 
 export type ResultatModifierUtilisateur =
   | { type: 'introuvable' }
   | { type: 'invalide'; erreur: ErreurInvariantUtilisateur }
   | { type: 'email_deja_utilise' }
+  | { type: 'doublon_roster' }
   | { type: 'modifie'; utilisateur: Utilisateur };
 
 /**
@@ -42,10 +44,13 @@ export class ModifierUtilisateur {
     }
 
     try {
-      await this.utilisateurs.save(utilisateur);
+      await this.utilisateurs.sauvegarderEtPropager(utilisateur);
     } catch (erreur) {
       if (erreur instanceof EmailUtilisateurDejaUtiliseError) {
         return { type: 'email_deja_utilise' };
+      }
+      if (erreur instanceof EmailMembreDejaUtiliseError) {
+        return { type: 'doublon_roster' };
       }
       throw erreur;
     }

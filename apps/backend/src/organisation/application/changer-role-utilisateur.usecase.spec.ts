@@ -27,6 +27,10 @@ class UtilisateurRepositoryFake implements UtilisateurRepository {
     this.utilisateurs.push(utilisateur);
     return Promise.resolve();
   }
+
+  sauvegarderEtPropager(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
 }
 
 describe('ChangerRoleUtilisateur', () => {

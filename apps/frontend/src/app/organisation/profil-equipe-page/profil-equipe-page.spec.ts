@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
@@ -35,6 +35,12 @@ function paramMapAvec(id: string | null): BehaviorSubject<ReturnType<typeof conv
   return new BehaviorSubject(convertToParamMap(id ? { id } : {}));
 }
 
+/** Chaque changement d'`:id` déclenche aussi `GET .../sessions` (#62), indépendamment de `profil`
+ * — à flusher dans chaque test pour ne pas laisser de requête en attente (`httpMock.verify()`). */
+function flushSessions(mock: HttpTestingController, equipeId: string): void {
+  mock.expectOne(`/api/organisation/equipes/${equipeId}/sessions`).flush([]);
+}
+
 describe('ProfilEquipePage', () => {
   let httpMock: HttpTestingController;
   let paramMap$: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
@@ -47,6 +53,7 @@ describe('ProfilEquipePage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideNoopAnimations(),
+        provideRouter([]),
         { provide: ActivatedRoute, useValue: { paramMap: paramMap$ } },
         provideNzIcons([WarningOutline, LeftOutline, RightOutline, RiseOutline, FallOutline, ArrowRightOutline]),
       ],
@@ -70,6 +77,7 @@ describe('ProfilEquipePage', () => {
 
     const req = httpMock.expectOne('/api/organisation/equipes/eq1/profil?offset=0');
     req.flush(PROFIL_PAR_DEFAUT);
+    flushSessions(httpMock, 'eq1');
     fixture.detectChanges();
 
     const texte = fixture.nativeElement.textContent as string;
@@ -85,6 +93,7 @@ describe('ProfilEquipePage', () => {
     httpMock
       .expectOne('/api/organisation/equipes/eq1/profil?offset=0')
       .flush('Introuvable', { status: 404, statusText: 'Not Found' });
+    flushSessions(httpMock, 'eq1');
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Ce Profil d’Équipe n’est pas accessible.');
@@ -95,6 +104,7 @@ describe('ProfilEquipePage', () => {
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/equipes/eq1/profil?offset=0').flush(PROFIL_PAR_DEFAUT);
+    flushSessions(httpMock, 'eq1');
     fixture.detectChanges();
 
     paramMap$.next(convertToParamMap({ id: 'eq2' }));
@@ -102,6 +112,7 @@ describe('ProfilEquipePage', () => {
 
     const req = httpMock.expectOne('/api/organisation/equipes/eq2/profil?offset=0');
     req.flush({ ...PROFIL_PAR_DEFAUT, equipeNom: 'Équipe Beta' });
+    flushSessions(httpMock, 'eq2');
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Profil de l’Équipe Équipe Beta');
@@ -112,6 +123,7 @@ describe('ProfilEquipePage', () => {
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/equipes/eq1/profil?offset=0').flush(PROFIL_PAR_DEFAUT);
+    flushSessions(httpMock, 'eq1');
     fixture.detectChanges();
 
     const boutons = fixture.nativeElement.querySelectorAll('button');
@@ -149,6 +161,7 @@ describe('ProfilEquipePage', () => {
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/equipes/eq1/profil?offset=0').flush(PROFIL_PAR_DEFAUT);
+    flushSessions(httpMock, 'eq1');
     fixture.detectChanges();
 
     const suivante = Array.from(fixture.nativeElement.querySelectorAll('button')).find(
@@ -197,6 +210,7 @@ describe('ProfilEquipePage', () => {
       margeAvantDescenteGlobal: 0.5,
       evolutionGlobale: 'hausse',
     });
+    flushSessions(httpMock, 'eq1');
     fixture.detectChanges();
 
     const fleche = fixture.nativeElement.querySelector(
@@ -213,6 +227,7 @@ describe('ProfilEquipePage', () => {
     httpMock
       .expectOne('/api/organisation/equipes/eq1/profil?offset=0')
       .flush({ ...PROFIL_PAR_DEFAUT, aPeriodePrecedente: false });
+    flushSessions(httpMock, 'eq1');
     fixture.detectChanges();
 
     const precedente = Array.from(fixture.nativeElement.querySelectorAll('button')).find(
@@ -224,5 +239,42 @@ describe('ProfilEquipePage', () => {
     fixture.detectChanges();
 
     httpMock.expectNone('/api/organisation/equipes/eq1/profil?offset=1');
+  });
+
+  it('liste les Sessions de l’Équipe, chacune en lien vers sa synthèse', async () => {
+    const fixture = await creerFixture('eq1');
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/equipes/eq1/profil?offset=0').flush(PROFIL_PAR_DEFAUT);
+    httpMock.expectOne('/api/organisation/equipes/eq1/sessions').flush([
+      {
+        id: 's1',
+        equipeNom: 'Équipe Alpha',
+        date: '2026-05-01T00:00:00.000Z',
+        statut: 'CLOTUREE',
+        verrouillee: true,
+        nbQuestions: 3,
+        modeleSessionNom: 'Diagnostic',
+      },
+    ]);
+    fixture.detectChanges();
+
+    const lien: HTMLAnchorElement = fixture.nativeElement.querySelector(
+      '.profil-equipe__sessions-ligne',
+    );
+    expect(lien).not.toBeNull();
+    expect(lien.getAttribute('href')).toBe('/sessions/s1/synthese');
+    expect(lien.textContent).toContain('Diagnostic');
+  });
+
+  it('affiche un état vide quand l’Équipe n’a aucune Session ouverte', async () => {
+    const fixture = await creerFixture('eq1');
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/equipes/eq1/profil?offset=0').flush(PROFIL_PAR_DEFAUT);
+    httpMock.expectOne('/api/organisation/equipes/eq1/sessions').flush([]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Aucune Session ouverte pour l’instant.');
   });
 });

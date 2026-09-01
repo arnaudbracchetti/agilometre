@@ -12,6 +12,7 @@ import { Chargement } from '../../shared/chargement/chargement';
 import { ErrorMessage } from '../../shared/error-message/error-message';
 import { SyntheseThemes } from '../../shared/synthese-themes/synthese-themes';
 import { SessionsService } from '../sessions.service';
+import { ADroit } from '../../auth/droits.directive';
 import { GlossaireSynthese } from './glossaire-synthese';
 
 /**
@@ -34,6 +35,7 @@ import { GlossaireSynthese } from './glossaire-synthese';
     NzIconModule,
     NzModalModule,
     NzPopconfirmModule,
+    ADroit,
     Chargement,
     ErrorMessage,
     SyntheseThemes,

@@ -5,6 +5,8 @@ import { JetonCompte } from '../domain/jeton-compte';
 import { JetonCompteRepository } from '../domain/jeton-compte.repository';
 import { Utilisateur } from '../domain/utilisateur';
 import { UtilisateurRepository } from '../domain/utilisateur.repository';
+import { Equipe } from '../domain/equipe';
+import { EquipeRepository } from '../domain/equipe.repository';
 import { CreerUtilisateur } from './creer-utilisateur.usecase';
 import { EmettreJetonCompte } from './emettre-jeton-compte';
 
@@ -30,6 +32,57 @@ class UtilisateurRepositoryFake implements UtilisateurRepository {
   save(utilisateur: Utilisateur): Promise<void> {
     this.utilisateurs.push(utilisateur);
     return Promise.resolve();
+  }
+
+  sauvegarderEtPropager(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+}
+
+class EquipeRepositoryFake implements EquipeRepository {
+  equipes: Equipe[] = [];
+
+  findById(id: string): Promise<Equipe | null> {
+    return Promise.resolve(this.equipes.find((e) => e.id === id) ?? null);
+  }
+
+  findByEntiteId(): Promise<Equipe[]> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  trouverParNom(): Promise<Equipe | null> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  save(equipe: Equipe): Promise<void> {
+    const index = this.equipes.findIndex((e) => e.id === equipe.id);
+    if (index !== -1) this.equipes[index] = equipe;
+    return Promise.resolve();
+  }
+
+  remove(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  compterParEntite(): Promise<number> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  trouverParEmailMembre(email: string): Promise<Equipe[]> {
+    const recherche = email.toLowerCase();
+    return Promise.resolve(
+      this.equipes.filter((equipe) =>
+        equipe.membres.some((m) => m.email.toLowerCase() === recherche),
+      ),
+    );
+  }
+
+  estMembreDe(): Promise<boolean> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  aUneEquipeDansLEntite(): Promise<boolean> {
+    return Promise.reject(new Error('non utilisé par ce test'));
   }
 }
 
@@ -57,6 +110,7 @@ class MailSenderFake implements MailSender {
 
 function creerUseCase() {
   const utilisateurs = new UtilisateurRepositoryFake();
+  const equipes = new EquipeRepositoryFake();
   const jetons = new JetonCompteRepositoryFake();
   const mail = new MailSenderFake();
   const emettreJetonCompte = new EmettreJetonCompte(
@@ -65,8 +119,9 @@ function creerUseCase() {
     'http://localhost:4200',
   );
   return {
-    useCase: new CreerUtilisateur(utilisateurs, emettreJetonCompte),
+    useCase: new CreerUtilisateur(utilisateurs, equipes, emettreJetonCompte),
     utilisateurs,
+    equipes,
     jetons,
     mail,
   };
@@ -154,5 +209,46 @@ describe('CreerUtilisateur', () => {
 
     expect(resultat.type).toBe('invalide');
     expect(mail.messages).toHaveLength(0);
+  });
+
+  it('lie le compte créé aux Membres de même email dans deux rosters différents', async () => {
+    const { useCase, equipes } = creerUseCase();
+    const equipeA = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
+    equipeA.ajouterMembre('m1', 'Jean D.', 'jean@example.com');
+    const equipeB = Equipe.creer('eq2', 'Beta', 'e1').valeur;
+    equipeB.ajouterMembre('m2', 'J. Dupont', 'jean@example.com');
+    equipes.equipes.push(equipeA, equipeB);
+
+    const resultat = await useCase.executer(
+      'jean@example.com',
+      'Jean',
+      'Dupont',
+      Role.Membre,
+    );
+
+    expect(resultat.type).toBe('cree');
+    if (resultat.type !== 'cree') throw new Error('unreachable');
+    const idCompte = resultat.utilisateur.id;
+    expect(equipeA.membres[0].utilisateurId).toBe(idCompte);
+    expect(equipeA.membres[0].nom).toBe('Dupont');
+    expect(equipeB.membres[0].utilisateurId).toBe(idCompte);
+    expect(equipeB.membres[0].nom).toBe('Dupont');
+  });
+
+  it('ne lie aucun roster pour un compte Coach ou Direction', async () => {
+    const { useCase, equipes } = creerUseCase();
+    const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
+    equipe.ajouterMembre('m1', 'Jean D.', 'jean@example.com');
+    equipes.equipes.push(equipe);
+
+    const resultat = await useCase.executer(
+      'jean@example.com',
+      'Jean',
+      'Dupont',
+      Role.Coach,
+    );
+
+    expect(resultat.type).toBe('cree');
+    expect(equipe.membres[0].utilisateurId).toBeNull();
   });
 });

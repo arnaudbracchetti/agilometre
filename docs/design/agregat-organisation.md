@@ -127,10 +127,14 @@ interface UtilisateurRepository {
 
 Le besoin pressenti ("un Utilisateur Membre d'équipe consulte les résultats de ses Équipes"), différé
 en YAGNI lors de la conception initiale, est désormais construit (voir
-[gestion-des-droits.md](../../doc/spec/annexes/gestion-des-droits.md)). Il reste servi par une
-**requête directe dédiée** ("mes Équipes"), **pas** par un `findByUtilisateurId` sur
-`EquipeRepository` qui chargerait des agrégats `Équipe` complets : le besoin est une liste d'Équipes
-et leur profil, pas la modification du roster.
+[gestion-des-droits.md](../../doc/spec/annexes/gestion-des-droits.md)). Décision révisée en aparté de
+la carte #62 par rapport au plan initial : plutôt qu'une requête directe dédiée ("mes Équipes")
+séparée, le Membre d'équipe réutilise le même arbre de navigation que Coach/Direction
+(`ArbreOrganisation`, Entité → Équipe), filtré côté serveur via `PerimetreUtilisateur.
+peutVoirEntite`/`peutVoirEquipe` (dérivées du roster) sur les mêmes requêtes déjà utilisées pour
+Coach/Direction (`EntiteRepository.findAll`, `EquipeRepository.findByEntiteId`) - toujours **pas**
+un `findByUtilisateurId` sur `EquipeRepository` qui chargerait des agrégats `Équipe` complets, mais
+plus de read model séparé non plus : un seul mécanisme de navigation pour les trois Rôles.
 
 ## 5. Inversion de dépendance
 
@@ -145,9 +149,11 @@ framework ni de Prisma. Les trois interfaces de repository sont définies dans l
   `DIRECTION` (bug signalé sur la carte #1 et l'Epic #6) - corrigé pour porter les 4 valeurs,
   alignées sur `packages/shared/src/roles.ts`.
 - **Recherche "mes Équipes" pour un Utilisateur Membre d'équipe** : n'est plus différée (voir
-  section 4) - requête directe dédiée, construite à même titre que les comptes Membre d'équipe
+  section 4) - construite à même titre que les comptes Membre d'équipe
   ([ADR 0021](../adr/0021-comptes-membre-equipe-en-perimetre-suivi-adr-0007.md), suivi de
-  [ADR 0007](../adr/0007-membre-utilisateur-optionnel-anticipe-sur-prd-v1.md)).
+  [ADR 0007](../adr/0007-membre-utilisateur-optionnel-anticipe-sur-prd-v1.md)), finalement servie par
+  le même arbre de navigation que Coach/Direction plutôt qu'un read model séparé (écart au plan
+  initial, voir gestion-des-droits.md).
 - **Désactivation d'un Utilisateur** : tranchée - réversible (`actif: boolean`), jamais de
   suppression définitive (auditabilité ; la suppression relève du RGPD et reste hors périmètre).
   `Membre.utilisateurId` n'est pas affecté par une désactivation : seule la connexion est bloquée,

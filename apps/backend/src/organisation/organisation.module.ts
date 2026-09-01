@@ -8,6 +8,7 @@ import { RenommerEquipe } from './application/renommer-equipe.usecase';
 import { SupprimerEquipe } from './application/supprimer-equipe.usecase';
 import { SupprimerEntite } from './application/supprimer-entite.usecase';
 import { ListerEquipesParEntite } from './application/lister-equipes-par-entite.usecase';
+import { ObtenirEquipe } from './application/obtenir-equipe.usecase';
 import { AjouterMembre } from './application/ajouter-membre.usecase';
 import { RetirerMembre } from './application/retirer-membre.usecase';
 import { ModifierMembre } from './application/modifier-membre.usecase';
@@ -77,9 +78,17 @@ import { NodemailerMailSender } from '../mail/nodemailer-mail-sender';
       useFactory: (
         repository: PrismaEntiteRepository,
         utilisateurs: PrismaUtilisateurRepository,
+        equipes: PrismaEquipeRepository,
       ) =>
-        new ListerEntites(repository, new PerimetreUtilisateur(utilisateurs)),
-      inject: [PrismaEntiteRepository, PrismaUtilisateurRepository],
+        new ListerEntites(
+          repository,
+          new PerimetreUtilisateur(utilisateurs, equipes),
+        ),
+      inject: [
+        PrismaEntiteRepository,
+        PrismaUtilisateurRepository,
+        PrismaEquipeRepository,
+      ],
     },
     {
       provide: CreerEquipe,
@@ -110,16 +119,32 @@ import { NodemailerMailSender } from '../mail/nodemailer-mail-sender';
       inject: [PrismaEntiteRepository, PrismaEquipeRepository],
     },
     {
+      // Même contournement de cycle de modules que `ListerEntites` ci-dessus : `PerimetreUtilisateur`
+      // instancié ici directement, pas injecté depuis `AuthModule`.
       provide: ListerEquipesParEntite,
+      useFactory: (
+        repository: PrismaEquipeRepository,
+        utilisateurs: PrismaUtilisateurRepository,
+      ) =>
+        new ListerEquipesParEntite(
+          repository,
+          new PerimetreUtilisateur(utilisateurs, repository),
+        ),
+      inject: [PrismaEquipeRepository, PrismaUtilisateurRepository],
+    },
+    {
+      provide: ObtenirEquipe,
       useFactory: (repository: PrismaEquipeRepository) =>
-        new ListerEquipesParEntite(repository),
+        new ObtenirEquipe(repository),
       inject: [PrismaEquipeRepository],
     },
     {
       provide: AjouterMembre,
-      useFactory: (repository: PrismaEquipeRepository) =>
-        new AjouterMembre(repository),
-      inject: [PrismaEquipeRepository],
+      useFactory: (
+        repository: PrismaEquipeRepository,
+        utilisateurs: PrismaUtilisateurRepository,
+      ) => new AjouterMembre(repository, utilisateurs),
+      inject: [PrismaEquipeRepository, PrismaUtilisateurRepository],
     },
     {
       provide: RetirerMembre,
@@ -161,9 +186,14 @@ import { NodemailerMailSender } from '../mail/nodemailer-mail-sender';
       provide: CreerUtilisateur,
       useFactory: (
         utilisateurs: PrismaUtilisateurRepository,
+        equipes: PrismaEquipeRepository,
         emettreJetonCompte: EmettreJetonCompte,
-      ) => new CreerUtilisateur(utilisateurs, emettreJetonCompte),
-      inject: [PrismaUtilisateurRepository, EmettreJetonCompte],
+      ) => new CreerUtilisateur(utilisateurs, equipes, emettreJetonCompte),
+      inject: [
+        PrismaUtilisateurRepository,
+        PrismaEquipeRepository,
+        EmettreJetonCompte,
+      ],
     },
     {
       provide: ModifierUtilisateur,

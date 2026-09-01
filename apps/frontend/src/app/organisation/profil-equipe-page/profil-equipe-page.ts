@@ -1,10 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { ProfilEquipeDto } from '@agilometre/shared';
+import { NzTagModule } from 'ng-zorro-antd/tag';
+import { LigneListeSessionDto, ProfilEquipeDto } from '@agilometre/shared';
 import { Chargement } from '../../shared/chargement/chargement';
 import { ErrorMessage } from '../../shared/error-message/error-message';
 import { SyntheseThemes } from '../../shared/synthese-themes/synthese-themes';
@@ -18,10 +19,23 @@ import { OrganisationService } from '../organisation.service';
  * résultats dans le même gabarit que la Synthèse de séance (`SyntheseThemes`, partagé avec
  * `SynthesePage`) — même lecture des Paliers par Thème, qu'ils viennent d'une seule séance ou
  * d'une Période entière.
+ *
+ * Porte aussi la liste des Sessions de l'Équipe (#62, "répartition détaillée de toutes les
+ * Sessions") : visible à tout Rôle atteignant cette page (Coach comme Membre d'équipe), chargée
+ * une seule fois par Équipe (pas à chaque navigation de Période, contrairement à `profil`).
  */
 @Component({
   selector: 'app-profil-equipe-page',
-  imports: [DatePipe, NzButtonModule, NzIconModule, Chargement, ErrorMessage, SyntheseThemes],
+  imports: [
+    DatePipe,
+    RouterLink,
+    NzButtonModule,
+    NzIconModule,
+    NzTagModule,
+    Chargement,
+    ErrorMessage,
+    SyntheseThemes,
+  ],
   templateUrl: './profil-equipe-page.html',
   styleUrl: './profil-equipe-page.scss',
 })
@@ -36,6 +50,7 @@ export class ProfilEquipePage {
   protected readonly chargementEnCours = signal(false);
   protected readonly chargementPeriode = signal(false);
   protected readonly inaccessible = signal(false);
+  protected readonly sessions = signal<LigneListeSessionDto[]>([]);
 
   constructor() {
     // `paramMap` (pas `snapshot.paramMap` lu une fois) : sélectionner une autre Équipe dans
@@ -47,8 +62,12 @@ export class ProfilEquipePage {
       this.profil.set(null);
       this.offset.set(0);
       this.inaccessible.set(false);
+      this.sessions.set([]);
       if (id) {
         this.chargerProfil(id, 0);
+        this.organisationService
+          .listerSessionsEquipe(id)
+          .subscribe((sessions) => this.sessions.set(sessions));
       }
     });
   }

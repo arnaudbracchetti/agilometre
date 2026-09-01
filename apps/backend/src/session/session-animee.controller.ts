@@ -4,11 +4,13 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import {
@@ -21,7 +23,8 @@ import {
 import { Question } from '../referentiel/domain/question';
 import { Theme } from '../referentiel/domain/theme';
 import { Session } from './domain/session';
-import { LigneListeSession } from './domain/session-liste.query';
+import { versLigneListeSessionDto } from './ligne-liste-session.mapper';
+import type { RequeteAuthentifiee } from '../auth/guards/auth.guard';
 import { CreerSession } from './application/creer-session.usecase';
 import { AjouterQuestionSession } from './application/ajouter-question-session.usecase';
 import { AjouterThemeSession } from './application/ajouter-theme-session.usecase';
@@ -129,15 +132,7 @@ export class SessionAnimeeController {
   @Get()
   async lister(): Promise<LigneListeSessionDto[]> {
     const lignes = await this.listerSessions.executer();
-    return lignes.map((ligne: LigneListeSession) => ({
-      id: ligne.id,
-      equipeNom: ligne.equipeNom,
-      date: ligne.date.toISOString(),
-      statut: STATUT_VERS_DTO[ligne.statut],
-      verrouillee: ligne.verrouillee,
-      nbQuestions: ligne.nbQuestions,
-      modeleSessionNom: ligne.modeleSessionNom,
-    }));
+    return lignes.map(versLigneListeSessionDto);
   }
 
   @Post()
@@ -188,11 +183,22 @@ export class SessionAnimeeController {
   @Requiert('voirSyntheseSession')
   @Get(':id/synthese')
   @SkipThrottle()
-  async synthese(@Param('id') id: string): Promise<SyntheseSessionDto> {
-    const resultat = await this.obtenirSyntheseSession.executer(id);
+  async synthese(
+    @Param('id') id: string,
+    @Req() request: RequeteAuthentifiee,
+  ): Promise<SyntheseSessionDto> {
+    const resultat = await this.obtenirSyntheseSession.executer(
+      id,
+      request.utilisateur,
+    );
     if (resultat.type === 'introuvable') {
       throw new NotFoundException(
         `Aucune synthèse accessible pour la Session ${id}`,
+      );
+    }
+    if (resultat.type === 'interdit') {
+      throw new ForbiddenException(
+        `Le Rôle ${request.utilisateur.role} n'a pas accès à cette ressource`,
       );
     }
     return versSyntheseDto(

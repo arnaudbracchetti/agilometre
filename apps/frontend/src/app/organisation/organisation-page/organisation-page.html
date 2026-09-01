@@ -55,6 +55,20 @@
           </button>
         </form>
       </div>
+
+      <div class="organisation__section organisation__section--danger">
+        <h3 class="organisation__section-titre">Supprimer l’Entité</h3>
+        <button
+          nz-button
+          nzDanger
+          class="organisation__supprimer"
+          nz-popconfirm
+          nzPopconfirmTitle="Supprimer cette Entité ?"
+          (nzOnConfirm)="supprimerEntite()"
+        >
+          Supprimer l’Entité
+        </button>
+      </div>
     } @else if (equipeSelectionnee(); as equipe) {
       <div class="organisation__entete">
         <h2 class="organisation__titre">{{ equipe.nom }}</h2>
@@ -139,37 +153,61 @@
     } @else if (membreSelectionne(); as selection) {
       <h2 class="organisation__titre">{{ selection.membre.nom }}</h2>
 
-      <div class="organisation__section">
-        <h3 class="organisation__section-titre">Modifier</h3>
-        <form class="organisation__formulaire" (ngSubmit)="modifierMembre()">
-          <label for="nomModifieMembre">Nom</label>
-          <input
-            nz-input
-            id="nomModifieMembre"
-            name="nomModifieMembre"
-            [ngModel]="nomModifieMembre()"
-            (ngModelChange)="nomModifieMembre.set($event)"
-          />
-          <label for="emailModifieMembre">Email</label>
-          <input
-            nz-input
-            id="emailModifieMembre"
-            name="emailModifieMembre"
-            type="email"
-            [ngModel]="emailModifieMembre()"
-            (ngModelChange)="emailModifieMembre.set($event)"
-          />
-          <button
-            nz-button
-            nzType="primary"
-            type="submit"
-            [disabled]="!modificationMembrePossible()"
-            [nzLoading]="modificationMembreEnCours()"
-          >
-            Enregistrer
-          </button>
-        </form>
-      </div>
+      @if (selection.membre.utilisateurId === null) {
+        <div class="organisation__section">
+          <h3 class="organisation__section-titre">Modifier</h3>
+          <form class="organisation__formulaire" (ngSubmit)="modifierMembre()">
+            <label for="nomModifieMembre">Nom</label>
+            <input
+              nz-input
+              id="nomModifieMembre"
+              name="nomModifieMembre"
+              [ngModel]="nomModifieMembre()"
+              (ngModelChange)="nomModifieMembre.set($event)"
+            />
+            <label for="emailModifieMembre">Email</label>
+            <input
+              nz-input
+              id="emailModifieMembre"
+              name="emailModifieMembre"
+              type="email"
+              [ngModel]="emailModifieMembre()"
+              (ngModelChange)="emailModifieMembre.set($event)"
+            />
+            <button
+              nz-button
+              nzType="primary"
+              type="submit"
+              [disabled]="!modificationMembrePossible()"
+              [nzLoading]="modificationMembreEnCours()"
+            >
+              Enregistrer
+            </button>
+          </form>
+        </div>
+
+        <div class="organisation__section">
+          <h3 class="organisation__section-titre">Compte</h3>
+          <p>Un compte n’est pas nécessaire pour répondre, seulement pour consulter les résultats.</p>
+          <button nz-button nzType="default" (click)="creerCompteDepuisRoster()">Créer un compte</button>
+        </div>
+      } @else {
+        <div class="organisation__section">
+          <h3 class="organisation__section-titre">Compte</h3>
+          <p>
+            Prénom, nom et email sont gérés depuis le compte lié —
+            <a routerLink="/comptes">voir l’écran Comptes</a>.
+          </p>
+          <dl class="organisation__lecture-seule">
+            <dt>Prénom</dt>
+            <dd>{{ selection.membre.prenom }}</dd>
+            <dt>Nom</dt>
+            <dd>{{ selection.membre.nom }}</dd>
+            <dt>Email</dt>
+            <dd>{{ selection.membre.email }}</dd>
+          </dl>
+        </div>
+      }
 
       <div class="organisation__section organisation__section--danger">
         <h3 class="organisation__section-titre">Retirer du roster</h3>

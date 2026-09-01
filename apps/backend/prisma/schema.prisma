@@ -82,24 +82,31 @@ model Equipe {
 
 // Roster d'une Équipe, sans compte de connexion obligatoire (agrégat Organisation,
 // docs/design/agregat-organisation.md). `email` n'est volontairement pas unique globalement :
-// une même personne peut apparaître dans plusieurs rosters. `utilisateurId` référence par id un
-// futur Utilisateur (pas de relation Prisma : ce modèle n'existe pas encore, voir #21/#23) — même
-// pattern que Sollicitation.membreId.
+// une même personne peut apparaître dans plusieurs rosters. `prenom` reste `null` tant qu'aucun
+// compte n'est lié (nom/email suffisent alors à l'identifier à l'écran) ; renseigné par
+// propagation descendante une fois lié (#62). `utilisateurId` référence un Utilisateur `Rôle=MEMBRE`
+// une fois rattaché — automatiquement par email, à la création du compte ou à l'ajout au roster
+// (doc/spec/annexes/gestion-des-droits.md, "Rattachement automatique"), jamais rejoué ensuite.
 model Membre {
-  id            String  @id @default(uuid())
+  id            String       @id @default(uuid())
   nom           String
+  prenom        String?
   email         String
-  equipe        Equipe  @relation(fields: [equipeId], references: [id], onDelete: Cascade)
+  equipe        Equipe       @relation(fields: [equipeId], references: [id], onDelete: Cascade)
   equipeId      String
+  // `onDelete: SetNull` documente l'intention plutôt que de dépendre du défaut implicite de Prisma :
+  // un Utilisateur ne se supprime jamais cette itération (désactivation seulement), mais si ce
+  // devait changer, la ligne de roster doit survivre, juste redevenir éditable.
+  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: SetNull)
   utilisateurId String?
+
+  @@index([utilisateurId])
 }
 
 // Compte de connexion (issue #59, doc/spec/annexes/gestion-des-droits.md). Unicité de `email`
 // (insensible à la casse) garantie par un index fonctionnel sur LOWER(email), ajouté par une
 // migration SQL brute (même limitation que Entite.nom) — voir la migration
-// utilisateur_email_unique_ci et docs/design/agregat-politique-des-droits.md. Pas de relation
-// Prisma vers Membre (Membre.utilisateurId reste une chaîne simple, voir le commentaire de Membre
-// ci-dessus).
+// utilisateur_email_unique_ci et docs/design/agregat-politique-des-droits.md.
 model Utilisateur {
   id             String         @id @default(uuid())
   email          String
@@ -110,6 +117,7 @@ model Utilisateur {
   role           Role
   jetons         JetonCompte[]
   habilitations  Habilitation[]
+  membres        Membre[]
 }
 
 // Entité enfant de Utilisateur (issue #61, docs/design/agregat-organisation.md §1) : borne le

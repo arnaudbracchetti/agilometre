@@ -68,6 +68,18 @@ class EquipeRepositoryFake implements EquipeRepository {
       this.equipes.filter((e) => e.entiteId === entiteId).length,
     );
   }
+
+  trouverParEmailMembre(): Promise<Equipe[]> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  estMembreDe(): Promise<boolean> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
+
+  aUneEquipeDansLEntite(): Promise<boolean> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
 }
 
 describe('CreerEquipe', () => {

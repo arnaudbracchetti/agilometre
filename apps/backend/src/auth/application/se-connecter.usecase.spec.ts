@@ -28,6 +28,10 @@ class UtilisateurRepositoryEnMemoire implements UtilisateurRepository {
   save(): Promise<void> {
     return Promise.reject(new Error('non utilisé par ce test'));
   }
+
+  sauvegarderEtPropager(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
 }
 
 describe('SeConnecter', () => {

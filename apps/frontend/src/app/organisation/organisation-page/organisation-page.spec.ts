@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgModel } from '@angular/forms';
@@ -6,12 +7,14 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
-import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzFormatEmitEvent } from 'ng-zorro-antd/tree';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import { ApartmentOutline, SearchOutline, TeamOutline, UserOutline } from '@ant-design/icons-angular/icons';
+import { Role, UtilisateurDto } from '@agilometre/shared';
 import { DroitsService } from '../../auth/droits.service';
 import { ArbreOrganisation } from '../arbre-organisation/arbre-organisation';
+import { CreerModifierCompteModal } from '../../comptes/creer-modifier-compte-modal/creer-modifier-compte-modal';
 import { OrganisationPage } from './organisation-page';
 
 /**
@@ -347,6 +350,132 @@ describe('OrganisationPage', () => {
     expect(arbre.textContent).toContain('jean.d@example.com');
   });
 
+  it('affiche un Membre lié à un compte en lecture seule, avec un renvoi vers l’écran Comptes', () => {
+    const fixture = TestBed.createComponent(OrganisationPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+    fixture.detectChanges();
+    cliquer(fixture, noeudEntite('e1'));
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([
+      {
+        id: 'eq1',
+        nom: 'Alpha',
+        entiteId: 'e1',
+        membres: [
+          {
+            id: 'm1',
+            nom: 'Dupont',
+            prenom: 'Jean',
+            email: 'jean@example.com',
+            utilisateurId: 'u1',
+          },
+        ],
+      },
+    ]);
+    fixture.detectChanges();
+    cliquer(fixture, noeudEquipe('eq1'));
+    fixture.detectChanges();
+    cliquer(fixture, noeudMembre('m1'));
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('#nomModifieMembre'))).toBeFalsy();
+    const panneau: HTMLElement = fixture.nativeElement.querySelector('.organisation__detail');
+    expect(panneau.textContent).toContain('Jean');
+    expect(panneau.textContent).toContain('Dupont');
+    expect(panneau.textContent).toContain('jean@example.com');
+    expect(panneau.textContent).toContain('Retirer du roster');
+    expect(panneau.querySelector('a[href="/comptes"]')).toBeTruthy();
+  });
+
+  it('« Créer un compte » ouvre CreerModifierCompteModal préremplie avec le nom et l’email du Membre', () => {
+    const fixture = TestBed.createComponent(OrganisationPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+    fixture.detectChanges();
+    cliquer(fixture, noeudEntite('e1'));
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([
+      {
+        id: 'eq1',
+        nom: 'Alpha',
+        entiteId: 'e1',
+        membres: [{ id: 'm1', nom: 'Jean Dupont', prenom: null, email: 'jean@example.com', utilisateurId: null }],
+      },
+    ]);
+    fixture.detectChanges();
+    cliquer(fixture, noeudEquipe('eq1'));
+    fixture.detectChanges();
+    cliquer(fixture, noeudMembre('m1'));
+    fixture.detectChanges();
+    const modal = fixture.debugElement.injector.get(NzModalService);
+    const createSpy = vi
+      .spyOn(modal, 'create')
+      .mockReturnValue({ afterClose: of(undefined) } as ReturnType<NzModalService['create']>);
+
+    fixture.componentInstance['creerCompteDepuisRoster']();
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nzContent: CreerModifierCompteModal,
+        nzData: { compte: null, emailInitial: 'jean@example.com', nomInitial: 'Jean Dupont' },
+      }),
+    );
+  });
+
+  it('après création du compte depuis le roster, rafraîchit l’Équipe affichée', () => {
+    const fixture = TestBed.createComponent(OrganisationPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+    fixture.detectChanges();
+    cliquer(fixture, noeudEntite('e1'));
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([
+      {
+        id: 'eq1',
+        nom: 'Alpha',
+        entiteId: 'e1',
+        membres: [{ id: 'm1', nom: 'Jean Dupont', prenom: null, email: 'jean@example.com', utilisateurId: null }],
+      },
+    ]);
+    fixture.detectChanges();
+    cliquer(fixture, noeudEquipe('eq1'));
+    fixture.detectChanges();
+    cliquer(fixture, noeudMembre('m1'));
+    fixture.detectChanges();
+    const compteCree: UtilisateurDto = {
+      id: 'u1',
+      email: 'jean@example.com',
+      prenom: 'Jean',
+      nom: 'Dupont',
+      role: Role.Membre,
+      actif: true,
+      habilitations: [],
+    };
+    const modal = fixture.debugElement.injector.get(NzModalService);
+    vi.spyOn(modal, 'create').mockReturnValue({
+      afterClose: of(compteCree),
+    } as ReturnType<NzModalService['create']>);
+
+    fixture.componentInstance['creerCompteDepuisRoster']();
+
+    const req = httpMock.expectOne('/api/organisation/equipes/eq1');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      id: 'eq1',
+      nom: 'Alpha',
+      entiteId: 'e1',
+      membres: [
+        { id: 'm1', nom: 'Dupont', prenom: 'Jean', email: 'jean@example.com', utilisateurId: 'u1' },
+      ],
+    });
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('#nomModifieMembre'))).toBeFalsy();
+    const panneau: HTMLElement = fixture.nativeElement.querySelector('.organisation__detail');
+    expect(panneau.textContent).toContain('jean@example.com');
+  });
+
   it('supprimer une Équipe sélectionne son Entité parente plutôt que de perdre la sélection', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
     fixture.detectChanges();
@@ -420,8 +549,10 @@ describe('OrganisationPage', () => {
     httpMock.expectOne('/api/organisation/entites').flush([]);
     fixture.detectChanges();
 
-    const message = TestBed.inject(NzMessageService);
-    const erreurSpy = vi.spyOn(message, 'error');
+    const modal = fixture.debugElement.injector.get(NzModalService);
+    const erreurSpy = vi
+      .spyOn(modal, 'error')
+      .mockReturnValue({} as ReturnType<NzModalService['error']>);
 
     saisir(fixture, '#nouveauNomEntite', 'DSI');
     const formDebug = fixture.debugElement.query(By.css('#nouveauNomEntite')).parent!;
@@ -433,7 +564,10 @@ describe('OrganisationPage', () => {
       { status: 409, statusText: 'Conflict' },
     );
 
-    expect(erreurSpy).toHaveBeenCalledWith('Une Entité porte déjà ce nom.');
+    expect(erreurSpy).toHaveBeenCalledWith({
+      nzTitle: 'Erreur',
+      nzContent: 'Une Entité porte déjà ce nom.',
+    });
   });
 
   it('affiche un message dédié en cas de doublon (409) à l’ajout d’un Membre', () => {
@@ -450,8 +584,10 @@ describe('OrganisationPage', () => {
     cliquer(fixture, noeudEquipe('eq1'));
     fixture.detectChanges();
 
-    const message = TestBed.inject(NzMessageService);
-    const erreurSpy = vi.spyOn(message, 'error');
+    const modal = fixture.debugElement.injector.get(NzModalService);
+    const erreurSpy = vi
+      .spyOn(modal, 'error')
+      .mockReturnValue({} as ReturnType<NzModalService['error']>);
 
     saisir(fixture, '#nouveauMembreNom', 'Jean Dupont');
     saisir(fixture, '#nouveauMembreEmail', 'jean@example.com');
@@ -464,7 +600,10 @@ describe('OrganisationPage', () => {
       { status: 409, statusText: 'Conflict' },
     );
 
-    expect(erreurSpy).toHaveBeenCalledWith('Un Membre porte déjà cet email dans cette Équipe.');
+    expect(erreurSpy).toHaveBeenCalledWith({
+      nzTitle: 'Erreur',
+      nzContent: 'Un Membre porte déjà cet email dans cette Équipe.',
+    });
   });
 
   it('replace le focus sur le champ de création d’Entité après une création, pour enchaîner les créations', () => {

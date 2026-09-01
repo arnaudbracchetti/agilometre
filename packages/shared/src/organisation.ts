@@ -25,6 +25,8 @@ export interface EntiteDto {
 export interface MembreDto {
   id: string;
   nom: string;
+  /** `null` tant qu'aucun compte n'est lié — reporté depuis l'Utilisateur une fois rattaché (#62). */
+  prenom: string | null;
   email: string;
   utilisateurId: string | null;
 }

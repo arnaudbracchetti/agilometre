@@ -6,6 +6,7 @@ import {
   EmailUtilisateurDejaUtiliseError,
   UtilisateurRepository,
 } from '../domain/utilisateur.repository';
+import { EquipeRepository } from '../domain/equipe.repository';
 import { EmettreJetonCompte } from './emettre-jeton-compte';
 
 export type ResultatCreerUtilisateur =
@@ -22,6 +23,7 @@ export type ResultatCreerUtilisateur =
 export class CreerUtilisateur {
   constructor(
     private readonly utilisateurs: UtilisateurRepository,
+    private readonly equipes: EquipeRepository,
     private readonly emettreJetonCompte: EmettreJetonCompte,
   ) {}
 
@@ -67,7 +69,45 @@ export class CreerUtilisateur {
       throw erreur;
     }
 
+    if (role === Role.Membre) {
+      await this.lierRostersExistants(resultat.valeur);
+    }
+
     await this.emettreJetonCompte.executer(resultat.valeur);
     return { type: 'cree', utilisateur: resultat.valeur };
+  }
+
+  /**
+   * Premier déclenchement du rattachement automatique par email
+   * (doc/spec/annexes/gestion-des-droits.md, "Rattachement automatique") : lie ce compte tout
+   * juste créé à chaque ligne de roster de même email, dans tous les rosters où elle apparaît. Le
+   * filtre `utilisateurId === null` est une garde défensive, pas une nécessité stricte : l'email
+   * d'un Utilisateur est unique globalement, donc un Membre déjà lié porte forcément l'email de
+   * *son* compte, jamais celui d'un compte tout juste créé.
+   */
+  private async lierRostersExistants(compte: Utilisateur): Promise<void> {
+    const equipes = await this.equipes.trouverParEmailMembre(compte.email);
+    for (const equipe of equipes) {
+      const membre = equipe.membres.find(
+        (m) =>
+          m.email.toLowerCase() === compte.email.toLowerCase() &&
+          m.utilisateurId === null,
+      );
+      if (!membre) {
+        continue;
+      }
+      // Résultat volontairement non vérifié : `membre` vient de `equipe.membres.find(...)`
+      // ci-dessus (id garanti présent dans ce même roster) avec l'email de `compte` — aucun autre
+      // Membre de ce roster ne peut déjà porter cet email (invariant d'unicité par roster) — ni
+      // MembreIntrouvableError ni EmailMembreDejaUtiliseError ne peuvent se produire ici.
+      equipe.lierUtilisateur(
+        membre.id,
+        compte.id,
+        compte.prenom,
+        compte.nom,
+        compte.email,
+      );
+      await this.equipes.save(equipe);
+    }
   }
 }

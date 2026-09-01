@@ -46,6 +46,10 @@ class UtilisateurRepositoryFake implements UtilisateurRepository {
   save(): Promise<void> {
     return Promise.resolve();
   }
+
+  sauvegarderEtPropager(): Promise<void> {
+    return Promise.reject(new Error('non utilisé par ce test'));
+  }
 }
 
 describe('DefinirMotDePasse', () => {
