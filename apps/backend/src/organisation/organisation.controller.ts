@@ -154,7 +154,7 @@ export class OrganisationController {
   }
 
   /**
-   * Récupère une seule Équipe par id — sert notamment à rafraîchir une ligne de roster côté front
+   * Récupère une seule Équipe par id - sert notamment à rafraîchir un Membre côté front
    * après création d'un compte depuis l'action "créer un compte" (#62), dont la réponse HTTP est
    * un `UtilisateurDto` et non l'`EquipeDto` mis à jour par la propagation.
    */

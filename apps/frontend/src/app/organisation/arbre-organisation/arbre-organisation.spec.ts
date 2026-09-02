@@ -419,7 +419,7 @@ describe('ArbreOrganisation', () => {
       expect(noeudEntite.isLeaf).toBe(false);
     });
 
-    it('déplier une Entité charge ses Équipes, déjà filtrées à son roster par le serveur', () => {
+    it('déplier une Entité charge ses Équipes, déjà filtrées à celles dont il est Membre par le serveur', () => {
       const fixture = TestBed.createComponent(ArbreOrganisation);
       const component = fixture.componentInstance;
       fixture.detectChanges();

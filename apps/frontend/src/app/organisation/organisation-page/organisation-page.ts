@@ -363,7 +363,7 @@ export class OrganisationPage {
       next: (equipeMiseAJour) => {
         this.arbre().remplacerEquipe(equipeMiseAJour);
         this.arbre().selectionnerEquipe(selection.equipeId);
-        this.message.success('Membre retiré du roster.');
+        this.message.success('Membre retiré de l’Équipe.');
       },
       error: () => {
         this.modal.error({ nzTitle: 'Erreur', nzContent: 'Impossible de retirer ce Membre.' });
@@ -373,13 +373,13 @@ export class OrganisationPage {
 
   /**
    * Créer un compte n'est pas nécessaire pour répondre à une Session ou un Pouls, seulement pour
-   * consulter — au choix du Coach ligne par ligne, jamais en masse
-   * (doc/spec/annexes/gestion-des-droits.md, "Comptes Membre d'équipe"). Le rattachement à cette
-   * ligne de roster est automatique côté serveur (email identique) ; ce composant se contente de
-   * rafraîchir l'Équipe affichée une fois le compte créé — la réponse HTTP de la création est un
+   * consulter - au choix du Coach Membre par Membre, jamais en masse
+   * (doc/spec/annexes/gestion-des-droits.md, "Comptes Membre d'équipe"). Le rattachement à ce
+   * Membre est automatique côté serveur (email identique) ; ce composant se contente de
+   * rafraîchir l'Équipe affichée une fois le compte créé - la réponse HTTP de la création est un
    * `UtilisateurDto`, pas l'`EquipeDto` mis à jour par la propagation.
    */
-  protected creerCompteDepuisRoster(): void {
+  protected creerCompteDepuisMembre(): void {
     const selection = this.membreSelectionne();
     if (!selection) {
       return;

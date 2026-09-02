@@ -13,7 +13,7 @@ import { DialogActions } from '../../shared/dialog-actions/dialog-actions';
 export interface DonneesCreerModifierCompte {
   /** `null` : création. Sinon : modification de ce compte (email/prénom/nom, jamais le Rôle). */
   compte: UtilisateurDto | null;
-  /** Préremplissage à la création depuis une ligne de roster (#62) — ignorés si `compte` non null. */
+  /** Préremplissage à la création depuis un Membre (#62) - ignorés si `compte` non null. */
   emailInitial?: string;
   nomInitial?: string;
 }

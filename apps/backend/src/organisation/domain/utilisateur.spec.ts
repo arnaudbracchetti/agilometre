@@ -278,7 +278,7 @@ describe('Utilisateur', () => {
       );
     });
 
-    it('rejette toute Habilitation pour un Membre d’équipe (périmètre dérivé du roster)', () => {
+    it('rejette toute Habilitation pour un Membre d’équipe (périmètre dérivé des Équipes où il est Membre)', () => {
       const utilisateur = Utilisateur.creer(
         'u1',
         'membre@example.com',

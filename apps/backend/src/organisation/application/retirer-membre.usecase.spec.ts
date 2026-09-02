@@ -43,7 +43,7 @@ class EquipeRepositoryFake implements EquipeRepository {
 }
 
 describe('RetirerMembre', () => {
-  it('retire un Membre existant du roster', async () => {
+  it('retire un Membre existant de l’Équipe', async () => {
     const repository = new EquipeRepositoryFake();
     const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
     equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');

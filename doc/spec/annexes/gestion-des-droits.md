@@ -32,18 +32,18 @@ Le PRD §9 emploie aussi le terme « manager » de façon informelle pour l'un e
 |---|---|---|
 | Coach | Transversale, toute l'Organisation | Aucune Habilitation - l'accès découle du Rôle seul |
 | Direction | Une ou plusieurs Entités | Habilitation portant `entiteId` |
-| Membre d'équipe | Une ou plusieurs Équipes | **Dérivée du roster**, aucune Habilitation |
+| Membre d'équipe | Une ou plusieurs Équipes | **Dérivée des Équipes où il est référencé comme Membre**, aucune Habilitation |
 | Manager d'équipe (différé) | Une ou plusieurs Équipes | Habilitation portant `équipeId` (invariant porté par le domaine, non exploité) |
 
 Un `Utilisateur` porte un **Rôle unique**, et peut cumuler **plusieurs Habilitations** de la même
 nature (une Direction habilitée sur les Entités Vente et Développement industriel, par exemple).
 
 **Le périmètre d'un Membre d'équipe n'est jamais porté par une Habilitation.** Il est déduit des
-lignes `Membre` du roster qui référencent son `utilisateurId` : il voit les Équipes où il figure au
-roster, point. Donner en plus une Habilitation `équipeId` aux comptes Membre créerait deux sources de
+`Membre` qui référencent son `utilisateurId` : il voit les Équipes où il est référencé comme Membre,
+point. Donner en plus une Habilitation `équipeId` aux comptes Membre créerait deux sources de
 vérité pour la même question (« cette personne voit-elle cette Équipe ? ») qui divergeraient dès
-qu'on la retire du roster sans penser à retirer l'Habilitation. Corollaire assumé : retirer quelqu'un
-d'un roster lui coupe l'accès à cette Équipe, immédiatement et sans geste d'administration séparé.
+qu'on retire son Membre d'une Équipe sans penser à retirer l'Habilitation. Corollaire assumé : retirer
+quelqu'un d'une Équipe lui coupe l'accès à cette Équipe, immédiatement et sans geste d'administration séparé.
 
 **Pas de seuil bloquant** sur les Entités ne comptant qu'une seule Équipe, où l'agrégat de l'Entité
 *est* de fait le Palier de cette Équipe unique - la Direction y aperçoit donc un résultat d'équipe
@@ -66,10 +66,10 @@ compte naît d'une **commande d'amorçage explicite**, exécutée hors du cycle 
 serveur - jamais d'un seed automatique au boot, qui recréerait silencieusement un compte connu à
 chaque redémarrage.
 
-**Comptes Membre d'équipe : à la demande, jamais en masse.** Un Membre du roster n'a jamais eu besoin
+**Comptes Membre d'équipe : à la demande, jamais en masse.** Un Membre n'a jamais eu besoin
 de compte pour répondre à une Session ou un Pouls (Code, Jeton - voir CONTEXT.md). Créer un compte ne
 sert donc qu'à consulter les résultats, et reste au choix du Coach ligne par ligne : pas d'invitation
-en masse sur tout un roster. `Membre.utilisateurId` reste `null`-able par conception - un roster peut
+en masse sur toute une Équipe. `Membre.utilisateurId` reste `null`-able par conception - une Équipe peut
 mélanger des personnes avec et sans compte indéfiniment.
 
 ### Identifiant
@@ -82,27 +82,27 @@ unique fonctionnel en base sur `LOWER(email)`).
 
 Le PRD ne prévoyait pas de compte pour ce Rôle ; cette itération l'introduit avec un mécanisme
 d'appariement automatique par email, pour éviter le geste manuel à deux temps (créer le compte, puis
-aller le lier depuis chaque ligne de roster) qui produirait des comptes orphelins.
+aller le lier depuis chaque Membre) qui produirait des comptes orphelins.
 
 - **Deux déclenchements, et deux seulement** : la création d'un `Utilisateur` (on cherche et lie les
-  lignes `Membre` de même email, dans tous les rosters où elles apparaissent), et l'ajout d'un
-  `Membre` à un roster (on cherche et lie l'`Utilisateur` de même email s'il existe).
+  lignes `Membre` de même email, dans toutes les Équipes où elles apparaissent), et l'ajout d'un
+  `Membre` à une Équipe (on cherche et lie l'`Utilisateur` de même email s'il existe).
 - **Jamais rejoué ensuite.** L'email n'est un critère d'appariement qu'au moment de la liaison ;
   passé ce moment, c'est `Membre.utilisateurId` qui fait foi. Modifier l'email d'un compte ne délie
   et ne relie rien automatiquement - sans quoi un simple changement d'adresse professionnelle
   romprait tous les accès d'un coup.
 - Au rattachement, les valeurs de l'`Utilisateur` (voir *Propagation descendante* ci-dessous)
-  écrasent celles qui avaient été saisies sur la ligne de roster.
+  écrasent celles qui avaient été saisies sur le Membre.
 
-Deux effets de bord assumés : ajouter quelqu'un à un roster lui accorde silencieusement un accès si
+Deux effets de bord assumés : ajouter quelqu'un à une Équipe lui accorde silencieusement un accès si
 son email correspond à un compte existant (symétrique du retrait, qui le coupe) ; une boîte email
-générique présente dans plusieurs rosters (`equipe-x@client.fr`) rattacherait un unique compte à
+générique présente dans plusieurs Équipes (`equipe-x@client.fr`) rattacherait un unique compte à
 toutes ces Équipes d'un coup.
 
 ### Propagation descendante sur le Membre lié
 
 Une fois qu'un `Membre` est lié à un `Utilisateur`, **le compte fait autorité** : prénom, nom et
-email sont **reportés du compte vers la ligne de roster**, qui devient **lecture seule** - on ne
+email sont **reportés du compte vers le Membre**, qui devient **lecture seule** - on ne
 modifie plus prénom, nom ou email d'un `Membre` lié qu'en modifiant le compte.
 
 Ce choix - propagation plutôt qu'une simple éclipse à l'affichage qui aurait laissé les valeurs du
@@ -110,7 +110,7 @@ Ce choix - propagation plutôt qu'une simple éclipse à l'affichage qui aurait 
 faisant autorité** pour tout ce qui le consomme, notamment la génération des Sollicitations de pouls
 (qui continue de lire `Membre.email` sans traverser vers l'agrégat `Utilisateur`) :
 
-- l'invariant d'unicité d'email au sein d'un roster (« deux Membres d'une même Équipe ne partagent
+- l'invariant d'unicité d'email au sein d'une Équipe (« deux Membres d'une même Équipe ne partagent
   pas le même email ») reste **local à `Équipe`**, sans devenir un contrôle sur un email calculé à la
   volée depuis un autre agrégat ;
 - le **déliage** n'a rien à recopier : les valeurs du `Membre` sont déjà à jour, il redevient
@@ -119,11 +119,11 @@ faisant autorité** pour tout ce qui le consomme, notamment la génération des 
 **Mécanique.**
 
 - Modifier prénom, nom ou email d'un `Utilisateur` **écrit, dans la même transaction**, sur les N
-  agrégats `Équipe` où il figure au roster - écriture cross-agrégat assumée, même exception que
+  agrégats `Équipe` où il est référencé comme Membre - écriture cross-agrégat assumée, même exception que
   l'[ADR-0006](../../docs/adr/0006-organisation-nettoyage-habilitations-meme-transaction.md).
-- **Garde de collision** : si le nouvel email créerait un doublon dans l'un des rosters concernés,
+- **Garde de collision** : si le nouvel email créerait un doublon dans l'une des Équipes concernées,
   la modification est **rejetée en bloc** - aucune des N lignes n'est modifiée. Pas de propagation
-  partielle qui laisserait certains rosters à jour et d'autres non.
+  partielle qui laisserait certaines Équipes à jour et d'autres non.
 - `Membre` gagne un champ `prenom` optionnel pour recevoir la propagation ; il reste `null` pour une
   personne sans compte, dont `nom` et `email` suffisent à l'identifier à l'écran.
 
@@ -177,7 +177,7 @@ risque d'une déconnexion en pleine animation.
 ## Application des droits à l'exécution
 
 Deux natures de connaissance séparées - quel Rôle a accès à quel écran/action (statique), et quelle
-ressource précise (dynamique, dépend des Habilitations/du roster) - chacune appliquée par un guard
+ressource précise (dynamique, dépend des Habilitations/des Membres) - chacune appliquée par un guard
 fail-closed, plutôt que des vérifications reproduites au fil des cartes. Mécanique complète, guards,
 décorateurs et test de non-régression unique : voir
 [politique-des-droits.md](../../../docs/design/agregat-politique-des-droits.md), qui porte le **comment** ;
@@ -209,11 +209,11 @@ n'étant créable avec ce Rôle, aucun écran ne lui est pour l'instant destiné
 | Se connecter / Mot de passe oublié (public) | Accessible | Accessible | Accessible |
 | Mon compte (changer son mot de passe) | Accessible | Accessible | Accessible |
 | Comptes (créer, modifier, désactiver, Habilitations) | Total | Aucun accès | Aucun accès |
-| Organisation (CRUD Entité/Équipe, gestion du roster) | Total | Aucun accès | Aucun accès |
+| Organisation (CRUD Entité/Équipe, gestion des Membres) | Total | Aucun accès | Aucun accès |
 | Référentiel (consultation, import) | Total | Aucun accès | Aucun accès |
-| Arbre de navigation Entité → Équipe | Total, dépliable | Réduit à ses Entités habilitées, non dépliable, aucune Équipe visible | Dépliable, réduit aux Entités et Équipes où il figure au roster (écart assumé, voir note ci-dessous) |
-| Profil d'une Entité (Palier agrégé, tendance) | Total | Restreint à ses Entités habilitées | Restreint aux Entités où il figure au roster d'au moins une Équipe (écart assumé, voir note ci-dessous) |
-| Profil d'une Équipe (Palier par Thème, lecture fine) | Total, sur toute l'Organisation | Aucun accès (détail d'Équipe hors de sa portée) | Restreint à ses Équipes (roster) |
+| Arbre de navigation Entité → Équipe | Total, dépliable | Réduit à ses Entités habilitées, non dépliable, aucune Équipe visible | Dépliable, réduit aux Entités et Équipes où il est référencé comme Membre (écart assumé, voir note ci-dessous) |
+| Profil d'une Entité (Palier agrégé, tendance) | Total | Restreint à ses Entités habilitées | Restreint aux Entités où il est référencé comme Membre d'au moins une Équipe (écart assumé, voir note ci-dessous) |
+| Profil d'une Équipe (Palier par Thème, lecture fine) | Total, sur toute l'Organisation | Aucun accès (détail d'Équipe hors de sa portée) | Restreint à ses Équipes |
 | Synthèse de fin de Session | Total | Aucun accès | Restreint à ses Équipes, toutes les Sessions sans filtre de participation |
 | Mur de badges (comparaison inter-Équipes) | Total | Aucun accès (ADR-0017) | Aucun accès |
 | Sessions (bibliothèque, pilotage, synthèse) | Total | Aucun accès | Aucun accès (lecture seule via le profil d'Équipe) |
@@ -224,8 +224,8 @@ n'étant créable avec ce Rôle, aucun écran ne lui est pour l'instant destiné
 prévoyait initialement un écran "mes Équipes" séparé (liste plate, sans arbre) pour ne pas exposer la
 structure des Entités à un Rôle qui n'a aucune Habilitation dessus. Décision révisée en aparté de la
 carte #62 : le Membre d'équipe réutilise le même arbre que Coach/Direction (`ArbreOrganisation`),
-filtré côté serveur aux Entités et Équipes où il figure au roster (`PerimetreUtilisateur.
-peutVoirEntite`/`peutVoirEquipe`, dérivées du roster, jamais d'une Habilitation). Conséquence
+filtré côté serveur aux Entités et Équipes où il est référencé comme Membre (`PerimetreUtilisateur.
+peutVoirEntite`/`peutVoirEquipe`, jamais d'une Habilitation). Conséquence
 assumée : afficher le nom d'une Entité dans l'arbre implique de lui ouvrir aussi le Profil agrégé de
 cette Entité (même capacité `voirProfilEntite`, même garde `@Perimetre('entite')` que pour Direction)
 - un Palier qui mélange les résultats de toutes les Équipes de l'Entité, y compris celles où il ne

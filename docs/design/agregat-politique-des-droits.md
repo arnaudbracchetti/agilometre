@@ -26,7 +26,7 @@ impossibles, ou au moins visibles automatiquement par un test unique.
 
 - **Statique** : quel Rôle a accès à quel écran/action. Ne dépend que du Rôle, jamais de la donnée.
 - **Dynamique** : à quelle ressource précise (quelle Entité, quelle Équipe) - dépend forcément de la
-  base (Habilitations, roster).
+  base (Habilitations, Membres).
 
 Ces deux natures ne sont **jamais fusionnées** dans une seule abstraction de policy (voir
 [ADR 0022](../adr/0022-capacites-statiques-plutot-que-moteur-de-regles-generique.md)) : le statique
@@ -98,7 +98,7 @@ qu'au scoring.
 
 - **`PerimetreUtilisateur`** (service de domaine) : `peutVoirEquipe(utilisateur, id)` /
   `peutVoirEntite(utilisateur, id)`. Pour un `Coach`, toujours vrai. Pour une `Direction`, selon ses
-  Habilitations. Pour un `Membre d'équipe`, selon les rosters où il figure.
+  Habilitations. Pour un `Membre d'équipe`, selon les Équipes où il figure.
 - **`@Perimetre('entite' | 'equipe')`** + **`PerimetreGuard`**
   (`apps/backend/src/auth/guards/perimetre.guard.ts`) : lit le `:id` de la route et appelle
   `PerimetreUtilisateur` **avant** que le contrôleur ne s'exécute, plutôt qu'un appel manuel en tête

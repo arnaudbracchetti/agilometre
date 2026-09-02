@@ -54,7 +54,7 @@ faire via une session `/ddd` dédiée (Epic #30 « Vote en séance »).
   sans compte ni mot de passe.
 - En échange, le serveur émet un **Jeton de session** anonyme : il authentifie le device pour
   toute la durée de la Session (pas renouvelé par Tour), sans jamais être lié à une identité
-  (pas de choix de nom, pas de lien vers un Membre du roster de l'Équipe).
+  (pas de choix de nom, pas de lien vers un Membre de l'Équipe).
 - Le Jeton est **persistant côté navigateur** (stockage local) : un rechargement de page le
   réutilise automatiquement, sans repasser par la saisie du Code.
 - Un participant qui rejoint après l'ouverture d'un Tour peut voter sur ce Tour tant qu'il n'est

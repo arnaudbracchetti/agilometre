@@ -133,7 +133,7 @@ describe('Organisation — Équipe (e2e)', () => {
       .expect(404);
   });
 
-  it('POST/DELETE .../membres — ajoute puis retire un Membre du roster', async () => {
+  it('POST/DELETE .../membres — ajoute puis retire un Membre de l’Équipe', async () => {
     const entite = await creerEntite('DSI');
     const creationEquipe = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
@@ -263,7 +263,7 @@ describe('Organisation — Équipe (e2e)', () => {
       .expect(409);
   });
 
-  it('POST .../membres — 409 si l’email est déjà utilisé dans le roster de cette Équipe', async () => {
+  it('POST .../membres — 409 si l’email est déjà utilisé dans cette Équipe', async () => {
     const entite = await creerEntite('DSI');
     const creationEquipe = await request(app.getHttpServer())
       .post('/api/organisation/equipes')
@@ -301,7 +301,7 @@ describe('Organisation — Équipe (e2e)', () => {
       .expect(400);
   });
 
-  it('DELETE /api/organisation/equipes/:id — supprime l’Équipe et son roster (cascade)', async () => {
+  it('DELETE /api/organisation/equipes/:id — supprime l’Équipe et ses Membres (cascade)', async () => {
     const entite = await creerEntite('DSI');
     const creationEquipe = await request(app.getHttpServer())
       .post('/api/organisation/equipes')

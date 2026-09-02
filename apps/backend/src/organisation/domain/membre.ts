@@ -52,7 +52,7 @@ export class Membre {
     if (validation.estEchec) {
       return Result.echec(validation.erreur);
     }
-    // `prenom` est une précision facultative de la ligne de roster, jamais requise : `nom` et
+    // `prenom` est une précision facultative du Membre, jamais requise : `nom` et
     // `email` suffisent à identifier un Membre sans compte. Un rattachement ultérieur (voir
     // `lierUtilisateur`) l'écrase de toute façon avec celui du compte, qui fait autorité.
     return Result.succes(

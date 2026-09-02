@@ -211,7 +211,7 @@ describe('CreerUtilisateur', () => {
     expect(mail.messages).toHaveLength(0);
   });
 
-  it('lie le compte créé aux Membres de même email dans deux rosters différents', async () => {
+  it('lie le compte créé aux Membres de même email dans deux Équipes différentes', async () => {
     const { useCase, equipes } = creerUseCase();
     const equipeA = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
     equipeA.ajouterMembre('m1', 'Jean D.', null, 'jean@example.com');
@@ -235,7 +235,7 @@ describe('CreerUtilisateur', () => {
     expect(equipeB.membres[0].nom).toBe('Dupont');
   });
 
-  it('ne lie aucun roster pour un compte Coach ou Direction', async () => {
+  it('ne lie aucun Membre pour un compte Coach ou Direction', async () => {
     const { useCase, equipes } = creerUseCase();
     const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
     equipe.ajouterMembre('m1', 'Jean D.', null, 'jean@example.com');

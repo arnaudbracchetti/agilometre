@@ -233,7 +233,7 @@ describe('OrganisationPage', () => {
     expect(lien.textContent).toContain('Voir le profil');
   });
 
-  it('ajoute un Membre au roster depuis le panneau d’une Équipe sélectionnée', () => {
+  it('ajoute un Membre à l’Équipe depuis le panneau d’une Équipe sélectionnée', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
@@ -297,7 +297,7 @@ describe('OrganisationPage', () => {
     });
   });
 
-  it('retire un Membre sélectionné du roster', () => {
+  it('retire un Membre sélectionné de l’Équipe', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
@@ -319,7 +319,7 @@ describe('OrganisationPage', () => {
 
     const bouton = fixture.debugElement
       .queryAll(By.css('button'))
-      .find((b) => b.nativeElement.textContent.includes('Retirer du roster'))!;
+      .find((b) => b.nativeElement.textContent.includes('Retirer de l’Équipe'))!;
     bouton.triggerEventHandler('nzOnConfirm', undefined);
 
     const req = httpMock.expectOne('/api/organisation/equipes/eq1/membres/m1');
@@ -378,7 +378,7 @@ describe('OrganisationPage', () => {
 
     const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
     expect(arbre.textContent).toContain('Jean D.');
-    expect(arbre.textContent).toContain('jean.d@example.com');
+    expect(arbre.textContent).not.toContain('jean.d@example.com');
   });
 
   it('affiche un Membre lié à un compte en lecture seule, avec un renvoi vers l’écran Comptes', () => {
@@ -415,7 +415,7 @@ describe('OrganisationPage', () => {
     expect(panneau.textContent).toContain('Jean');
     expect(panneau.textContent).toContain('Dupont');
     expect(panneau.textContent).toContain('jean@example.com');
-    expect(panneau.textContent).toContain('Retirer du roster');
+    expect(panneau.textContent).toContain('Retirer de l’Équipe');
     expect(panneau.querySelector('a[href="/comptes"]')).toBeTruthy();
   });
 
@@ -444,7 +444,7 @@ describe('OrganisationPage', () => {
       .spyOn(modal, 'create')
       .mockReturnValue({ afterClose: of(undefined) } as ReturnType<NzModalService['create']>);
 
-    fixture.componentInstance['creerCompteDepuisRoster']();
+    fixture.componentInstance['creerCompteDepuisMembre']();
 
     expect(createSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -454,7 +454,7 @@ describe('OrganisationPage', () => {
     );
   });
 
-  it('après création du compte depuis le roster, rafraîchit l’Équipe affichée', () => {
+  it('après création du compte depuis le Membre sélectionné, rafraîchit l’Équipe affichée', () => {
     const fixture = TestBed.createComponent(OrganisationPage);
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
@@ -488,7 +488,7 @@ describe('OrganisationPage', () => {
       afterClose: of(compteCree),
     } as ReturnType<NzModalService['create']>);
 
-    fixture.componentInstance['creerCompteDepuisRoster']();
+    fixture.componentInstance['creerCompteDepuisMembre']();
 
     const req = httpMock.expectOne('/api/organisation/equipes/eq1');
     expect(req.request.method).toBe('GET');

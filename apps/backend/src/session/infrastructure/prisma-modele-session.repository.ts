@@ -33,8 +33,8 @@ export class PrismaModeleSessionRepository implements ModeleSessionRepository {
       });
 
       // SelectionItem ne porte aucune donnée propre au-delà de questionId/ordre : contrairement
-      // au roster de Membres d'une Équipe, un diff upsert-par-id n'apporterait rien ici —
-      // supprimer/recréer en bloc est plus simple, à coût négligeable (cf. plan d'implémentation).
+      // aux Membres d'une Équipe, un diff upsert-par-id n'apporterait rien ici - supprimer/recréer
+      // en bloc est plus simple, à coût négligeable (cf. plan d'implémentation).
       await tx.selectionItem.deleteMany({
         where: { modeleSessionId: modele.id },
       });

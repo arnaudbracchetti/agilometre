@@ -9,7 +9,7 @@ export type ResultatModifierUtilisateur =
   | { type: 'introuvable' }
   | { type: 'invalide'; erreur: ErreurInvariantUtilisateur }
   | { type: 'email_deja_utilise' }
-  | { type: 'doublon_roster' }
+  | { type: 'doublon_equipe' }
   | { type: 'modifie'; utilisateur: Utilisateur };
 
 /**
@@ -50,7 +50,7 @@ export class ModifierUtilisateur {
         return { type: 'email_deja_utilise' };
       }
       if (erreur instanceof EmailMembreDejaUtiliseError) {
-        return { type: 'doublon_roster' };
+        return { type: 'doublon_equipe' };
       }
       throw erreur;
     }

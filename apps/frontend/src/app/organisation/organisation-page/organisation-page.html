@@ -140,7 +140,7 @@
             (ngModelChange)="nouveauMembreEmail.set($event)"
           />
           <button nz-button nzType="primary" type="submit" [nzLoading]="ajoutMembreEnCours()">
-            Ajouter au roster
+            Ajouter à l’Équipe
           </button>
         </form>
       </div>
@@ -205,13 +205,13 @@
         <div class="organisation__section">
           <h3 class="organisation__section-titre">Compte</h3>
           <p>Un compte n’est pas nécessaire pour répondre, seulement pour consulter les résultats.</p>
-          <button nz-button nzType="default" (click)="creerCompteDepuisRoster()">Créer un compte</button>
+          <button nz-button nzType="default" (click)="creerCompteDepuisMembre()">Créer un compte</button>
         </div>
       } @else {
         <div class="organisation__section">
           <h3 class="organisation__section-titre">Compte</h3>
           <p>
-            Prénom, nom et email sont gérés depuis le compte lié —
+            Prénom, nom et email sont gérés depuis le compte lié -
             <a routerLink="/comptes">voir l’écran Comptes</a>.
           </p>
           <dl class="organisation__lecture-seule">
@@ -226,15 +226,15 @@
       }
 
       <div class="organisation__section organisation__section--danger">
-        <h3 class="organisation__section-titre">Retirer du roster</h3>
+        <h3 class="organisation__section-titre">Retirer de l’Équipe</h3>
         <button
           nz-button
           nzDanger
           nz-popconfirm
-          nzPopconfirmTitle="Retirer ce Membre du roster ?"
+          nzPopconfirmTitle="Retirer ce Membre de l’Équipe ?"
           (nzOnConfirm)="retirerMembre()"
         >
-          Retirer du roster
+          Retirer de l’Équipe
         </button>
       </div>
     } @else {

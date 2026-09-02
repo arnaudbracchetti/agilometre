@@ -70,7 +70,7 @@ export class CreerUtilisateur {
     }
 
     if (role === Role.Membre) {
-      await this.lierRostersExistants(resultat.valeur);
+      await this.lierMembresExistants(resultat.valeur);
     }
 
     await this.emettreJetonCompte.executer(resultat.valeur);
@@ -80,12 +80,12 @@ export class CreerUtilisateur {
   /**
    * Premier déclenchement du rattachement automatique par email
    * (doc/spec/annexes/gestion-des-droits.md, "Rattachement automatique") : lie ce compte tout
-   * juste créé à chaque ligne de roster de même email, dans tous les rosters où elle apparaît. Le
+   * juste créé à chaque Membre de même email, dans toutes les Équipes où il apparaît. Le
    * filtre `utilisateurId === null` est une garde défensive, pas une nécessité stricte : l'email
    * d'un Utilisateur est unique globalement, donc un Membre déjà lié porte forcément l'email de
    * *son* compte, jamais celui d'un compte tout juste créé.
    */
-  private async lierRostersExistants(compte: Utilisateur): Promise<void> {
+  private async lierMembresExistants(compte: Utilisateur): Promise<void> {
     const equipes = await this.equipes.trouverParEmailMembre(compte.email);
     for (const equipe of equipes) {
       const membre = equipe.membres.find(
@@ -97,9 +97,10 @@ export class CreerUtilisateur {
         continue;
       }
       // Résultat volontairement non vérifié : `membre` vient de `equipe.membres.find(...)`
-      // ci-dessus (id garanti présent dans ce même roster) avec l'email de `compte` — aucun autre
-      // Membre de ce roster ne peut déjà porter cet email (invariant d'unicité par roster) — ni
-      // MembreIntrouvableError ni EmailMembreDejaUtiliseError ne peuvent se produire ici.
+      // ci-dessus (id garanti présent dans cette même Équipe) avec l'email de `compte` — aucun
+      // autre Membre de cette Équipe ne peut déjà porter cet email (invariant d'unicité par
+      // Équipe) — ni MembreIntrouvableError ni EmailMembreDejaUtiliseError ne peuvent se
+      // produire ici.
       equipe.lierUtilisateur(
         membre.id,
         compte.id,

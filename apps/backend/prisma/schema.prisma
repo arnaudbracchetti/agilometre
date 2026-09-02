@@ -80,12 +80,12 @@ model Equipe {
   campagnes CampagnePouls[]
 }
 
-// Roster d'une Équipe, sans compte de connexion obligatoire (agrégat Organisation,
+// Un Membre d'une Équipe, sans compte de connexion obligatoire (agrégat Organisation,
 // docs/design/agregat-organisation.md). `email` n'est volontairement pas unique globalement :
-// une même personne peut apparaître dans plusieurs rosters. `prenom` reste `null` tant qu'aucun
-// compte n'est lié (nom/email suffisent alors à l'identifier à l'écran) ; renseigné par
+// une même personne peut apparaître comme Membre de plusieurs Équipes. `prenom` reste `null`
+// tant qu'aucun compte n'est lié (nom/email suffisent alors à l'identifier à l'écran) ; renseigné par
 // propagation descendante une fois lié (#62). `utilisateurId` référence un Utilisateur `Rôle=MEMBRE`
-// une fois rattaché — automatiquement par email, à la création du compte ou à l'ajout au roster
+// une fois rattaché — automatiquement par email, à la création du compte ou à l'ajout d'un Membre à une Équipe
 // (doc/spec/annexes/gestion-des-droits.md, "Rattachement automatique"), jamais rejoué ensuite.
 model Membre {
   id            String       @id @default(uuid())
@@ -96,7 +96,7 @@ model Membre {
   equipeId      String
   // `onDelete: SetNull` documente l'intention plutôt que de dépendre du défaut implicite de Prisma :
   // un Utilisateur ne se supprime jamais cette itération (désactivation seulement), mais si ce
-  // devait changer, la ligne de roster doit survivre, juste redevenir éditable.
+  // devait changer, le Membre doit survivre, juste redevenir éditable.
   utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: SetNull)
   utilisateurId String?
 

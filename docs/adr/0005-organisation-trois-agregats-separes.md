@@ -19,7 +19,7 @@ conflits entre Équipes sans rapport et un chargement lourd à chaque opération
   use case (`ÉquipeRepository.compterParEntite`), pas par une méthode de domaine sur Entité.
 - **Équipe** — possède **Membre** comme entité enfant (cascade à la suppression) : c'est la seule
   relation parent/enfant réelle du domaine (une Équipe supprimée n'a pas de sens sans nettoyer
-  son roster).
+  ses Membres).
 - **Utilisateur** — porte un Rôle unique et une liste d'Habilitations (Équipes pour Manager,
   Entités pour Direction, aucune pour Coach - accès transversal).
 

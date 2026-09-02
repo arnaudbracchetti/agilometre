@@ -233,7 +233,7 @@ describe('PerimetreUtilisateur', () => {
     ).resolves.toBe(false);
   });
 
-  it('peutVoirEquipe — vrai pour un Membre présent au roster de cette Équipe', async () => {
+  it('peutVoirEquipe - vrai pour un Membre de cette Équipe', async () => {
     const equipe = creerEquipeAvecMembreLie('equipe-1', 'm1', 'u3');
     const perimetre = new PerimetreUtilisateur(
       new UtilisateurRepositoryFake([]),
@@ -248,7 +248,7 @@ describe('PerimetreUtilisateur', () => {
     ).resolves.toBe(true);
   });
 
-  it('peutVoirEquipe — faux pour un Membre absent du roster de cette Équipe', async () => {
+  it('peutVoirEquipe - faux pour un Membre absent de cette Équipe', async () => {
     const equipe = creerEquipeAvecMembreLie('equipe-1', 'm1', 'u3');
     const perimetre = new PerimetreUtilisateur(
       new UtilisateurRepositoryFake([]),

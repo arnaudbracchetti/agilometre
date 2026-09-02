@@ -102,7 +102,7 @@ export class OrganisationService {
   }
 
   /** Rafraîchit une Équipe après une mutation dont la réponse HTTP n'est pas l'EquipeDto à jour —
-   * ex. créer un compte depuis une ligne de roster, dont la réponse est un UtilisateurDto. */
+   * ex. créer un compte depuis un Membre, dont la réponse est un UtilisateurDto. */
   obtenirEquipe(id: string): Observable<EquipeDto> {
     return this.http.get<EquipeDto>(`${this.baseUrl}/equipes/${id}`);
   }

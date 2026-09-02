@@ -32,7 +32,7 @@ Trois agrégats racines, indépendants, référencés entre eux par id (pas d'im
 - **`Équipe`** (racine) : id, `nom` (unique dans toute l'Organisation, insensible à la casse - même
   règle que le nom d'Entité), `entiteId`. Possède **`Membre`** comme entité enfant (chargée/
   sauvegardée avec elle, supprimée en cascade avec elle) : id, `nom`, `prénom: string | null`,
-  `email` (`nom` et `email` obligatoires - une personne recensée dans un roster doit être
+  `email` (`nom` et `email` obligatoires - une personne recensée dans une Équipe doit être
   identifiable à l'écran même sans compte de connexion associé ; `prénom` reste `null` tant qu'aucun
   compte n'est lié), `utilisateurId: string | null` - quand renseigné, référence toujours un
   Utilisateur `Rôle=MEMBRE` (invariant cross-agrégat, voir section 2). Voir
@@ -57,8 +57,8 @@ Trois agrégats racines, indépendants, référencés entre eux par id (pas d'im
 |---|---|
 | Deux Entités ne peuvent pas porter le même nom (comparaison insensible à la casse) | Use cases `CreerEntite`/`RenommerEntite`, via `EntiteRepository.trouverParNom(nom)` - **pas** une méthode de domaine sur `Entité`, qui ne connaît pas les autres instances (règle de coordination, cf. `/ddd`) ; filet de sécurité en base via un index unique fonctionnel sur `LOWER(nom)` |
 | Deux Équipes ne peuvent pas porter le même nom, même règle et même portée globale que pour Entité (pas scopée à une Entité) | Use cases `CreerEquipe`/`RenommerEquipe`, via `EquipeRepository.trouverParNom(nom)` ; filet de sécurité en base via un index unique fonctionnel sur `LOWER(nom)` |
-| `Membre.nom` et `Membre.email` sont obligatoires ; deux Membres d'une même Équipe ne peuvent pas partager le même email (comparaison insensible à la casse) | `Équipe.ajouterMembre()` - invariant purement local à l'agrégat, l'Équipe porte déjà tout son roster |
-| Une Habilitation est cohérente avec le Rôle : `entiteId` seul si `DIRECTION`, aucune Habilitation si `COACH` **ni si `MEMBRE`** (portée dérivée du roster, jamais d'Habilitation - les deux mécanismes divergeraient), `équipeId` seul si `MANAGER` (invariant porté, Rôle non exploité cette itération) | `Utilisateur.ajouterHabilitation()` |
+| `Membre.nom` et `Membre.email` sont obligatoires ; deux Membres d'une même Équipe ne peuvent pas partager le même email (comparaison insensible à la casse) | `Équipe.ajouterMembre()` - invariant purement local à l'agrégat, l'Équipe porte déjà tous ses Membres |
+| Une Habilitation est cohérente avec le Rôle : `entiteId` seul si `DIRECTION`, aucune Habilitation si `COACH` **ni si `MEMBRE`** (portée dérivée des Équipes où il est référencé comme Membre, jamais d'Habilitation - les deux mécanismes divergeraient), `équipeId` seul si `MANAGER` (invariant porté, Rôle non exploité cette itération) | `Utilisateur.ajouterHabilitation()` |
 | Pas de doublon d'Habilitation (même Équipe/Entité deux fois) | `Utilisateur.ajouterHabilitation()` |
 | Un Membre référence au plus un Utilisateur | Structurel (`utilisateurId` singulier, pas une liste) |
 | Un Utilisateur ne peut pas être Membre deux fois de la même Équipe | `Équipe.ajouterMembre()`, vérifie les Membres enfants existants |
@@ -66,9 +66,9 @@ Trois agrégats racines, indépendants, référencés entre eux par id (pas d'im
 | Une Entité ne peut être supprimée si des Équipes lui sont rattachées | Use case `SupprimerEntite`, via `ÉquipeRepository.compterParEntite(entiteId)` - **pas** une méthode de domaine sur `Entité`, qui ne possède pas la liste de ses Équipes |
 | Un Membre ne référence qu'un Utilisateur `Rôle=MEMBRE` | Use case (`ajouterMembre`/`lierUtilisateur`), lecture du Rôle via `UtilisateurRepository` avant d'écrire sur l'agrégat `Équipe` - cross-agrégat, voir [ADR 0005](../adr/0005-organisation-trois-agregats-separes.md) |
 | `Utilisateur.email` unique sur toute l'instance (comparaison insensible à la casse) | Use cases `CreerUtilisateur`/`ModifierUtilisateur`, via `UtilisateurRepository.trouverParEmail(email)` ; filet de sécurité en base via un index unique fonctionnel sur `LOWER(email)` |
-| Modifier prénom/nom/email d'un Utilisateur les **propage** vers chaque `Membre` qui le référence, dans toutes les Équipes concernées, dans la même transaction ; rejetée **en bloc** si elle créerait un doublon d'email dans l'un des rosters | Use case `ModifierUtilisateur`, cross-agrégat comme le nettoyage d'[ADR 0006](../adr/0006-organisation-nettoyage-habilitations-meme-transaction.md) - voir [gestion-des-droits.md](../../doc/spec/annexes/gestion-des-droits.md) |
+| Modifier prénom/nom/email d'un Utilisateur les **propage** vers chaque `Membre` qui le référence, dans toutes les Équipes concernées, dans la même transaction ; rejetée **en bloc** si elle créerait un doublon d'email dans l'une des Équipes | Use case `ModifierUtilisateur`, cross-agrégat comme le nettoyage d'[ADR 0006](../adr/0006-organisation-nettoyage-habilitations-meme-transaction.md) - voir [gestion-des-droits.md](../../doc/spec/annexes/gestion-des-droits.md) |
 | Un `Membre` lié à un `Utilisateur` est en lecture seule sur `nom`/`prénom`/`email` | Use case (refuse toute modification directe tant que `utilisateurId` est renseigné) |
-| Créer un `Utilisateur`, ou ajouter un `Membre` à un roster, déclenche un rattachement automatique par email (jamais rejoué ensuite - `utilisateurId` fait foi une fois posé) | Use cases `CreerUtilisateur`/`AjouterMembre`, via `UtilisateurRepository.trouverParEmail`/`EquipeRepository` |
+| Créer un `Utilisateur`, ou ajouter un `Membre` à une Équipe, déclenche un rattachement automatique par email (jamais rejoué ensuite - `utilisateurId` fait foi une fois posé) | Use cases `CreerUtilisateur`/`AjouterMembre`, via `UtilisateurRepository.trouverParEmail`/`EquipeRepository` |
 | Un `Utilisateur` désactivé (`actif=false`) ne peut pas se connecter, mais reste consultable et son lien `Membre.utilisateurId` n'est pas affecté | Use cases `DesactiverUtilisateur`/`ReactiverUtilisateur` ; vérifié à l'authentification, pas au niveau de l'agrégat Organisation |
 | Changer le Rôle d'un Utilisateur est rejeté si ses Habilitations existantes deviennent incohérentes avec le nouveau Rôle | `Utilisateur.changerRole()` - pas de vidage silencieux, l'opérateur doit retirer les Habilitations explicitement d'abord |
 | La suppression d'une Équipe/Entité nettoie les Habilitations orphelines qui la référencent | Use case `SupprimerEquipe`/`SupprimerEntite`, même transaction - voir [ADR 0006](../adr/0006-organisation-nettoyage-habilitations-meme-transaction.md) |
@@ -83,7 +83,7 @@ Trois agrégats racines, indépendants, référencés entre eux par id (pas d'im
 | Créer une Équipe (rattachée à une Entité) | Commande | Méthode de domaine | Racine (`Équipe`) |
 | Renommer une Équipe | Commande | Méthode de domaine | Racine (`Équipe`) |
 | Supprimer une Équipe (cascade Membres) | Commande | Use case (suppression + nettoyage des Habilitations `équipeId` orphelines) | Racine (`Équipe`) |
-| Ajouter un Membre à une Équipe (nom, email obligatoires) | Commande | Use case + `équipe.ajouterMembre(id, nom, email)` - rejette un email déjà présent dans le roster de cette Équipe, déclenche le rattachement automatique par email (#62) | Enfant (`Membre`), délégué par la racine |
+| Ajouter un Membre à une Équipe (nom, email obligatoires) | Commande | Use case + `équipe.ajouterMembre(id, nom, email)` - rejette un email déjà présent parmi les Membres de cette Équipe, déclenche le rattachement automatique par email (#62) | Enfant (`Membre`), délégué par la racine |
 | Retirer un Membre d'une Équipe | Commande | `équipe.retirerMembre(id)` | Enfant (`Membre`), délégué par la racine |
 | Lier un Utilisateur existant à un Membre | Commande | Use case + `membre.lierUtilisateur(utilisateurId)` - vérifie `Rôle=MEMBRE`, applique la propagation descendante (#62) | Enfant (`Membre`) |
 | Délier l'Utilisateur d'un Membre | Commande | `membre.delierUtilisateur()` - rien à recopier, les valeurs sont déjà à jour par propagation | Enfant (`Membre`) |
@@ -131,7 +131,7 @@ en YAGNI lors de la conception initiale, est désormais construit (voir
 la carte #62 par rapport au plan initial : plutôt qu'une requête directe dédiée ("mes Équipes")
 séparée, le Membre d'équipe réutilise le même arbre de navigation que Coach/Direction
 (`ArbreOrganisation`, Entité → Équipe), filtré côté serveur via `PerimetreUtilisateur.
-peutVoirEntite`/`peutVoirEquipe` (dérivées du roster) sur les mêmes requêtes déjà utilisées pour
+peutVoirEntite`/`peutVoirEquipe` (dérivées des Équipes où il est référencé comme Membre) sur les mêmes requêtes déjà utilisées pour
 Coach/Direction (`EntiteRepository.findAll`, `EquipeRepository.findByEntiteId`) - toujours **pas**
 un `findByUtilisateurId` sur `EquipeRepository` qui chargerait des agrégats `Équipe` complets, mais
 plus de read model séparé non plus : un seul mécanisme de navigation pour les trois Rôles.
@@ -157,5 +157,5 @@ framework ni de Prisma. Les trois interfaces de repository sont définies dans l
 - **Désactivation d'un Utilisateur** : tranchée - réversible (`actif: boolean`), jamais de
   suppression définitive (auditabilité ; la suppression relève du RGPD et reste hors périmètre).
   `Membre.utilisateurId` n'est pas affecté par une désactivation : seule la connexion est bloquée,
-  le lien au roster et la propagation descendante restent inchangés. Voir
+  le lien au Membre et la propagation descendante restent inchangés. Voir
   [gestion-des-droits.md](../../doc/spec/annexes/gestion-des-droits.md).

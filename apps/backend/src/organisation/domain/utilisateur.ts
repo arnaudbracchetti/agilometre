@@ -40,7 +40,7 @@ export type ErreurInvariantUtilisateur =
  * Levée par `ajouterHabilitation` quand la cible (Entité/Équipe) n'est pas de la nature attendue
  * pour le Rôle du porteur — doc/spec/annexes/gestion-des-droits.md, "Habilitations" : `entiteId`
  * seul si `DIRECTION`, `equipeId` seul si `MANAGER`, aucune Habilitation si `COACH` ni `MEMBRE`
- * (le périmètre d'un Membre est dérivé du roster, jamais d'une Habilitation).
+ * (le périmètre d'un Membre est dérivé des Équipes où il est référencé, jamais d'une Habilitation).
  */
 export class HabilitationIncompatibleAvecRoleError extends Error {
   constructor() {
@@ -283,7 +283,7 @@ export class Utilisateur {
 
   /**
    * Coach seul, réservé aux comptes `DIRECTION`/`MANAGER` — `COACH` et `MEMBRE` n'ont jamais
-   * d'Habilitation, leur périmètre respectif est transversal ou dérivé du roster
+   * d'Habilitation, leur périmètre respectif est transversal ou dérivé des Équipes où il est Membre
    * (doc/spec/annexes/gestion-des-droits.md, "Habilitations").
    */
   ajouterHabilitation(

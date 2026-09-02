@@ -78,7 +78,7 @@ function creerCompte(role: Role, email: string): Utilisateur {
 }
 
 describe('AjouterMembre', () => {
-  it('ajoute un Membre valide au roster de l’Équipe', async () => {
+  it('ajoute un Membre valide à l’Équipe', async () => {
     const repository = new EquipeRepositoryFake();
     repository.equipes.push(Equipe.creer('eq1', 'Alpha', 'e1').valeur);
     const utilisateurs = new UtilisateurRepositoryFake();
@@ -147,7 +147,7 @@ describe('AjouterMembre', () => {
     expect(resultat.type).toBe('invalide');
   });
 
-  it('renvoie "invalide" pour un email déjà présent dans le roster de cette Équipe', async () => {
+  it('renvoie "invalide" pour un email déjà présent dans cette Équipe', async () => {
     const repository = new EquipeRepositoryFake();
     const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
     equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
@@ -186,7 +186,7 @@ describe('AjouterMembre', () => {
     expect(resultat.type).toBe('ajoute');
     if (resultat.type !== 'ajoute') throw new Error('unreachable');
     expect(resultat.equipe.membres[0].utilisateurId).toBe('u1');
-    // Le compte fait autorité : le nom saisi sur le roster est écrasé par celui du compte.
+    // Le compte fait autorité : le nom saisi à la création est écrasé par celui du compte.
     expect(resultat.equipe.membres[0].nom).toBe('Dupont');
   });
 

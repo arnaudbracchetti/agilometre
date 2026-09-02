@@ -165,7 +165,7 @@ describe('OrganisationController', () => {
   });
 
   describe('listerEquipes', () => {
-    it('renvoie les Équipes d’une Entité, roster inclus', async () => {
+    it('renvoie les Équipes d’une Entité, Membres inclus', async () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
       equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
       listerEquipesParEntite.executer.mockResolvedValue([equipe]);
@@ -340,7 +340,7 @@ describe('OrganisationController', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('lève une ConflictException si l’email est déjà utilisé dans le roster', async () => {
+    it('lève une ConflictException si l’email est déjà utilisé dans l’Équipe', async () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
       equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
       const doublon = equipe.ajouterMembre('m2', 'Jean D.', null, 'jean@example.com');

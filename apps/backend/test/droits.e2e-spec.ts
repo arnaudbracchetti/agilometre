@@ -52,7 +52,7 @@ const METHODE_VERS_VERBE: Partial<
 const LIGNE_MATRICE_PAR_CAPACITE: Record<Capacite, string> = {
   gererComptes: 'Comptes (créer, modifier, désactiver, Habilitations)',
   gererSonCompte: 'Mon compte (changer son mot de passe)',
-  gererOrganisation: 'Organisation (CRUD Entité/Équipe, gestion du roster)',
+  gererOrganisation: 'Organisation (CRUD Entité/Équipe, gestion des Membres)',
   gererReferentiel: 'Référentiel (consultation, import)',
   voirProfilEntite: "Profil d'une Entité",
   voirProfilEquipe: "Profil d'une Équipe",

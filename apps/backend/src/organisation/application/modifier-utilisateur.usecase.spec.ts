@@ -130,7 +130,7 @@ describe('ModifierUtilisateur', () => {
     expect(resultat.type).toBe('invalide');
   });
 
-  it('renvoie "doublon_roster" si la propagation créerait un doublon dans un roster', async () => {
+  it('renvoie "doublon_equipe" si la propagation créerait un doublon dans une Équipe', async () => {
     const repository = new UtilisateurRepositoryFake();
     ajouter(repository, 'id-1', 'ada@example.com');
     repository.sauvegarderEtPropager = () =>
@@ -144,6 +144,6 @@ describe('ModifierUtilisateur', () => {
       'Lovelace',
     );
 
-    expect(resultat).toEqual({ type: 'doublon_roster' });
+    expect(resultat).toEqual({ type: 'doublon_equipe' });
   });
 });

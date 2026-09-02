@@ -10,9 +10,9 @@ import { UtilisateurConnecte } from '../jeton-utilisateur';
  * réponse dépend de ses Habilitations, chargées ici via `UtilisateurRepository` — jamais du JWT
  * (qui ne porte que `{ id, email, role }`, voir jeton-utilisateur.ts), pour que révoquer une
  * Habilitation prenne effet immédiatement, sans attendre le renouvellement du jeton. Pour un Membre
- * d'équipe, le périmètre est dérivé du roster (`EquipeRepository.estMembreDe`), jamais d'une
- * Habilitation (gestion-des-droits.md, "Le périmètre d'un Membre d'équipe n'est jamais porté par une
- * Habilitation").
+ * d'équipe, le périmètre est dérivé de l'appartenance à l'Équipe (`EquipeRepository.estMembreDe`),
+ * jamais d'une Habilitation (gestion-des-droits.md, "Le périmètre d'un Membre d'équipe n'est jamais
+ * porté par une Habilitation").
  */
 export class PerimetreUtilisateur {
   constructor(

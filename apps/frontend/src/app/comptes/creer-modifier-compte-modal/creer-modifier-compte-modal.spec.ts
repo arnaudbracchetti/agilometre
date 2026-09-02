@@ -60,7 +60,7 @@ describe('CreerModifierCompteModal', () => {
     expect(modalRef.close).toHaveBeenCalledWith(COMPTE);
   });
 
-  it('mode création préremplie depuis une ligne de roster — email/nom prérempli, Rôle par défaut Membre', async () => {
+  it('mode création préremplie depuis un Membre - email/nom prérempli, Rôle par défaut Membre', async () => {
     const fixture = await creerFixture({
       compte: null,
       emailInitial: 'jean@example.com',

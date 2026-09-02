@@ -359,7 +359,7 @@ describe('ObtenirSyntheseSession', () => {
     });
   });
 
-  it('renvoie "interdit" pour un Membre absent du roster de l’Équipe de la Session', async () => {
+  it('renvoie "interdit" pour un Membre absent de l’Équipe de la Session', async () => {
     const session = await creerSessionOuverte('s1', ['q1']);
     const sessions = new SessionRepositoryFake();
     sessions.sessions.push(session);
@@ -383,7 +383,7 @@ describe('ObtenirSyntheseSession', () => {
     expect(resultat.type).toBe('interdit');
   });
 
-  it('renvoie la synthèse pour un Membre présent au roster de l’Équipe de la Session', async () => {
+  it('renvoie la synthèse pour un Membre présent dans l’Équipe de la Session', async () => {
     const themeA = Theme.creer('t1', 'Thème A', [question('q1', 't1')]);
     const referentiel = Referentiel.reconstituer(new Date('2026-01-01'), [
       themeA,

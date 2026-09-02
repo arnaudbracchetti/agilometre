@@ -17,7 +17,7 @@ export class EmailMembreDejaUtiliseError extends Error {
 
 export class MembreIntrouvableError extends Error {
   constructor() {
-    super('Ce Membre ne fait pas partie du roster de cette Équipe');
+    super('Ce Membre ne fait pas partie de cette Équipe');
     this.name = 'MembreIntrouvableError';
   }
 }
@@ -49,7 +49,7 @@ export class Equipe {
   }
 
   /**
-   * Recharge une Équipe (avec son roster) depuis une source déjà validée (le repository Prisma)
+   * Recharge une Équipe (avec ses Membres) depuis une source déjà validée (le repository Prisma)
    * — ne revalide pas l'invariant, contrairement à `creer` (cf. CLAUDE.md sur la vigilance
    * requise pour toute factory additionnelle d'une entité déjà validée ailleurs).
    */
@@ -138,9 +138,9 @@ export class Equipe {
   }
 
   /**
-   * Rattache un Membre du roster à un Utilisateur (rattachement automatique par email, ou
-   * liaison explicite) — garde de collision locale à ce roster, même check que `modifierMembre`.
-   * La garde « en bloc » à travers plusieurs rosters (propagation d'une modification de profil
+   * Rattache un Membre de cette Équipe à un Utilisateur (rattachement automatique par email, ou
+   * liaison explicite) - garde de collision locale à cette Équipe, même check que `modifierMembre`.
+   * La garde « en bloc » à travers plusieurs Équipes (propagation d'une modification de profil
    * Utilisateur) vit dans l'infrastructure, pas ici (voir `UtilisateurRepository.sauvegarderEtPropager`).
    */
   lierUtilisateur(

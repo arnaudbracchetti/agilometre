@@ -13,7 +13,7 @@ La session `/grill-with-docs` du 2026-08-30 sur la carte [#27](https://github.co
 referme cet écart dans l'autre sens : le Membre d'équipe reçoit un compte dès cette itération.
 
 **Décision.** Un Utilisateur peut porter le Rôle Membre d'équipe et se connecter, pour consulter les
-résultats des Équipes où il est référencé au roster. Le champ anticipé par l'ADR 0007 est désormais
+résultats des Équipes où il est référencé comme Membre. Le champ anticipé par l'ADR 0007 est désormais
 exploité : rattachement automatique par email, liaison manuelle, propagation descendante des
 informations du compte vers le Membre - voir [annexe Gestion des droits](../../doc/spec/annexes/gestion-des-droits.md).
 

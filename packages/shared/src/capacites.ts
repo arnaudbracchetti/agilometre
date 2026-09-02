@@ -23,10 +23,11 @@ export type Capacite =
 // #61 : Direction y accède désormais, restreinte par `PerimetreUtilisateur.peutVoirEntite` (ses
 // Habilitations) plutôt que par la carte statique, qui ne sait dire que *si* elle y accède, jamais
 // *à quelle* Entité précise. `voirProfilEquipe`/`voirSyntheseSession` élargissent de même à
-// Role.Membre dès #62, restreint par `PerimetreUtilisateur.peutVoirEquipe` (son roster, jamais une
-// Habilitation). `voirProfilEntite` s'élargit une seconde fois, au même Rôle, pour que l'arbre de
-// navigation partagé (Coach/Direction/Membre) puisse afficher les noms d'Entités contenant ses
-// Équipes — accepté avec la conséquence assumée qu'un Membre peut alors aussi ouvrir le Profil
+// Role.Membre dès #62, restreint par `PerimetreUtilisateur.peutVoirEquipe` (les Équipes où il est
+// référencé comme Membre, jamais une Habilitation). `voirProfilEntite` s'élargit une seconde fois,
+// au même Rôle, pour que l'arbre de navigation partagé (Coach/Direction/Membre) puisse afficher les
+// noms d'Entités contenant ses Équipes — accepté avec la conséquence assumée qu'un Membre peut
+// alors aussi ouvrir le Profil
 // agrégé de cette Entité (écart délibéré à la matrice initiale de gestion-des-droits.md, tranché en
 // aparté de la carte #62).
 export const CAPACITES: Record<Capacite, Role[]> = {

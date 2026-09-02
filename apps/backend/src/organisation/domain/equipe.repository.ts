@@ -24,9 +24,9 @@ export class EquipeReferenceeError extends Error {
 }
 
 export interface EquipeRepository {
-  /** Charge l'agrégat complet, avec son roster de Membres. */
+  /** Charge l'agrégat complet, avec ses Membres. */
   findById(id: string): Promise<Equipe | null>;
-  /** Charge les Équipes d'une Entité, agrégats complets (roster inclus). */
+  /** Charge les Équipes d'une Entité, agrégats complets (Membres inclus). */
   findByEntiteId(entiteId: string): Promise<Equipe[]>;
   /** Recherche insensible à la casse, globale à l'Organisation — garde d'unicité pour CreerEquipe/RenommerEquipe. */
   trouverParNom(nom: string): Promise<Equipe | null>;
@@ -39,12 +39,12 @@ export interface EquipeRepository {
   /** Équipes ayant au moins un Membre portant cet email (insensible à la casse) — rattachement
    * automatique par email à la création d'un Utilisateur (#62), pas une recherche générale. */
   trouverParEmailMembre(email: string): Promise<Equipe[]>;
-  /** Dérivation du périmètre Membre d'équipe (`PerimetreUtilisateur.peutVoirEquipe`, #62) — évite
-   * de charger l'agrégat Équipe complet pour une simple question d'appartenance au roster. */
+  /** Dérivation du périmètre Membre d'équipe (`PerimetreUtilisateur.peutVoirEquipe`, #62) - évite
+   * de charger l'agrégat Équipe complet pour une simple question d'appartenance à l'Équipe. */
   estMembreDe(utilisateurId: string, equipeId: string): Promise<boolean>;
   /** Dérivation du périmètre Membre d'équipe côté Entité (`PerimetreUtilisateur.peutVoirEntite`) :
-   * vrai si au moins une Équipe de cette Entité figure dans son roster — sert à afficher les noms
-   * d'Entités dans l'arbre de navigation, pas à charger quoi que ce soit de plus. */
+   * vrai si au moins une Équipe de cette Entité compte cet Utilisateur comme Membre - sert à
+   * afficher les noms d'Entités dans l'arbre de navigation, pas à charger quoi que ce soit de plus. */
   aUneEquipeDansLEntite(
     utilisateurId: string,
     entiteId: string,

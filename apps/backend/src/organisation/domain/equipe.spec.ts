@@ -41,7 +41,7 @@ describe('Equipe', () => {
   });
 
   describe('ajouterMembre', () => {
-    it('ajoute un Membre valide au roster', () => {
+    it('ajoute un Membre valide à l’Équipe', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
 
       const resultat = equipe.ajouterMembre(
@@ -70,7 +70,7 @@ describe('Equipe', () => {
       expect(equipe.membres[0].prenom).toBe('Jean');
     });
 
-    it('rejette un nom ou un email invalide sans modifier le roster', () => {
+    it('rejette un nom ou un email invalide sans modifier l’Équipe', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
 
       const resultat = equipe.ajouterMembre('m1', '', null, 'jean@example.com');
@@ -79,7 +79,7 @@ describe('Equipe', () => {
       expect(equipe.membres).toHaveLength(0);
     });
 
-    it('rejette un doublon d’email dans le même roster, insensible à la casse', () => {
+    it('rejette un doublon d’email dans la même Équipe, insensible à la casse', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
       equipe.ajouterMembre('m1', 'Jean Dupont', null, 'Jean@Example.com');
 
@@ -112,7 +112,7 @@ describe('Equipe', () => {
   });
 
   describe('retirerMembre', () => {
-    it('retire un Membre existant du roster', () => {
+    it('retire un Membre existant de l’Équipe', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
       equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
 
@@ -179,7 +179,7 @@ describe('Equipe', () => {
       expect(equipe.membres[0].nom).toBe('Jean Dupont');
     });
 
-    it('rejette un email déjà utilisé par un autre Membre du roster', () => {
+    it('rejette un email déjà utilisé par un autre Membre de l’Équipe', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
       equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
       equipe.ajouterMembre('m2', 'Marie Curie', null, 'marie@example.com');
@@ -213,7 +213,7 @@ describe('Equipe', () => {
   });
 
   describe('reconstituer', () => {
-    it('recharge une Équipe avec son roster sans revalider', () => {
+    it('recharge une Équipe avec ses Membres sans revalider', () => {
       const membre = Membre.reconstituer(
         'm1',
         'Jean Dupont',
@@ -265,7 +265,7 @@ describe('Equipe', () => {
       expect(resultat.erreur.name).toBe('MembreIntrouvableError');
     });
 
-    it('rejette la liaison si l’email du compte entre en collision avec un autre Membre du roster', () => {
+    it('rejette la liaison si l’email du compte entre en collision avec un autre Membre de l’Équipe', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
       equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
       equipe.ajouterMembre('m2', 'Marie Curie', null, 'marie@example.com');

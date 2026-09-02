@@ -99,8 +99,8 @@ describe('Organisation — Rattachement Membre d’équipe (e2e) — carte #62',
     return reponse.body as EquipeDto;
   }
 
-  /** Jeton signé avec le vrai id du compte (pas le `test-membre` fixe de jeton-membre-de-test.ts) —
-   * nécessaire pour que `PerimetreUtilisateur.peutVoirEquipe` résolve le roster réel en base. */
+  /** Jeton signé avec le vrai id du compte (pas le `test-membre` fixe de jeton-membre-de-test.ts) -
+   * nécessaire pour que `PerimetreUtilisateur.peutVoirEquipe` résolve l'appartenance réelle en base. */
   function jetonPourCompte(compte: UtilisateurDto): Promise<string> {
     return app.get(JwtService).signAsync({
       sub: compte.id,
@@ -110,7 +110,7 @@ describe('Organisation — Rattachement Membre d’équipe (e2e) — carte #62',
   }
 
   describe('Rattachement automatique par email', () => {
-    it('POST /api/comptes — lie le compte créé aux Membres de même email dans deux rosters différents', async () => {
+    it('POST /api/comptes — lie le compte créé aux Membres de même email dans deux Équipes différentes', async () => {
       const entite = await creerEntite('DSI');
       const equipeA = await creerEquipe('Alpha', entite.id);
       const equipeB = await creerEquipe('Beta', entite.id);
@@ -216,7 +216,7 @@ describe('Organisation — Rattachement Membre d’équipe (e2e) — carte #62',
   });
 
   describe('Propagation descendante', () => {
-    it('PATCH /api/comptes/:id — propage nom/prénom/email vers les rosters de deux Équipes, dans le même appel', async () => {
+    it('PATCH /api/comptes/:id — propage nom/prénom/email vers les Membres de deux Équipes, dans le même appel', async () => {
       const compte = await creerCompte(
         'jean@example.com',
         'Jean',
@@ -226,7 +226,7 @@ describe('Organisation — Rattachement Membre d’équipe (e2e) — carte #62',
       const entite = await creerEntite('DSI');
       const equipeA = await creerEquipe('Alpha', entite.id);
       const equipeB = await creerEquipe('Beta', entite.id);
-      // Auto-rattachés via l'ajout au roster (trigger #2), puisque `compte` existe déjà.
+      // Auto-rattachés via l'ajout à l'Équipe (trigger #2), puisque `compte` existe déjà.
       await ajouterMembre(equipeA.id, 'x', 'jean@example.com');
       await ajouterMembre(equipeB.id, 'x', 'jean@example.com');
 
@@ -252,7 +252,7 @@ describe('Organisation — Rattachement Membre d’équipe (e2e) — carte #62',
       });
     });
 
-    it('PATCH /api/comptes/:id — 409 et aucune propagation si le nouvel email collisionne dans un roster, en bloc', async () => {
+    it('PATCH /api/comptes/:id — 409 et aucune propagation si le nouvel email collisionne dans une Équipe, en bloc', async () => {
       const compte = await creerCompte(
         'jean@example.com',
         'Jean',
@@ -263,7 +263,7 @@ describe('Organisation — Rattachement Membre d’équipe (e2e) — carte #62',
       const equipeA = await creerEquipe('Alpha', entite.id);
       const equipeB = await creerEquipe('Beta', entite.id);
       await ajouterMembre(equipeA.id, 'x', 'jean@example.com');
-      // Un autre Membre du roster B porte déjà l'email cible du changement.
+      // Un autre Membre de l'Équipe B porte déjà l'email cible du changement.
       await ajouterMembre(equipeB.id, 'Collision', 'collision@example.com');
       await ajouterMembre(equipeB.id, 'x', 'jean@example.com');
 
@@ -282,7 +282,7 @@ describe('Organisation — Rattachement Membre d’équipe (e2e) — carte #62',
         obtenirEquipe(equipeB.id),
         prisma.utilisateur.findUniqueOrThrow({ where: { id: compte.id } }),
       ]);
-      // Rien n'a changé : ni le compte, ni le roster A, ni le roster B (rejet en bloc).
+      // Rien n'a changé : ni le compte, ni l'Équipe A, ni l'Équipe B (rejet en bloc).
       expect(compteApres.email).toBe('jean@example.com');
       expect(equipeAApres.membres[0].email).toBe('jean@example.com');
       expect(equipeBApres.membres.map((m) => m.email).sort()).toEqual(
@@ -291,7 +291,7 @@ describe('Organisation — Rattachement Membre d’équipe (e2e) — carte #62',
     });
   });
 
-  describe('Ligne de roster liée — lecture seule', () => {
+  describe('Membre lié - lecture seule', () => {
     it('PATCH .../membres/:membreId — refuse la modification d’un Membre lié à un compte', async () => {
       const entite = await creerEntite('DSI');
       const equipe = await creerEquipe('Alpha', entite.id);
@@ -438,7 +438,7 @@ describe('Organisation — Rattachement Membre d’équipe (e2e) — carte #62',
         .expect(403);
     });
 
-    it('retirer un Membre du roster lui retire immédiatement l’accès à cette Équipe', async () => {
+    it('retirer un Membre de son Équipe lui retire immédiatement l’accès à cette dernière', async () => {
       const compte = await creerCompte(
         'jean@example.com',
         'Jean',

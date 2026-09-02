@@ -29,7 +29,7 @@ export class ObtenirSessionDetail {
       return { type: 'introuvable' };
     }
     // L'Équipe est chargée avec succès à la création (CreerSession) ; on ne revalide pas son
-    // existence ici — un roster manquant n'empêche pas d'afficher le détail de la Session.
+    // existence ici - une Équipe manquante n'empêche pas d'afficher le détail de la Session.
     const equipe = await this.equipes.findById(session.equipeId);
     const referentiel = await this.referentiel.charger();
     const themesActifs = referentiel.themesActifs();

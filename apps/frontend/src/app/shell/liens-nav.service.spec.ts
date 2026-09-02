@@ -39,7 +39,7 @@ describe('LiensNavService', () => {
     ]);
   });
 
-  it('un Membre d’équipe voit Profil (accès à ses Équipes via le roster, #62), rien d’autre', () => {
+  it('un Membre d’équipe voit Profil (accès à ses Équipes en tant que Membre, #62), rien d’autre', () => {
     expect(creerService(Role.Membre).liens()).toEqual([
       { label: 'Profil', routerLink: '/profil' },
     ]);

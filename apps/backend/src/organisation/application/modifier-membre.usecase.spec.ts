@@ -114,7 +114,7 @@ describe('ModifierMembre', () => {
     expect(resultat.type).toBe('invalide');
   });
 
-  it('renvoie "invalide" pour un email déjà utilisé par un autre Membre du roster', async () => {
+  it('renvoie "invalide" pour un email déjà utilisé par un autre Membre de l’Équipe', async () => {
     const repository = new EquipeRepositoryFake();
     const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
     equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');

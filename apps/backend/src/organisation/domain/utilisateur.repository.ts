@@ -24,12 +24,12 @@ export interface UtilisateurRepository {
   save(utilisateur: Utilisateur): Promise<void>;
   /**
    * Sauvegarde le profil modifié d'un Utilisateur (email/prénom/nom) et propage ces trois champs,
-   * dans la même transaction, vers chaque Membre qui le référence à travers tous les rosters —
+   * dans la même transaction, vers chaque Membre qui le référence, dans toutes les Équipes -
    * jamais appelé par la création, la désactivation ou les Habilitations, qui ne touchent pas ces
    * champs et n'ont donc rien à propager (voir `ModifierUtilisateur`).
    * @throws {EmailUtilisateurDejaUtiliseError} si la contrainte d'unicité globale d'email est violée.
-   * @throws {EmailMembreDejaUtiliseError} sans rien écrire — ni l'Utilisateur, ni aucune ligne —
-   * si la propagation créerait un doublon d'email dans l'un des rosters concernés.
+   * @throws {EmailMembreDejaUtiliseError} sans rien écrire - ni l'Utilisateur, ni aucun Membre -
+   * si la propagation créerait un doublon d'email dans l'une des Équipes concernées.
    */
   sauvegarderEtPropager(utilisateur: Utilisateur): Promise<void>;
 }
