@@ -89,9 +89,10 @@ export class Equipe {
   ajouterMembre(
     id: string,
     nom: string,
+    prenom: string | null,
     email: string,
   ): Result<Membre, ErreurAjoutMembre> {
-    const resultat = Membre.creer(id, nom, email);
+    const resultat = Membre.creer(id, nom, prenom, email);
     if (resultat.estEchec) {
       return Result.echec(resultat.erreur);
     }
@@ -118,6 +119,7 @@ export class Equipe {
   modifierMembre(
     membreId: string,
     nom: string,
+    prenom: string | null,
     email: string,
   ): Result<void, ErreurModifierMembre> {
     const membre = this._membres.find((m) => m.id === membreId);
@@ -132,7 +134,7 @@ export class Equipe {
     if (doublon) {
       return Result.echec(new EmailMembreDejaUtiliseError());
     }
-    return membre.modifier(nom, email);
+    return membre.modifier(nom, prenom, email);
   }
 
   /**

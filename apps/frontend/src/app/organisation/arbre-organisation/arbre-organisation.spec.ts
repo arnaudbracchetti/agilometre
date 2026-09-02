@@ -170,6 +170,58 @@ describe('ArbreOrganisation', () => {
     expect(selection.equipeId).toBe('eq1');
   });
 
+  it('affiche un Membre par prénom puis nom, sans son email', () => {
+    const fixture = TestBed.createComponent(ArbreOrganisation);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+    fixture.detectChanges();
+    cliquer(component, noeudEntite('e1'));
+    httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([
+      {
+        id: 'eq1',
+        nom: 'Alpha',
+        entiteId: 'e1',
+        membres: [
+          { id: 'm1', nom: 'Dupont', prenom: 'Jean', email: 'jean@example.com', utilisateurId: null },
+        ],
+      },
+    ]);
+    fixture.detectChanges();
+    cliquer(component, noeudEquipe('eq1'));
+    fixture.detectChanges();
+
+    const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
+    expect(arbre.textContent).toContain('Jean Dupont');
+    expect(arbre.textContent).not.toContain('jean@example.com');
+  });
+
+  it('affiche un Membre sans compte lié par son seul nom, faute de prénom', () => {
+    const fixture = TestBed.createComponent(ArbreOrganisation);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+    fixture.detectChanges();
+    cliquer(component, noeudEntite('e1'));
+    httpMock.expectOne('/api/organisation/entites/e1/equipes').flush([
+      {
+        id: 'eq1',
+        nom: 'Alpha',
+        entiteId: 'e1',
+        membres: [
+          { id: 'm1', nom: 'Jean Dupont', prenom: null, email: 'jean@example.com', utilisateurId: null },
+        ],
+      },
+    ]);
+    fixture.detectChanges();
+    cliquer(component, noeudEquipe('eq1'));
+    fixture.detectChanges();
+
+    const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
+    expect(arbre.textContent).toContain('Jean Dupont');
+    expect(arbre.textContent).not.toContain('jean@example.com');
+  });
+
   it('cliquer sur la racine de l’arbre repasse la sélection en mode racine', () => {
     const fixture = TestBed.createComponent(ArbreOrganisation);
     const component = fixture.componentInstance;

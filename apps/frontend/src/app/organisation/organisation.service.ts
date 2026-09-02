@@ -56,11 +56,12 @@ export class OrganisationService {
   ajouterMembre(
     equipeId: string,
     nom: string,
+    prenom: string | null,
     email: string,
   ): Observable<EquipeDto> {
     return this.http.post<EquipeDto>(
       `${this.baseUrl}/equipes/${equipeId}/membres`,
-      { nom, email },
+      { nom, prenom, email },
     );
   }
 
@@ -91,11 +92,12 @@ export class OrganisationService {
     equipeId: string,
     membreId: string,
     nom: string,
+    prenom: string | null,
     email: string,
   ): Observable<EquipeDto> {
     return this.http.patch<EquipeDto>(
       `${this.baseUrl}/equipes/${equipeId}/membres/${membreId}`,
-      { nom, email },
+      { nom, prenom, email },
     );
   }
 

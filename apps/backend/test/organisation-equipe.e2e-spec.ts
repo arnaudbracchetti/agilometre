@@ -163,6 +163,34 @@ describe('Organisation — Équipe (e2e)', () => {
     expect((retrait.body as EquipeDto).membres).toHaveLength(0);
   });
 
+  it('POST puis PATCH .../membres — accepte un prénom facultatif à la création et à la modification', async () => {
+    const entite = await creerEntite('DSI');
+    const creationEquipe = await request(app.getHttpServer())
+      .post('/api/organisation/equipes')
+      .set('Authorization', `Bearer ${jetonCoach}`)
+      .send({ nom: 'Beta', entiteId: entite.id })
+      .expect(201);
+    const equipe = creationEquipe.body as EquipeDto;
+
+    const ajout = await request(app.getHttpServer())
+      .post(`/api/organisation/equipes/${equipe.id}/membres`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
+      .send({ nom: 'Dupont', prenom: 'Jean', email: 'jean.d@example.com' })
+      .expect(201);
+    const membre = (ajout.body as EquipeDto).membres[0];
+    expect(membre).toMatchObject({ nom: 'Dupont', prenom: 'Jean' });
+
+    const modification = await request(app.getHttpServer())
+      .patch(`/api/organisation/equipes/${equipe.id}/membres/${membre.id}`)
+      .set('Authorization', `Bearer ${jetonCoach}`)
+      .send({ nom: 'Dupont', prenom: 'Jeanne', email: 'jean.d@example.com' })
+      .expect(200);
+    expect((modification.body as EquipeDto).membres[0]).toMatchObject({
+      nom: 'Dupont',
+      prenom: 'Jeanne',
+    });
+  });
+
   it('PATCH .../membres/:membreId — modifie le nom et l’email d’un Membre', async () => {
     const entite = await creerEntite('DSI');
     const creationEquipe = await request(app.getHttpServer())

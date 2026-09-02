@@ -43,10 +43,10 @@ class EquipeRepositoryFake implements EquipeRepository {
 }
 
 describe('ModifierMembre', () => {
-  it('modifie le nom et l’email d’un Membre existant', async () => {
+  it('modifie le nom, le prénom et l’email d’un Membre existant', async () => {
     const repository = new EquipeRepositoryFake();
     const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-    equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+    equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
     repository.equipes.push(equipe);
     const useCase = new ModifierMembre(repository);
 
@@ -54,12 +54,14 @@ describe('ModifierMembre', () => {
       'eq1',
       'm1',
       'Jean D.',
+      'Jean',
       'jean.d@example.com',
     );
 
     expect(resultat.type).toBe('modifie');
     if (resultat.type !== 'modifie') throw new Error('unreachable');
     expect(resultat.equipe.membres[0].nom).toBe('Jean D.');
+    expect(resultat.equipe.membres[0].prenom).toBe('Jean');
     expect(resultat.equipe.membres[0].email).toBe('jean.d@example.com');
   });
 
@@ -71,6 +73,7 @@ describe('ModifierMembre', () => {
       'inconnue',
       'm1',
       'Jean D.',
+      null,
       'jean@example.com',
     );
 
@@ -86,6 +89,7 @@ describe('ModifierMembre', () => {
       'eq1',
       'inconnu',
       'Jean D.',
+      null,
       'jean@example.com',
     );
 
@@ -95,7 +99,7 @@ describe('ModifierMembre', () => {
   it('renvoie "invalide" pour un email mal formé', async () => {
     const repository = new EquipeRepositoryFake();
     const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-    equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+    equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
     repository.equipes.push(equipe);
     const useCase = new ModifierMembre(repository);
 
@@ -103,6 +107,7 @@ describe('ModifierMembre', () => {
       'eq1',
       'm1',
       'Jean D.',
+      null,
       'pas-un-email',
     );
 
@@ -112,8 +117,8 @@ describe('ModifierMembre', () => {
   it('renvoie "invalide" pour un email déjà utilisé par un autre Membre du roster', async () => {
     const repository = new EquipeRepositoryFake();
     const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-    equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
-    equipe.ajouterMembre('m2', 'Marie Curie', 'marie@example.com');
+    equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
+    equipe.ajouterMembre('m2', 'Marie Curie', null, 'marie@example.com');
     repository.equipes.push(equipe);
     const useCase = new ModifierMembre(repository);
 
@@ -121,6 +126,7 @@ describe('ModifierMembre', () => {
       'eq1',
       'm2',
       'Marie C.',
+      null,
       'jean@example.com',
     );
 

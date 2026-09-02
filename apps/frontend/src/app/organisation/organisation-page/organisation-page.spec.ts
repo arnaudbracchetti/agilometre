@@ -254,7 +254,7 @@ describe('OrganisationPage', () => {
 
     const req = httpMock.expectOne('/api/organisation/equipes/eq1/membres');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ nom: 'Jean Dupont', email: 'jean@example.com' });
+    expect(req.request.body).toEqual({ nom: 'Jean Dupont', prenom: null, email: 'jean@example.com' });
     req.flush({
       id: 'eq1',
       nom: 'Alpha',
@@ -265,6 +265,36 @@ describe('OrganisationPage', () => {
 
     const arbre: HTMLElement = fixture.nativeElement.querySelector('.arbre-organisation__tree');
     expect(arbre.textContent).toContain('Jean Dupont');
+  });
+
+  it('ajoute un Membre avec un prénom facultatif', () => {
+    const fixture = TestBed.createComponent(OrganisationPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/organisation/entites').flush([{ id: 'e1', nom: 'DSI' }]);
+    fixture.detectChanges();
+    cliquer(fixture, noeudEntite('e1'));
+    fixture.detectChanges();
+    httpMock
+      .expectOne('/api/organisation/entites/e1/equipes')
+      .flush([{ id: 'eq1', nom: 'Alpha', entiteId: 'e1', membres: [] }]);
+    fixture.detectChanges();
+    cliquer(fixture, noeudEquipe('eq1'));
+    fixture.detectChanges();
+
+    saisir(fixture, '#nouveauMembreNom', 'Dupont');
+    saisir(fixture, '#nouveauMembrePrenom', 'Jean');
+    saisir(fixture, '#nouveauMembreEmail', 'jean@example.com');
+    const formDebug = fixture.debugElement.query(By.css('#nouveauMembreNom')).parent!;
+    formDebug.triggerEventHandler('submit', new Event('submit'));
+
+    const req = httpMock.expectOne('/api/organisation/equipes/eq1/membres');
+    expect(req.request.body).toEqual({ nom: 'Dupont', prenom: 'Jean', email: 'jean@example.com' });
+    req.flush({
+      id: 'eq1',
+      nom: 'Alpha',
+      entiteId: 'e1',
+      membres: [{ id: 'm1', nom: 'Dupont', prenom: 'Jean', email: 'jean@example.com', utilisateurId: null }],
+    });
   });
 
   it('retire un Membre sélectionné du roster', () => {
@@ -330,13 +360,14 @@ describe('OrganisationPage', () => {
     fixture.detectChanges();
 
     saisir(fixture, '#nomModifieMembre', 'Jean D.');
+    saisir(fixture, '#prenomModifieMembre', 'Jean');
     saisir(fixture, '#emailModifieMembre', 'jean.d@example.com');
     const formDebug = fixture.debugElement.query(By.css('#nomModifieMembre')).parent!;
     formDebug.triggerEventHandler('submit', new Event('submit'));
 
     const req = httpMock.expectOne('/api/organisation/equipes/eq1/membres/m1');
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual({ nom: 'Jean D.', email: 'jean.d@example.com' });
+    expect(req.request.body).toEqual({ nom: 'Jean D.', prenom: 'Jean', email: 'jean.d@example.com' });
     req.flush({
       id: 'eq1',
       nom: 'Alpha',

@@ -50,8 +50,10 @@ export class OrganisationPage {
   protected readonly nouveauNomEquipe = signal('');
   protected readonly nomRenommeEquipe = signal('');
   protected readonly nouveauMembreNom = signal('');
+  protected readonly nouveauMembrePrenom = signal('');
   protected readonly nouveauMembreEmail = signal('');
   protected readonly nomModifieMembre = signal('');
+  protected readonly prenomModifieMembre = signal('');
   protected readonly emailModifieMembre = signal('');
 
   protected readonly creationEntiteEnCours = signal(false);
@@ -106,12 +108,15 @@ export class OrganisationPage {
   protected readonly modificationMembrePossible = computed(() => {
     const selection = this.membreSelectionne();
     const nom = this.nomModifieMembre().trim();
+    const prenom = this.prenomModifieMembre().trim();
     const email = this.emailModifieMembre().trim();
     return (
       selection !== null &&
       nom.length > 0 &&
       email.length > 0 &&
-      (nom !== selection.membre.nom || email !== selection.membre.email)
+      (nom !== selection.membre.nom ||
+        prenom !== (selection.membre.prenom ?? '') ||
+        email !== selection.membre.email)
     );
   });
 
@@ -127,9 +132,11 @@ export class OrganisationPage {
       } else if (selection.type === 'equipe') {
         this.nomRenommeEquipe.set(selection.equipe.nom);
         this.nouveauMembreNom.set('');
+        this.nouveauMembrePrenom.set('');
         this.nouveauMembreEmail.set('');
       } else if (selection.type === 'membre') {
         this.nomModifieMembre.set(selection.membre.nom);
+        this.prenomModifieMembre.set(selection.membre.prenom ?? '');
         this.emailModifieMembre.set(selection.membre.email);
       }
     });
@@ -281,30 +288,34 @@ export class OrganisationPage {
   protected ajouterMembre(): void {
     const equipe = this.equipeSelectionnee();
     const nom = this.nouveauMembreNom().trim();
+    const prenom = this.nouveauMembrePrenom().trim();
     const email = this.nouveauMembreEmail().trim();
     if (!equipe || nom.length === 0 || email.length === 0) {
       return;
     }
     this.ajoutMembreEnCours.set(true);
-    this.organisationService.ajouterMembre(equipe.id, nom, email).subscribe({
-      next: (equipeMiseAJour) => {
-        this.arbre().remplacerEquipe(equipeMiseAJour);
-        this.nouveauMembreNom.set('');
-        this.nouveauMembreEmail.set('');
-        this.ajoutMembreEnCours.set(false);
-        this.champNouveauMembre()?.nativeElement.focus();
-      },
-      error: (erreur: HttpErrorResponse) => {
-        this.ajoutMembreEnCours.set(false);
-        this.modal.error({
-          nzTitle: 'Erreur',
-          nzContent:
-            erreur.status === 409
-              ? 'Un Membre porte déjà cet email dans cette Équipe.'
-              : 'Impossible d’ajouter ce Membre.',
-        });
-      },
-    });
+    this.organisationService
+      .ajouterMembre(equipe.id, nom, prenom.length > 0 ? prenom : null, email)
+      .subscribe({
+        next: (equipeMiseAJour) => {
+          this.arbre().remplacerEquipe(equipeMiseAJour);
+          this.nouveauMembreNom.set('');
+          this.nouveauMembrePrenom.set('');
+          this.nouveauMembreEmail.set('');
+          this.ajoutMembreEnCours.set(false);
+          this.champNouveauMembre()?.nativeElement.focus();
+        },
+        error: (erreur: HttpErrorResponse) => {
+          this.ajoutMembreEnCours.set(false);
+          this.modal.error({
+            nzTitle: 'Erreur',
+            nzContent:
+              erreur.status === 409
+                ? 'Un Membre porte déjà cet email dans cette Équipe.'
+                : 'Impossible d’ajouter ce Membre.',
+          });
+        },
+      });
   }
 
   protected modifierMembre(): void {
@@ -313,10 +324,17 @@ export class OrganisationPage {
       return;
     }
     const nom = this.nomModifieMembre().trim();
+    const prenom = this.prenomModifieMembre().trim();
     const email = this.emailModifieMembre().trim();
     this.modificationMembreEnCours.set(true);
     this.organisationService
-      .modifierMembre(selection.equipeId, selection.membre.id, nom, email)
+      .modifierMembre(
+        selection.equipeId,
+        selection.membre.id,
+        nom,
+        prenom.length > 0 ? prenom : null,
+        email,
+      )
       .subscribe({
         next: (equipeMiseAJour) => {
           this.arbre().remplacerEquipe(equipeMiseAJour);

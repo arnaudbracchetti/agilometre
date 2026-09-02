@@ -81,7 +81,7 @@ function equipeVersNoeud(equipe: EquipeDto): NoeudOrganisation {
 
 function membreVersNoeud(membre: MembreDto): NoeudOrganisation {
   return {
-    title: `${membre.nom} — ${membre.email}`,
+    title: membre.prenom ? `${membre.prenom} ${membre.nom}` : membre.nom,
     key: membre.id,
     type: 'membre',
     isLeaf: true,
@@ -316,9 +316,10 @@ export class ArbreOrganisation implements OnInit {
   /**
    * Distingue un nœud qui correspond lui-même au terme recherché d'un nœud affiché seulement
    * comme contexte (ancêtre d'une correspondance, ou enfant d'une Entité/Équipe qui correspond
-   * directement — voir `entiteFiltreeVersNoeud`/`equipeFiltreeVersNoeud`). `node.title` porte déjà
-   * `nom` seul (Entité/Équipe) ou `nom — email` (Membre), donc une correspondance sur l'un ou
-   * l'autre reste détectable par une simple sous-chaîne sur le titre affiché.
+   * directement - voir `entiteFiltreeVersNoeud`/`equipeFiltreeVersNoeud`). `node.title` porte
+   * `nom` seul (Entité/Équipe), ou `prénom nom`/`nom` seul (Membre) - une correspondance sur
+   * l'email (`membreCorrespond`) n'apparaît donc pas dans le titre affiché et n'est jamais
+   * surlignée comme correspondance directe, seulement incluse dans les résultats.
    */
   protected estCorrespondanceDirecte(titre: string): boolean {
     const terme = this.filtre().trim().toLowerCase();

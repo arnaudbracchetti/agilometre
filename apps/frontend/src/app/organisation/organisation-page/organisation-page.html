@@ -113,12 +113,20 @@
       <div class="organisation__section">
         <h3 class="organisation__section-titre">Ajouter un Membre</h3>
         <form class="organisation__formulaire" (ngSubmit)="ajouterMembre()">
+          <label for="nouveauMembrePrenom">Prénom</label>
+          <input
+            nz-input
+            id="nouveauMembrePrenom"
+            name="nouveauMembrePrenom"
+            #champNouveauMembre
+            [ngModel]="nouveauMembrePrenom()"
+            (ngModelChange)="nouveauMembrePrenom.set($event)"
+          />
           <label for="nouveauMembreNom">Nom</label>
           <input
             nz-input
             id="nouveauMembreNom"
             name="nouveauMembreNom"
-            #champNouveauMembre
             [ngModel]="nouveauMembreNom()"
             (ngModelChange)="nouveauMembreNom.set($event)"
           />
@@ -157,6 +165,14 @@
         <div class="organisation__section">
           <h3 class="organisation__section-titre">Modifier</h3>
           <form class="organisation__formulaire" (ngSubmit)="modifierMembre()">
+            <label for="prenomModifieMembre">Prénom</label>
+            <input
+              nz-input
+              id="prenomModifieMembre"
+              name="prenomModifieMembre"
+              [ngModel]="prenomModifieMembre()"
+              (ngModelChange)="prenomModifieMembre.set($event)"
+            />
             <label for="nomModifieMembre">Nom</label>
             <input
               nz-input

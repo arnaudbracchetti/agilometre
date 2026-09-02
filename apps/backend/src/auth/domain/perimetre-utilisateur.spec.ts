@@ -104,7 +104,7 @@ function creerEquipeAvecMembreLie(
   utilisateurId: string,
 ): Equipe {
   const equipe = Equipe.creer(equipeId, 'Alpha', 'e1').valeur;
-  equipe.ajouterMembre(membreId, 'Jean Dupont', 'jean@example.com');
+  equipe.ajouterMembre(membreId, 'Jean Dupont', null, 'jean@example.com');
   equipe.lierUtilisateur(
     membreId,
     utilisateurId,

@@ -25,13 +25,14 @@ export class AjouterMembre {
   async executer(
     equipeId: string,
     nom: string,
+    prenom: string | null,
     email: string,
   ): Promise<ResultatAjouterMembre> {
     const equipe = await this.repository.findById(equipeId);
     if (!equipe) {
       return { type: 'introuvable' };
     }
-    const resultat = equipe.ajouterMembre(randomUUID(), nom, email);
+    const resultat = equipe.ajouterMembre(randomUUID(), nom, prenom, email);
     if (resultat.estEchec) {
       return { type: 'invalide', erreur: resultat.erreur };
     }

@@ -218,7 +218,12 @@ export class OrganisationController {
     @Param('id') id: string,
     @Body() dto: AjouterMembreDto,
   ): Promise<EquipeDto> {
-    const resultat = await this.ajouterMembre.executer(id, dto.nom, dto.email);
+    const resultat = await this.ajouterMembre.executer(
+      id,
+      dto.nom,
+      dto.prenom ?? null,
+      dto.email,
+    );
     if (resultat.type === 'introuvable') {
       throw new NotFoundException(`Équipe ${id} introuvable`);
     }
@@ -241,6 +246,7 @@ export class OrganisationController {
       id,
       membreId,
       dto.nom,
+      dto.prenom ?? null,
       dto.email,
     );
     if (resultat.type === 'introuvable') {

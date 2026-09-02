@@ -2,35 +2,66 @@ import { Membre } from './membre';
 
 describe('Membre', () => {
   describe('creer', () => {
-    it('crée un Membre avec un nom et un email valides', () => {
+    it('crée un Membre avec un nom et un email valides, sans prénom', () => {
       const resultat = Membre.creer(
         'm1',
         'Jean Dupont',
+        null,
         'jean.dupont@example.com',
       );
 
       expect(resultat.estSucces).toBe(true);
       expect(resultat.valeur.nom).toBe('Jean Dupont');
+      expect(resultat.valeur.prenom).toBeNull();
       expect(resultat.valeur.email).toBe('jean.dupont@example.com');
       expect(resultat.valeur.utilisateurId).toBeNull();
     });
 
+    it('accepte un prénom facultatif, épuré des espaces superflus', () => {
+      const resultat = Membre.creer(
+        'm1',
+        'Jean Dupont',
+        '  Jean  ',
+        'jean.dupont@example.com',
+      );
+
+      expect(resultat.estSucces).toBe(true);
+      expect(resultat.valeur.prenom).toBe('Jean');
+    });
+
+    it('traite un prénom vide comme absent', () => {
+      const resultat = Membre.creer(
+        'm1',
+        'Jean Dupont',
+        '   ',
+        'jean.dupont@example.com',
+      );
+
+      expect(resultat.estSucces).toBe(true);
+      expect(resultat.valeur.prenom).toBeNull();
+    });
+
     it('rejette un nom vide', () => {
-      const resultat = Membre.creer('m1', '', 'jean.dupont@example.com');
+      const resultat = Membre.creer('m1', '', null, 'jean.dupont@example.com');
 
       expect(resultat.estEchec).toBe(true);
       expect(resultat.erreur.name).toBe('NomMembreInvalideError');
     });
 
     it('rejette un email vide', () => {
-      const resultat = Membre.creer('m1', 'Jean Dupont', '');
+      const resultat = Membre.creer('m1', 'Jean Dupont', null, '');
 
       expect(resultat.estEchec).toBe(true);
       expect(resultat.erreur.name).toBe('EmailMembreInvalideError');
     });
 
     it('rejette un email mal formé', () => {
-      const resultat = Membre.creer('m1', 'Jean Dupont', 'pas-un-email');
+      const resultat = Membre.creer(
+        'm1',
+        'Jean Dupont',
+        null,
+        'pas-un-email',
+      );
 
       expect(resultat.estEchec).toBe(true);
       expect(resultat.erreur.name).toBe('EmailMembreInvalideError');
@@ -38,28 +69,44 @@ describe('Membre', () => {
   });
 
   describe('modifier', () => {
-    it('modifie le nom et l’email avec des valeurs valides', () => {
+    it('modifie le nom, le prénom et l’email avec des valeurs valides', () => {
       const membre = Membre.creer(
         'm1',
         'Jean Dupont',
+        null,
         'jean@example.com',
       ).valeur;
 
-      const resultat = membre.modifier('Jean D.', 'jean.d@example.com');
+      const resultat = membre.modifier('Jean D.', 'Jean', 'jean.d@example.com');
 
       expect(resultat.estSucces).toBe(true);
       expect(membre.nom).toBe('Jean D.');
+      expect(membre.prenom).toBe('Jean');
       expect(membre.email).toBe('jean.d@example.com');
+    });
+
+    it('remet le prénom à null si absent de la modification', () => {
+      const membre = Membre.creer(
+        'm1',
+        'Jean Dupont',
+        'Jean',
+        'jean@example.com',
+      ).valeur;
+
+      membre.modifier('Jean Dupont', null, 'jean@example.com');
+
+      expect(membre.prenom).toBeNull();
     });
 
     it('rejette un nom vide et laisse le Membre inchangé', () => {
       const membre = Membre.creer(
         'm1',
         'Jean Dupont',
+        null,
         'jean@example.com',
       ).valeur;
 
-      const resultat = membre.modifier('', 'jean.d@example.com');
+      const resultat = membre.modifier('', null, 'jean.d@example.com');
 
       expect(resultat.estEchec).toBe(true);
       expect(membre.nom).toBe('Jean Dupont');
@@ -70,10 +117,11 @@ describe('Membre', () => {
       const membre = Membre.creer(
         'm1',
         'Jean Dupont',
+        null,
         'jean@example.com',
       ).valeur;
 
-      const resultat = membre.modifier('Jean D.', 'pas-un-email');
+      const resultat = membre.modifier('Jean D.', null, 'pas-un-email');
 
       expect(resultat.estEchec).toBe(true);
       expect(membre.email).toBe('jean@example.com');
@@ -103,6 +151,7 @@ describe('Membre', () => {
       const membre = Membre.creer(
         'm1',
         'Jean Dupont',
+        null,
         'jean@example.com',
       ).valeur;
 
@@ -114,15 +163,29 @@ describe('Membre', () => {
       expect(membre.email).toBe('jean.dupont@compte.com');
     });
 
+    it('écrase un prénom saisi manuellement à la création — le compte fait autorité', () => {
+      const membre = Membre.creer(
+        'm1',
+        'Jean Dupont',
+        'Jeannot',
+        'jean@example.com',
+      ).valeur;
+
+      membre.lierUtilisateur('u1', 'Jean', 'Dupont', 'jean.dupont@compte.com');
+
+      expect(membre.prenom).toBe('Jean');
+    });
+
     it('rend le Membre en lecture seule sur nom/email', () => {
       const membre = Membre.creer(
         'm1',
         'Jean Dupont',
+        null,
         'jean@example.com',
       ).valeur;
       membre.lierUtilisateur('u1', 'Jean', 'Dupont', 'jean.dupont@compte.com');
 
-      const resultat = membre.modifier('Autre nom', 'autre@example.com');
+      const resultat = membre.modifier('Autre nom', null, 'autre@example.com');
 
       expect(resultat.estEchec).toBe(true);
       expect(resultat.erreur.name).toBe('MembreLieError');
@@ -136,6 +199,7 @@ describe('Membre', () => {
       const membre = Membre.creer(
         'm1',
         'Jean Dupont',
+        null,
         'jean@example.com',
       ).valeur;
       membre.lierUtilisateur('u1', 'Jean', 'Dupont', 'jean.dupont@compte.com');
@@ -152,12 +216,17 @@ describe('Membre', () => {
       const membre = Membre.creer(
         'm1',
         'Jean Dupont',
+        null,
         'jean@example.com',
       ).valeur;
       membre.lierUtilisateur('u1', 'Jean', 'Dupont', 'jean.dupont@compte.com');
       membre.delierUtilisateur();
 
-      const resultat = membre.modifier('Nouveau nom', 'nouveau@example.com');
+      const resultat = membre.modifier(
+        'Nouveau nom',
+        null,
+        'nouveau@example.com',
+      );
 
       expect(resultat.estSucces).toBe(true);
       expect(membre.nom).toBe('Nouveau nom');

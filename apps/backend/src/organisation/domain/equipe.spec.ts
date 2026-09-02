@@ -47,6 +47,7 @@ describe('Equipe', () => {
       const resultat = equipe.ajouterMembre(
         'm1',
         'Jean Dupont',
+        null,
         'jean@example.com',
       );
 
@@ -55,10 +56,24 @@ describe('Equipe', () => {
       expect(equipe.membres[0].nom).toBe('Jean Dupont');
     });
 
+    it('ajoute un Membre avec un prénom facultatif', () => {
+      const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
+
+      const resultat = equipe.ajouterMembre(
+        'm1',
+        'Jean Dupont',
+        'Jean',
+        'jean@example.com',
+      );
+
+      expect(resultat.estSucces).toBe(true);
+      expect(equipe.membres[0].prenom).toBe('Jean');
+    });
+
     it('rejette un nom ou un email invalide sans modifier le roster', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
 
-      const resultat = equipe.ajouterMembre('m1', '', 'jean@example.com');
+      const resultat = equipe.ajouterMembre('m1', '', null, 'jean@example.com');
 
       expect(resultat.estEchec).toBe(true);
       expect(equipe.membres).toHaveLength(0);
@@ -66,11 +81,12 @@ describe('Equipe', () => {
 
     it('rejette un doublon d’email dans le même roster, insensible à la casse', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'Jean@Example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'Jean@Example.com');
 
       const resultat = equipe.ajouterMembre(
         'm2',
         'Jean D.',
+        null,
         'jean@example.com',
       );
 
@@ -82,11 +98,12 @@ describe('Equipe', () => {
     it('autorise le même email dans deux Équipes différentes', () => {
       const equipeA = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
       const equipeB = Equipe.creer('eq2', 'Beta', 'e1').valeur;
-      equipeA.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+      equipeA.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
 
       const resultat = equipeB.ajouterMembre(
         'm2',
         'Jean Dupont',
+        null,
         'jean@example.com',
       );
 
@@ -97,7 +114,7 @@ describe('Equipe', () => {
   describe('retirerMembre', () => {
     it('retire un Membre existant du roster', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
 
       const resultat = equipe.retirerMembre('m1');
 
@@ -116,18 +133,20 @@ describe('Equipe', () => {
   });
 
   describe('modifierMembre', () => {
-    it('modifie le nom et l’email d’un Membre existant', () => {
+    it('modifie le nom, le prénom et l’email d’un Membre existant', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
 
       const resultat = equipe.modifierMembre(
         'm1',
         'Jean D.',
+        'Jean',
         'jean.d@example.com',
       );
 
       expect(resultat.estSucces).toBe(true);
       expect(equipe.membres[0].nom).toBe('Jean D.');
+      expect(equipe.membres[0].prenom).toBe('Jean');
       expect(equipe.membres[0].email).toBe('jean.d@example.com');
     });
 
@@ -137,6 +156,7 @@ describe('Equipe', () => {
       const resultat = equipe.modifierMembre(
         'inconnu',
         'Jean D.',
+        null,
         'jean.d@example.com',
       );
 
@@ -146,9 +166,14 @@ describe('Equipe', () => {
 
     it('rejette un nom ou un email invalide sans modifier le Membre', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
 
-      const resultat = equipe.modifierMembre('m1', '', 'jean.d@example.com');
+      const resultat = equipe.modifierMembre(
+        'm1',
+        '',
+        null,
+        'jean.d@example.com',
+      );
 
       expect(resultat.estEchec).toBe(true);
       expect(equipe.membres[0].nom).toBe('Jean Dupont');
@@ -156,12 +181,13 @@ describe('Equipe', () => {
 
     it('rejette un email déjà utilisé par un autre Membre du roster', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
-      equipe.ajouterMembre('m2', 'Marie Curie', 'marie@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
+      equipe.ajouterMembre('m2', 'Marie Curie', null, 'marie@example.com');
 
       const resultat = equipe.modifierMembre(
         'm2',
         'Marie C.',
+        null,
         'jean@example.com',
       );
 
@@ -172,11 +198,12 @@ describe('Equipe', () => {
 
     it('autorise à garder son propre email inchangé', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
 
       const resultat = equipe.modifierMembre(
         'm1',
         'Jean D.',
+        null,
         'jean@example.com',
       );
 
@@ -206,7 +233,7 @@ describe('Equipe', () => {
   describe('lierUtilisateur', () => {
     it('lie le Membre trouvé au compte donné', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
 
       const resultat = equipe.lierUtilisateur(
         'm1',
@@ -240,8 +267,8 @@ describe('Equipe', () => {
 
     it('rejette la liaison si l’email du compte entre en collision avec un autre Membre du roster', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
-      equipe.ajouterMembre('m2', 'Marie Curie', 'marie@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
+      equipe.ajouterMembre('m2', 'Marie Curie', null, 'marie@example.com');
 
       const resultat = equipe.lierUtilisateur(
         'm1',
@@ -260,7 +287,7 @@ describe('Equipe', () => {
   describe('delierUtilisateur', () => {
     it('délie le Membre trouvé', () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
       equipe.lierUtilisateur('m1', 'u1', 'Jean', 'Dupont', 'jean@compte.com');
 
       const resultat = equipe.delierUtilisateur('m1');

@@ -214,9 +214,9 @@ describe('CreerUtilisateur', () => {
   it('lie le compte créé aux Membres de même email dans deux rosters différents', async () => {
     const { useCase, equipes } = creerUseCase();
     const equipeA = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-    equipeA.ajouterMembre('m1', 'Jean D.', 'jean@example.com');
+    equipeA.ajouterMembre('m1', 'Jean D.', null, 'jean@example.com');
     const equipeB = Equipe.creer('eq2', 'Beta', 'e1').valeur;
-    equipeB.ajouterMembre('m2', 'J. Dupont', 'jean@example.com');
+    equipeB.ajouterMembre('m2', 'J. Dupont', null, 'jean@example.com');
     equipes.equipes.push(equipeA, equipeB);
 
     const resultat = await useCase.executer(
@@ -238,7 +238,7 @@ describe('CreerUtilisateur', () => {
   it('ne lie aucun roster pour un compte Coach ou Direction', async () => {
     const { useCase, equipes } = creerUseCase();
     const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-    equipe.ajouterMembre('m1', 'Jean D.', 'jean@example.com');
+    equipe.ajouterMembre('m1', 'Jean D.', null, 'jean@example.com');
     equipes.equipes.push(equipe);
 
     const resultat = await useCase.executer(

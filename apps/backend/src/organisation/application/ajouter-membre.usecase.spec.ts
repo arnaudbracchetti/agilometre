@@ -87,6 +87,7 @@ describe('AjouterMembre', () => {
     const resultat = await useCase.executer(
       'eq1',
       'Jean Dupont',
+      null,
       'jean@example.com',
     );
 
@@ -97,6 +98,24 @@ describe('AjouterMembre', () => {
     expect(resultat.equipe.membres[0].utilisateurId).toBeNull();
   });
 
+  it('ajoute un Membre avec un prénom facultatif', async () => {
+    const repository = new EquipeRepositoryFake();
+    repository.equipes.push(Equipe.creer('eq1', 'Alpha', 'e1').valeur);
+    const utilisateurs = new UtilisateurRepositoryFake();
+    const useCase = new AjouterMembre(repository, utilisateurs);
+
+    const resultat = await useCase.executer(
+      'eq1',
+      'Dupont',
+      'Jean',
+      'jean@example.com',
+    );
+
+    expect(resultat.type).toBe('ajoute');
+    if (resultat.type !== 'ajoute') throw new Error('unreachable');
+    expect(resultat.equipe.membres[0].prenom).toBe('Jean');
+  });
+
   it('renvoie "introuvable" pour une Équipe inconnue', async () => {
     const repository = new EquipeRepositoryFake();
     const utilisateurs = new UtilisateurRepositoryFake();
@@ -105,6 +124,7 @@ describe('AjouterMembre', () => {
     const resultat = await useCase.executer(
       'inconnue',
       'Jean Dupont',
+      null,
       'jean@example.com',
     );
 
@@ -120,6 +140,7 @@ describe('AjouterMembre', () => {
     const resultat = await useCase.executer(
       'eq1',
       'Jean Dupont',
+      null,
       'pas-un-email',
     );
 
@@ -129,7 +150,7 @@ describe('AjouterMembre', () => {
   it('renvoie "invalide" pour un email déjà présent dans le roster de cette Équipe', async () => {
     const repository = new EquipeRepositoryFake();
     const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-    equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+    equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
     repository.equipes.push(equipe);
     const utilisateurs = new UtilisateurRepositoryFake();
     const useCase = new AjouterMembre(repository, utilisateurs);
@@ -137,6 +158,7 @@ describe('AjouterMembre', () => {
     const resultat = await useCase.executer(
       'eq1',
       'Jean D.',
+      null,
       'jean@example.com',
     );
 
@@ -157,6 +179,7 @@ describe('AjouterMembre', () => {
     const resultat = await useCase.executer(
       'eq1',
       'Autre nom',
+      null,
       'jean@example.com',
     );
 
@@ -165,6 +188,27 @@ describe('AjouterMembre', () => {
     expect(resultat.equipe.membres[0].utilisateurId).toBe('u1');
     // Le compte fait autorité : le nom saisi sur le roster est écrasé par celui du compte.
     expect(resultat.equipe.membres[0].nom).toBe('Dupont');
+  });
+
+  it('écrase un prénom saisi manuellement lors du rattachement automatique', async () => {
+    const repository = new EquipeRepositoryFake();
+    repository.equipes.push(Equipe.creer('eq1', 'Alpha', 'e1').valeur);
+    const utilisateurs = new UtilisateurRepositoryFake();
+    utilisateurs.utilisateurs.push(
+      creerCompte(Role.Membre, 'jean@example.com'),
+    );
+    const useCase = new AjouterMembre(repository, utilisateurs);
+
+    const resultat = await useCase.executer(
+      'eq1',
+      'Autre nom',
+      'Autre prénom',
+      'jean@example.com',
+    );
+
+    expect(resultat.type).toBe('ajoute');
+    if (resultat.type !== 'ajoute') throw new Error('unreachable');
+    expect(resultat.equipe.membres[0].prenom).toBe('Jean');
   });
 
   it('ne lie pas un Membre à un compte de même email mais d’un autre Rôle', async () => {
@@ -177,6 +221,7 @@ describe('AjouterMembre', () => {
     const resultat = await useCase.executer(
       'eq1',
       'Jean Dupont',
+      null,
       'jean@example.com',
     );
 

@@ -80,11 +80,11 @@ describe('OrganisationService', () => {
   });
 
   it('ajoute un Membre via POST /api/organisation/equipes/:id/membres', () => {
-    service.ajouterMembre('eq1', 'Jean Dupont', 'jean@example.com').subscribe();
+    service.ajouterMembre('eq1', 'Jean Dupont', null, 'jean@example.com').subscribe();
 
     const req = httpMock.expectOne('/api/organisation/equipes/eq1/membres');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ nom: 'Jean Dupont', email: 'jean@example.com' });
+    expect(req.request.body).toEqual({ nom: 'Jean Dupont', prenom: null, email: 'jean@example.com' });
     req.flush({
       id: 'eq1',
       nom: 'Alpha',
@@ -118,11 +118,11 @@ describe('OrganisationService', () => {
   });
 
   it('modifie un Membre via PATCH /api/organisation/equipes/:id/membres/:membreId', () => {
-    service.modifierMembre('eq1', 'm1', 'Jean D.', 'jean.d@example.com').subscribe();
+    service.modifierMembre('eq1', 'm1', 'Jean D.', null, 'jean.d@example.com').subscribe();
 
     const req = httpMock.expectOne('/api/organisation/equipes/eq1/membres/m1');
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual({ nom: 'Jean D.', email: 'jean.d@example.com' });
+    expect(req.request.body).toEqual({ nom: 'Jean D.', prenom: null, email: 'jean.d@example.com' });
     req.flush({
       id: 'eq1',
       nom: 'Alpha',

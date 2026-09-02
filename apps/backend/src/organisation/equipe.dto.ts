@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreerEquipeDto {
   @IsString()
@@ -21,6 +21,10 @@ export class AjouterMembreDto {
   @IsNotEmpty()
   nom!: string;
 
+  @IsOptional()
+  @IsString()
+  prenom?: string;
+
   @IsEmail()
   email!: string;
 }
@@ -29,6 +33,10 @@ export class ModifierMembreDto {
   @IsString()
   @IsNotEmpty()
   nom!: string;
+
+  @IsOptional()
+  @IsString()
+  prenom?: string;
 
   @IsEmail()
   email!: string;

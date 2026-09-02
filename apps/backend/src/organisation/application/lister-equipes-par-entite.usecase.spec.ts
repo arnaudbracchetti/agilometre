@@ -115,7 +115,7 @@ describe('ListerEquipesParEntite', () => {
 
   it('ne renvoie à un Membre d’équipe que ses propres Équipes de cette Entité', async () => {
     const equipeMembre = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-    equipeMembre.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+    equipeMembre.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
     equipeMembre.lierUtilisateur(
       'm1',
       'membre-1',

@@ -167,7 +167,7 @@ describe('OrganisationController', () => {
   describe('listerEquipes', () => {
     it('renvoie les Équipes d’une Entité, roster inclus', async () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
       listerEquipesParEntite.executer.mockResolvedValue([equipe]);
 
       await expect(
@@ -291,7 +291,7 @@ describe('OrganisationController', () => {
   describe('ajouterMembreAction', () => {
     it('renvoie l’Équipe avec le Membre ajouté', async () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
       ajouterMembre.executer.mockResolvedValue({ type: 'ajoute', equipe });
 
       await expect(
@@ -342,8 +342,8 @@ describe('OrganisationController', () => {
 
     it('lève une ConflictException si l’email est déjà utilisé dans le roster', async () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
-      const doublon = equipe.ajouterMembre('m2', 'Jean D.', 'jean@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
+      const doublon = equipe.ajouterMembre('m2', 'Jean D.', null, 'jean@example.com');
       ajouterMembre.executer.mockResolvedValue({
         type: 'invalide',
         erreur: doublon.erreur,
@@ -361,8 +361,8 @@ describe('OrganisationController', () => {
   describe('modifierMembreAction', () => {
     it('renvoie l’Équipe avec le Membre modifié', async () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
-      equipe.modifierMembre('m1', 'Jean D.', 'jean.d@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
+      equipe.modifierMembre('m1', 'Jean D.', null, 'jean.d@example.com');
       modifierMembre.executer.mockResolvedValue({ type: 'modifie', equipe });
 
       await expect(
@@ -424,11 +424,12 @@ describe('OrganisationController', () => {
 
     it('lève une ConflictException si l’email est déjà utilisé par un autre Membre', async () => {
       const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-      equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
-      equipe.ajouterMembre('m2', 'Marie Curie', 'marie@example.com');
+      equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
+      equipe.ajouterMembre('m2', 'Marie Curie', null, 'marie@example.com');
       const doublon = equipe.modifierMembre(
         'm2',
         'Marie C.',
+        null,
         'jean@example.com',
       );
       modifierMembre.executer.mockResolvedValue({

@@ -22,13 +22,14 @@ export class ModifierMembre {
     equipeId: string,
     membreId: string,
     nom: string,
+    prenom: string | null,
     email: string,
   ): Promise<ResultatModifierMembre> {
     const equipe = await this.repository.findById(equipeId);
     if (!equipe) {
       return { type: 'introuvable' };
     }
-    const resultat = equipe.modifierMembre(membreId, nom, email);
+    const resultat = equipe.modifierMembre(membreId, nom, prenom, email);
     if (resultat.estEchec) {
       if (resultat.erreur instanceof MembreIntrouvableError) {
         return { type: 'membre_introuvable' };

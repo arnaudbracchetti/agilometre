@@ -45,15 +45,19 @@ export class Membre {
   static creer(
     id: string,
     nom: string,
+    prenom: string | null,
     email: string,
   ): Result<Membre, ErreurInvariantMembre> {
     const validation = Membre.valider(nom, email);
     if (validation.estEchec) {
       return Result.echec(validation.erreur);
     }
-    // `prenom` reste `null` tant qu'aucun compte n'est lié — reçu uniquement par propagation
-    // (voir `lierUtilisateur`), jamais saisi à la création d'une ligne de roster.
-    return Result.succes(new Membre(id, nom.trim(), null, email.trim(), null));
+    // `prenom` est une précision facultative de la ligne de roster, jamais requise : `nom` et
+    // `email` suffisent à identifier un Membre sans compte. Un rattachement ultérieur (voir
+    // `lierUtilisateur`) l'écrase de toute façon avec celui du compte, qui fait autorité.
+    return Result.succes(
+      new Membre(id, nom.trim(), prenom?.trim() || null, email.trim(), null),
+    );
   }
 
   /**
@@ -100,7 +104,11 @@ export class Membre {
     return this._utilisateurId;
   }
 
-  modifier(nom: string, email: string): Result<void, ErreurInvariantMembre> {
+  modifier(
+    nom: string,
+    prenom: string | null,
+    email: string,
+  ): Result<void, ErreurInvariantMembre> {
     if (this._utilisateurId !== null) {
       return Result.echec(new MembreLieError());
     }
@@ -109,6 +117,7 @@ export class Membre {
       return Result.echec(validation.erreur);
     }
     this._nom = nom.trim();
+    this._prenom = prenom?.trim() || null;
     this._email = email.trim();
     return Result.succes(undefined);
   }

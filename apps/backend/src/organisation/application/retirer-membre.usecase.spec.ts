@@ -46,7 +46,7 @@ describe('RetirerMembre', () => {
   it('retire un Membre existant du roster', async () => {
     const repository = new EquipeRepositoryFake();
     const equipe = Equipe.creer('eq1', 'Alpha', 'e1').valeur;
-    equipe.ajouterMembre('m1', 'Jean Dupont', 'jean@example.com');
+    equipe.ajouterMembre('m1', 'Jean Dupont', null, 'jean@example.com');
     repository.equipes.push(equipe);
     const useCase = new RetirerMembre(repository);
 
