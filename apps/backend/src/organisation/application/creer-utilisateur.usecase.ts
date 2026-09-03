@@ -73,7 +73,7 @@ export class CreerUtilisateur {
       await this.lierMembresExistants(resultat.valeur);
     }
 
-    await this.emettreJetonCompte.executer(resultat.valeur);
+    await this.emettreJetonCompte.emettrePourInvitation(resultat.valeur);
     return { type: 'cree', utilisateur: resultat.valeur };
   }
 

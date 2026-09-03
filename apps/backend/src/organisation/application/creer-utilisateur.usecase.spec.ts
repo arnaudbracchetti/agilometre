@@ -1,6 +1,7 @@
 import * as argon2 from 'argon2';
 import { Role } from '@agilometre/shared';
-import { MailSender, MessageEmail } from '../../mail/mail-sender';
+import { CleTemplateEmail } from '../../mail/domain/cles-templates-email';
+import { MailSender } from '../../mail/domain/mail-sender';
 import { JetonCompte } from '../domain/jeton-compte';
 import { JetonCompteRepository } from '../domain/jeton-compte.repository';
 import { Utilisateur } from '../domain/utilisateur';
@@ -99,11 +100,21 @@ class JetonCompteRepositoryFake implements JetonCompteRepository {
   }
 }
 
-class MailSenderFake implements MailSender {
-  messages: MessageEmail[] = [];
+interface EmailEnvoye {
+  cle: CleTemplateEmail;
+  destinataire: string;
+  variables: Record<string, string>;
+}
 
-  envoyer(message: MessageEmail): Promise<void> {
-    this.messages.push(message);
+class MailSenderFake implements MailSender {
+  messages: EmailEnvoye[] = [];
+
+  envoyer(
+    cle: CleTemplateEmail,
+    destinataire: string,
+    variables: Record<string, string>,
+  ): Promise<void> {
+    this.messages.push({ cle, destinataire, variables });
     return Promise.resolve();
   }
 }

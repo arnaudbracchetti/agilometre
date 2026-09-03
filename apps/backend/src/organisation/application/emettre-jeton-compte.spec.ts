@@ -1,5 +1,6 @@
 import { Role } from '@agilometre/shared';
-import { MailSender, MessageEmail } from '../../mail/mail-sender';
+import { CleTemplateEmail } from '../../mail/domain/cles-templates-email';
+import { MailSender } from '../../mail/domain/mail-sender';
 import { JetonCompte } from '../domain/jeton-compte';
 import { JetonCompteRepository } from '../domain/jeton-compte.repository';
 import { Utilisateur } from '../domain/utilisateur';
@@ -18,15 +19,25 @@ class JetonCompteRepositoryEnMemoire implements JetonCompteRepository {
   }
 }
 
+interface EmailEnvoye {
+  cle: CleTemplateEmail;
+  destinataire: string;
+  variables: Record<string, string>;
+}
+
 class MailSenderEnMemoire implements MailSender {
-  messages: MessageEmail[] = [];
+  messages: EmailEnvoye[] = [];
   echoue = false;
 
-  envoyer(message: MessageEmail): Promise<void> {
+  envoyer(
+    cle: CleTemplateEmail,
+    destinataire: string,
+    variables: Record<string, string>,
+  ): Promise<void> {
     if (this.echoue) {
       return Promise.reject(new Error('panne SMTP simulée'));
     }
-    this.messages.push(message);
+    this.messages.push({ cle, destinataire, variables });
     return Promise.resolve();
   }
 }
@@ -43,7 +54,7 @@ function creerUtilisateur(): Utilisateur {
 }
 
 describe('EmettreJetonCompte', () => {
-  it('sauve un Jeton de compte haché et envoie un email avec un lien contenant le jeton en clair', async () => {
+  it('emettrePourInvitation — sauve un Jeton de compte haché et envoie l’email de la clé compte.invitation', async () => {
     const jetons = new JetonCompteRepositoryEnMemoire();
     const mail = new MailSenderEnMemoire();
     const emettre = new EmettreJetonCompte(
@@ -52,17 +63,37 @@ describe('EmettreJetonCompte', () => {
       'http://localhost:4200',
     );
 
-    await emettre.executer(creerUtilisateur());
+    await emettre.emettrePourInvitation(creerUtilisateur());
 
     expect(jetons.jetons).toHaveLength(1);
     expect(jetons.jetons[0].utilisateurId).toBe('utilisateur-1');
     expect(mail.messages).toHaveLength(1);
+    expect(mail.messages[0].cle).toBe('compte.invitation');
     expect(mail.messages[0].destinataire).toBe('ada@example.com');
+    expect(mail.messages[0].variables.prenom).toBe('Ada');
 
-    const jetonBrut = /jeton=([a-f0-9]+)/.exec(mail.messages[0].texte)?.[1];
+    const jetonBrut = /jeton=([a-f0-9]+)/.exec(
+      mail.messages[0].variables.lien,
+    )?.[1];
     expect(jetonBrut).toBeDefined();
     // Le jeton en clair n'apparaît jamais dans ce qui est persisté — seul son hash l'est.
     expect(jetons.jetons[0].tokenHash).not.toBe(jetonBrut);
+  });
+
+  it('emettrePourReinitialisation — envoie l’email de la clé compte.mot-de-passe-oublie', async () => {
+    const jetons = new JetonCompteRepositoryEnMemoire();
+    const mail = new MailSenderEnMemoire();
+    const emettre = new EmettreJetonCompte(
+      jetons,
+      mail,
+      'http://localhost:4200',
+    );
+
+    await emettre.emettrePourReinitialisation(creerUtilisateur());
+
+    expect(jetons.jetons).toHaveLength(1);
+    expect(mail.messages).toHaveLength(1);
+    expect(mail.messages[0].cle).toBe('compte.mot-de-passe-oublie');
   });
 
   it('ne propage pas une panne d’envoi d’email — le jeton reste émis', async () => {
@@ -75,7 +106,9 @@ describe('EmettreJetonCompte', () => {
       'http://localhost:4200',
     );
 
-    await expect(emettre.executer(creerUtilisateur())).resolves.toBeUndefined();
+    await expect(
+      emettre.emettrePourInvitation(creerUtilisateur()),
+    ).resolves.toBeUndefined();
     expect(jetons.jetons).toHaveLength(1);
   });
 });

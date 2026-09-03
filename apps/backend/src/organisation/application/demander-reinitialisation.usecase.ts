@@ -18,7 +18,7 @@ export class DemanderReinitialisation {
   async executer(email: string): Promise<ResultatDemanderReinitialisation> {
     const utilisateur = await this.utilisateurs.trouverParEmail(email);
     if (utilisateur) {
-      await this.emettreJetonCompte.executer(utilisateur);
+      await this.emettreJetonCompte.emettrePourReinitialisation(utilisateur);
     }
     return { type: 'ok' };
   }

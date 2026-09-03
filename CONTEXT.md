@@ -129,6 +129,17 @@ _Avoid_: Répondre à (réservé à l'acte du Membre ; "honorer" est l'effet cô
 La part des Sollicitations honorées sur une période - le critère de succès principal du produit (PRD §11).
 _Avoid_: Taux de réponse (même notion, formulation alternative du PRD §11)
 
+### Emails
+
+**Template** (email):
+Le contenu d'un type d'email (sujet + corps markdown), chargé et validé depuis un fichier versionné dans le dépôt, identifié par une Clé d'email. Distinct de Modèle de session (voir section Session animée) - deux concepts sans rapport qui partagent le même mot faute de meilleure alternative native pour celui-ci ; voir [docs/design/contenu-emails-gabarits.md](docs/design/contenu-emails-gabarits.md).
+
+**Clé d'email**:
+L'identifiant stable d'un type d'email (ex: `compte.invitation`), choisi par le développeur dans le usecase appelant, qui résout par convention de nommage vers son fichier Template sur le disque.
+
+**EmailRendu**:
+Le résultat de l'application des variables et du rendu markdown vers HTML sur un Template : sujet, corps HTML, et repli texte brut auto-dérivé - prêt à être envoyé.
+
 ### Réponses & anonymat
 
 **Réponse**:

@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto';
-import { MailSender } from '../../mail/mail-sender';
+import { CleTemplateEmail } from '../../mail/domain/cles-templates-email';
+import { MailSender } from '../../mail/domain/mail-sender';
 import { JetonCompte } from '../domain/jeton-compte';
 import { JetonCompteRepository } from '../domain/jeton-compte.repository';
 import { HacherJetonCompte } from '../domain/jeton-hachage';
@@ -19,7 +20,18 @@ export class EmettreJetonCompte {
     private readonly urlPublique: string,
   ) {}
 
-  async executer(utilisateur: Utilisateur): Promise<void> {
+  async emettrePourInvitation(utilisateur: Utilisateur): Promise<void> {
+    await this.emettre('compte.invitation', utilisateur);
+  }
+
+  async emettrePourReinitialisation(utilisateur: Utilisateur): Promise<void> {
+    await this.emettre('compte.mot-de-passe-oublie', utilisateur);
+  }
+
+  private async emettre(
+    cle: CleTemplateEmail,
+    utilisateur: Utilisateur,
+  ): Promise<void> {
     const tokenBrut = randomBytes(32).toString('hex');
     const jeton = JetonCompte.creer(
       randomUUID(),
@@ -31,10 +43,9 @@ export class EmettreJetonCompte {
 
     const lien = `${this.urlPublique}/definir-mot-de-passe?jeton=${tokenBrut}`;
     try {
-      await this.mailSender.envoyer({
-        destinataire: utilisateur.email,
-        sujet: 'Définir votre mot de passe — Agilomètre',
-        texte: `Bonjour ${utilisateur.prenom},\n\n${lien}\n\nCe lien est valable 7 jours, à usage unique.`,
+      await this.mailSender.envoyer(cle, utilisateur.email, {
+        prenom: utilisateur.prenom,
+        lien,
       });
     } catch (erreur) {
       // Ne fait jamais échouer la création de compte / la demande de réinitialisation pour une

@@ -36,7 +36,7 @@ import { ComptesController } from './comptes.controller';
 import { MotDePasseController } from './mot-de-passe.controller';
 import { MonCompteController } from './mon-compte.controller';
 import { MailModule } from '../mail/mail.module';
-import { NodemailerMailSender } from '../mail/nodemailer-mail-sender';
+import { NodemailerMailSender } from '../mail/infrastructure/nodemailer-mail-sender';
 
 @Module({
   imports: [ConfigModule, MailModule],
