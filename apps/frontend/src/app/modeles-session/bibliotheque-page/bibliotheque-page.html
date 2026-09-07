@@ -33,9 +33,14 @@
           <td>{{ ligne.nom }}</td>
           <td>{{ ligne.nbQuestionsActives }}</td>
           <td>
-            @for (theme of ligne.themesCouverts; track theme) {
-              <nz-tag>{{ theme }}</nz-tag>
-            }
+            <div class="bibliotheque__themes">
+              @for (theme of ligne.themesCouverts; track theme; let i = $index) {
+                <span class="bibliotheque__theme">
+                  <span class="bibliotheque__theme-pastille" [style.background]="couleurTheme(i)"></span>
+                  {{ theme }}
+                </span>
+              }
+            </div>
           </td>
           <td>{{ ligne.misAJourLe | date: 'dd/MM/yyyy HH:mm' }}</td>
           <td class="bibliotheque__actions" (click)="$event.stopPropagation()">

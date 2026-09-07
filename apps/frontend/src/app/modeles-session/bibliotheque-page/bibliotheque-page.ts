@@ -6,10 +6,10 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzTableModule } from 'ng-zorro-antd/table';
-import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { LigneBibliothequeModeleSessionDto } from '@agilometre/shared';
 import { ModelesSessionService } from '../modeles-session.service';
+import { couleurCategorielle } from '../../shared/couleur-categorielle';
 
 const NOM_MODELE_PAR_DEFAUT = 'nouveau modèle';
 
@@ -22,7 +22,6 @@ const NOM_MODELE_PAR_DEFAUT = 'nouveau modèle';
     NzIconModule,
     NzPopconfirmModule,
     NzTableModule,
-    NzTagModule,
     NzTooltipModule,
   ],
   templateUrl: './bibliotheque-page.html',
@@ -70,6 +69,11 @@ export class BibliothequePage implements OnInit {
 
   protected ouvrir(id: string): void {
     this.router.navigate(['/modeles-session', id]);
+  }
+
+  /** Couleur catégorielle d'un Thème (même repère que le composeur de session — DESIGN.md). */
+  protected couleurTheme(position: number): string {
+    return couleurCategorielle(position);
   }
 
   protected dupliquer(id: string): void {
