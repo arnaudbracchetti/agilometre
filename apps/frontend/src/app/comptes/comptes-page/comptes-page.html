@@ -27,8 +27,7 @@
   >
     <thead>
       <tr>
-        <th [nzSortFn]="trierParNom">Nom</th>
-        <th>Email</th>
+        <th [nzSortFn]="trierParNom">Compte</th>
         <th [nzSortFn]="trierParRole">Rôle</th>
         <th>Statut</th>
         <th class="comptes__colonne-actions">Actions</th>
@@ -37,8 +36,10 @@
     <tbody>
       @for (compte of table.data; track compte.id) {
         <tr>
-          <td>{{ compte.prenom }} {{ compte.nom }}</td>
-          <td nzEllipsis>{{ compte.email }}</td>
+          <td>
+            <span class="comptes__compte-nom">{{ compte.prenom }} {{ compte.nom }}</span>
+            <span class="comptes__compte-email">{{ compte.email }}</span>
+          </td>
           <td>{{ libelleRole(compte.role) }}</td>
           <td>
             <nz-tag [nzColor]="compte.actif ? 'blue' : 'default'">

@@ -40,8 +40,38 @@
     }
   }
 
+  &__compte-nom {
+    display: block;
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__compte-email {
+    display: block;
+    max-width: 320px;
+    overflow: hidden;
+    color: var(--color-ink-muted);
+    font-size: var(--font-size-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+
   &__colonne-actions {
     text-align: right;
+  }
+
+  ::ng-deep {
+    .ant-table-cell {
+      padding-block: 12px;
+    }
+
+    .ant-table-wrapper {
+      width: 100vw;
+      padding: var(--space-3);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+    }
   }
 
   &__actions {
