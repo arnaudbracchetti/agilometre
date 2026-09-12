@@ -1,32 +1,77 @@
+// Élément hôte du composant : `inline` par défaut, donc `height: 100%` sur .profil ci-dessous ne
+// se résoudrait sinon contre rien. Même recette que pilotage-page.scss : remplit exactement
+// l'espace laissé par le chrome de la coquille (en-tête + fil d'Ariane), jamais toute la fenêtre
+// en plus de ce chrome.
+:host {
+  display: block;
+  height: 100%;
+}
+
 .profil {
-  display: grid;
-  grid-template-columns: minmax(230px, 307px) 1fr;
-  gap: var(--space-6);
-  padding: var(--space-6);
+  box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
   font-family: var(--font-family-base);
   color: var(--color-ink);
 
+  // Sous 640px, l'arbre et le détail s'empilent : le rail latéral n'a plus la place de rester
+  // fixe, la page redevient une colonne qui défile normalement.
   @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-    padding: var(--space-4);
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
   }
 
+  // Rail latéral gris — même traitement que &__rail dans pilotage-page.scss : fond
+  // --color-surface-alt, largeur fixe non flexible, défilement interne indépendant du panneau de
+  // détail (`contain: layout` : sans lui, Chromium propage la hauteur masquée de ce panneau
+  // défilant jusqu'au document racine, même filet que le rail de pilotage).
   &__arbre {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: var(--space-5);
+    flex: 0 0 22rem;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    contain: layout;
+    padding: var(--space-5) var(--space-4);
+    background: var(--color-surface-alt);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+
+    @media (max-width: 900px) {
+      flex-basis: 18rem;
+    }
+
+    @media (max-width: 640px) {
+      flex-basis: auto;
+      max-height: 40vh;
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+    }
   }
 
   &__titre {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
     color: var(--color-primary);
-    margin: 0 0 var(--space-4);
+    margin: 0;
   }
 
   &__detail {
-    max-width: 86rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    contain: layout;
+    padding: var(--space-6);
+
+    @media (max-width: 640px) {
+      overflow: visible;
+      padding: var(--space-4);
+    }
   }
 
   &__etat-vide {

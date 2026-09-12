@@ -1,8 +1,8 @@
 <div class="profil">
-  <section class="profil__arbre">
-    <h2 class="profil__titre">Organisation</h2>
+  <nav class="profil__arbre" aria-labelledby="profil-arbre-titre">
+    <h2 class="profil__titre" id="profil-arbre-titre">Organisation</h2>
     <app-arbre-organisation />
-  </section>
+  </nav>
 
   <section class="profil__detail">
     @if (!enfantActif()) {

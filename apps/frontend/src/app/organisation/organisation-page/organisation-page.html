@@ -1,9 +1,9 @@
 <div class="organisation">
-  <section class="organisation__arbre">
-    <h2 class="organisation__titre">Organisation</h2>
+  <nav class="organisation__arbre" aria-labelledby="organisation-arbre-titre">
+    <h2 class="organisation__titre" id="organisation-arbre-titre">Organisation</h2>
 
     <app-arbre-organisation />
-  </section>
+  </nav>
 
   <section class="organisation__detail">
     @if (entiteSelectionnee(); as entite) {
