@@ -1043,12 +1043,16 @@ describe('Participant — jointure par Code (e2e)', () => {
           libelle: 'Libellé qaF2a',
           statut: 'SAUTEE',
           reactivable: false,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
         {
           questionId: 'qbF2a',
           libelle: 'Libellé qbF2a',
           statut: 'COURANTE',
           reactivable: false,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
       ]);
       expect(pilotageApresSaut.questionCourante?.questionId).toBe('qbF2a');
@@ -1085,6 +1089,8 @@ describe('Participant — jointure par Code (e2e)', () => {
           libelle: 'Libellé qaF2b',
           statut: 'COURANTE',
           reactivable: false,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
         // Sautée par anticipation, toujours devant indexCourant : réactivable.
         {
@@ -1092,6 +1098,8 @@ describe('Participant — jointure par Code (e2e)', () => {
           libelle: 'Libellé qbF2b',
           statut: 'SAUTEE',
           reactivable: true,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
       ]);
       expect(pilotage.questionCourante?.questionId).toBe('qaF2b');
@@ -1163,12 +1171,16 @@ describe('Participant — jointure par Code (e2e)', () => {
           libelle: 'Libellé qaRa',
           statut: 'COURANTE',
           reactivable: false,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
         {
           questionId: 'qbRa',
           libelle: 'Libellé qbRa',
           statut: 'A_VENIR',
           reactivable: false,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
       ]);
     });
@@ -1250,12 +1262,16 @@ describe('Participant — jointure par Code (e2e)', () => {
           libelle: 'Libellé qaF3a',
           statut: 'SAUTEE',
           reactivable: true,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
         {
           questionId: 'qbF3a',
           libelle: 'Libellé qbF3a',
           statut: 'SAUTEE',
           reactivable: true,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
       ]);
       expect(pilotage.questionCourante).toBeNull();
@@ -1295,18 +1311,24 @@ describe('Participant — jointure par Code (e2e)', () => {
           libelle: 'Libellé qaF3b',
           statut: 'SAUTEE',
           reactivable: false,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
         {
           questionId: 'qbF3b',
           libelle: 'Libellé qbF3b',
           statut: 'SAUTEE',
           reactivable: false,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
         {
           questionId: 'qcF3b',
           libelle: 'Libellé qcF3b',
           statut: 'SAUTEE',
           reactivable: false,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
       ]);
       expect(pilotage.questionCourante).toBeNull();
@@ -1349,18 +1371,24 @@ describe('Participant — jointure par Code (e2e)', () => {
           libelle: 'Libellé qaF3c',
           statut: 'TRAITEE',
           reactivable: false,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
         {
           questionId: 'qbF3c',
           libelle: 'Libellé qbF3c',
           statut: 'SAUTEE',
           reactivable: false,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
         {
           questionId: 'qcF3c',
           libelle: 'Libellé qcF3c',
           statut: 'SAUTEE',
           reactivable: false,
+          themeId: 't1',
+          themeLibelle: 'Thème 1',
         },
       ]);
     });

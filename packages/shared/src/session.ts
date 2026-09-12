@@ -89,6 +89,8 @@ export interface ProgressionQuestionDto {
   statut: StatutQuestionProgressionDto;
   /** Pertinent seulement si statut === 'SAUTEE' — index de la Question devant indexCourant. */
   reactivable: boolean;
+  themeId: string;
+  themeLibelle: string;
 }
 
 export interface ProjectionSessionDto {

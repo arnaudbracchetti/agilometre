@@ -86,5 +86,7 @@ export function versProgressionDto(
     libelle: entree.libelle,
     statut: entree.statut,
     reactivable: entree.reactivable,
+    themeId: entree.themeId,
+    themeLibelle: entree.themeLibelle,
   }));
 }

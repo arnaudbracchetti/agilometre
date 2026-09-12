@@ -494,13 +494,67 @@ describe('ObtenirPilotageSession', () => {
         libelle: 'Question 1',
         statut: 'TRAITEE',
         reactivable: false,
+        themeId: 't1',
+        themeLibelle: 'Thème 1',
       },
       {
         questionId: 'q2',
         libelle: 'Question 2',
         statut: 'COURANTE',
         reactivable: false,
+        themeId: 't1',
+        themeLibelle: 'Thème 1',
       },
+    ]);
+  });
+
+  it('renvoie le Thème de chaque Question même si les Thèmes s’alternent dans la Sélection (pas de contiguïté imposée)', async () => {
+    const sessions = new SessionRepositoryFake();
+    const session = Session.creer(
+      's1',
+      'e1',
+      new Date('2026-04-01'),
+      'm1',
+      Selection.reconstituer(['q1', 'q2', 'q3']),
+      generateurDeCode,
+    ).valeur;
+    await session.ouvrir();
+    sessions.sessions.push(session);
+    const jetons = new JetonSessionRepositoryFake();
+    const referentiel = new ReferentielRepositoryFake();
+    const options = [1, 2, 3, 4].map((niveau) =>
+      Option.creer(`Option ${niveau}`, Niveau.creer(niveau).valeur),
+    );
+    const themeA = Theme.creer('ta', 'Thème A', [
+      Question.creer('q1', 'Question 1', 'ta', options).valeur,
+      Question.creer('q3', 'Question 3', 'ta', options).valeur,
+    ]);
+    const themeB = Theme.creer('tb', 'Thème B', [
+      Question.creer('q2', 'Question 2', 'tb', options).valeur,
+    ]);
+    referentiel.referentiel = Referentiel.reconstituer(new Date('2026-01-01'), [
+      themeA,
+      themeB,
+    ]);
+    const useCase = new ObtenirPilotageSession(
+      sessions,
+      jetons,
+      referentiel,
+      new TourDeVoteRepositoryFake(),
+      new EtatToursQueryFake(),
+      new RepartitionTourQueryFake(),
+    );
+
+    const resultat = await useCase.executer('s1');
+
+    expect(resultat.type).toBe('ok');
+    if (resultat.type !== 'ok') throw new Error('unreachable');
+    expect(
+      resultat.progression.map((p) => [p.questionId, p.themeId, p.themeLibelle]),
+    ).toEqual([
+      ['q1', 'ta', 'Thème A'],
+      ['q2', 'tb', 'Thème B'],
+      ['q3', 'ta', 'Thème A'],
     ]);
   });
 
@@ -538,6 +592,8 @@ describe('ObtenirPilotageSession', () => {
         libelle: 'Question 1',
         statut: 'A_VENIR',
         reactivable: false,
+        themeId: 't1',
+        themeLibelle: 'Thème 1',
       },
     ]);
   });

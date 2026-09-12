@@ -10,11 +10,15 @@ export interface ProgressionQuestion {
   libelle: string;
   statut: StatutQuestionProgression;
   reactivable: boolean;
+  themeId: string;
+  themeLibelle: string;
 }
 
 /**
  * Progression de la Sélection entière (carte F1), dans son ordre — dérivée par
- * `Session.progression`, enrichie du libellé de chaque Question. Filtre les Questions retirées
+ * `Session.progression`, enrichie du libellé de chaque Question et de son Thème (le rail de
+ * pilotage colore chaque Question par Thème, y compris quand les Thèmes s'alternent dans la
+ * Sélection : `Question.themeId` ne suppose aucune contiguïté). Filtre les Questions retirées
  * du Référentiel actif depuis la Sélection, même garde que `resoudreHistoriqueToursClos`.
  *
  * `etatsDesTours`/`referentielCharge` sont déjà résolus par l'appelant (`ObtenirPilotageSession`,
@@ -25,16 +29,26 @@ export function resoudreProgression(
   etatsDesTours: readonly EtatTour[],
   referentielCharge: Referentiel,
 ): ProgressionQuestion[] {
-  const libelleQuestion = new Map(
-    session.selectionEnrichie(referentielCharge).map((q) => [q.id, q.libelle]),
+  const questions = new Map(
+    session.selectionEnrichie(referentielCharge).map((q) => [q.id, q] as const),
+  );
+  const libelleParThemeId = new Map(
+    referentielCharge
+      .themesActifs()
+      .map((theme) => [theme.id, theme.libelle] as const),
   );
   return session
     .progression(etatsDesTours)
-    .filter((entree) => libelleQuestion.has(entree.questionId))
-    .map((entree) => ({
-      questionId: entree.questionId,
-      libelle: libelleQuestion.get(entree.questionId)!,
-      statut: entree.statut,
-      reactivable: entree.reactivable,
-    }));
+    .filter((entree) => questions.has(entree.questionId))
+    .map((entree) => {
+      const question = questions.get(entree.questionId)!;
+      return {
+        questionId: entree.questionId,
+        libelle: question.libelle,
+        statut: entree.statut,
+        reactivable: entree.reactivable,
+        themeId: question.themeId,
+        themeLibelle: libelleParThemeId.get(question.themeId) ?? '',
+      };
+    });
 }

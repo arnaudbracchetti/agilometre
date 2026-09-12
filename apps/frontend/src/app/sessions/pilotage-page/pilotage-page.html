@@ -15,227 +15,264 @@
         class="pilotage__connexion-perdue"
       />
     }
-    <div class="pilotage__mise-en-page">
-      <div class="pilotage__colonne-principale">
-        <header class="pilotage__entete">
-          <h2 class="pilotage__titre">Pilotage de la séance</h2>
-          @if (estOuverte()) {
-            <a nz-button nzType="default" [href]="urlProjection()" target="_blank" rel="noopener">
-              Ouvrir l’écran de projection
-            </a>
-          }
-        </header>
 
-        <div class="pilotage__code">
-          <span class="pilotage__code-label">Code de session</span>
-          <span class="pilotage__code-valeur">{{ code() }}</span>
-        </div>
+    <header class="pilotage__entete">
+      <div class="pilotage__code">
+        <span class="pilotage__code-label">Code de session</span>
+        <span class="pilotage__code-valeur">{{ code() }}</span>
+      </div>
+      <p class="pilotage__participants">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
+      @if (estOuverte()) {
+        <a
+          nz-button
+          nzType="default"
+          [href]="urlProjection()"
+          target="_blank"
+          rel="noopener"
+          class="pilotage__projection-lien"
+        >
+          <span nz-icon nzType="desktop" nzTheme="outline" aria-hidden="true"></span>
+          Ouvrir l’écran de projection
+        </a>
+      }
+    </header>
 
-        <p class="pilotage__compteur">{{ nbDevicesConnectes() }} participant(s) connecté(s)</p>
-
-        <div class="pilotage__principal">
-          @if (estOuverte()) {
-            @if (questionCourante(); as question) {
-              <div class="pilotage__question">
-                <p class="pilotage__question-libelle">{{ question.libelle }}</p>
-                <ul class="pilotage__options">
-                  @for (option of question.options; track $index) {
-                    <li><span class="pilotage__lettre">{{ lettres[$index] }}</span> — {{ option.libelle }}</li>
-                  }
-                </ul>
-              </div>
-              @if (tourOuvert(); as tour) {
-                <p class="pilotage__compteur-tour">{{ tour.nbVotants }} / {{ nbDevicesConnectes() }} ont voté</p>
-              }
-            } @else if (estTerminee()) {
-              <p class="pilotage__statut">Toutes les Questions ont été traitées ou sautées.</p>
-              <a nz-button nzType="primary" [routerLink]="['/sessions', sessionId(), 'synthese']">
-                Voir la synthèse
-              </a>
-            } @else {
-              <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
-            }
-            <div class="pilotage__actions">
-              @if (questionCourante()) {
-                <button
-                  class="pilotage__bouton"
-                  nz-button
-                  nzType="primary"
-                  [disabled]="tourEnCours()"
-                  (click)="basculerTour()"
-                >
-                  {{ libelleBoutonTour() }}
-                </button>
-              }
-              @if (!estTerminee()) {
-                <button
-                  class="pilotage__bouton"
-                  nz-button
-                  [nzType]="questionCourante() ? 'default' : 'primary'"
-                  [disabled]="avancerEnCours() || tourOuvert() !== null"
-                  (click)="avancer()"
-                >
-                  {{ libelleBouton() }}
-                </button>
-                <button
-                  class="pilotage__bouton"
-                  nz-button
-                  nzDanger
-                  (click)="confirmerTerminerPrematurement()"
-                  [disabled]="terminerPrematurementEnCours()"
-                >
-                  Terminer la séance prématurément
-                </button>
+    <div class="pilotage__corps">
+      @if (progression().length > 0) {
+        <nav
+          class="pilotage__rail"
+          aria-label="Vue d’ensemble de la Sélection"
+          #railRef
+          (scroll)="onScrollRail()"
+        >
+          @if (themesDistincts().length > 1) {
+            <div class="pilotage__legende">
+              @for (theme of themesDistincts(); track theme.themeId) {
+                <span class="pilotage__legende-item">
+                  <span
+                    class="pilotage__legende-pastille"
+                    [style.background]="couleurTheme(theme.themeId)"
+                  ></span>
+                  {{ theme.themeLibelle }}
+                </span>
               }
             </div>
-          } @else {
+          }
+          <ul class="pilotage__liste">
+            @for (entree of progression(); track entree.questionId) {
+              @let indicateur = indicateurStatut(entree.statut);
+              <li
+                class="pilotage__question"
+                [class.pilotage__question--courante]="entree.statut === 'COURANTE'"
+                [class.pilotage__question--sautee]="entree.statut === 'SAUTEE'"
+                [class.pilotage__question--consultee]="
+                  !estEnDirect() && questionConsulteeId() === entree.questionId
+                "
+                #ligneRailRef
+              >
+                <button
+                  type="button"
+                  class="pilotage__question-bouton"
+                  [class.pilotage__question-bouton--statique]="!estConsultable(entree.statut)"
+                  [disabled]="!estConsultable(entree.statut)"
+                  [attr.title]="entree.themeLibelle + ' — ' + entree.libelle"
+                  (click)="consulterQuestion(entree)"
+                >
+                  <span
+                    class="pilotage__question-theme"
+                    [style.background]="couleurTheme(entree.themeId)"
+                    aria-hidden="true"
+                  ></span>
+                  <span
+                    nz-icon
+                    [nzType]="indicateur.type"
+                    [nzTheme]="indicateur.theme"
+                    [class]="indicateur.classe"
+                    aria-hidden="true"
+                  ></span>
+                  <span class="pilotage__question-libelle">{{ entree.libelle }}</span>
+                  <span class="pilotage__question-statut-texte">{{ libelleStatut(entree.statut) }}</span>
+                </button>
+                @if (estOuverte() && entree.statut === 'A_VENIR') {
+                  <button
+                    type="button"
+                    nz-button
+                    nzType="text"
+                    nzShape="circle"
+                    nz-tooltip
+                    nzTooltipTitle="Sauter cette Question"
+                    aria-label="Sauter cette Question"
+                    class="pilotage__sauter-ligne"
+                    [disabled]="sauterEnCours() === entree.questionId"
+                    (click)="sauterQuestion(entree.questionId)"
+                  >
+                    <span nz-icon nzType="step-forward" nzTheme="outline" aria-hidden="true"></span>
+                  </button>
+                }
+                @if (estOuverte() && entree.statut === 'SAUTEE' && entree.reactivable) {
+                  <button
+                    type="button"
+                    nz-button
+                    nzType="text"
+                    nzShape="circle"
+                    nz-tooltip
+                    nzTooltipTitle="Réactiver cette Question"
+                    aria-label="Réactiver cette Question"
+                    class="pilotage__reactiver"
+                    [disabled]="reactiverEnCours() === entree.questionId"
+                    (click)="reactiverQuestion(entree.questionId)"
+                  >
+                    <span nz-icon nzType="undo" nzTheme="outline" aria-hidden="true"></span>
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        </nav>
+      }
+
+      <section class="pilotage__spotlight">
+        <div class="pilotage__zone-question">
+          @if (questionAffichee(); as question) {
+            <div
+              class="pilotage__cadre-question"
+              [class.pilotage__cadre-question--consultation]="!estEnDirect()"
+            >
+              @if (!estEnDirect()) {
+                <div class="pilotage__consultation-entete">
+                  <p class="pilotage__badge-consultation">Résultat consulté</p>
+                  @if (toursConsultables().length > 1) {
+                    <div class="pilotage__carousel-tours">
+                      <button
+                        type="button"
+                        nz-button
+                        nzType="text"
+                        nzShape="circle"
+                        aria-label="Tour précédent"
+                        [disabled]="!peutReculerTour()"
+                        (click)="tourPrecedent()"
+                      >
+                        <span nz-icon nzType="left" nzTheme="outline" aria-hidden="true"></span>
+                      </button>
+                      <span class="pilotage__carousel-compteur">
+                        Tour {{ tourConsulteIndex() + 1 }} / {{ toursConsultables().length }}
+                      </span>
+                      <button
+                        type="button"
+                        nz-button
+                        nzType="text"
+                        nzShape="circle"
+                        aria-label="Tour suivant"
+                        [disabled]="!peutAvancerTour()"
+                        (click)="tourSuivant()"
+                      >
+                        <span nz-icon nzType="right" nzTheme="outline" aria-hidden="true"></span>
+                      </button>
+                    </div>
+                  } @else if (tourAffiche(); as tour) {
+                    <span class="pilotage__carousel-tour-unique">Tour {{ tour.numero }}</span>
+                  }
+                </div>
+              }
+              <p class="pilotage__question-enonce">{{ question.libelle }}</p>
+              <ul class="pilotage__options">
+                @for (option of question.options; track $index) {
+                  <li>
+                    <span class="pilotage__lettre">{{ lettres[$index] }}</span>
+                    <span class="pilotage__option-libelle">{{ option.libelle }}</span>
+                    @if (tourAffiche(); as tour) {
+                      <span class="pilotage__resultat" role="status" aria-live="polite">
+                        <span class="pilotage__barre-piste">
+                          <span
+                            class="pilotage__barre"
+                            [style.transform]="'scaleX(' + fractionOption(tour, $index) + ')'"
+                          ></span>
+                        </span>
+                        <span class="pilotage__resultat-compte">{{ compteOption(tour, $index) }}</span>
+                      </span>
+                    }
+                  </li>
+                }
+              </ul>
+              @if (estEnDirect() && tourOuvert(); as tour) {
+                <p class="pilotage__compteur-tour">{{ tour.nbVotants }} / {{ nbDevicesConnectes() }} ont voté</p>
+              }
+            </div>
+          } @else if (!estOuverte()) {
             <p class="pilotage__statut">Séance clôturée.</p>
+          } @else if (estTerminee()) {
+            <p class="pilotage__statut">Toutes les Questions ont été traitées ou sautées.</p>
+          } @else {
+            <p class="pilotage__statut">Salle d’attente — en attente du lancement de la première Question.</p>
+          }
+
+          @if (!estEnDirect()) {
+            <button type="button" nz-button nzType="default" nzSize="large" (click)="revenirAuDirect()">
+              <span nz-icon nzType="left" nzTheme="outline" aria-hidden="true"></span>
+              Revenir au direct
+            </button>
+          } @else if (!estOuverte() || estTerminee()) {
             <a nz-button nzType="primary" [routerLink]="['/sessions', sessionId(), 'synthese']">
               Voir la synthèse
             </a>
           }
         </div>
-      </div>
 
-      @if (vueDensemble().length > 0) {
-        <section class="pilotage__historique">
-          <h3 class="pilotage__historique-titre">Vue d’ensemble de la Sélection</h3>
-          <div class="pilotage__historique-liste">
-            @for (groupe of vueDensemble(); track groupe.questionId) {
-              @let ouvert = estGroupeHistoriqueOuvert(groupe.questionId);
-              @let aDesTours = groupe.tours.length > 0;
-              @let indicateur = indicateurStatut(groupe.statut);
-              <div
-                class="pilotage__historique-ligne"
-                [class.pilotage__historique-ligne--courante]="groupe.statut === 'COURANTE'"
-                [class.pilotage__historique-ligne--sautee]="groupe.statut === 'SAUTEE'"
+        @if (estEnDirect() && estOuverte() && !estTerminee()) {
+          <div class="pilotage__cadre-action">
+            @if (action(); as primaire) {
+              <button
+                type="button"
+                nz-button
+                nzSize="large"
+                class="pilotage__bouton-primaire"
+                [disabled]="avancerEnCours() || tourEnCours()"
+                (click)="primaire.executer()"
               >
-                <div class="pilotage__historique-entete-rangee">
-                  @if (aDesTours) {
-                    <button
-                      type="button"
-                      class="pilotage__historique-entete"
-                      [attr.aria-expanded]="ouvert"
-                      (click)="basculerGroupeHistorique(groupe.questionId)"
-                    >
-                      <span
-                        nz-icon
-                        [nzType]="indicateur.type"
-                        [nzTheme]="indicateur.theme"
-                        [class]="indicateur.classe"
-                        aria-hidden="true"
-                      ></span>
-                      <span class="pilotage__historique-libelle">{{ groupe.libelle }}</span>
-                      <span class="pilotage__historique-meta">
-                        <span
-                          class="pilotage__historique-statut"
-                          [class.pilotage__historique-statut--a-venir]="groupe.statut === 'A_VENIR'"
-                          [class.pilotage__historique-statut--courante]="groupe.statut === 'COURANTE'"
-                          [class.pilotage__historique-statut--sautee]="groupe.statut === 'SAUTEE'"
-                        >{{ libelleStatut(groupe.statut) }}</span>
-                        <span class="pilotage__historique-nb-tours">
-                          {{ groupe.tours.length }} {{ groupe.tours.length > 1 ? 'tours' : 'tour' }}
-                        </span>
-                      </span>
-                      <span
-                        nz-icon
-                        nzType="down"
-                        nzTheme="outline"
-                        class="pilotage__historique-chevron"
-                        [class.pilotage__historique-chevron--ouvert]="ouvert"
-                        aria-hidden="true"
-                      ></span>
-                    </button>
-                  } @else {
-                    <div class="pilotage__historique-entete pilotage__historique-entete--statique">
-                      <span
-                        nz-icon
-                        [nzType]="indicateur.type"
-                        [nzTheme]="indicateur.theme"
-                        [class]="indicateur.classe"
-                        aria-hidden="true"
-                      ></span>
-                      <span class="pilotage__historique-libelle">{{ groupe.libelle }}</span>
-                      <span
-                        class="pilotage__historique-statut"
-                        [class.pilotage__historique-statut--a-venir]="groupe.statut === 'A_VENIR'"
-                        [class.pilotage__historique-statut--courante]="groupe.statut === 'COURANTE'"
-                        [class.pilotage__historique-statut--sautee]="groupe.statut === 'SAUTEE'"
-                      >{{ libelleStatut(groupe.statut) }}</span>
-                    </div>
-                  }
-                  @if (estOuverte() && estSautable(groupe.statut)) {
-                    <button
-                      type="button"
-                      nz-button
-                      nzType="text"
-                      nzShape="circle"
-                      nzDanger
-                      nz-tooltip
-                      nzTooltipTitle="Sauter cette Question"
-                      (click)="sauterQuestion(groupe.questionId)"
-                      [disabled]="sauterEnCours() === groupe.questionId"
-                      class="pilotage__historique-action"
-                      aria-label="Sauter cette Question"
-                    >
-                      <span nz-icon nzType="step-forward" nzTheme="outline" aria-hidden="true"></span>
-                    </button>
-                  }
-                  @if (estOuverte() && groupe.statut === 'SAUTEE' && groupe.reactivable) {
-                    <button
-                      type="button"
-                      nz-button
-                      nzType="text"
-                      nzShape="circle"
-                      nz-tooltip
-                      nzTooltipTitle="Réactiver cette Question"
-                      (click)="reactiverQuestion(groupe.questionId)"
-                      [disabled]="reactiverEnCours() === groupe.questionId"
-                      class="pilotage__historique-action"
-                      aria-label="Réactiver cette Question"
-                    >
-                      <span nz-icon nzType="undo" nzTheme="outline" aria-hidden="true"></span>
-                    </button>
-                  }
-                </div>
-                @if (ouvert && aDesTours) {
-                  <div class="pilotage__historique-tours">
-                    @for (tour of groupe.tours; track tour.numero; let dernier = $last) {
-                      <div class="pilotage__historique-tour">
-                        <p class="pilotage__historique-tour-titre">
-                          <span class="pilotage__historique-tour-numero">Tour {{ tour.numero }}</span>
-                          @if (dernier) {
-                            <span class="pilotage__historique-badge">Pris en compte</span>
-                          }
-                        </p>
-                        <ul class="pilotage__historique-barres">
-                          @for (lettre of lettres; track $index) {
-                            <li>
-                              <span class="pilotage__lettre">{{ lettre }}</span>
-                              <span class="pilotage__historique-option-libelle">{{
-                                tour.options[$index].libelle
-                              }}</span>
-                              <span class="pilotage__historique-barre-piste">
-                                <span
-                                  class="pilotage__historique-barre"
-                                  [style.transform]="'scaleX(' + fractionHistorique(tour, $index) + ')'"
-                                ></span>
-                              </span>
-                              <span class="pilotage__historique-compte">{{
-                                compteHistorique(tour, $index)
-                              }}</span>
-                            </li>
-                          }
-                        </ul>
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
+                {{ primaire.libelle }}
+              </button>
             }
+            <div class="pilotage__actions-secondaires">
+              @if (peutRevoter()) {
+                <button
+                  type="button"
+                  nz-button
+                  nzType="text"
+                  class="pilotage__action-secondaire"
+                  [disabled]="tourEnCours()"
+                  (click)="basculerTour()"
+                >
+                  Revoter cette Question
+                </button>
+              }
+              @if (peutSauterCourante()) {
+                @if (questionCourante(); as courante) {
+                  <button
+                    type="button"
+                    nz-button
+                    nzType="text"
+                    class="pilotage__action-secondaire"
+                    [disabled]="sauterEnCours() === courante.questionId"
+                    (click)="sauterQuestion(courante.questionId)"
+                  >
+                    Sauter cette Question
+                  </button>
+                }
+              }
+              <button
+                type="button"
+                nz-button
+                nzType="text"
+                class="pilotage__action-secondaire pilotage__action-secondaire--danger"
+                [disabled]="terminerPrematurementEnCours()"
+                (click)="confirmerTerminerPrematurement()"
+              >
+                Terminer la séance prématurément
+              </button>
+            </div>
           </div>
-        </section>
-      }
+        }
+      </section>
     </div>
   }
 </div>
