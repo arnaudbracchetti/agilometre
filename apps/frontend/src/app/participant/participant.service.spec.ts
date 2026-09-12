@@ -45,6 +45,15 @@ describe('ParticipantService', () => {
     req.flush({ voteOuvert: false, question: null, optionChoisieIndex: null });
   });
 
+  it('résout un Code via GET /api/participant/apercu-session, sans Jeton', () => {
+    service.obtenirApercuSession('4271').subscribe();
+
+    const req = httpMock.expectOne('/api/participant/apercu-session?code=4271');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({ equipeNom: 'Les Mangoustes', ouvertureLe: null });
+  });
+
   it('vote via POST /api/participant/voter avec le Jeton en Authorization', () => {
     service.voter('jeton-abc', 2).subscribe();
 

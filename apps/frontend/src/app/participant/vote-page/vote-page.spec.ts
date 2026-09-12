@@ -2,10 +2,12 @@ import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgModel } from '@angular/forms';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { JetonParticipantStorage } from '../jeton-participant.storage';
 import { VotePage } from './vote-page';
 
@@ -25,12 +27,28 @@ const QUESTION_COURANTE = {
 describe('VotePage', () => {
   let httpMock: HttpTestingController;
   let fixture: ReturnType<typeof TestBed.createComponent<VotePage>>;
+  let activatedRoute: { snapshot: { queryParamMap: ReturnType<typeof convertToParamMap> } };
+  let routerNavigate: ReturnType<typeof vi.fn>;
+
+  /** Par défaut aucun Code en query param — à écraser avant `TestBed.createComponent` pour les
+   * tests de jointure via l'URL (QR). */
+  function definirCodeUrl(code?: string): void {
+    activatedRoute.snapshot.queryParamMap = convertToParamMap(code ? { code } : {});
+  }
 
   beforeEach(async () => {
     localStorage.clear();
+    activatedRoute = { snapshot: { queryParamMap: convertToParamMap({}) } };
+    routerNavigate = vi.fn();
     await TestBed.configureTestingModule({
       imports: [VotePage],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideNoopAnimations()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        { provide: ActivatedRoute, useValue: activatedRoute },
+        { provide: Router, useValue: { navigate: routerNavigate } },
+      ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -453,6 +471,191 @@ describe('VotePage', () => {
       expect(fixture.nativeElement.querySelector('#code')).toBeTruthy();
       expect(fixture.nativeElement.textContent).toContain('Séance terminée ou expirée');
       expect(TestBed.inject(JetonParticipantStorage).obtenir()).toBeNull();
+    });
+  });
+
+  describe('jointure via un Code dans l’URL (scan du QR — grilling du 2026-09-12)', () => {
+    it('sans Jeton actif, la jointure part automatiquement, sans clic', () => {
+      definirCodeUrl('4271');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+
+      const req = httpMock.expectOne('/api/participant/rejoindre');
+      expect(req.request.body).toEqual({ code: '4271', jetonPrecedent: undefined });
+      req.flush({ sessionId: 's1', jeton: 'jeton-abc' });
+      fixture.detectChanges();
+      httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('anime la discussion');
+      expect(routerNavigate).toHaveBeenCalledWith([], {
+        relativeTo: activatedRoute,
+        queryParams: {},
+        replaceUrl: true,
+      });
+    });
+
+    it('un Code invalide dans l’URL en jointure automatique retombe sur l’écran de saisie avec le message habituel', () => {
+      definirCodeUrl('0000');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+
+      httpMock
+        .expectOne('/api/participant/rejoindre')
+        .flush('Introuvable', { status: 404, statusText: 'Not Found' });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('#code')).toBeTruthy();
+      expect(fixture.nativeElement.textContent).toContain('invalide ou expiré');
+    });
+
+    it('avec un Jeton déjà actif, un Code dans l’URL propose une confirmation (Aperçu de Session) plutôt qu’une bascule automatique', () => {
+      TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+      definirCodeUrl('9999');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+
+      const modal = fixture.debugElement.injector.get(NzModalService);
+      const confirmSpy = vi.spyOn(modal, 'confirm');
+
+      httpMock
+        .expectOne('/api/participant/info-session')
+        .flush({ equipeNom: 'Les Mangoustes', ouvertureLe: null });
+      httpMock
+        .expectOne('/api/participant/apercu-session?code=9999')
+        .flush({ equipeNom: 'Les Piranhas', ouvertureLe: null });
+      fixture.detectChanges();
+
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+      const contenu = confirmSpy.mock.calls[0]?.[0]?.nzContent as string;
+      expect(contenu).toContain('Les Mangoustes');
+      expect(contenu).toContain('Les Piranhas');
+      httpMock.expectNone('/api/participant/rejoindre');
+    });
+
+    it('confirmer la bascule rejoint la nouvelle Session en transmettant le Jeton précédent', () => {
+      TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+      definirCodeUrl('9999');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+      const modal = fixture.debugElement.injector.get(NzModalService);
+      const confirmSpy = vi.spyOn(modal, 'confirm');
+      httpMock
+        .expectOne('/api/participant/info-session')
+        .flush({ equipeNom: 'Les Mangoustes', ouvertureLe: null });
+      httpMock
+        .expectOne('/api/participant/apercu-session?code=9999')
+        .flush({ equipeNom: 'Les Piranhas', ouvertureLe: null });
+      fixture.detectChanges();
+
+      const config = confirmSpy.mock.calls[0]?.[0];
+      (config?.nzOnOk as (() => void) | undefined)?.();
+
+      const req = httpMock.expectOne('/api/participant/rejoindre');
+      expect(req.request.body).toEqual({ code: '9999', jetonPrecedent: 'jeton-existant' });
+      req.flush({ sessionId: 's2', jeton: 'jeton-nouveau' });
+      fixture.detectChanges();
+      httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+
+      expect(TestBed.inject(JetonParticipantStorage).obtenir()).toEqual({
+        sessionId: 's2',
+        jeton: 'jeton-nouveau',
+      });
+      expect(routerNavigate).toHaveBeenCalledWith([], {
+        relativeTo: activatedRoute,
+        queryParams: {},
+        replaceUrl: true,
+      });
+    });
+
+    it('annuler la bascule laisse la Session actuelle intacte et nettoie l’URL', () => {
+      TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+      definirCodeUrl('9999');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+      const modal = fixture.debugElement.injector.get(NzModalService);
+      const confirmSpy = vi.spyOn(modal, 'confirm');
+      httpMock
+        .expectOne('/api/participant/info-session')
+        .flush({ equipeNom: 'Les Mangoustes', ouvertureLe: null });
+      httpMock
+        .expectOne('/api/participant/apercu-session?code=9999')
+        .flush({ equipeNom: 'Les Piranhas', ouvertureLe: null });
+      fixture.detectChanges();
+
+      const config = confirmSpy.mock.calls[0]?.[0];
+      (config?.nzOnCancel as (() => void) | undefined)?.();
+
+      httpMock.expectNone('/api/participant/rejoindre');
+      expect(TestBed.inject(JetonParticipantStorage).obtenir()).toEqual({
+        sessionId: 's1',
+        jeton: 'jeton-existant',
+      });
+      expect(routerNavigate).toHaveBeenCalledWith([], {
+        relativeTo: activatedRoute,
+        queryParams: {},
+        replaceUrl: true,
+      });
+    });
+
+    it('un Jeton actuel déjà rejeté (401) bascule directement sur le Code de l’URL, sans confirmation', () => {
+      TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+      definirCodeUrl('9999');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+      const modal = fixture.debugElement.injector.get(NzModalService);
+      const confirmSpy = vi.spyOn(modal, 'confirm');
+      // La requête apercu-session, toujours en attente, est annulée par forkJoin dès que
+      // info-session échoue — pas de flush dessus, `httpMock.verify()` ignore les requêtes
+      // annulées.
+      httpMock.expectOne('/api/participant/apercu-session?code=9999');
+      httpMock
+        .expectOne('/api/participant/info-session')
+        .flush('Jeton invalide', { status: 401, statusText: 'Unauthorized' });
+      fixture.detectChanges();
+
+      expect(confirmSpy).not.toHaveBeenCalled();
+      const req = httpMock.expectOne('/api/participant/rejoindre');
+      expect(req.request.body).toEqual({ code: '9999', jetonPrecedent: undefined });
+      req.flush({ sessionId: 's2', jeton: 'jeton-nouveau' });
+      fixture.detectChanges();
+      httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+
+      expect(TestBed.inject(JetonParticipantStorage).obtenir()).toEqual({
+        sessionId: 's2',
+        jeton: 'jeton-nouveau',
+      });
+    });
+
+    it('un Code invalide dans l’URL alors qu’une Session est déjà active reste silencieux (aucune confirmation, aucune erreur)', () => {
+      TestBed.inject(JetonParticipantStorage).enregistrer('s1', 'jeton-existant');
+      definirCodeUrl('0000');
+      fixture = TestBed.createComponent(VotePage);
+      fixture.detectChanges();
+      httpMock.expectOne('/api/participant/moi').flush(HORS_VOTE);
+      const modal = fixture.debugElement.injector.get(NzModalService);
+      const confirmSpy = vi.spyOn(modal, 'confirm');
+      httpMock
+        .expectOne('/api/participant/info-session')
+        .flush({ equipeNom: 'Les Mangoustes', ouvertureLe: null });
+      httpMock
+        .expectOne('/api/participant/apercu-session?code=0000')
+        .flush('Introuvable', { status: 404, statusText: 'Not Found' });
+      fixture.detectChanges();
+
+      expect(confirmSpy).not.toHaveBeenCalled();
+      expect(fixture.nativeElement.textContent).toContain('anime la discussion');
+      expect(fixture.nativeElement.textContent).not.toContain('invalide ou expiré');
+      httpMock.expectNone('/api/participant/rejoindre');
+      expect(routerNavigate).toHaveBeenCalledWith([], {
+        relativeTo: activatedRoute,
+        queryParams: {},
+        replaceUrl: true,
+      });
     });
   });
 });

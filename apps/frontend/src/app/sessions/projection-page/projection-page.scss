@@ -74,6 +74,16 @@
     margin: 0;
   }
 
+  // Fond blanc explicite plutôt que de compter sur le post-it (pâle mais coloré) : contraste de
+  // scan garanti quel que soit --color-sticky-blue.
+  &__qr,
+  &__badge-qr {
+    display: inline-flex;
+    background: var(--color-white);
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+  }
+
   &__compteur-valeur {
     font-family: var(--font-family-mono);
     font-size: clamp(3.5rem, 9vw, 7rem);

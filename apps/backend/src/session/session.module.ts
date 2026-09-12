@@ -48,6 +48,7 @@ import { TerminerSession } from './application/terminer-session.usecase';
 import { VoterParticipant } from './application/voter-participant.usecase';
 import { ObtenirEtatParticipant } from './application/obtenir-etat-participant.usecase';
 import { ObtenirInfoSessionParticipant } from './application/obtenir-info-session-participant.usecase';
+import { ObtenirApercuSession } from './application/obtenir-apercu-session.usecase';
 import { PrismaModeleSessionRepository } from './infrastructure/prisma-modele-session.repository';
 import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-modele-session-bibliotheque.query';
 import { PrismaSessionRepository } from './infrastructure/prisma-session.repository';
@@ -492,6 +493,14 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
         sessions: PrismaSessionRepository,
         equipes: PrismaEquipeRepository,
       ) => new ObtenirInfoSessionParticipant(sessions, equipes),
+      inject: [PrismaSessionRepository, PrismaEquipeRepository],
+    },
+    {
+      provide: ObtenirApercuSession,
+      useFactory: (
+        sessions: PrismaSessionRepository,
+        equipes: PrismaEquipeRepository,
+      ) => new ObtenirApercuSession(sessions, equipes),
       inject: [PrismaSessionRepository, PrismaEquipeRepository],
     },
     {

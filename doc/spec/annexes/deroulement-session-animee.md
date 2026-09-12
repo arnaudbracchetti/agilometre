@@ -51,7 +51,12 @@ faire via une session `/ddd` dédiée (Epic #30 « Vote en séance »).
 ## Jointure d'un participant
 
 - Le participant (smartphone ou PC, en salle ou à distance) saisit le Code sur un écran dédié,
-  sans compte ni mot de passe.
+  sans compte ni mot de passe. Sur l'écran de projection, un **QR code** encodant l'URL de cet
+  écran avec le Code en query param est affiché à côté du Code en clair — un scan ouvre l'écran
+  avec le Code déjà connu, sans en changer le mécanisme (grilling du 2026-09-12).
+- Si aucun Jeton n'est encore actif sur ce device, rejoindre via un Code déjà connu dans l'URL
+  (donc issu d'un scan) déclenche l'appel serveur **automatiquement**, sans confirmation — seule
+  la saisie manuelle au clavier reste soumise à un clic explicite.
 - En échange, le serveur émet un **Jeton de session** anonyme : il authentifie le device pour
   toute la durée de la Session (pas renouvelé par Tour), sans jamais être lié à une identité
   (pas de choix de nom, pas de lien vers un Membre de l'Équipe).
@@ -127,8 +132,9 @@ séparé.
 - Devient **inaccessible dès que la Session passe à `CLOTUREE`** — même règle de validité que le
   Code et le Jeton participant.
 - Le Code de session reste affiché **en permanence**, quel que soit l'état — y compris une fois
-  les Questions lancées — pour qu'un retardataire puisse toujours rejoindre. Contenu par état,
-  en plus du Code :
+  les Questions lancées — pour qu'un retardataire puisse toujours rejoindre, accompagné du **QR
+  code** encodant l'URL de jointure avec ce Code (voir « Jointure d'un participant » ci-dessus).
+  Contenu par état, en plus du Code :
   - **Salle d'attente** (avant la première Question) : nombre de devices déjà connectés.
   - **Discussion** : Question courante + 4 Options (avec leur lettre A/B/C/D), aucun Tour ouvert.
   - **Vote** : **même contenu que la Discussion** (Question + 4 Options) **plus** le Compteur de
@@ -150,6 +156,13 @@ séparé.
   une autre Session : le nouveau Jeton remplace l'ancien, qui est invalidé et sort du Compteur de
   participation de la Session quittée (ADR-0011, addendum carte #37) — mais reste sans effet sur
   la Session cible tant que la nouvelle jointure n'a pas explicitement réussi.
+- **Bascule via un Code déjà connu dans l'URL (scan d'un nouveau QR) alors qu'un Jeton est déjà
+  actif** : contrairement à la jointure à froid, pas d'appel automatique ici — le device affiche
+  un **Aperçu de Session** (Équipe + date d'ouverture, résolues en lecture seule, sans Jeton émis)
+  de la Session actuelle et de la Session ciblée, et attend une confirmation explicite avant
+  d'appeler le serveur (ADR-0024). Évite qu'un scan accidentel ou un onglet resté ouvert ne fasse
+  perdre silencieusement un vote en cours, et donne de quoi reconnaître une vieille Session mal
+  réinitialisée.
 - **Reconnexion après déconnexion sauvage** : un device qui revient (réseau rétabli) avec un
   Jeton toujours en stockage local, alors que sa Session s'est entretemps clôturée, se voit
   rejeté par le serveur dès la requête suivante — traité exactement comme un Code invalide, avec

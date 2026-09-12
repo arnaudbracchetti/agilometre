@@ -87,7 +87,10 @@ Le code court affiché à l'écran de projection permettant aux Membres de rejoi
 
 **Jeton de session**:
 Un jeton anonyme émis à un device qui rejoint une Session via le Code, valable pour toute la Session (pas renouvelé par Tour de vote) ; authentifie le device sans jamais être lié à une identité ni à une Réponse.
-_Avoid_: Jeton (sans qualificatif, réservé au jeton de Sollicitation du Pouls - mécanisme distinct, voir section Pouls)
+_Avoid_: Jeton (sans qualificatif, réservé au jeton de Sollicitation du Pouls - mécanisme distinct, voir section Pouls). Jointure, comme nom de l'action de rejoindre une Session (nominalisation calquée, moins naturelle en français) - dire "rejoindre", verbe déjà retenu par cette définition elle-même.
+
+**Aperçu de Session**:
+La résolution d'un Code en lecture seule vers la Session qu'il désigne (Équipe, date d'ouverture), sans émission de Jeton ni écriture - permet de comparer la Session ciblée à une Session déjà active avant de confirmer un changement, sans laisser de Jeton orphelin si l'utilisateur renonce. Même principe que l'Aperçu d'import du Référentiel, appliqué au Code plutôt qu'au fichier d'import.
 
 **Sauter** (une Question):
 Marquer, une fois la Session ouverte, qu'une Question restante de la Sélection ne sera pas traitée - la Question reste visible dans l'historique de la Session mais est exclue du score. Remplace toute édition de la Sélection (ajout, retrait, réordonnancement), verrouillée dès l'ouverture.

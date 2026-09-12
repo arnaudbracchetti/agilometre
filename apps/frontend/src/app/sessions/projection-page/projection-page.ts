@@ -1,6 +1,14 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { QRCodeComponent } from 'angularx-qrcode';
 import { Subscription } from 'rxjs';
 import {
   QuestionCouranteDto,
@@ -15,7 +23,7 @@ import { ProjectionService } from '../projection.service';
 /** Écran de projection — public, sans compte, sondage 2s (doc/spec/annexes/deroulement-session-animee.md). */
 @Component({
   selector: 'app-projection-page',
-  imports: [StickyNote],
+  imports: [StickyNote, QRCodeComponent],
   templateUrl: './projection-page.html',
   styleUrl: './projection-page.scss',
 })
@@ -38,6 +46,11 @@ export class ProjectionPage implements OnInit {
   /** URL à saisir par un participant pour rejoindre (doc "Écran de projection", état salle d'attente). */
   protected readonly urlDeJointure = signal(
     typeof window !== 'undefined' ? `${window.location.origin}/vote` : '',
+  );
+  /** Encodée dans le QR code affiché à côté du Code (grilling du 2026-09-12) — même écran, même
+   * mécanisme de jointure, le Code est juste déjà connu au chargement (voir VotePage.ngOnInit). */
+  protected readonly urlDeJointureAvecCode = computed(
+    () => `${this.urlDeJointure()}?code=${this.code() ?? ''}`,
   );
   /** Coupé définitivement dès le 404 (Session plus OUVERTE, y compris CLOTUREE — la lecture
    * publique ne distingue pas les deux, voir ObtenirProjectionSession) — évite un sondage

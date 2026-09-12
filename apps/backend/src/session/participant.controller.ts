@@ -5,6 +5,7 @@ import {
   Get,
   NotFoundException,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -17,6 +18,7 @@ import {
 import { RejoindreSession } from './application/rejoindre-session.usecase';
 import { ObtenirEtatParticipant } from './application/obtenir-etat-participant.usecase';
 import { ObtenirInfoSessionParticipant } from './application/obtenir-info-session-participant.usecase';
+import { ObtenirApercuSession } from './application/obtenir-apercu-session.usecase';
 import { VoterParticipant } from './application/voter-participant.usecase';
 import { RejoindreSessionDto, VoterParticipantDto } from './session.dto';
 import { versQuestionCouranteDto } from './question-courante.mapper';
@@ -40,6 +42,7 @@ export class ParticipantController {
     private readonly rejoindreSession: RejoindreSession,
     private readonly obtenirEtatParticipant: ObtenirEtatParticipant,
     private readonly obtenirInfoSessionParticipant: ObtenirInfoSessionParticipant,
+    private readonly obtenirApercuSession: ObtenirApercuSession,
     private readonly voterParticipant: VoterParticipant,
   ) {}
 
@@ -53,6 +56,27 @@ export class ParticipantController {
       throw new NotFoundException('Code de session invalide ou expiré');
     }
     return { sessionId: resultat.sessionId, jeton: resultat.jeton.id };
+  }
+
+  /**
+   * Aperçu en lecture seule (ADR-0024) : résout un Code vers son Équipe/date d'ouverture sans
+   * émettre de Jeton, pour comparer une Session ciblée par un scan de QR à une Session déjà
+   * active avant de confirmer une bascule (doc/spec/annexes/deroulement-session-animee.md,
+   * "Jointure d'un participant"). Public comme /rejoindre, même exposition (résolution de Code) :
+   * pas de @SkipThrottle, le rate-limit global reste la seule protection.
+   */
+  @Get('apercu-session')
+  async apercuSession(
+    @Query('code') code: string,
+  ): Promise<InfoSessionParticipantDto> {
+    const resultat = await this.obtenirApercuSession.executer(code);
+    if (resultat.type === 'introuvable') {
+      throw new NotFoundException('Code de session invalide ou expiré');
+    }
+    return {
+      equipeNom: resultat.equipeNom,
+      ouvertureLe: resultat.ouvertureLe?.toISOString() ?? null,
+    };
   }
 
   @Get('moi')

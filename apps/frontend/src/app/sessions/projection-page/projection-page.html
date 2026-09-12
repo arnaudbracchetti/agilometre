@@ -39,6 +39,14 @@
       <app-sticky-note couleur="blue" class="projection__badge-note">
         <p class="projection__badge-code">Code {{ code() }}</p>
         <p class="projection__badge-url">{{ urlDeJointure() }}</p>
+        <div class="projection__badge-qr">
+          <qrcode
+            [qrdata]="urlDeJointureAvecCode()"
+            [width]="88"
+            elementType="svg"
+            errorCorrectionLevel="M"
+          />
+        </div>
         <p class="projection__badge-compteur">{{ nbDevicesConnectes() }} connecté(s)</p>
       </app-sticky-note>
       @if (tourOuvert(); as tour) {
@@ -58,6 +66,14 @@
         <p class="projection__invite">Rejoignez la séance</p>
         <p class="projection__code">{{ code() }}</p>
         <p class="projection__url">{{ urlDeJointure() }}</p>
+        <div class="projection__qr">
+          <qrcode
+            [qrdata]="urlDeJointureAvecCode()"
+            [width]="200"
+            elementType="svg"
+            errorCorrectionLevel="M"
+          />
+        </div>
       </app-sticky-note>
       <app-sticky-note
         couleur="magenta"

@@ -1,10 +1,12 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { QuestionCouranteDto } from '@agilometre/shared';
 import { JetonParticipantStorage } from '../jeton-participant.storage';
 import { ParticipantService } from '../participant.service';
@@ -24,6 +26,9 @@ const INTERVALLE_SONDAGE_PARTICIPANT_MS = 1000;
  * sur la même URL et relit le Jeton en storage (doc/spec/annexes/deroulement-session-animee.md,
  * "Jointure d'un participant"). Sondage 1s de `GET /api/participant/moi` dès qu'un Jeton est
  * connu — rythme volontairement plus rapide que les écrans Coach ("Synchronisation des écrans").
+ * Un Code peut aussi arriver en query param (`?code=`, scan du QR de l'écran de projection,
+ * grilling du 2026-09-12) : jointure automatique s'il n'y a pas déjà de Jeton actif, confirmation
+ * via Aperçu de Session (ADR-0024) sinon.
  */
 @Component({
   selector: 'app-vote-page',
@@ -31,6 +36,7 @@ const INTERVALLE_SONDAGE_PARTICIPANT_MS = 1000;
     FormsModule,
     NzButtonModule,
     NzInputModule,
+    NzModalModule,
     StickyNote,
     ErrorMessage,
     AideMenu,
@@ -42,6 +48,9 @@ export class VotePage implements OnInit {
   private readonly participantService = inject(ParticipantService);
   private readonly storage = inject(JetonParticipantStorage);
   private readonly message = inject(NzMessageService);
+  private readonly modal = inject(NzModalService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly lettres = LETTRES_OPTIONS;
@@ -66,10 +75,22 @@ export class VotePage implements OnInit {
   private sondageAbonnement: Subscription | null = null;
 
   ngOnInit(): void {
+    const codeUrl = this.route.snapshot.queryParamMap.get('code')?.trim() || null;
     const jeton = this.storage.obtenir();
     if (jeton) {
       this.phase.set('attente');
       this.demarrerSondage(jeton.jeton);
+      if (codeUrl) {
+        this.proposerBascule(codeUrl, jeton.jeton);
+      }
+      return;
+    }
+    if (codeUrl) {
+      // Jointure à froid via un Code déjà connu dans l'URL (scan) : automatique, sans confirmation
+      // — seule la saisie manuelle au clavier reste soumise à un clic explicite (grilling du
+      // 2026-09-12, doc/spec/annexes/deroulement-session-animee.md, "Jointure d'un participant").
+      this.code.set(codeUrl);
+      this.rejoindre();
     }
   }
 
@@ -85,10 +106,8 @@ export class VotePage implements OnInit {
     const jetonPrecedent = this.storage.obtenir()?.jeton;
     this.participantService.rejoindre(code, jetonPrecedent).subscribe({
       next: (resultat) => {
-        this.storage.enregistrer(resultat.sessionId, resultat.jeton);
         this.soumissionEnCours.set(false);
-        this.phase.set('attente');
-        this.demarrerSondage(resultat.jeton);
+        this.appliquerJetonObtenu(resultat);
       },
       error: () => {
         this.soumissionEnCours.set(false);
@@ -96,6 +115,94 @@ export class VotePage implements OnInit {
         // (voir RejoindreSession.executer) : un seul message, qui ne présume d'aucune des trois causes.
         this.erreur.set('Code de session invalide ou expiré.');
       },
+    });
+  }
+
+  private appliquerJetonObtenu(resultat: { sessionId: string; jeton: string }): void {
+    this.storage.enregistrer(resultat.sessionId, resultat.jeton);
+    this.phase.set('attente');
+    this.demarrerSondage(resultat.jeton);
+    this.nettoyerCodeDeLUrl();
+  }
+
+  /** Retire `?code=` une fois traité, pour qu'un rechargement (F5, verrouillage d'écran) ne rejoue
+   * pas `rejoindre()` — non idempotent côté serveur (RejoindreSession émet un nouveau Jeton et
+   * invalide l'ancien à chaque appel, y compris pour la même Session). */
+  private nettoyerCodeDeLUrl(): void {
+    if (this.route.snapshot.queryParamMap.has('code')) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {},
+        replaceUrl: true,
+      });
+    }
+  }
+
+  /** Un Jeton est déjà actif ET un Code figure dans l'URL (scan pendant qu'une autre Session est
+   * déjà rejointe) : contrairement à la jointure à froid, pas d'appel automatique — un Aperçu de
+   * Session (ADR-0024) des deux côtés est affiché pour confirmation, afin de reconnaître une
+   * vieille Session mal réinitialisée avant de perdre un vote en cours. */
+  private proposerBascule(code: string, jetonActuel: string): void {
+    forkJoin({
+      actuelle: this.participantService.obtenirInfoSession(jetonActuel),
+      cible: this.participantService.obtenirApercuSession(code),
+    }).subscribe({
+      next: ({ actuelle, cible }) => {
+        this.modal.confirm({
+          nzTitle: 'Rejoindre une autre séance ?',
+          nzContent:
+            `Vous êtes connecté à la séance de <strong>${actuelle.equipeNom}</strong> ` +
+            `(${this.formaterOuvertureLe(actuelle.ouvertureLe)}).<br>` +
+            `Rejoindre à la place celle de <strong>${cible.equipeNom}</strong> ` +
+            `(${this.formaterOuvertureLe(cible.ouvertureLe)}) ?`,
+          nzOkText: 'Rejoindre',
+          nzCancelText: 'Rester ici',
+          nzOnOk: () => this.confirmerBascule(code),
+          nzOnCancel: () => this.nettoyerCodeDeLUrl(),
+        });
+      },
+      error: (erreur: unknown) => {
+        // Un 401 ne peut venir que de `obtenirInfoSession` (protégée par JetonParticipantGuard) —
+        // `obtenirApercuSession` est publique, sans guard, ne renvoie jamais 401 aujourd'hui. Si
+        // elle gagnait un jour une auth, ce raccourci cesserait d'être valide.
+        if (this.estJetonRejete(erreur)) {
+          // Jeton actuel déjà invalide côté serveur (vieille Session close) : rien à protéger,
+          // rien à comparer — on rejoint directement le Code de l'URL, comme à froid.
+          this.sondageAbonnement?.unsubscribe();
+          this.storage.effacer();
+          this.resetAffichage();
+          this.code.set(code);
+          this.rejoindre();
+          return;
+        }
+        // Code de l'URL invalide/expiré (404) : rien à signaler, le participant n'a rien tapé —
+        // on reste silencieusement sur la Session déjà active.
+        this.nettoyerCodeDeLUrl();
+      },
+    });
+  }
+
+  private confirmerBascule(code: string): void {
+    const jetonPrecedent = this.storage.obtenir()?.jeton;
+    this.participantService.rejoindre(code, jetonPrecedent).subscribe({
+      next: (resultat) => this.appliquerJetonObtenu(resultat),
+      error: () => {
+        this.nettoyerCodeDeLUrl();
+        this.modal.error({
+          nzTitle: 'Impossible de rejoindre cette séance',
+          nzContent: 'Cette séance n’est plus disponible.',
+        });
+      },
+    });
+  }
+
+  private formaterOuvertureLe(iso: string | null): string {
+    if (!iso) {
+      return 'pas encore ouverte';
+    }
+    return new Date(iso).toLocaleString('fr-FR', {
+      dateStyle: 'long',
+      timeStyle: 'short',
     });
   }
 

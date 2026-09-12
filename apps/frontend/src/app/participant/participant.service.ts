@@ -37,6 +37,14 @@ export class ParticipantService {
     );
   }
 
+  /** Aperçu en lecture seule (ADR-0024) : résout un Code sans émettre de Jeton — pas de Jeton à transmettre, contrairement à `obtenirInfoSession`. */
+  obtenirApercuSession(code: string): Observable<InfoSessionParticipantDto> {
+    return this.http.get<InfoSessionParticipantDto>(
+      '/api/participant/apercu-session',
+      { params: { code } },
+    );
+  }
+
   voter(jeton: string, optionIndex: number): Observable<MoiParticipantDto> {
     return this.http.post<MoiParticipantDto>(
       '/api/participant/voter',

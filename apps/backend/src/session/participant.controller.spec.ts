@@ -5,6 +5,7 @@ import { Question } from '../referentiel/domain/question';
 import { RejoindreSession } from './application/rejoindre-session.usecase';
 import { ObtenirEtatParticipant } from './application/obtenir-etat-participant.usecase';
 import { ObtenirInfoSessionParticipant } from './application/obtenir-info-session-participant.usecase';
+import { ObtenirApercuSession } from './application/obtenir-apercu-session.usecase';
 import { VoterParticipant } from './application/voter-participant.usecase';
 import { RequeteAvecJetonParticipant } from './jeton-participant.guard';
 import { ParticipantController } from './participant.controller';
@@ -30,11 +31,13 @@ function creerControleur(
   obtenirInfoSessionParticipant: { executer: jest.Mock } = {
     executer: jest.fn(),
   },
+  obtenirApercuSession: { executer: jest.Mock } = { executer: jest.fn() },
 ): ParticipantController {
   return new ParticipantController(
     {} as unknown as RejoindreSession,
     obtenirEtatParticipant as unknown as ObtenirEtatParticipant,
     obtenirInfoSessionParticipant as unknown as ObtenirInfoSessionParticipant,
+    obtenirApercuSession as unknown as ObtenirApercuSession,
     voterParticipant as unknown as VoterParticipant,
   );
 }
@@ -145,6 +148,49 @@ describe('ParticipantController.infoSession', () => {
     );
 
     await expect(controller.infoSession(requete())).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+});
+
+describe('ParticipantController.apercuSession', () => {
+  it('renvoie le nom d’équipe et la date d’ouverture pour un Code résolu', async () => {
+    const ouvertureLe = new Date('2026-08-21T09:00:00.000Z');
+    const obtenirApercuSession = {
+      executer: jest.fn().mockResolvedValue({
+        type: 'ok',
+        equipeNom: 'Les Mangoustes',
+        ouvertureLe,
+      }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      obtenirApercuSession,
+    );
+
+    const resultat = await controller.apercuSession('4271');
+
+    expect(obtenirApercuSession.executer).toHaveBeenCalledWith('4271');
+    expect(resultat).toEqual({
+      equipeNom: 'Les Mangoustes',
+      ouvertureLe: ouvertureLe.toISOString(),
+    });
+  });
+
+  it('renvoie 404 pour un Code invalide ou expiré', async () => {
+    const obtenirApercuSession = {
+      executer: jest.fn().mockResolvedValue({ type: 'introuvable' }),
+    };
+    const controller = creerControleur(
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      { executer: jest.fn() },
+      obtenirApercuSession,
+    );
+
+    await expect(controller.apercuSession('0000')).rejects.toThrow(
       NotFoundException,
     );
   });

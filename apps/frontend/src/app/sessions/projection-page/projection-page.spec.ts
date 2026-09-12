@@ -48,6 +48,10 @@ describe('ProjectionPage', () => {
     expect(fixture.nativeElement.textContent).toContain('654321');
     expect(fixture.nativeElement.textContent).toContain('3');
     expect(fixture.nativeElement.textContent).toContain(window.location.origin);
+    expect(fixture.componentInstance['urlDeJointureAvecCode']()).toBe(
+      `${window.location.origin}/vote?code=654321`,
+    );
+    expect(fixture.nativeElement.querySelectorAll('qrcode').length).toBe(1);
   });
 
   it('affiche la Question courante et ses Options lettrées en Discussion, sans salle d’attente', () => {
@@ -79,6 +83,7 @@ describe('ProjectionPage', () => {
     expect(texte).not.toContain('Salle d’attente');
     expect(texte).toContain('654321');
     expect(texte).not.toContain('ont voté');
+    expect(fixture.nativeElement.querySelectorAll('qrcode').length).toBe(1);
   });
 
   it('affiche le Compteur de participation pendant le Vote, sans jamais révéler la répartition', () => {
