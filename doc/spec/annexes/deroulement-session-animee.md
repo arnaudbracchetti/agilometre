@@ -176,12 +176,12 @@ séparé.
 - **Vote** (Tour ouvert) : les 4 Options s'affichent, actives pendant toute la durée du Tour.
 
 **Voter — responsive, sans biais de Niveau.**
-- **PC** : 4 gros boutons affichant à la fois une lettre (A/B/C/D) et le libellé texte complet
-  de l'Option.
-- **Mobile** : 4 gros boutons affichant **uniquement** la lettre (A/B/C/D), sans libellé —
-  priorité à la taille de la cible tactile sur petit écran. Le texte reste consultable via
-  l'écran de projection (accessible sans compte par lien direct, y compris à distance dans un
-  second onglet).
+- **Écran large** (≥ 350px de large **et** ≥ 800px de haut) : 4 gros boutons affichant à la fois
+  une lettre (A/B/C/D) et le libellé texte complet de l'Option.
+- **Écran étroit ou bas** (< 350px de large **ou** < 800px de haut) : 4 gros boutons affichant
+  **uniquement** la lettre (A/B/C/D), sans libellé — priorité à la taille de la cible tactile sur
+  petit écran. Le texte reste consultable via l'écran de projection (accessible sans compte par
+  lien direct, y compris à distance dans un second onglet).
 - **Ordre des lettres fixe** : A/B/C/D suivent l'ordre des Options tel que stocké dans le
   Référentiel (pas de mélange par Question/Tour/participant) — plus simple à suivre à l'oral en
   salle, au prix d'un risque assumé qu'un participant assidu associe au fil de la séance une
