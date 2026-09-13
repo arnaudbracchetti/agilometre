@@ -17,6 +17,11 @@ scorables). Décisions prises par cette session :
 [ADR-0026](../adr/0026-abandon-date-de-fin-campagne-pouls.md),
 [ADR-0027](../adr/0027-perimetre-renommage-modele-de-collecte.md).
 
+**§1 et §2 amendés** par la résolution du ticket
+[#69](https://github.com/arnaudbracchetti/agilometre/issues/69) (écran « Collecte
+d'informations ») : [ADR-0028](../adr/0028-modele-de-collecte-verrouille-panel-modifiable-en-place.md)
+(Modèle de collecte verrouillé après création, Panel modifiable en place).
+
 ## Contexte
 
 Le squelette Prisma `CampagnePouls` / `Sollicitation` existe depuis la migration d'init
@@ -100,8 +105,15 @@ connaître, pas à découvrir.
 
 Le **panel de Membres ne l'est pas** : l'annexe §2 pose « le périmètre est l'Équipe entière,
 évaluée à l'instant de l'échéance ». Un Membre ajouté entre deux échéances entre au tirage suivant
-avec un cycle vierge ; un Membre retiré cesse d'être sollicité. Seule la Sélection de Questions est
-copiée figée. Aucun mécanisme nouveau à inventer de ce côté.
+avec un cycle vierge ; un Membre retiré cesse d'être sollicité. Aucun mécanisme nouveau à inventer
+de ce côté.
+
+**Le contenu du Panel non plus** ([ADR-0028](../adr/0028-modele-de-collecte-verrouille-panel-modifiable-en-place.md)) :
+seule la copie depuis le `ModeleCollecte` source est figée à la création (ADR-0009) - le Panel
+obtenu reste ensuite modifiable en place (ajout, retrait, réordonnancement de Questions), tant que
+la Campagne n'est pas `TERMINEE`. Le `ModeleCollecte` source, lui, reste verrouillé : aucune
+opération ne permet de le remplacer après création. Ajouter ou retirer une Question du Panel
+réinitialise le cycle de tirage de tous les Membres ; réordonner seul ne réinitialise rien.
 
 ## 2. Invariants
 
@@ -114,6 +126,8 @@ copiée figée. Aucun mécanisme nouveau à inventer de ce côté.
 | `activer()` refusé si `statut ≠ BROUILLON` et `≠ SUSPENDUE` ; `suspendre()` refusé si `≠ ACTIVE` ; `terminer()` refusé si `= TERMINEE` | `CampagnePouls` |
 | `TERMINEE` est définitif : plus aucune transition, plus aucun envoi | `CampagnePouls` |
 | **Au plus une Campagne `ACTIVE` par Équipe** | Repository (garde applicative) **et** index unique partiel en base - voir §6 |
+| **Au plus une Campagne non-`TERMINEE` par Équipe** - la création d'une nouvelle Campagne est refusée tant qu'une précédente existe et n'est pas `TERMINEE` (ADR-0028) | Use case de création (garde applicative - l'index unique partiel en base ne couvre aujourd'hui que `ACTIVE`, à élargir à l'implémentation) |
+| Le Modèle de collecte source d'une Campagne n'est jamais remplacé après création (ADR-0028) | `CampagnePouls` - aucune opération de changement de Modèle |
 | La suppression d'un `ModeleCollecte` n'a aucun effet sur les Campagnes issues de lui | Structurel : `modeleCollecteId` est un scalaire nu, sans FK (ADR-0009) |
 | Une Question archivée au Référentiel disparaît des lectures du Panel sans en être retirée physiquement | Résolu à la lecture, le Référentiel passé en paramètre - identique à `Session` |
 | Une Sollicitation porte **au moins une** Question | `Sollicitation` |
@@ -134,7 +148,7 @@ et `origine = POULS`, avec `tourId = null`.
 |---|---|---|
 | Créer (Équipe, Modèle de collecte, rythme, nombre par envoi) | Commande | Use case - copie la `Selection` du `ModeleCollecte` (traverse deux agrégats), puis `CampagnePouls.creer` |
 | Modifier la configuration (rythme, nombre par envoi) | Commande | Racine |
-| Changer le Modèle source (donc remplacer le Panel) | Commande | Use case - recopie une Sélection figée du nouveau Modèle, jamais une fusion. Effet sur le cycle courant des Membres : tranché par la carte [#69](https://github.com/arnaudbracchetti/agilometre/issues/69) |
+| Modifier le Panel (ajouter / retirer / réordonner des Questions) | Commande | Racine - ajouter ou retirer réinitialise le cycle de tirage de tous les Membres, réordonner seul ne réinitialise rien (ADR-0028) |
 | Activer / Suspendre / Reprendre / Terminer | Commande | Racine - la garde « au plus une active » est vérifiée par le use case via le repository avant `activer()` |
 | Supprimer | Commande | Use case |
 

@@ -60,6 +60,16 @@ jusqu'à la table, en carte dédiée exécutée avant les cartes du Pouls
 ([ADR-0027](../../../docs/adr/0027-perimetre-renommage-modele-de-collecte.md)). Conception complète :
 [agregat-campagne-de-pouls.md](../../../docs/design/agregat-campagne-de-pouls.md).
 
+**Mise à jour ([#69](https://github.com/arnaudbracchetti/agilometre/issues/69) résolue)** : le
+**Modèle de collecte source est verrouillé après création** - aucune opération ne permet de le
+remplacer ; pour en changer, le Coach termine la Campagne et en crée une nouvelle. Le **Panel**,
+lui, reste modifiable en place (ajout, retrait, réordonnancement de Questions) tant que la Campagne
+n'est pas terminée, via un écran dédié réutilisant le composant de composition de Sélection déjà
+utilisé pour les Modèles de collecte et les Sessions. **Au plus une Campagne non-terminée par
+Équipe** : créer une nouvelle Campagne exige que la précédente (s'il y en a une) soit terminée -
+règle plus stricte que le seul « au plus une active » ci-dessus.
+([ADR-0028](../../../docs/adr/0028-modele-de-collecte-verrouille-panel-modifiable-en-place.md))
+
 ## 2. Les échéances
 
 Un **ordonnanceur in-process** (`@nestjs/schedule`, déjà câblé dans l'application) déclenche les
@@ -105,6 +115,12 @@ vérité, à réparer à chaque ajout de Membre ou modification de panel.
 Membres à une même échéance - c'est acceptable, la règle 2 les répartit au mieux. Une Question
 archivée par un ré-import du Référentiel sort du panel ; le cycle se poursuit sans elle, sans
 invalider les Sollicitations déjà émises.
+
+**Mise à jour ([#69](https://github.com/arnaudbracchetti/agilometre/issues/69) résolue)** : le
+Panel étant modifiable en place (§1), **ajouter ou retirer une Question du Panel réinitialise le
+cycle de tirage de tous les Membres de l'Équipe** - repart de zéro, comme si aucune Question n'avait
+encore été posée dans ce cycle. Un simple réordonnancement ne change rien au tirage.
+([ADR-0028](../../../docs/adr/0028-modele-de-collecte-verrouille-panel-modifiable-en-place.md))
 
 ## 4. La Sollicitation et la Réponse
 
@@ -191,9 +207,27 @@ affiché explicitement.
 dans le modèle de domaine. Le terme du domaine reste **Campagne de pouls**, et il reste visible comme
 tel dans l'écran.
 
-> **À trancher** - contenu exact des deux onglets à chaque niveau de sélection, ce qui est modifiable
-> et ce qui est en lecture seule, gestes de cycle de vie :
-> [#69](https://github.com/arnaudbracchetti/agilometre/issues/69).
+**Tranché ([#69](https://github.com/arnaudbracchetti/agilometre/issues/69))** :
+
+- **Équipe sélectionnée, onglet Campagnes** : statut affiché en Tag, gestes de cycle de vie en
+  boutons directs (Activer, Suspendre, Terminer selon le statut courant) et un bouton « Créer une
+  Campagne », actif uniquement si l'Équipe n'a aucune Campagne ou que la précédente est terminée
+  (§1). Un bloc Configuration montre le Modèle de collecte source (verrouillé, §1), le Rythme et le
+  nombre de Questions par envoi, avec un unique bouton « Modifier » qui ouvre un écran dédié - même
+  patron que l'ajustement d'une Session - portant le Rythme, le nombre par envoi et la gestion fine
+  du Panel (ajout/retrait/réordonnancement de Questions, ADR-0028). Un bloc Suivi montre la
+  prochaine échéance et les deux lectures du taux de participation. L'historique des échéances est
+  une table triée de la plus récente à la plus ancienne.
+- **Entité sélectionnée, onglet Campagnes** : table en lecture seule (Équipe, statut de la Campagne,
+  taux sur la Période), « aucune Campagne » affiché explicitement plutôt qu'une ligne vide ; cliquer
+  une ligne descend sur l'Équipe correspondante.
+- **Racine sélectionnée ou rien sélectionné** : l'onglet Sessions retrouve son comportement actuel,
+  non filtré ; l'onglet Campagnes affiche une invite à sélectionner une Équipe ou une Entité.
+- **Onglet Sessions** : filtré par la sélection de l'arbre (Équipe : ses Sessions ; Entité : les
+  Sessions de ses Équipes ; Racine : non filtré, comportement actuel).
+
+Prototype comparé (trois organisations d'écran) et détail complet de la résolution : voir le ticket
+[#69](https://github.com/arnaudbracchetti/agilometre/issues/69).
 
 ## 7. Hors périmètre
 

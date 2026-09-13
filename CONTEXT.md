@@ -116,17 +116,17 @@ L'état d'avancement d'une Session dans sa Sélection : pour chaque Question, si
 ### Pouls
 
 **Campagne de pouls**:
-La configuration attachée à une Équipe qui pilote l'envoi périodique de Sollicitations : Panel, rythme hebdomadaire, nombre de Questions par envoi. Au plus une active par Équipe à la fois. Pas de date de fin : la terminaison est un geste du Coach (ADR-0026).
+La configuration attachée à une Équipe qui pilote l'envoi périodique de Sollicitations : Panel, rythme hebdomadaire, nombre de Questions par envoi. Au plus une active par Équipe à la fois, et au plus une non-terminée par Équipe : en créer une nouvelle exige que la précédente soit terminée (ADR-0028). Pas de date de fin : la terminaison est un geste du Coach (ADR-0026). Son Modèle de collecte source est verrouillé après création - pour en changer, terminer la Campagne et en créer une nouvelle (ADR-0028).
 _Avoid_: Thèmes actifs (paramètre annoncé par les premières versions du PRD, écarté : le Panel exprime déjà le périmètre, Question par Question)
 
 **Panel**:
-L'ensemble des Questions dans lequel une Campagne de pouls tire : la Sélection de son Modèle de collecte, copiée figée à la création de la Campagne.
+L'ensemble des Questions dans lequel une Campagne de pouls tire : la Sélection de son Modèle de collecte, copiée figée à la création de la Campagne. Reste ensuite modifiable en place (ajout, retrait, réordonnancement de Questions) tant que la Campagne n'est pas terminée, indépendamment du Modèle source qui lui reste verrouillé (ADR-0028).
 
 **Échéance**:
 Un instant d'envoi d'une Campagne de pouls, déterminé par son rythme hebdomadaire (jours cochés + heure). Chaque Échéance produit une Sollicitation par Membre de l'Équipe. Une Échéance manquée est perdue, jamais rattrapée.
 
 **Cycle** (de Questions):
-Un balayage complet du Panel par un Membre donné. Tant que son Cycle courant n'est pas épuisé, une Question déjà posée à ce Membre n'est pas retirée à nouveau ; une fois le Panel épuisé, le Cycle repart. Entièrement déduit de l'historique des Sollicitations, jamais persisté tel quel.
+Un balayage complet du Panel par un Membre donné. Tant que son Cycle courant n'est pas épuisé, une Question déjà posée à ce Membre n'est pas retirée à nouveau ; une fois le Panel épuisé, le Cycle repart. Entièrement déduit de l'historique des Sollicitations, jamais persisté tel quel. Ajouter ou retirer une Question du Panel réinitialise le Cycle de tous les Membres ; réordonner seul ne le réinitialise pas (ADR-0028).
 
 **Sollicitation**:
 Un envoi individuel généré par une Campagne de pouls vers un Membre, portant un Jeton à usage unique. Porte les Questions d'une Échéance et reçoit une soumission unique et indivisible - jamais partiellement honorée.
