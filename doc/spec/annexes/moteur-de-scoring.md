@@ -41,6 +41,15 @@ détail d'une Session précise, et réciproquement.
 La lecture fine utilise toujours la même Portée que le Palier qu'elle détaille — jamais de Palier
 trimestriel affiché au-dessus d'une Moyenne calculée sur la seule dernière Session.
 
+**Effectif minimal de la lecture fine.** Moyenne et Dispersion ne sont calculées qu'au-delà d'un
+nombre minimal de Réponses sur la Question, réglage **d'instance** au même titre que le Seuil de
+Palier et la durée d'une Période. En deçà, les deux indicateurs sont absents et la restitution
+affiche le nombre de Réponses à la place. Motif : l'écart-type d'une Réponse unique vaut zéro, donc
+le cran « consensus fort » - l'exact inverse de ce que la donnée autorise à dire. La règle vaut pour
+les deux Portées, Session comprise : c'est un défaut du moteur, que le Pouls rend seulement nominal
+(une Question tirée pour une seule personne à une échéance) au lieu d'accidentel. Le Palier, lui,
+reste sans seuil d'effectif : il est calculé dès la première Réponse.
+
 ## Écran — Résultat de fin de Session
 
 Prolonge l'écran de synthèse existant (`sessions/synthese-page`) : Palier par Thème de la Session
@@ -127,9 +136,13 @@ compare toujours des points calculés avec les mêmes règles.
   non construite ici.
 - **Matrice de droits par Rôle** — tous les écrans ci-dessus sont accessibles à tous en V1 ; la
   restriction par Rôle (PRD §9) est le sujet de l'Epic #11 Restitutions par rôle.
-- **Origine Pouls** — seule l'origine Session alimente le moteur pour l'instant ; la fenêtre glissante
-  du Pouls et sa réconciliation avec les Périodes de calcul sont à trancher lors du
-  `/grill-with-docs` de l'Epic #9 Campagne de pouls.
+- **Origine Pouls** - seule l'origine Session alimente le moteur tel que livré par cette Epic. La
+  réconciliation est tranchée depuis, lors de la conception de l'Epic #9 Campagne de pouls : **pas de
+  fenêtre glissante**, les Réponses d'origine Pouls tombent dans les mêmes Périodes de calcul et s'y
+  mélangent sans distinction d'origine (PRD §6). Leur raccordement effectif au moteur - une seconde
+  source de Réponses scorables sur le port de l'ADR-0018, composée avec la source Session existante -
+  est porté par l'Epic #9, de même que les gardes de l'écran Profil qui ne consultent aujourd'hui que
+  les Sessions closes.
 - **Bornage fin de l'agrégat Réponse** — extrait de `session/` par cette Epic vers un module
   `reponse/` autonome, mais son bornage complet reste porté par l'Epic #7 Réponse & anonymat, dont
   le périmètre s'en trouve d'autant réduit.

@@ -21,3 +21,17 @@ agrège et calcule ; il ne connaît que le port, et n'importe aucun module Prism
 
 **Conséquence pour les tests.** Les use cases de `scoring/` doivent pouvoir se tester avec une
 implémentation en mémoire du port, preuve qu'aucune origine n'y est câblée en dur.
+
+**Addendum (conception de l'Epic #9, carte [#68](https://github.com/arnaudbracchetti/agilometre/issues/68)).**
+La phrase « `pouls/` en fournira une autre » ci-dessus est amendée sur la forme, pas sur le fond. La
+source de Réponses scorables d'origine Pouls est une **requête directe portée par `reponse/`**, et
+non une implémentation vivant dans `pouls/`. La raison : il n'y a **rien à filtrer** côté Pouls,
+contrairement à la source Session, où vit la règle « seul le dernier Tour clos de chaque couple
+(Session, Question) compte » et qui justifie que l'implémentation soit là où vit `TourDeVote`. Faire
+transiter par `pouls/` une requête sans règle n'aurait fait qu'y créer une dépendance au scoring que
+ce module n'a aucune raison de porter : `pouls/` produit des Sollicitations, tire des Questions et
+consomme des Jetons.
+
+Le fond de cette décision est intact : `scoring/` ne connaît toujours que le port, ignore l'origine,
+et n'importe aucun module d'infrastructure. L'emplacement du composite des deux sources reste à la
+carte [#71](https://github.com/arnaudbracchetti/agilometre/issues/71).

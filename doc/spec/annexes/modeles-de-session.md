@@ -1,4 +1,13 @@
-# Spécification fonctionnelle — Modèles de session
+# Spécification fonctionnelle - Modèles de collecte
+
+> **Renommage en cours.** Ce concept s'appelait « modèle de session » tant qu'il ne servait que la
+> séance animée. Depuis la conception de l'Epic Campagne de pouls, il sert **deux** dispositifs : une
+> Session en copie la Sélection pour dérouler ses Tours de vote, une Campagne de pouls en copie la
+> Sélection pour définir son Panel (voir [annexe Campagne de pouls](campagne-de-pouls.md) §1). Le
+> terme retenu est **Modèle de collecte** ; le code dit encore `ModeleSession`, et le périmètre exact
+> du renommage (table Prisma, routes API, DTO partagés, libellés) est tranché par
+> [#68](https://github.com/arnaudbracchetti/agilometre/issues/68). Le corps de ce document parle
+> encore de « Modèle de session » et sera repris à ce moment-là ; tout ce qu'il décrit reste exact.
 
 Complète le [PRD](../PRD-maturite-agile.md) sur un point qu'il pose comme central sans le détailler :
 « la sélection des questions au moment de créer une session est une fonction centrale, pas un

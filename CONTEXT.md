@@ -68,15 +68,15 @@ _Avoid_: Management, pour désigner le Rôle Direction - vocabulaire oral rencon
 
 ### Session animée
 
-**Modèle de session**:
-Une Sélection de Questions nommée, indépendante de toute Équipe, que le Coach compose et réutilise pour créer des Sessions. Librement supprimable, y compris après avoir servi à créer une ou plusieurs Sessions - aucun lien retour vers les Sessions qui en sont issues.
-_Avoid_: Template, Template de session (anglicisme utilisé en discussion, écarté au profit d'un glossaire 100% français)
+**Modèle de collecte**:
+Une Sélection de Questions nommée, indépendante de toute Équipe, que le Coach compose et réutilise. Sert les deux dispositifs de collecte : une Session en copie la Sélection pour dérouler ses Tours de vote, une Campagne de pouls en copie la Sélection pour définir son Panel. Librement supprimable, y compris après avoir servi - aucun lien retour vers ce qui en est issu.
+_Avoid_: Modèle de session (nom porté tant que le concept ne servait que la séance animée ; le code dit encore `ModeleSession` jusqu'à résolution du périmètre de renommage). Template, Template de session (anglicisme utilisé en discussion, écarté au profit d'un glossaire 100% français)
 
 **Sélection**:
-Une liste ordonnée de Questions. Un Modèle de session porte sa propre Sélection, librement modifiable. Une Session reçoit une copie figée de la Sélection de son Modèle d'origine au moment de sa création - sans lien vivant vers celui-ci.
+Une liste ordonnée de Questions. Un Modèle de collecte porte sa propre Sélection, librement modifiable. Une Session, comme une Campagne de pouls, en reçoit une copie figée au moment de sa création - sans lien vivant vers le Modèle d'origine.
 
 **Session**:
-Une séance animée par un Coach pour une Équipe, à une date, à partir d'un Modèle de session dont la Sélection est copiée au moment de la création ; contient des Tours de vote.
+Une séance animée par un Coach pour une Équipe, à une date, à partir d'un Modèle de collecte dont la Sélection est copiée au moment de la création ; contient des Tours de vote.
 _Avoid_: Séance (synonyme naturel du PRD narratif - Session est le terme du modèle)
 
 **Tour de vote**:
@@ -116,10 +116,20 @@ L'état d'avancement d'une Session dans sa Sélection : pour chaque Question, si
 ### Pouls
 
 **Campagne de pouls**:
-La configuration attachée à une Équipe qui pilote l'envoi périodique de Sollicitations : rythme, nombre de Questions par envoi, Thèmes actifs, date de fin éventuelle.
+La configuration attachée à une Équipe qui pilote l'envoi périodique de Sollicitations : Panel, rythme hebdomadaire, nombre de Questions par envoi. Au plus une active par Équipe à la fois. Pas de date de fin : la terminaison est un geste du Coach (ADR-0026).
+_Avoid_: Thèmes actifs (paramètre annoncé par les premières versions du PRD, écarté : le Panel exprime déjà le périmètre, Question par Question)
+
+**Panel**:
+L'ensemble des Questions dans lequel une Campagne de pouls tire : la Sélection de son Modèle de collecte, copiée figée à la création de la Campagne.
+
+**Échéance**:
+Un instant d'envoi d'une Campagne de pouls, déterminé par son rythme hebdomadaire (jours cochés + heure). Chaque Échéance produit une Sollicitation par Membre de l'Équipe. Une Échéance manquée est perdue, jamais rattrapée.
+
+**Cycle** (de Questions):
+Un balayage complet du Panel par un Membre donné. Tant que son Cycle courant n'est pas épuisé, une Question déjà posée à ce Membre n'est pas retirée à nouveau ; une fois le Panel épuisé, le Cycle repart. Entièrement déduit de l'historique des Sollicitations, jamais persisté tel quel.
 
 **Sollicitation**:
-Un envoi individuel généré par une Campagne de pouls vers un Membre, portant un Jeton à usage unique.
+Un envoi individuel généré par une Campagne de pouls vers un Membre, portant un Jeton à usage unique. Porte les Questions d'une Échéance et reçoit une soumission unique et indivisible - jamais partiellement honorée.
 
 **Jeton**:
 Un identifiant à usage unique attaché à une Sollicitation, consommé à la réception de la Réponse puis sans lien conservé vers celle-ci. Distinct du Jeton de session (Session animée) : usage unique et nominatif ici, réutilisable et anonyme là-bas.
@@ -135,7 +145,7 @@ _Avoid_: Taux de réponse (même notion, formulation alternative du PRD §11)
 ### Emails
 
 **Template** (email):
-Le contenu d'un type d'email (sujet + corps markdown), chargé et validé depuis un fichier versionné dans le dépôt, identifié par une Clé d'email. Distinct de Modèle de session (voir section Session animée) - deux concepts sans rapport qui partagent le même mot faute de meilleure alternative native pour celui-ci ; voir [docs/design/contenu-emails-gabarits.md](docs/design/contenu-emails-gabarits.md).
+Le contenu d'un type d'email (sujet + corps markdown), chargé et validé depuis un fichier versionné dans le dépôt, identifié par une Clé d'email. Distinct de Modèle de collecte (voir section Session animée) - deux concepts sans rapport qui partagent le même mot faute de meilleure alternative native pour celui-ci ; voir [docs/design/contenu-emails-gabarits.md](docs/design/contenu-emails-gabarits.md).
 
 **Clé d'email**:
 L'identifiant stable d'un type d'email (ex: `compte.invitation`), choisi par le développeur dans le usecase appelant, qui résout par convention de nommage vers son fichier Template sur le disque.
@@ -149,7 +159,8 @@ Le résultat de l'application des variables et du rendu markdown vers HTML sur u
 Un enregistrement immuable : Question, Niveau choisi, Équipe, horodatage, origine (Session ou Pouls), et pour une Session le numéro de Tour de vote. Ne porte jamais de référence au Membre ni au Jeton qui l'a produite - l'anonymat est une propriété du modèle de données, pas un filtre d'affichage.
 
 **Agrégation temporelle**:
-La règle qui impose aux restitutions issues du Pouls de toujours porter sur une fenêtre glissante, jamais sur une Réponse isolée à une date donnée.
+La règle qui impose aux restitutions issues du Pouls de toujours porter sur une Période de calcul, jamais sur une Réponse isolée à une date donnée.
+_Avoid_: Fenêtre glissante (découpage propre au Pouls annoncé par les premières versions du PRD, abandonné : le Pouls et les Sessions partagent les mêmes Périodes de calcul)
 
 **Restriction d'affichage**:
 La règle qui limite Manager et Direction aux Paliers calculés, jamais à la répartition brute des votes ni au détail Question par Question.

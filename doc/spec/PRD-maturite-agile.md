@@ -41,7 +41,9 @@ SSO client, édition du référentiel dans l'application, multi-tenant, applicat
 
 **Session** — une séance animée par un coach pour une équipe, à une date, sur une sélection de questions. Contient des *tours de vote*.
 
-**Campagne de pouls** — une configuration attachée à une équipe : rythme, nombre de questions par envoi (une ou deux), thèmes actifs, date de fin éventuelle. Génère des *sollicitations*.
+**Modèle de collecte** - une sélection de questions nommée et réutilisable, indépendante de toute équipe. Sert les deux dispositifs : une session en copie figée sa sélection pour dérouler ses tours de vote, une campagne de pouls en copie figée sa sélection pour définir le *panel* dans lequel elle tire. *Renommage assumé lors de la conception de l'Epic Campagne de pouls : ce concept s'appelait « modèle de session » tant qu'il ne servait que la séance animée.*
+
+**Campagne de pouls** - une configuration attachée à une équipe, **au plus une active à la fois** : le panel de questions copié d'un modèle de collecte, un rythme hebdomadaire (jours de la semaine cochés, heure d'envoi), un nombre de questions par envoi. Génère des *sollicitations*. Détail fonctionnel complet : [annexe Campagne de pouls](annexes/campagne-de-pouls.md).
 
 **Réponse** — question, niveau choisi (1 à 4), équipe, horodatage, origine (session ou pouls), et pour une session le numéro de tour. **Aucun lien vers l'identité du répondant.**
 
@@ -50,10 +52,11 @@ SSO client, édition du référentiel dans l'application, multi-tenant, applicat
 L'anonymat est une propriété du modèle de données, pas un filtre d'affichage. L'application étant déployée chez le client, un administrateur local a accès à la base : si le lien répondant ↔ réponse existe, la promesse ne tient pas.
 
 - La sollicitation par email porte un jeton à usage unique. À la réception de la réponse, le jeton est marqué consommé et la réponse est enregistrée **sans référence au jeton ni au membre**.
-- Est conservé : qui a été sollicité, sur quelle question, à quelle date, et si la sollicitation a été honorée. C'est nécessaire pour l'assiduité, les relances et pour éviter de reposer trop vite la même question à la même personne. Ce lien membre ↔ question ne doit jamais devenir un lien membre ↔ réponse.
+- Est conservé : qui a été sollicité, sur quelle question, à quelle date, et si la sollicitation a été honorée. C'est nécessaire pour le taux de participation et pour le tirage des questions, qui évite de reposer la même question à la même personne. Ce lien membre ↔ question ne doit jamais devenir un lien membre ↔ réponse.
+- **Conséquence directe : une réponse au pouls n'est pas modifiable après validation.** Revenir sur sa réponse supposerait de savoir laquelle est la sienne, donc de persister exactement le lien que ce paragraphe interdit. Le jeton est à usage unique, sans exception - voir [ADR-0001](../../docs/adr/0001-contrat-anonymat-reponse.md).
 - En séance, les participants rejoignent par un code éphémère, sans compte.
-- Aucun seuil bloquant de répondants. L'anonymat est protégé par deux règles :
-  - **agrégation temporelle** — les restitutions issues du pouls portent toujours sur une fenêtre glissante, jamais sur une question isolée à une date donnée ;
+- Aucun seuil bloquant de répondants sur le palier. L'anonymat est protégé par deux règles :
+  - **agrégation temporelle** - les restitutions issues du pouls portent toujours sur une période de calcul, jamais sur une question isolée à une date donnée ;
   - **restriction d'affichage** — manager et direction voient les paliers calculés, jamais la répartition brute des votes ni le détail question par question.
 
 ## 6. Moteur de scoring
@@ -72,11 +75,13 @@ Une fonction unique, appelée par toutes les vues. Entrée : un ensemble de rép
 
 **Deux niveaux de lecture.** Le palier reste volontairement grossier (quatre crans, pour l'émulation entre équipes sans classement fin) mais ne dit pas où une équipe doit se concentrer. Une **lecture fine**, réservée au grain question, complète donc chaque restitution synthétique : moyenne des niveaux et indicateur de dispersion (l'accord ou le désaccord de l'équipe, restitué en trois crans de consensus), avec accès au détail de la répartition par niveau. Cette moyenne n'est jamais agrégée au-delà de la question — au grain thème ou équipe, elle recréerait le classement fin que le palier écarte délibérément.
 
+**Effectif minimal de la lecture fine.** Moyenne et dispersion ne sont calculées qu'à partir d'un nombre minimal de réponses sur la question, configuré au niveau de l'instance ; en deçà, la restitution affiche le nombre de réponses à la place des deux indicateurs. Sans cette garde, une question ayant reçu une seule réponse afficherait un consensus « fort » - l'écart-type d'une valeur unique étant nul - c'est-à-dire l'inverse exact de ce qui est vrai. Le pouls rend le cas nominal plutôt qu'accidentel (une question tirée pour une seule personne à une échéance), mais **la règle vaut pour toutes les portées, séances comprises** : ce n'est pas une exception au pouls, c'est un défaut du moteur que le pouls révèle. Le palier, lui, n'a aucun seuil d'effectif : il reste calculé dès la première réponse (voir ci-dessus).
+
 **Score global.** Même calcul appliqué à toutes les réponses, tous thèmes confondus. *Limite assumée en v1 : les thèmes comportant le plus de questions pèsent mécaniquement davantage.*
 
 **Agrégation entité / BU.** Recalcul du palier sur l'ensemble des réponses de l'entité. *Limite assumée : les grandes équipes pèsent davantage que les petites.*
 
-**Fenêtres d'agrégation.** Séance : la session elle-même, hors de toute notion de période. Vue synthétique d'une équipe ou d'une entité (paliers, tendance) : des **périodes de calcul** calendaires contiguës, de durée fixée pour toute l'instance et alignée sur le calendrier pour toutes les équipes — condition pour que deux badges restent comparables. Une période sans réponse laisse un trou dans la tendance plutôt que de reporter le dernier palier connu. Pouls : fenêtre glissante configurable, à réconcilier avec ce découpage lors de la conception de l'Epic Campagne de pouls.
+**Fenêtres d'agrégation.** Séance : la session elle-même, hors de toute notion de période. Vue synthétique d'une équipe ou d'une entité (paliers, tendance) : des **périodes de calcul** calendaires contiguës, de durée fixée pour toute l'instance et alignée sur le calendrier pour toutes les équipes - condition pour que deux badges restent comparables. Une période sans réponse laisse un trou dans la tendance plutôt que de reporter le dernier palier connu. Pouls : **aucune fenêtre propre**. Les réponses du pouls tombent dans les mêmes périodes de calcul que celles des séances, et s'y mélangent sans distinction d'origine - une seule mécanique temporelle pour tout le produit. *La « fenêtre glissante configurable » annoncée par les versions précédentes de ce document est abandonnée : deux découpages temporels concurrents auraient produit deux paliers différents pour la même équipe au même instant, sans qu'aucun ne soit plus légitime que l'autre. Décidé lors de la conception de l'Epic Campagne de pouls ; ferme le point ouvert correspondant du §12.*
 
 **Badges.** Un badge est la représentation visuelle d'un palier atteint sur un thème. Ce n'est pas un objet distinct — même donnée, autre habillage. La granularité à quatre crans est délibérée : elle permet l'émulation entre équipes sans autoriser le classement fin.
 
@@ -93,12 +98,16 @@ Une fonction unique, appelée par toutes les vues. Entrée : un ensemble de rép
 
 ## 8. Parcours — le pouls
 
-1. Le coach configure la campagne : rythme, une ou deux questions par envoi, thèmes actifs, date de fin.
-2. À chaque échéance, l'application tire les questions en **équilibrant la couverture des thèmes au niveau de l'équipe** — l'objectif est de balayer le référentiel régulièrement, pas que chaque personne voie tous les thèmes. Le tirage évite les questions récemment adressées au même membre.
-3. Envoi d'un email par membre, avec un lien à jeton unique.
-4. Page de réponse épurée : une question, quatre choix, quelques secondes.
-5. Le jeton expire à l'échéance suivante, pour éviter que des réponses tardives ne polluent la fenêtre d'agrégation en cours.
-6. Après validation, un simple remerciement. Aucun résultat n'est affiché à cette étape.
+1. Le coach configure la campagne de son équipe : un modèle de collecte (dont la sélection de questions devient le **panel** de la campagne, copié figé), les jours de la semaine et l'heure d'envoi, le nombre de questions par envoi. Il l'active ; il peut ensuite la suspendre, la reprendre, la terminer. Une équipe n'a jamais deux campagnes actives à la fois.
+2. À chaque échéance, **tous les membres de l'équipe** sont sollicités - sans opt-out, l'équipe est le périmètre.
+3. Le tirage est **indépendant pour chaque membre** et vise à balayer le panel le plus vite possible, d'abord à l'échelle de la personne, ensuite à l'échelle de l'équipe. Trois règles, dans cet ordre : exclure les questions déjà posées à ce membre dans son cycle courant (un cycle = un balayage complet du panel par ce membre ; épuisé, il repart à zéro) ; parmi les restantes, privilégier les moins posées dans l'équipe sur ce cycle ; départager au hasard. Rien n'est persisté du tirage : il se rejoue entièrement depuis l'historique des sollicitations.
+4. Envoi d'un email par membre, portant un lien à jeton unique.
+5. Page de réponse épurée : les questions de l'envoi, quatre choix chacune, quelques secondes. Une seule soumission, indivisible - le jeton couvre l'envoi entier, pas question par question.
+6. Le jeton expire à l'échéance suivante. *Ce n'est plus l'agrégation qu'on protège - les réponses tardives tomberaient de toute façon dans la même période de calcul - mais la lisibilité du taux de participation, qui n'a de sens que rapporté à une échéance donnée.*
+7. Après validation, un simple remerciement. Aucun résultat n'est affiché à cette étape. Le jeton est consommé : revenir sur le lien affiche un message, jamais un formulaire modifiable (§5).
+8. Une échéance manquée - application arrêtée, SMTP indisponible - est **perdue, jamais rattrapée**. Envoyer d'un coup trois sollicitations en retard dessert davantage le critère de succès n°1 (§11) que de sauter un tour.
+
+Le coach suit le dispositif par deux lectures du taux de participation : sur la période de calcul affichée, qui se compare d'une période à l'autre, et sur la dernière échéance, qui dit la santé immédiate du dispositif - un effondrement à zéro y désigne une panne d'envoi, pas un désengagement.
 
 ## 9. Restitutions et droits
 
@@ -110,7 +119,7 @@ Détail complet du cycle de vie des comptes et de l'application de ces droits à
 |---|---|
 | Membre | Paliers de son équipe par thème, score global, badges des autres équipes, répartition détaillée de toutes les sessions de son équipe - voir divergence ci-dessous |
 | Coach | Tout sur ses équipes : répartitions brutes, tours de vote, historique des sessions, taux de participation au pouls, comparaison entre ses équipes (mur de badges) |
-| Manager d'équipe | Paliers par thème, taux d'approche, tendance. Ni répartition brute, ni détail question par question. Pouls en agrégats glissants uniquement - **différé, voir §10** |
+| Manager d'équipe | Paliers par thème, taux d'approche, tendance. Ni répartition brute, ni détail question par question. Le pouls y est fondu dans les mêmes périodes de calcul que les séances - **différé, voir §10** |
 | Direction | Paliers par thème agrégés au niveau entité, tendance de l'entité. Pas de mur de badges par équipe - voir divergence ci-dessous |
 
 **Divergence assumée (Membre).** Le filtre « des sessions auxquelles il a participé » est abandonné :
@@ -161,5 +170,6 @@ Par ordre de priorité :
 - Pondération des thèmes dans le score global (écarté de la v1, à réexaminer).
 - Pondération des équipes dans l'agrégation par entité (écarté de la v1, à réexaminer).
 - Valeur par défaut de X à recommander aux coachs.
-- Durée par défaut de la fenêtre glissante du pouls.
 - Nom du produit.
+
+*Fermé : « durée par défaut de la fenêtre glissante du pouls » - la fenêtre glissante elle-même est abandonnée, le pouls entre dans les périodes de calcul (§6).*
