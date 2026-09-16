@@ -1,10 +1,5 @@
 # Spécification fonctionnelle - Campagne de pouls
 
-> **État : cadrage produit tranché, conception en cours.** Ce document porte les décisions arrêtées
-> à l'ouverture de la [carte Campagne de pouls #67](https://github.com/arnaudbracchetti/agilometre/issues/67).
-> Les blocs **« À trancher »** signalent ce qui reste ouvert et renvoient au ticket qui le résout ;
-> ils disparaîtront avec ce bandeau quand la carte atteindra sa destination.
-
 Complète le [PRD](../PRD-maturite-agile.md) §8 (parcours du pouls), §4 (modèle de domaine), §5
 (anonymat) et §6 (fenêtres d'agrégation). Le pouls est le second dispositif de collecte : là où la
 [séance animée](deroulement-session-animee.md) réunit l'Équipe pour quelques Questions travaillées en
@@ -153,9 +148,26 @@ contrairement aux routes de polling d'une séance en direct
 ([ADR-0012](../../../docs/adr/0012-exoneration-throttler-routes-polling.md)), dont la fréquence était
 justifiée par le direct. Rien ici ne justifie un débit soutenu.
 
-> **À trancher** - contenu du gabarit markdown, forme de la page de réponse, formulation des trois
-> états d'échec et de l'écran de remerciement :
-> [#70](https://github.com/arnaudbracchetti/agilometre/issues/70).
+**Tranché ([#70](https://github.com/arnaudbracchetti/agilometre/issues/70))** : la page de réponse
+empile les N Questions de l'envoi sur un seul écran (quatre choix A/B/C/D chacune, même code
+couleur/lettre que le vote de séance animée), le bouton Valider restant désactivé tant qu'une
+Question n'a pas de réponse - cohérent avec « une soumission unique, indivisible ». **L'email et la
+page tutoient**, par exception délibérée au reste de l'application qui vouvoie : voix plus proche et
+engageante pour un dispositif récurrent dont le critère de succès n°1 (PRD §11) est le taux de
+réponse dans la durée - **pas une incohérence à corriger**. Formulations retenues, aucune ne nomme
+l'Équipe ni la Question :
+
+| État | Message | Détail |
+|---|---|---|
+| Jeton inconnu | Ce lien n'est pas valide. | Vérifie que tu as copié l'intégralité du lien reçu par email. |
+| Jeton expiré | Ce lien a expiré. | Une nouvelle sollicitation te parviendra à la prochaine échéance. |
+| Déjà honorée | Tu as déjà répondu à cette sollicitation. | Ta réponse est enregistrée - elle n'est pas modifiable. |
+| Remerciement | Merci ! | Ta réponse a été enregistrée. |
+
+L'écran de remerciement porte un lien générique vers `/connexion` (« Se connecter pour voir les
+résultats de ton équipe ») : la page ne sait jamais qui porte le Jeton, elle ne le résout pas pour
+construire ce lien - aucune tension avec l'anonymat. Conception complète, gabarit email inclus :
+[pouls-sollicitation-vue-membre.md](../../../docs/design/pouls-sollicitation-vue-membre.md).
 
 ## 5. Consolidation dans le temps
 
