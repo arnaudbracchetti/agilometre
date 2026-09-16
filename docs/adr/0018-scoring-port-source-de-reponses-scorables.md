@@ -35,3 +35,9 @@ consomme des Jetons.
 Le fond de cette décision est intact : `scoring/` ne connaît toujours que le port, ignore l'origine,
 et n'importe aucun module d'infrastructure. L'emplacement du composite des deux sources reste à la
 carte [#71](https://github.com/arnaudbracchetti/agilometre/issues/71).
+
+**Addendum (carte [#71](https://github.com/arnaudbracchetti/agilometre/issues/71)).** L'emplacement
+laissé ouvert ci-dessus est tranché par l'[ADR-0030](./0030-restitutions-periodiques-deux-branches-composees-jamais-une-requete-unifiee.md) :
+le composite vit dans les use cases de restitution périodique, et le port reste ignorant de
+l'origine, y compris pour l'affichage de la Composition - le compte par origine est pris **avant**
+que les deux branches ne soient fondues, jamais en ajoutant un champ `origine` à `ReponseScorable`.

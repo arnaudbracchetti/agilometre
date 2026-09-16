@@ -186,8 +186,15 @@ La représentation visuelle d'un Palier atteint sur un Thème - pas un objet dis
 **Portée**:
 L'ensemble de Réponses sur lequel porte un calcul de scoring : soit une Session donnée, soit une Période de calcul pour une Équipe ou une Entité. Les deux modes sont exclusifs - une Portée de Session ignore tout découpage temporel.
 
+**Effectif**:
+Le nombre de Réponses retenues sur une Portée, au grain Question, Thème ou global. Toujours le nombre de Réponses effectivement entrées dans le calcul, jamais le nombre de Membres attendus.
+
+**Composition**:
+La part de l'Effectif venant des Sessions et celle venant du Pouls. Ne change rien au calcul - Palier, Moyenne et Dispersion ignorent l'origine - mais reste affichée au Coach, qui a besoin de distinguer une baisse venue d'une séance tendue d'une baisse venue d'un pouls à trois répondants.
+_Avoid_: Répartition par origine (« répartition » est réservé à la répartition des Niveaux d'une Question)
+
 **Période de calcul**:
-L'intervalle calendaire contigu, de durée fixée pour toute l'instance et aligné sur le calendrier pour toutes les Équipes, qui sert de Portée aux restitutions synthétiques et à la Tendance.
+L'intervalle calendaire contigu, de durée fixée pour toute l'instance et aligné sur le calendrier pour toutes les Équipes, qui sert de Portée aux restitutions synthétiques et à la Tendance. Une Réponse y est rattachée par une règle propre à son origine : la date de la Session pour une Réponse de séance, l'instant où le Membre a répondu pour une Réponse de Pouls.
 
 **Lecture fine**:
 La restitution au grain Question - Moyenne, Dispersion et répartition des Niveaux - destinée au Coach et à l'Équipe pour situer les points à travailler. Complète le Palier, volontairement grossier, sans le remplacer.

@@ -161,7 +161,9 @@ justifiée par le direct. Rien ici ne justifie un débit soutenu.
 
 **Une seule mécanique temporelle pour tout le produit : la Période de calcul.** Les Réponses
 d'origine Pouls tombent dans les mêmes Périodes calendaires que celles des Sessions et s'y mélangent
-sans distinction d'origine.
+sans distinction d'origine : aucun Palier, aucune Moyenne ni aucune Dispersion n'est calculé par
+origine. Elles se mélangent dans le **calcul** ; elles restent distinguées dans le **compte**, seule
+concession à la lisibilité (voir la Composition, plus bas).
 
 La « fenêtre glissante configurable » annoncée par les premières versions du PRD est **abandonnée**.
 Deux découpages temporels concurrents auraient produit deux Paliers différents pour la même Équipe au
@@ -180,11 +182,32 @@ consomme des Jetons - il ne porte aucune règle sur la lecture des Réponses.
 nombre minimal de Réponses sur la Question, réglable au niveau de l'instance ; en deçà, l'effectif
 est affiché à la place. Le pouls rend ce cas nominal (une Question tirée pour une seule personne),
 mais la règle vaut pour toutes les Portées, Sessions comprises - voir
-[annexe Moteur de scoring](moteur-de-scoring.md).
+[annexe Moteur de scoring](moteur-de-scoring.md). Jamais livrée par l'Epic #10, elle fait l'objet
+d'une carte dédiée hors périmètre du Pouls :
+[#73](https://github.com/arnaudbracchetti/agilometre/issues/73).
 
-> **À trancher** - lisibilité de la composition d'un Palier, écran d'une Période sans Session,
-> reformulation des gardes qui ne consultent aujourd'hui que les Sessions closes, et emplacement du
-> composite : [#71](https://github.com/arnaudbracchetti/agilometre/issues/71).
+**Quel instant rattache une Réponse de Pouls à une Période.** Son **horodatage**, l'instant où le
+Membre a répondu : une Sollicitation envoyée le 30 juin et honorée le 2 juillet compte pour juillet.
+Ce n'est pas un choix mais une contrainte - l'anonymat interdit tout lien entre une Réponse et sa
+Sollicitation, donc la date d'envoi est hors d'atteinte
+([ADR-0029](../../../docs/adr/0029-rattachement-reponse-pouls-a-une-periode-par-horodatage.md)). Les
+deux origines sont donc bornées par deux instants différents : la date de la séance pour une Session,
+l'horodatage de la Réponse pour le Pouls.
+
+**Où se composent les deux origines.** Dans les use cases de restitution périodique
+(`obtenir-profil-equipe`, `obtenir-profil-entite`), qui tiennent les deux branches séparées avant de
+les fondre. La garde qui autorise le calcul de l'Évolution suit la même forme : la requête existante
+sur les Sessions closes est conservée et **complétée** d'une requête sur les Réponses de Pouls, pas
+remplacée par une requête unifiée qui ferait diverger la garde de la source
+([ADR-0030](../../../docs/adr/0030-restitutions-periodiques-deux-branches-composees-jamais-une-requete-unifiee.md)).
+C'est ce qui permet à une Équipe ne pratiquant que le pouls d'avoir enfin une Évolution et une
+navigation entre Périodes.
+
+**Ce que voit le Coach.** La **Composition** de l'effectif (part séance, part pouls) est affichée aux
+trois grains où l'effectif l'est déjà - Question, Thème, global - et **seulement quand les deux
+origines coexistent**, sous la forme « 8 réponses (5 séance, 3 pouls) ». Une Équipe qui ne fait que
+des séances voit donc ses écrans inchangés. Le bandeau de Période garde sa seule logique temporelle :
+pas d'état « Période sans Session », la composition se raconte au grain du Thème et de la Question.
 
 ## 6. Suivi du dispositif
 
