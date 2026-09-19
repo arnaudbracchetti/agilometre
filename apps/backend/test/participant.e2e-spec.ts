@@ -7,7 +7,7 @@ import {
   EquipeDto,
   InfoSessionParticipantDto,
   JetonSessionDto,
-  ModeleSessionDto,
+  ModeleCollecteDto,
   MoiParticipantDto,
   PilotageSessionDto,
   ProjectionSessionDto,
@@ -55,7 +55,7 @@ describe('Participant — jointure par Code (e2e)', () => {
     await prisma.sessionQuestionSautee.deleteMany();
     await prisma.session.deleteMany();
     await prisma.selectionItem.deleteMany();
-    await prisma.modeleSession.deleteMany();
+    await prisma.modeleCollecte.deleteMany();
     await prisma.equipe.deleteMany();
     await prisma.entite.deleteMany();
     await prisma.option.deleteMany();
@@ -115,13 +115,13 @@ describe('Participant — jointure par Code (e2e)', () => {
     return reponse.body as EquipeDto;
   }
 
-  async function creerModele(nom: string): Promise<ModeleSessionDto> {
+  async function creerModele(nom: string): Promise<ModeleCollecteDto> {
     const reponse = await request(app.getHttpServer())
-      .post('/api/modeles-session')
+      .post('/api/modeles-collecte')
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
-    return reponse.body as ModeleSessionDto;
+    return reponse.body as ModeleCollecteDto;
   }
 
   /**
@@ -136,7 +136,7 @@ describe('Participant — jointure par Code (e2e)', () => {
     const equipe = await creerEquipe(`Équipe Alpha${suffixe}`, entite.id);
     const modele = await creerModele(`Diagnostic${suffixe}`);
     await request(app.getHttpServer())
-      .post(`/api/modeles-session/${modele.id}/themes`)
+      .post(`/api/modeles-collecte/${modele.id}/themes`)
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: [questionId] })
       .expect(201);
@@ -146,7 +146,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
-        modeleSessionId: modele.id,
+        modeleCollecteId: modele.id,
       })
       .expect(201);
     return creation.body as SessionDto;
@@ -169,7 +169,7 @@ describe('Participant — jointure par Code (e2e)', () => {
     const equipe = await creerEquipe(`Équipe ${suffixe}`, entite.id);
     const modele = await creerModele(`Diagnostic ${suffixe}`);
     await request(app.getHttpServer())
-      .post(`/api/modeles-session/${modele.id}/themes`)
+      .post(`/api/modeles-collecte/${modele.id}/themes`)
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: [`qa${suffixe}`, `qb${suffixe}`] })
       .expect(201);
@@ -179,7 +179,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
-        modeleSessionId: modele.id,
+        modeleCollecteId: modele.id,
       })
       .expect(201);
     return creation.body as SessionDto;
@@ -226,7 +226,7 @@ describe('Participant — jointure par Code (e2e)', () => {
     const equipe = await creerEquipe(`Équipe ${suffixe}`, entite.id);
     const modele = await creerModele(`Diagnostic ${suffixe}`);
     await request(app.getHttpServer())
-      .post(`/api/modeles-session/${modele.id}/themes`)
+      .post(`/api/modeles-collecte/${modele.id}/themes`)
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds })
       .expect(201);
@@ -236,7 +236,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
-        modeleSessionId: modele.id,
+        modeleCollecteId: modele.id,
       })
       .expect(201);
     return creation.body as SessionDto;
@@ -821,7 +821,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       const equipe = await creerEquipe('Équipe E1', entite.id);
       const modele = await creerModele('Diagnostic E1');
       await request(app.getHttpServer())
-        .post(`/api/modeles-session/${modele.id}/themes`)
+        .post(`/api/modeles-collecte/${modele.id}/themes`)
         .set('Authorization', `Bearer ${jetonCoach}`)
         .send({ questionIds: ['qa', 'qb'] })
         .expect(201);
@@ -831,7 +831,7 @@ describe('Participant — jointure par Code (e2e)', () => {
         .send({
           equipeId: equipe.id,
           date: '2026-04-01',
-          modeleSessionId: modele.id,
+          modeleCollecteId: modele.id,
         })
         .expect(201);
       const session = creation.body as SessionDto;
@@ -891,7 +891,7 @@ describe('Participant — jointure par Code (e2e)', () => {
       const equipe = await creerEquipe('Équipe E2', entite.id);
       const modele = await creerModele('Diagnostic E2');
       await request(app.getHttpServer())
-        .post(`/api/modeles-session/${modele.id}/themes`)
+        .post(`/api/modeles-collecte/${modele.id}/themes`)
         .set('Authorization', `Bearer ${jetonCoach}`)
         .send({ questionIds: ['qa', 'qb'] })
         .expect(201);
@@ -901,7 +901,7 @@ describe('Participant — jointure par Code (e2e)', () => {
         .send({
           equipeId: equipe.id,
           date: '2026-04-01',
-          modeleSessionId: modele.id,
+          modeleCollecteId: modele.id,
         })
         .expect(201);
       const session = creation.body as SessionDto;

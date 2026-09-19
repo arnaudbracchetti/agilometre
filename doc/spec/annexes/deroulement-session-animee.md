@@ -2,7 +2,7 @@
 
 Détaille le parcours « séance animée » que le [PRD](../PRD-maturite-agile.md) décrit à un niveau
 narratif (§5 Anonymat, §7 Parcours, §9 Restitutions, §10 Contraintes techniques). Complète
-[modeles-de-session.md](modeles-de-session.md), qui couvre la préparation d'une Session
+[modeles-de-collecte.md](modeles-de-collecte.md), qui couvre la préparation d'une Session
 (sélection de questions) et renvoie explicitement l'écran de pilotage de séance en direct à un
 document séparé (§"Hors périmètre", ligne 96-97) — c'est cette annexe. Vocabulaire : voir
 [CONTEXT.md](../../../CONTEXT.md) ; les termes nouveaux introduits ici (Jeton de session, Question
@@ -42,7 +42,7 @@ faire via une session `/ddd` dédiée (Epic #30 « Vote en séance »).
   régénéré. Deux Sessions closes à des dates différentes peuvent avoir eu le même Code.
 - L'ouverture **verrouille immédiatement la Sélection** (`Session.verrouillee = true`), avant
   même l'ouverture du premier Tour de vote. Ceci précise et remplace la règle énoncée dans
-  [modeles-de-session.md:74-77](modeles-de-session.md), qui plaçait ce verrouillage au premier
+  [modeles-de-collecte.md:74-77](modeles-de-collecte.md), qui plaçait ce verrouillage au premier
   Tour — décision affinée par ce grilling, la Sélection ne doit plus bouger dès que des
   participants peuvent commencer à rejoindre.
 - Une Session `OUVERTE` sans activité ne connaît **aucune expiration automatique** — seule une
@@ -96,7 +96,7 @@ faire via une session `/ddd` dédiée (Epic #30 « Vote en séance »).
 - Une Question sautée reste visible dans la Session et son historique (trace qu'elle était
   prévue), mais n'attend plus de résultat et est **exclue du score global de la Session**.
 - Le « mode annulation seule » mentionné dans
-  [modeles-de-session.md](modeles-de-session.md) désigne ce marquage — pas une annulation
+  [modeles-de-collecte.md](modeles-de-collecte.md) désigne ce marquage — pas une annulation
   globale de la Session, qui n'existe pas dans cet Epic.
 - **Terminer la séance prématurément** (action du Coach, à tout moment) marque automatiquement
   toutes les Questions restantes comme sautées et amène directement à l'écran de synthèse — pas

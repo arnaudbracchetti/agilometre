@@ -1,6 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { GenerateurDeCode } from './domain/generateur-de-code';
-import { Selection } from './domain/selection';
+import { Selection } from '../modele-collecte/domain/selection';
 import { Session } from './domain/session';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
 import { PasserQuestionSuivanteSession } from './application/passer-question-suivante-session.usecase';

@@ -36,7 +36,7 @@ describe('CreerPage', () => {
     fixture = TestBed.createComponent(CreerPage);
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites').flush([{ id: 'ent1', nom: 'DSI' }]);
-    httpMock.expectOne('/api/modeles-session').flush([
+    httpMock.expectOne('/api/modeles-collecte').flush([
       {
         id: 'm1',
         nom: 'Diagnostic',
@@ -70,7 +70,7 @@ describe('CreerPage', () => {
   it('onModeleChange — charge l’aperçu en lecture seule du Modèle choisi', () => {
     fixture.componentInstance['onModeleChange']('m1');
 
-    const req = httpMock.expectOne('/api/modeles-session/m1');
+    const req = httpMock.expectOne('/api/modeles-collecte/m1');
     expect(req.request.method).toBe('GET');
     req.flush({
       id: 'm1',
@@ -93,14 +93,14 @@ describe('CreerPage', () => {
     fixture.componentInstance['onEntiteChange']('ent1');
     httpMock.expectOne('/api/organisation/entites/ent1/equipes').flush([]);
     fixture.componentInstance['equipeId'].set('e1');
-    fixture.componentInstance['modeleSessionId'].set('m1');
+    fixture.componentInstance['modeleCollecteId'].set('m1');
 
     expect(fixture.componentInstance['formulaireValide']()).toBe(true);
   });
 
   it('creer — crée la Session, ferme le modal puis navigue vers /sessions/:id', () => {
     fixture.componentInstance['equipeId'].set('e1');
-    fixture.componentInstance['modeleSessionId'].set('m1');
+    fixture.componentInstance['modeleCollecteId'].set('m1');
     fixture.componentInstance['date'].set(new Date('2026-04-01T00:00:00.000Z'));
 
     const router = TestBed.inject(Router);
@@ -113,7 +113,7 @@ describe('CreerPage', () => {
     expect(req.request.body).toEqual({
       equipeId: 'e1',
       date: '2026-04-01T00:00:00.000Z',
-      modeleSessionId: 'm1',
+      modeleCollecteId: 'm1',
     });
     req.flush({
       id: 's1',
@@ -121,7 +121,7 @@ describe('CreerPage', () => {
       equipeNom: 'Alpha',
       date: '2026-04-01T00:00:00.000Z',
       statut: 'OUVERTE',
-      modeleSessionId: 'm1',
+      modeleCollecteId: 'm1',
       verrouillee: false,
       selection: [],
     });
@@ -132,7 +132,7 @@ describe('CreerPage', () => {
 
   it('affiche un message d’erreur si la création échoue', () => {
     fixture.componentInstance['equipeId'].set('e1');
-    fixture.componentInstance['modeleSessionId'].set('m1');
+    fixture.componentInstance['modeleCollecteId'].set('m1');
     fixture.componentInstance['date'].set(new Date('2026-04-01T00:00:00.000Z'));
 
     const message = TestBed.inject(NzMessageService);

@@ -36,7 +36,7 @@ interface EntreeCouvertureTheme {
 
 /**
  * Écran double-liste (arbre du Référentiel à gauche, Sélection réordonnable à droite), partagé
- * entre le composer d'un Modèle de session et l'ajustement de la Sélection d'une Session — même
+ * entre le composer d'un Modèle de collecte et l'ajustement de la Sélection d'une Session — même
  * interaction, deux consommateurs distincts qui persistent chacun à leur propre endpoint (le
  * composant ne fait lui-même aucun appel HTTP, il ne fait qu'émettre des intentions).
  * `verrouillee` désactive l'ajout et le réordonnancement (reflète `Session.estVerrouillee()`),

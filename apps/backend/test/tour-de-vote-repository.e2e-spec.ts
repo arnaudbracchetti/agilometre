@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { PrismaService } from './../src/prisma/prisma.service';
 import { PrismaTourDeVoteRepository } from './../src/session/infrastructure/prisma-tour-de-vote.repository';
 import { GenerateurDeCode } from './../src/session/domain/generateur-de-code';
-import { Selection } from './../src/session/domain/selection';
+import { Selection } from './../src/modele-collecte/domain/selection';
 import { Session } from './../src/session/domain/session';
 import { PrismaSessionRepository } from './../src/session/infrastructure/prisma-session.repository';
 import { Reponse } from './../src/reponse/domain/reponse';

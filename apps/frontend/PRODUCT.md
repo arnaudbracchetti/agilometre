@@ -8,12 +8,12 @@ web
 
 ## Users
 
-- **Coach / consultant** (primary user of most screens) — anime les séances (projection + pilotage), configure les campagnes de pouls, gère l'organisation (entités/équipes) et les modèles de session, exploite le grain fin (répartitions brutes, tours de vote, historique). Le seul rôle avec compte "riche".
+- **Coach / consultant** (primary user of most screens) — anime les séances (projection + pilotage), configure les campagnes de pouls, gère l'organisation (entités/équipes) et les modèles de collecte, exploite le grain fin (répartitions brutes, tours de vote, historique). Le seul rôle avec compte "riche".
 - **Membre d'équipe** — vote en séance depuis son téléphone/PC (code éphémère, sans compte) et répond au pouls depuis un lien à jeton reçu par email. Consulte les paliers de sa propre équipe par thème, le score global, les badges des autres équipes.
 - **Manager d'équipe** — suit paliers, taux d'approche et tendance de son équipe. Jamais la répartition brute ni le détail question par question. Pouls en agrégats glissants uniquement.
 - **Direction / sponsor** — suit les paliers agrégés au niveau entité, mur de badges des équipes. Pas de vue équipe par équipe.
 
-État actuel de l'implémentation (`app.routes.ts`) : les parcours coach (organisation, modèles de session, sessions : bibliothèque/création/ajustement/pilotage) et les parcours participant (vote, projection) existent. Les trois vues de restitution manager/direction (profil par thème, tendance, mur de badges) ne sont pas encore construites comme routes.
+État actuel de l'implémentation (`app.routes.ts`) : les parcours coach (organisation, modèles de collecte, sessions : bibliothèque/création/ajustement/pilotage) et les parcours participant (vote, projection) existent. Les trois vues de restitution manager/direction (profil par thème, tendance, mur de badges) ne sont pas encore construites comme routes.
 
 ## Product Purpose
 

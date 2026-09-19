@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Periode } from '../../scoring/domain/scoring';
 import type { GenerateurDeCode } from '../domain/generateur-de-code';
-import { Selection } from '../domain/selection';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { CryptoGenerateurDeCode } from './crypto-generateur-de-code';
@@ -52,7 +52,7 @@ export class PrismaSessionRepository implements SessionRepository {
       row.equipeId,
       row.date,
       row.statut,
-      row.modeleSessionId,
+      row.modeleCollecteId,
       Selection.reconstituer(row.items.map((item) => item.questionId)),
       row.code,
       row.indexCourant,
@@ -104,7 +104,7 @@ export class PrismaSessionRepository implements SessionRepository {
           code: session.code,
           ouvertureLe: session.ouvertureLe,
           indexCourant: session.indexCourant,
-          modeleSessionId: session.modeleSessionId,
+          modeleCollecteId: session.modeleCollecteId,
         },
         update: {
           equipeId: session.equipeId,
@@ -113,12 +113,12 @@ export class PrismaSessionRepository implements SessionRepository {
           code: session.code,
           ouvertureLe: session.ouvertureLe,
           indexCourant: session.indexCourant,
-          modeleSessionId: session.modeleSessionId,
+          modeleCollecteId: session.modeleCollecteId,
         },
       });
 
       // SessionSelectionItem ne porte aucune donnée propre au-delà de questionId/ordre : même
-      // raisonnement que PrismaModeleSessionRepository.save, supprimer/recréer en bloc est plus
+      // raisonnement que PrismaModeleCollecteRepository.save, supprimer/recréer en bloc est plus
       // simple qu'un diff, à coût négligeable.
       await tx.sessionSelectionItem.deleteMany({
         where: { sessionId: session.id },

@@ -1,0 +1,22 @@
+  <div class="composer">
+    <header class="composer__entete">
+      <input
+        nz-input
+        id="nomRenomme"
+        name="nomRenomme"
+        class="composer__titre-input"
+        [ngModel]="nomRenomme()"
+        (ngModelChange)="onNomModifie($event)"
+      />
+      <a nz-button nzType="default" routerLink="/modeles-collecte">Retour à la bibliothèque</a>
+    </header>
+
+    <app-selection-editor
+      [themes]="themes()"
+      [selection]="selection()"
+      (ajouterQuestion)="onAjouterQuestion($event)"
+      (ajouterTheme)="onAjouterTheme($event)"
+      (retirerQuestion)="onRetirerQuestion($event)"
+      (reordonnerQuestion)="onReordonnerQuestion($event)"
+    />
+  </div>

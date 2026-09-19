@@ -72,7 +72,7 @@ describe('BibliothequePage (Sessions)', () => {
         statut: 'OUVERTE',
         verrouillee: false,
         nbQuestions: 3,
-        modeleSessionNom: 'Diagnostic complet',
+        modeleCollecteNom: 'Diagnostic complet',
       },
     ]);
     fixture.detectChanges();
@@ -81,7 +81,7 @@ describe('BibliothequePage (Sessions)', () => {
     expect(fixture.nativeElement.textContent).toContain('Diagnostic complet');
   });
 
-  it('affiche "Modèle supprimé" quand modeleSessionNom est null', () => {
+  it('affiche "Modèle supprimé" quand modeleCollecteNom est null', () => {
     const fixture = TestBed.createComponent(BibliothequePage);
     fixture.detectChanges();
 
@@ -93,7 +93,7 @@ describe('BibliothequePage (Sessions)', () => {
         statut: 'CLOTUREE',
         verrouillee: false,
         nbQuestions: 1,
-        modeleSessionNom: null,
+        modeleCollecteNom: null,
       },
     ]);
     fixture.detectChanges();
@@ -114,7 +114,7 @@ describe('BibliothequePage (Sessions)', () => {
       statut: StatutSession.Ouverte,
       verrouillee: false,
       nbQuestions: 1,
-      modeleSessionNom: 'M',
+      modeleCollecteNom: 'M',
     };
 
     expect(fixture.componentInstance['estSupprimable'](ligneOuverte)).toBe(true);
@@ -140,7 +140,7 @@ describe('BibliothequePage (Sessions)', () => {
         statut: 'OUVERTE',
         verrouillee: false,
         nbQuestions: 1,
-        modeleSessionNom: 'M',
+        modeleCollecteNom: 'M',
       },
     ]);
     fixture.detectChanges();
@@ -205,7 +205,7 @@ describe('BibliothequePage (Sessions)', () => {
         statut: 'PREPAREE',
         verrouillee: false,
         nbQuestions: 1,
-        modeleSessionNom: 'M',
+        modeleCollecteNom: 'M',
       },
     ]);
     fixture.detectChanges();
@@ -227,7 +227,7 @@ describe('BibliothequePage (Sessions)', () => {
       entiteId: 'ent1',
       date: '2026-04-01T00:00:00.000Z',
       statut: 'OUVERTE',
-      modeleSessionId: 'm1',
+      modeleCollecteId: 'm1',
       verrouillee: true,
       code: '1234',
       selection: [],
@@ -247,7 +247,7 @@ describe('BibliothequePage (Sessions)', () => {
         statut: 'OUVERTE',
         verrouillee: true,
         nbQuestions: 1,
-        modeleSessionNom: 'M',
+        modeleCollecteNom: 'M',
       },
     ]);
     fixture.detectChanges();
@@ -267,7 +267,7 @@ describe('BibliothequePage (Sessions)', () => {
         statut: 'CLOTUREE',
         verrouillee: true,
         nbQuestions: 1,
-        modeleSessionNom: 'M',
+        modeleCollecteNom: 'M',
       },
     ]);
     fixture.detectChanges();
@@ -311,7 +311,7 @@ describe('BibliothequePage (Sessions)', () => {
     const trier = fixture.componentInstance['trierParModele'] as (a: unknown, b: unknown) => number;
 
     expect(
-      trier({ modeleSessionNom: null }, { modeleSessionNom: 'Diagnostic complet' }),
+      trier({ modeleCollecteNom: null }, { modeleCollecteNom: 'Diagnostic complet' }),
     ).toBeLessThan(0);
   });
 
@@ -326,7 +326,7 @@ describe('BibliothequePage (Sessions)', () => {
         statut: 'OUVERTE',
         verrouillee: false,
         nbQuestions: 1,
-        modeleSessionNom: 'Diagnostic complet',
+        modeleCollecteNom: 'Diagnostic complet',
       },
       {
         id: 's2',
@@ -335,7 +335,7 @@ describe('BibliothequePage (Sessions)', () => {
         statut: 'OUVERTE',
         verrouillee: false,
         nbQuestions: 1,
-        modeleSessionNom: 'Pouls rapide',
+        modeleCollecteNom: 'Pouls rapide',
       },
     ]);
     fixture.detectChanges();
@@ -358,7 +358,7 @@ describe('BibliothequePage (Sessions)', () => {
         statut: 'OUVERTE',
         verrouillee: false,
         nbQuestions: 1,
-        modeleSessionNom: 'M',
+        modeleCollecteNom: 'M',
       },
     ]);
     fixture.detectChanges();

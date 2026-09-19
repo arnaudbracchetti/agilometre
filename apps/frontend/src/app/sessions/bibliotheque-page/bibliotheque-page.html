@@ -53,7 +53,7 @@
             </nz-tag>
           </td>
           <td><span class="bibliotheque__mesure">{{ ligne.nbQuestions }}</span></td>
-          <td nzEllipsis>{{ ligne.modeleSessionNom ?? 'Modèle supprimé' }}</td>
+          <td nzEllipsis>{{ ligne.modeleCollecteNom ?? 'Modèle supprimé' }}</td>
           <td class="bibliotheque__actions" (click)="$event.stopPropagation()">
             @if (ligne.statut === 'PREPAREE') {
               <button

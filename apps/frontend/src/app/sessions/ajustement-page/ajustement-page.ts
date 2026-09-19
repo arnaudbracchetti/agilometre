@@ -11,15 +11,15 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import {
   EntiteDto,
   EquipeDto,
-  LigneBibliothequeModeleSessionDto,
+  LigneBibliothequeModeleCollecteDto,
   SelectionQuestionDto,
   SessionDto,
   ThemeReferentielDto,
 } from '@agilometre/shared';
 import { SelectionEditor } from '../../shared/selection-editor/selection-editor';
 import { OrganisationService } from '../../organisation/organisation.service';
-import { ModelesSessionService } from '../../modeles-session/modeles-session.service';
-import { ReferentielService } from '../../modeles-session/referentiel.service';
+import { ModelesCollecteService } from '../../modeles-collecte/modeles-collecte.service';
+import { ReferentielService } from '../../modeles-collecte/referentiel.service';
 import { SessionsService } from '../sessions.service';
 
 @Component({
@@ -42,7 +42,7 @@ export class AjustementPage implements OnInit {
   private readonly router = inject(Router);
   private readonly sessionsService = inject(SessionsService);
   private readonly organisationService = inject(OrganisationService);
-  private readonly modelesSessionService = inject(ModelesSessionService);
+  private readonly modelesCollecteService = inject(ModelesCollecteService);
   private readonly referentielService = inject(ReferentielService);
   private readonly message = inject(NzMessageService);
   private readonly modal = inject(NzModalService);
@@ -52,7 +52,7 @@ export class AjustementPage implements OnInit {
   protected readonly entiteId = signal<string | null>(null);
   protected readonly equipeId = signal<string | null>(null);
   protected readonly date = signal<Date | null>(null);
-  protected readonly modeleSessionId = signal<string | null>(null);
+  protected readonly modeleCollecteId = signal<string | null>(null);
   protected readonly statut = signal<SessionDto['statut'] | null>(null);
   protected readonly verrouillee = signal(false);
   protected readonly code = signal<string | null>(null);
@@ -62,7 +62,7 @@ export class AjustementPage implements OnInit {
 
   protected readonly entites = signal<EntiteDto[]>([]);
   protected readonly equipesDeLEntite = signal<EquipeDto[]>([]);
-  protected readonly modeles = signal<LigneBibliothequeModeleSessionDto[]>([]);
+  protected readonly modeles = signal<LigneBibliothequeModeleCollecteDto[]>([]);
   protected readonly chargementEquipesEnCours = signal(false);
 
   /** Équipe, Date et Modèle ne sont modifiables que tant qu'aucune réponse n'a été reçue et que la Session n'est pas clôturée. */
@@ -85,7 +85,7 @@ export class AjustementPage implements OnInit {
       referentiel: this.referentielService.obtenirReferentielActif(),
       session: this.sessionsService.obtenir(id),
       entites: this.organisationService.listerEntites(),
-      modeles: this.modelesSessionService.listerBibliotheque(),
+      modeles: this.modelesCollecteService.listerBibliotheque(),
     }).subscribe({
       next: ({ referentiel, session, entites, modeles }) => {
         this.themes.set(referentiel.themes);
@@ -123,7 +123,7 @@ export class AjustementPage implements OnInit {
     this.entiteId.set(session.entiteId);
     this.equipeId.set(session.equipeId);
     this.date.set(new Date(session.date));
-    this.modeleSessionId.set(session.modeleSessionId);
+    this.modeleCollecteId.set(session.modeleCollecteId);
     this.statut.set(session.statut);
     this.verrouillee.set(session.verrouillee);
     this.code.set(session.code);
@@ -162,24 +162,24 @@ export class AjustementPage implements OnInit {
     });
   }
 
-  protected onModeleChange(nouveauModeleSessionId: string | null): void {
-    const modeleActuel = this.modeleSessionId();
-    if (!nouveauModeleSessionId || nouveauModeleSessionId === modeleActuel) {
+  protected onModeleChange(nouveauModeleCollecteId: string | null): void {
+    const modeleActuel = this.modeleCollecteId();
+    if (!nouveauModeleCollecteId || nouveauModeleCollecteId === modeleActuel) {
       return;
     }
     this.modal.confirm({
-      nzTitle: 'Changer de Modèle de session ?',
+      nzTitle: 'Changer de Modèle de collecte ?',
       nzContent:
         'La Sélection de Questions sera entièrement réinitialisée avec celle du nouveau Modèle. Toute modification manuelle déjà faite sur la Sélection actuelle sera perdue.',
       nzOkText: 'Changer le Modèle',
       nzOkDanger: true,
       nzCancelText: 'Annuler',
-      nzOnOk: () => this.persisterChangementModele(nouveauModeleSessionId),
+      nzOnOk: () => this.persisterChangementModele(nouveauModeleCollecteId),
     });
   }
 
-  private persisterChangementModele(modeleSessionId: string): void {
-    this.sessionsService.changerModele(this.requireId(), modeleSessionId).subscribe({
+  private persisterChangementModele(modeleCollecteId: string): void {
+    this.sessionsService.changerModele(this.requireId(), modeleCollecteId).subscribe({
       next: (session) => this.appliquerSession(session),
       error: () => this.message.error('Impossible de changer le Modèle de cette Session.'),
     });

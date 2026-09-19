@@ -9,12 +9,12 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import {
   EntiteDto,
   EquipeDto,
-  LigneBibliothequeModeleSessionDto,
-  ModeleSessionDto,
+  LigneBibliothequeModeleCollecteDto,
+  ModeleCollecteDto,
   SelectionQuestionDto,
 } from '@agilometre/shared';
 import { OrganisationService } from '../../organisation/organisation.service';
-import { ModelesSessionService } from '../../modeles-session/modeles-session.service';
+import { ModelesCollecteService } from '../../modeles-collecte/modeles-collecte.service';
 import { SessionsService } from '../sessions.service';
 import { DialogActions } from '../../shared/dialog-actions/dialog-actions';
 import { couleurCategorielle } from '../../shared/couleur-categorielle';
@@ -35,7 +35,7 @@ interface GroupeApercuTheme {
 })
 export class CreerPage implements OnInit {
   private readonly organisationService = inject(OrganisationService);
-  private readonly modelesSessionService = inject(ModelesSessionService);
+  private readonly modelesCollecteService = inject(ModelesCollecteService);
   private readonly sessionsService = inject(SessionsService);
   private readonly message = inject(NzMessageService);
   private readonly router = inject(Router);
@@ -43,19 +43,19 @@ export class CreerPage implements OnInit {
 
   protected readonly entites = signal<EntiteDto[]>([]);
   protected readonly equipesDeLEntite = signal<EquipeDto[]>([]);
-  protected readonly modeles = signal<LigneBibliothequeModeleSessionDto[]>([]);
-  protected readonly apercuModele = signal<ModeleSessionDto | null>(null);
+  protected readonly modeles = signal<LigneBibliothequeModeleCollecteDto[]>([]);
+  protected readonly apercuModele = signal<ModeleCollecteDto | null>(null);
 
   protected readonly entiteId = signal<string | null>(null);
   protected readonly equipeId = signal<string | null>(null);
   protected readonly date = signal<Date | null>(new Date());
-  protected readonly modeleSessionId = signal<string | null>(null);
+  protected readonly modeleCollecteId = signal<string | null>(null);
 
   protected readonly creationEnCours = signal(false);
   protected readonly chargementEquipesEnCours = signal(false);
 
   protected readonly formulaireValide = computed(
-    () => this.equipeId() !== null && this.date() !== null && this.modeleSessionId() !== null,
+    () => this.equipeId() !== null && this.date() !== null && this.modeleCollecteId() !== null,
   );
 
   protected readonly groupesApercu = computed<GroupeApercuTheme[]>(() => {
@@ -78,7 +78,7 @@ export class CreerPage implements OnInit {
 
   ngOnInit(): void {
     this.organisationService.listerEntites().subscribe((entites) => this.entites.set(entites));
-    this.modelesSessionService.listerBibliotheque().subscribe((modeles) => this.modeles.set(modeles));
+    this.modelesCollecteService.listerBibliotheque().subscribe((modeles) => this.modeles.set(modeles));
   }
 
   protected annuler(): void {
@@ -105,13 +105,13 @@ export class CreerPage implements OnInit {
     });
   }
 
-  protected onModeleChange(modeleSessionId: string | null): void {
-    this.modeleSessionId.set(modeleSessionId);
+  protected onModeleChange(modeleCollecteId: string | null): void {
+    this.modeleCollecteId.set(modeleCollecteId);
     this.apercuModele.set(null);
-    if (!modeleSessionId) {
+    if (!modeleCollecteId) {
       return;
     }
-    this.modelesSessionService.obtenirModele(modeleSessionId).subscribe({
+    this.modelesCollecteService.obtenirModele(modeleCollecteId).subscribe({
       next: (modele) => this.apercuModele.set(modele),
       error: () => this.message.error('Impossible de charger l’aperçu de ce Modèle.'),
     });
@@ -120,12 +120,12 @@ export class CreerPage implements OnInit {
   protected creer(): void {
     const equipeId = this.equipeId();
     const date = this.date();
-    const modeleSessionId = this.modeleSessionId();
-    if (!equipeId || !date || !modeleSessionId) {
+    const modeleCollecteId = this.modeleCollecteId();
+    if (!equipeId || !date || !modeleCollecteId) {
       return;
     }
     this.creationEnCours.set(true);
-    this.sessionsService.creer(equipeId, date.toISOString(), modeleSessionId).subscribe({
+    this.sessionsService.creer(equipeId, date.toISOString(), modeleCollecteId).subscribe({
       next: (session) => {
         this.modalRef.close();
         this.router.navigate(['/sessions', session.id]);

@@ -6,7 +6,7 @@ import {
   EntiteDto,
   EquipeDto,
   JetonSessionDto,
-  ModeleSessionDto,
+  ModeleCollecteDto,
   ProfilEntiteDto,
   SessionDto,
 } from '@agilometre/shared';
@@ -64,7 +64,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
     await prisma.sessionQuestionSautee.deleteMany();
     await prisma.session.deleteMany();
     await prisma.selectionItem.deleteMany();
-    await prisma.modeleSession.deleteMany();
+    await prisma.modeleCollecte.deleteMany();
     await prisma.equipe.deleteMany();
     await prisma.entite.deleteMany();
     await prisma.option.deleteMany();
@@ -117,13 +117,13 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
     return reponse.body as EquipeDto;
   }
 
-  async function creerModele(nom: string): Promise<ModeleSessionDto> {
+  async function creerModele(nom: string): Promise<ModeleCollecteDto> {
     const reponse = await request(app.getHttpServer())
-      .post('/api/modeles-session')
+      .post('/api/modeles-collecte')
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
-    return reponse.body as ModeleSessionDto;
+    return reponse.body as ModeleCollecteDto;
   }
 
   /** Crée, ouvre, fait voter un jeton sur q1 au Niveau `niveau`, clôt le Tour puis termine la Session. */
@@ -136,7 +136,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
       .set('Authorization', `Bearer ${jetonCoach}`)
-      .send({ equipeId, date, modeleSessionId: modeleId })
+      .send({ equipeId, date, modeleCollecteId: modeleId })
       .expect(201);
     const sessionPreparee = creation.body as SessionDto;
     const ouverture = await request(app.getHttpServer())
@@ -175,7 +175,7 @@ describe('Palier agrégé d’une Entité (e2e)', () => {
 
   async function ajouterThemeAuModele(modeleId: string): Promise<void> {
     await request(app.getHttpServer())
-      .post(`/api/modeles-session/${modeleId}/themes`)
+      .post(`/api/modeles-collecte/${modeleId}/themes`)
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1'] })
       .expect(201);

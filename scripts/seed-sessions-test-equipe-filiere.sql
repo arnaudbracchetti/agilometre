@@ -39,16 +39,16 @@ BEGIN
 
   -- Modèle de session, avec 5 questions par Thème si créé ici. Suppose le Référentiel déjà
   -- importé (Thème/Question sont un bounded context séparé, pas créé par ce script).
-  SELECT id INTO v_modele_id FROM "ModeleSession" WHERE lower(nom) = lower(v_modele_nom);
+  SELECT id INTO v_modele_id FROM "ModeleCollecte" WHERE lower(nom) = lower(v_modele_nom);
   IF v_modele_id IS NULL THEN
     IF NOT EXISTS (SELECT 1 FROM "Theme" WHERE "retireLe" IS NULL) THEN
       RAISE EXCEPTION 'Aucun Thème en base : importer le Référentiel avant ce script (scripts/import-referentiel.sh)';
     END IF;
 
     v_modele_id := gen_random_uuid()::text;
-    INSERT INTO "ModeleSession" (id, nom, "updatedAt") VALUES (v_modele_id, v_modele_nom, now());
+    INSERT INTO "ModeleCollecte" (id, nom, "updatedAt") VALUES (v_modele_id, v_modele_nom, now());
 
-    INSERT INTO "SelectionItem" (id, "modeleSessionId", "questionId", "ordre")
+    INSERT INTO "SelectionItem" (id, "modeleCollecteId", "questionId", "ordre")
     SELECT gen_random_uuid()::text, v_modele_id, q.id, row_number() OVER (ORDER BY t.ordre, q.ordre)
     FROM "Theme" t
     JOIN LATERAL (
@@ -65,11 +65,11 @@ BEGIN
     v_session_id := gen_random_uuid()::text;
     v_code := (1000 + floor(random() * 9000))::int::text;
 
-    INSERT INTO "Session" (id, "equipeId", date, statut, code, "ouvertureLe", "indexCourant", "modeleSessionId")
+    INSERT INTO "Session" (id, "equipeId", date, statut, code, "ouvertureLe", "indexCourant", "modeleCollecteId")
     VALUES (v_session_id, v_equipe_id, v_date, 'CLOTUREE', v_code, v_date, 12, v_modele_id);
 
     FOR v_item IN
-      SELECT "questionId", "ordre" FROM "SelectionItem" WHERE "modeleSessionId" = v_modele_id ORDER BY "ordre"
+      SELECT "questionId", "ordre" FROM "SelectionItem" WHERE "modeleCollecteId" = v_modele_id ORDER BY "ordre"
     LOOP
       INSERT INTO "SessionSelectionItem" (id, "sessionId", "questionId", "ordre")
       VALUES (gen_random_uuid()::text, v_session_id, v_item."questionId", v_item."ordre");

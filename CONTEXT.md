@@ -70,7 +70,7 @@ _Avoid_: Management, pour désigner le Rôle Direction - vocabulaire oral rencon
 
 **Modèle de collecte**:
 Une Sélection de Questions nommée, indépendante de toute Équipe, que le Coach compose et réutilise. Sert les deux dispositifs de collecte : une Session en copie la Sélection pour dérouler ses Tours de vote, une Campagne de pouls en copie la Sélection pour définir son Panel. Librement supprimable, y compris après avoir servi - aucun lien retour vers ce qui en est issu.
-_Avoid_: Modèle de session (nom porté tant que le concept ne servait que la séance animée ; le code dit encore `ModeleSession` jusqu'à résolution du périmètre de renommage). Template, Template de session (anglicisme utilisé en discussion, écarté au profit d'un glossaire 100% français)
+_Avoid_: Modèle de session (nom porté tant que le concept ne servait que la séance animée). Template, Template de session (anglicisme utilisé en discussion, écarté au profit d'un glossaire 100% français)
 
 **Sélection**:
 Une liste ordonnée de Questions. Un Modèle de collecte porte sa propre Sélection, librement modifiable. Une Session, comme une Campagne de pouls, en reçoit une copie figée au moment de sa création - sans lien vivant vers le Modèle d'origine.

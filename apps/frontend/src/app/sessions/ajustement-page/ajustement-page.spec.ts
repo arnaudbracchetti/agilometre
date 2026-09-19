@@ -37,7 +37,7 @@ const sessionFixture = {
   entiteId: 'ent1',
   date: '2026-04-01T00:00:00.000Z',
   statut: 'OUVERTE',
-  modeleSessionId: 'm1',
+  modeleCollecteId: 'm1',
   verrouillee: false,
   code: '123456',
   selection: [{ questionId: 'q1', libelle: 'Question 1', themeId: 't1', themeLibelle: 'Thème A' }],
@@ -89,7 +89,7 @@ describe('AjustementPage', () => {
     httpMock.expectOne('/api/referentiel').flush(referentielFixture);
     httpMock.expectOne('/api/sessions/s1').flush(sessionFixture);
     httpMock.expectOne('/api/organisation/entites').flush(entitesFixture);
-    httpMock.expectOne('/api/modeles-session').flush(modelesFixture);
+    httpMock.expectOne('/api/modeles-collecte').flush(modelesFixture);
     fixture.detectChanges();
     httpMock.expectOne('/api/organisation/entites/ent1/equipes').flush(equipesFixture);
     fixture.detectChanges();
@@ -103,7 +103,7 @@ describe('AjustementPage', () => {
     expect(fixture.componentInstance['equipeNom']()).toBe('Équipe Alpha');
     expect(fixture.componentInstance['entiteId']()).toBe('ent1');
     expect(fixture.componentInstance['equipeId']()).toBe('e1');
-    expect(fixture.componentInstance['modeleSessionId']()).toBe('m1');
+    expect(fixture.componentInstance['modeleCollecteId']()).toBe('m1');
     expect(fixture.componentInstance['statut']()).toBe('OUVERTE');
     expect(fixture.componentInstance['selection']()).toHaveLength(1);
     expect(fixture.componentInstance['equipesDeLEntite']()).toEqual(equipesFixture);

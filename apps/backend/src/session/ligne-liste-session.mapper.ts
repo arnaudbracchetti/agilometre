@@ -12,6 +12,6 @@ export function versLigneListeSessionDto(
     statut: STATUT_VERS_DTO[ligne.statut],
     verrouillee: ligne.verrouillee,
     nbQuestions: ligne.nbQuestions,
-    modeleSessionNom: ligne.modeleSessionNom,
+    modeleCollecteNom: ligne.modeleCollecteNom,
   };
 }

@@ -52,7 +52,7 @@ export class BibliothequePage implements OnInit {
     return this.lignes().filter(
       (ligne) =>
         ligne.equipeNom.toLowerCase().includes(terme) ||
-        (ligne.modeleSessionNom ?? '').toLowerCase().includes(terme),
+        (ligne.modeleCollecteNom ?? '').toLowerCase().includes(terme),
     );
   });
 
@@ -66,7 +66,7 @@ export class BibliothequePage implements OnInit {
     a.nbQuestions - b.nbQuestions;
 
   protected readonly trierParModele: NzTableSortFn<LigneListeSessionDto> = (a, b) =>
-    (a.modeleSessionNom ?? '').localeCompare(b.modeleSessionNom ?? '');
+    (a.modeleCollecteNom ?? '').localeCompare(b.modeleCollecteNom ?? '');
 
   ngOnInit(): void {
     this.rafraichir();

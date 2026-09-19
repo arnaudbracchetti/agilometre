@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { GenerateurDeCode } from '../domain/generateur-de-code';
 import { JetonSession } from '../domain/jeton-session';
 import { JetonSessionRepository } from '../domain/jeton-session.repository';
-import { Selection } from '../domain/selection';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { Session, SessionNonOuverteError } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { RejoindreSession } from './rejoindre-session.usecase';

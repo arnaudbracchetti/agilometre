@@ -59,7 +59,7 @@ const LIGNE_MATRICE_PAR_CAPACITE: Record<Capacite, string> = {
   voirSyntheseSession: 'Synthèse de fin de Session',
   voirMurDeBadges: 'Mur de badges',
   gererSessions: 'Sessions (bibliothèque, pilotage, synthèse)',
-  gererModelesSession: 'Modèles de session',
+  gererModelesCollecte: 'Modèles de collecte',
   gererCampagnesPouls: 'Campagnes de pouls',
 };
 

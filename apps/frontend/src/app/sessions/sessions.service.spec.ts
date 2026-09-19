@@ -32,7 +32,7 @@ describe('SessionsService', () => {
 
     const req = httpMock.expectOne('/api/sessions');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ equipeId: 'e1', date: '2026-04-01', modeleSessionId: 'm1' });
+    expect(req.request.body).toEqual({ equipeId: 'e1', date: '2026-04-01', modeleCollecteId: 'm1' });
     req.flush({
       id: 's1',
       equipeId: 'e1',
@@ -40,7 +40,7 @@ describe('SessionsService', () => {
       entiteId: 'ent1',
       date: '2026-04-01',
       statut: 'OUVERTE',
-      modeleSessionId: 'm1',
+      modeleCollecteId: 'm1',
       verrouillee: false,
       selection: [],
     });
@@ -58,7 +58,7 @@ describe('SessionsService', () => {
       entiteId: 'ent1',
       date: '2026-04-01',
       statut: 'OUVERTE',
-      modeleSessionId: 'm1',
+      modeleCollecteId: 'm1',
       verrouillee: false,
       selection: [],
     });
@@ -109,7 +109,7 @@ describe('SessionsService', () => {
       entiteId: 'ent1',
       date: '2026-05-01',
       statut: 'OUVERTE',
-      modeleSessionId: 'm1',
+      modeleCollecteId: 'm1',
       verrouillee: false,
       selection: [],
     });
@@ -120,7 +120,7 @@ describe('SessionsService', () => {
 
     const req = httpMock.expectOne('/api/sessions/s1/modele');
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual({ modeleSessionId: 'm2' });
+    expect(req.request.body).toEqual({ modeleCollecteId: 'm2' });
     req.flush({
       id: 's1',
       equipeId: 'e1',
@@ -128,7 +128,7 @@ describe('SessionsService', () => {
       entiteId: 'ent1',
       date: '2026-04-01',
       statut: 'OUVERTE',
-      modeleSessionId: 'm2',
+      modeleCollecteId: 'm2',
       verrouillee: false,
       selection: [],
     });

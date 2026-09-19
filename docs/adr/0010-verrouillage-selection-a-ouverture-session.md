@@ -7,7 +7,7 @@ status: accepted
 La Sélection d'une Session se verrouille (`Session.verrouillee = true`) au moment où le Coach
 ouvre la Session (génération du Code) — pas à l'ouverture du premier Tour de vote comme le
 supposait la première rédaction de
-[doc/spec/annexes/modeles-de-session.md](../../doc/spec/annexes/modeles-de-session.md). Entre
+[doc/spec/annexes/modeles-de-collecte.md](../../doc/spec/annexes/modeles-de-collecte.md). Entre
 ces deux instants, des Membres peuvent déjà avoir rejoint via le Code et être en train
 d'observer la salle d'attente projetée ; le Coach ne doit plus pouvoir modifier ce que ces
 participants s'apprêtent à voir. Verrouiller à l'ouverture fait porter l'engagement du Coach sur

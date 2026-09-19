@@ -29,7 +29,7 @@ import { ReferentielController } from './referentiel.controller';
     },
   ],
   // PrismaReferentielRepository : exporté pour que SessionModule puisse résoudre le Référentiel
-  // actif lors de la lecture d'un Modèle de session enrichi (ObtenirModeleSessionDetail).
+  // actif lors de la lecture d'un Modèle de collecte enrichi (ObtenirModeleCollecteDetail).
   // Preview/ApplyImportReferentiel : exportés pour import-referentiel-cli.ts, qui les résout via
   // NestFactory.createApplicationContext(AppModule) sans passer par ReferentielController.
   exports: [

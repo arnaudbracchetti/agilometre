@@ -1,11 +1,11 @@
 import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
-import { QuestionDejaSelectionneeError } from '../domain/selection';
+import { QuestionDejaSelectionneeError } from '../../modele-collecte/domain/selection';
 import { Session, SessionVerrouilleeError } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import {
   chargerIdsQuestionsActives,
   positionDansSelectionComplete,
-} from './position-affichee';
+} from '../../shared-kernel/position-affichee';
 
 export type ResultatAjouterQuestionSession =
   | { type: 'introuvable' }

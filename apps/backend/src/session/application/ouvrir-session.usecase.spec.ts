@@ -1,5 +1,5 @@
 import { GenerateurDeCode } from '../domain/generateur-de-code';
-import { Selection } from '../domain/selection';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { OuvrirSession } from './ouvrir-session.usecase';

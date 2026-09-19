@@ -217,7 +217,7 @@ n'étant créable avec ce Rôle, aucun écran ne lui est pour l'instant destiné
 | Synthèse de fin de Session | Total | Aucun accès | Restreint à ses Équipes, toutes les Sessions sans filtre de participation |
 | Mur de badges (comparaison inter-Équipes) | Total | Aucun accès (ADR-0017) | Aucun accès |
 | Sessions (bibliothèque, pilotage, synthèse) | Total | Aucun accès | Aucun accès (lecture seule via le profil d'Équipe) |
-| Modèles de session | Total | Aucun accès | Aucun accès |
+| Modèles de collecte | Total | Aucun accès | Aucun accès |
 | Campagnes de pouls (configuration) | Total | Aucun accès | Aucun accès |
 
 **Écart assumé (arbre de navigation et Profil d'Entité pour le Membre d'équipe).** Cette itération

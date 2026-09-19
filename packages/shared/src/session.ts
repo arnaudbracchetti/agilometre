@@ -1,25 +1,5 @@
 import { StatutSession } from './scoring';
-
-export interface SelectionQuestionDto {
-  questionId: string;
-  libelle: string;
-  themeId: string;
-  themeLibelle: string;
-}
-
-export interface ModeleSessionDto {
-  id: string;
-  nom: string;
-  selection: SelectionQuestionDto[];
-}
-
-export interface LigneBibliothequeModeleSessionDto {
-  id: string;
-  nom: string;
-  nbQuestionsActives: number;
-  themesCouverts: string[];
-  misAJourLe: string;
-}
+import { SelectionQuestionDto } from './modele-collecte';
 
 export interface SessionDto {
   id: string;
@@ -28,7 +8,7 @@ export interface SessionDto {
   entiteId: string;
   date: string;
   statut: StatutSession;
-  modeleSessionId: string;
+  modeleCollecteId: string;
   verrouillee: boolean;
   code: string | null;
   selection: SelectionQuestionDto[];
@@ -41,7 +21,7 @@ export interface LigneListeSessionDto {
   statut: StatutSession;
   verrouillee: boolean;
   nbQuestions: number;
-  modeleSessionNom: string | null;
+  modeleCollecteNom: string | null;
 }
 
 export interface OptionAffichageDto {

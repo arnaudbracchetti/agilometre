@@ -1,11 +1,11 @@
 import { ReferentielRepository } from '../../referentiel/domain/referentiel.repository';
-import { QuestionIntrouvableDansSelectionError } from '../domain/selection';
+import { QuestionIntrouvableDansSelectionError } from '../../modele-collecte/domain/selection';
 import { Session, SessionVerrouilleeError } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import {
   chargerIdsQuestionsActives,
   positionDansSelectionComplete,
-} from './position-affichee';
+} from '../../shared-kernel/position-affichee';
 
 export type ResultatReordonnerQuestionSession =
   | { type: 'introuvable' }

@@ -3,7 +3,7 @@ import { GenerateurDeCode } from './domain/generateur-de-code';
 import { Niveau } from '../referentiel/domain/niveau';
 import { Option } from '../referentiel/domain/option';
 import { Question } from '../referentiel/domain/question';
-import { Selection } from './domain/selection';
+import { Selection } from '../modele-collecte/domain/selection';
 import { Session } from './domain/session';
 import { TourDeVote } from './domain/tour-de-vote';
 import { ProjectionController } from './projection.controller';

@@ -3,7 +3,7 @@ import { PrismaService } from './../src/prisma/prisma.service';
 import { PrismaJetonSessionRepository } from './../src/session/infrastructure/prisma-jeton-session.repository';
 import { PrismaSessionRepository } from './../src/session/infrastructure/prisma-session.repository';
 import { GenerateurDeCode } from './../src/session/domain/generateur-de-code';
-import { Selection } from './../src/session/domain/selection';
+import { Selection } from './../src/modele-collecte/domain/selection';
 import {
   Session,
   SessionNonOuverteError,

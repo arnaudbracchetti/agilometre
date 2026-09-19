@@ -17,8 +17,8 @@ export class SessionsService {
     return this.http.get<LigneListeSessionDto[]>(this.baseUrl);
   }
 
-  creer(equipeId: string, date: string, modeleSessionId: string): Observable<SessionDto> {
-    return this.http.post<SessionDto>(this.baseUrl, { equipeId, date, modeleSessionId });
+  creer(equipeId: string, date: string, modeleCollecteId: string): Observable<SessionDto> {
+    return this.http.post<SessionDto>(this.baseUrl, { equipeId, date, modeleCollecteId });
   }
 
   obtenir(id: string): Observable<SessionDto> {
@@ -81,9 +81,9 @@ export class SessionsService {
     return this.http.patch<SessionDto>(`${this.baseUrl}/${id}`, { equipeId, date });
   }
 
-  changerModele(id: string, modeleSessionId: string): Observable<SessionDto> {
+  changerModele(id: string, modeleCollecteId: string): Observable<SessionDto> {
     return this.http.patch<SessionDto>(`${this.baseUrl}/${id}/modele`, {
-      modeleSessionId,
+      modeleCollecteId,
     });
   }
 

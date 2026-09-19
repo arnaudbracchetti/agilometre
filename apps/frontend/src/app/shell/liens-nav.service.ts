@@ -21,8 +21,8 @@ export class LiensNavService {
       this.droits.peut('gererOrganisation')
         ? { label: 'Organisation', routerLink: '/organisation' }
         : null,
-      this.droits.peut('gererModelesSession')
-        ? { label: 'Modèles de session', routerLink: '/modeles-session' }
+      this.droits.peut('gererModelesCollecte')
+        ? { label: 'Modèles de collecte', routerLink: '/modeles-collecte' }
         : null,
     ].filter((lien) => lien !== null);
     if (enfantsAdministration.length > 0) {

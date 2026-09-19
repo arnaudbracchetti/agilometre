@@ -1,7 +1,7 @@
 import { Equipe } from '../../organisation/domain/equipe';
 import { EquipeRepository } from '../../organisation/domain/equipe.repository';
 import { GenerateurDeCode } from '../domain/generateur-de-code';
-import { Selection } from '../domain/selection';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { ModifierInfosSession } from './modifier-infos-session.usecase';

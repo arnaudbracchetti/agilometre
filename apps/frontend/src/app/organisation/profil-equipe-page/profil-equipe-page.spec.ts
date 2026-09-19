@@ -254,7 +254,7 @@ describe('ProfilEquipePage', () => {
         statut: 'CLOTUREE',
         verrouillee: true,
         nbQuestions: 3,
-        modeleSessionNom: 'Diagnostic',
+        modeleCollecteNom: 'Diagnostic',
       },
     ]);
     fixture.detectChanges();

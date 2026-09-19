@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { EquipeRepository } from '../../organisation/domain/equipe.repository';
 import { GenerateurDeCode } from '../domain/generateur-de-code';
-import { ModeleSessionRepository } from '../domain/modele-session.repository';
-import { Selection } from '../domain/selection';
+import { ModeleCollecteRepository } from '../../modele-collecte/domain/modele-collecte.repository';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { ErreurInvariantSession, Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 
@@ -16,20 +16,20 @@ export class CreerSession {
   constructor(
     private readonly sessions: SessionRepository,
     private readonly equipes: EquipeRepository,
-    private readonly modeles: ModeleSessionRepository,
+    private readonly modeles: ModeleCollecteRepository,
     private readonly generateurDeCode: GenerateurDeCode,
   ) {}
 
   async executer(
     equipeId: string,
     date: Date,
-    modeleSessionId: string,
+    modeleCollecteId: string,
   ): Promise<ResultatCreerSession> {
     const equipe = await this.equipes.findById(equipeId);
     if (!equipe) {
       return { type: 'equipe_introuvable' };
     }
-    const modele = await this.modeles.findById(modeleSessionId);
+    const modele = await this.modeles.findById(modeleCollecteId);
     if (!modele) {
       return { type: 'modele_introuvable' };
     }
@@ -43,7 +43,7 @@ export class CreerSession {
       randomUUID(),
       equipeId,
       date,
-      modeleSessionId,
+      modeleCollecteId,
       selectionCopiee,
       this.generateurDeCode,
     );

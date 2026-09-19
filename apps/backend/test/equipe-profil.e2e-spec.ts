@@ -6,7 +6,7 @@ import {
   EntiteDto,
   EquipeDto,
   JetonSessionDto,
-  ModeleSessionDto,
+  ModeleCollecteDto,
   ProfilEquipeDto,
   SessionDto,
 } from '@agilometre/shared';
@@ -68,7 +68,7 @@ describe('Profil par Thème d’une Équipe (e2e) — carte #53', () => {
     await prisma.sessionQuestionSautee.deleteMany();
     await prisma.session.deleteMany();
     await prisma.selectionItem.deleteMany();
-    await prisma.modeleSession.deleteMany();
+    await prisma.modeleCollecte.deleteMany();
     await prisma.equipe.deleteMany();
     await prisma.entite.deleteMany();
     await prisma.option.deleteMany();
@@ -176,13 +176,13 @@ describe('Profil par Thème d’une Équipe (e2e) — carte #53', () => {
     return reponse.body as EquipeDto;
   }
 
-  async function creerModele(nom: string): Promise<ModeleSessionDto> {
+  async function creerModele(nom: string): Promise<ModeleCollecteDto> {
     const reponse = await request(app.getHttpServer())
-      .post('/api/modeles-session')
+      .post('/api/modeles-collecte')
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
-    return reponse.body as ModeleSessionDto;
+    return reponse.body as ModeleCollecteDto;
   }
 
   /** Crée, ouvre, fait voter un jeton sur q1 (Niveau 3), clôt le Tour puis termine la Session. */
@@ -194,7 +194,7 @@ describe('Profil par Thème d’une Équipe (e2e) — carte #53', () => {
     const creation = await request(app.getHttpServer())
       .post('/api/sessions')
       .set('Authorization', `Bearer ${jetonCoach}`)
-      .send({ equipeId, date, modeleSessionId: modeleId })
+      .send({ equipeId, date, modeleCollecteId: modeleId })
       .expect(201);
     const sessionPreparee = creation.body as SessionDto;
     const ouverture = await request(app.getHttpServer())
@@ -237,7 +237,7 @@ describe('Profil par Thème d’une Équipe (e2e) — carte #53', () => {
     const equipe = await creerEquipe('Équipe Alpha', entite.id);
     const modele = await creerModele('Diagnostic');
     await request(app.getHttpServer())
-      .post(`/api/modeles-session/${modele.id}/themes`)
+      .post(`/api/modeles-collecte/${modele.id}/themes`)
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1'] })
       .expect(201);
@@ -286,7 +286,7 @@ describe('Profil par Thème d’une Équipe (e2e) — carte #53', () => {
     const equipe = await creerEquipe('Équipe Alpha', entite.id);
     const modele = await creerModele('Diagnostic');
     await request(app.getHttpServer())
-      .post(`/api/modeles-session/${modele.id}/themes`)
+      .post(`/api/modeles-collecte/${modele.id}/themes`)
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1'] })
       .expect(201);
@@ -346,7 +346,7 @@ describe('Profil par Thème d’une Équipe (e2e) — carte #53', () => {
     const equipe = await creerEquipe('Équipe Alpha', entite.id);
     const modele = await creerModele('Diagnostic');
     await request(app.getHttpServer())
-      .post(`/api/modeles-session/${modele.id}/themes`)
+      .post(`/api/modeles-collecte/${modele.id}/themes`)
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1'] })
       .expect(201);

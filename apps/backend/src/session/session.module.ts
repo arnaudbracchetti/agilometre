@@ -10,16 +10,8 @@ import { PrismaUtilisateurRepository } from '../organisation/infrastructure/pris
 import { PrismaReponseRepository } from '../reponse/infrastructure/prisma-reponse.repository';
 import { ScoringV1 } from '../scoring/domain/scoring-v1';
 import { PerimetreUtilisateur } from '../auth/domain/perimetre-utilisateur';
-import { CreerModeleSession } from './application/creer-modele-session.usecase';
-import { RenommerModeleSession } from './application/renommer-modele-session.usecase';
-import { AjouterQuestionModeleSession } from './application/ajouter-question-modele-session.usecase';
-import { AjouterThemeModeleSession } from './application/ajouter-theme-modele-session.usecase';
-import { RetirerQuestionModeleSession } from './application/retirer-question-modele-session.usecase';
-import { ReordonnerQuestionModeleSession } from './application/reordonner-question-modele-session.usecase';
-import { DupliquerModeleSession } from './application/dupliquer-modele-session.usecase';
-import { SupprimerModeleSession } from './application/supprimer-modele-session.usecase';
-import { ListerModelesSession } from './application/lister-modeles-session.usecase';
-import { ObtenirModeleSessionDetail } from './application/obtenir-modele-session-detail.usecase';
+import { ModeleCollecteModule } from '../modele-collecte/modele-collecte.module';
+import { PrismaModeleCollecteRepository } from '../modele-collecte/infrastructure/prisma-modele-collecte.repository';
 import { CreerSession } from './application/creer-session.usecase';
 import { AjouterQuestionSession } from './application/ajouter-question-session.usecase';
 import { AjouterThemeSession } from './application/ajouter-theme-session.usecase';
@@ -28,7 +20,7 @@ import { ReordonnerQuestionSession } from './application/reordonner-question-ses
 import { ListerSessions } from './application/lister-sessions.usecase';
 import { ObtenirSessionDetail } from './application/obtenir-session-detail.usecase';
 import { ModifierInfosSession } from './application/modifier-infos-session.usecase';
-import { ChangerModeleSession } from './application/changer-modele-session.usecase';
+import { ChangerModeleCollecte } from './application/changer-modele-collecte.usecase';
 import { SupprimerSession } from './application/supprimer-session.usecase';
 import { OuvrirSession } from './application/ouvrir-session.usecase';
 import { ObtenirProjectionSession } from './application/obtenir-projection-session.usecase';
@@ -49,8 +41,6 @@ import { VoterParticipant } from './application/voter-participant.usecase';
 import { ObtenirEtatParticipant } from './application/obtenir-etat-participant.usecase';
 import { ObtenirInfoSessionParticipant } from './application/obtenir-info-session-participant.usecase';
 import { ObtenirApercuSession } from './application/obtenir-apercu-session.usecase';
-import { PrismaModeleSessionRepository } from './infrastructure/prisma-modele-session.repository';
-import { PrismaModeleSessionBibliothequeQuery } from './infrastructure/prisma-modele-session-bibliotheque.query';
 import { PrismaSessionRepository } from './infrastructure/prisma-session.repository';
 import { PrismaSessionListeQuery } from './infrastructure/prisma-session-liste.query';
 import { PrismaTourDeVoteRepository } from './infrastructure/prisma-tour-de-vote.repository';
@@ -58,7 +48,6 @@ import { PrismaJetonSessionRepository } from './infrastructure/prisma-jeton-sess
 import { PrismaEtatToursQuery } from './infrastructure/prisma-etat-tours.query';
 import { PrismaRepartitionTourQuery } from './infrastructure/prisma-repartition-tour.query';
 import { CryptoGenerateurDeCode } from './infrastructure/crypto-generateur-de-code';
-import { SessionController } from './session.controller';
 import { SessionAnimeeController } from './session-animee.controller';
 import { ProjectionController } from './projection.controller';
 import { ParticipantController } from './participant.controller';
@@ -67,9 +56,13 @@ import { EntiteProfilController } from './entite-profil.controller';
 import { JetonParticipantGuard } from './jeton-participant.guard';
 
 @Module({
-  imports: [ReferentielModule, OrganisationModule, ReponseModule],
+  imports: [
+    ReferentielModule,
+    OrganisationModule,
+    ReponseModule,
+    ModeleCollecteModule,
+  ],
   controllers: [
-    SessionController,
     SessionAnimeeController,
     ProjectionController,
     ParticipantController,
@@ -77,8 +70,6 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
     EntiteProfilController,
   ],
   providers: [
-    PrismaModeleSessionRepository,
-    PrismaModeleSessionBibliothequeQuery,
     CryptoGenerateurDeCode,
     PrismaSessionRepository,
     PrismaSessionListeQuery,
@@ -88,85 +79,17 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
     PrismaRepartitionTourQuery,
     JetonParticipantGuard,
     {
-      provide: CreerModeleSession,
-      useFactory: (repository: PrismaModeleSessionRepository) =>
-        new CreerModeleSession(repository),
-      inject: [PrismaModeleSessionRepository],
-    },
-    {
-      provide: RenommerModeleSession,
-      useFactory: (repository: PrismaModeleSessionRepository) =>
-        new RenommerModeleSession(repository),
-      inject: [PrismaModeleSessionRepository],
-    },
-    {
-      provide: AjouterQuestionModeleSession,
-      useFactory: (
-        repository: PrismaModeleSessionRepository,
-        referentiel: PrismaReferentielRepository,
-      ) => new AjouterQuestionModeleSession(repository, referentiel),
-      inject: [PrismaModeleSessionRepository, PrismaReferentielRepository],
-    },
-    {
-      provide: AjouterThemeModeleSession,
-      useFactory: (
-        repository: PrismaModeleSessionRepository,
-        referentiel: PrismaReferentielRepository,
-      ) => new AjouterThemeModeleSession(repository, referentiel),
-      inject: [PrismaModeleSessionRepository, PrismaReferentielRepository],
-    },
-    {
-      provide: RetirerQuestionModeleSession,
-      useFactory: (repository: PrismaModeleSessionRepository) =>
-        new RetirerQuestionModeleSession(repository),
-      inject: [PrismaModeleSessionRepository],
-    },
-    {
-      provide: ReordonnerQuestionModeleSession,
-      useFactory: (
-        repository: PrismaModeleSessionRepository,
-        referentiel: PrismaReferentielRepository,
-      ) => new ReordonnerQuestionModeleSession(repository, referentiel),
-      inject: [PrismaModeleSessionRepository, PrismaReferentielRepository],
-    },
-    {
-      provide: DupliquerModeleSession,
-      useFactory: (repository: PrismaModeleSessionRepository) =>
-        new DupliquerModeleSession(repository),
-      inject: [PrismaModeleSessionRepository],
-    },
-    {
-      provide: SupprimerModeleSession,
-      useFactory: (repository: PrismaModeleSessionRepository) =>
-        new SupprimerModeleSession(repository),
-      inject: [PrismaModeleSessionRepository],
-    },
-    {
-      provide: ListerModelesSession,
-      useFactory: (query: PrismaModeleSessionBibliothequeQuery) =>
-        new ListerModelesSession(query),
-      inject: [PrismaModeleSessionBibliothequeQuery],
-    },
-    {
-      provide: ObtenirModeleSessionDetail,
-      useFactory: (
-        modeles: PrismaModeleSessionRepository,
-        referentiel: PrismaReferentielRepository,
-      ) => new ObtenirModeleSessionDetail(modeles, referentiel),
-      inject: [PrismaModeleSessionRepository, PrismaReferentielRepository],
-    },
-    {
       provide: CreerSession,
       useFactory: (
         sessions: PrismaSessionRepository,
         equipes: PrismaEquipeRepository,
-        modeles: PrismaModeleSessionRepository,
+        modeles: PrismaModeleCollecteRepository,
         generateurDeCode: CryptoGenerateurDeCode,
       ) => new CreerSession(sessions, equipes, modeles, generateurDeCode),
       inject: [
         PrismaSessionRepository,
         PrismaEquipeRepository,
-        PrismaModeleSessionRepository,
+        PrismaModeleCollecteRepository,
         CryptoGenerateurDeCode,
       ],
     },
@@ -227,12 +150,12 @@ import { JetonParticipantGuard } from './jeton-participant.guard';
       inject: [PrismaSessionRepository, PrismaEquipeRepository],
     },
     {
-      provide: ChangerModeleSession,
+      provide: ChangerModeleCollecte,
       useFactory: (
         sessions: PrismaSessionRepository,
-        modeles: PrismaModeleSessionRepository,
-      ) => new ChangerModeleSession(sessions, modeles),
-      inject: [PrismaSessionRepository, PrismaModeleSessionRepository],
+        modeles: PrismaModeleCollecteRepository,
+      ) => new ChangerModeleCollecte(sessions, modeles),
+      inject: [PrismaSessionRepository, PrismaModeleCollecteRepository],
     },
     {
       provide: SupprimerSession,

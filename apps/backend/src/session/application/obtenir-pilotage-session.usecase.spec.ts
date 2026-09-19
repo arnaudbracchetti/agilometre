@@ -13,7 +13,7 @@ import {
   RepartitionTour,
   RepartitionTourQuery,
 } from '../domain/repartition-tour.query';
-import { Selection } from '../domain/selection';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { TourDeVote } from '../domain/tour-de-vote';

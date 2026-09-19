@@ -2,7 +2,7 @@
 
 Design issu de la session `/ddd` sur l'Epic [Session animée #29](https://github.com/arnaudbracchetti/agilometre/issues/29),
 en continuité de la réflexion `/grill-me` documentée dans
-[doc/spec/annexes/modeles-de-session.md](../../doc/spec/annexes/modeles-de-session.md). Vocabulaire : voir
+[doc/spec/annexes/modeles-de-collecte.md](../../doc/spec/annexes/modeles-de-collecte.md). Vocabulaire : voir
 `CONTEXT.md`, section Session animée.
 
 ## Contexte
@@ -137,7 +137,7 @@ use case/contrôleur (jamais un `catch` aveugle).
   `questionsSautees`, `indexCourant`, et un 3e statut `PREPAREE`.
 - **Historique "déjà traité avec cette Équipe"** — question ouverte listée par l'Epic #29
   lui-même, explicitement reportée hors V1 pendant la session `/grill-me` (voir
-  [doc/spec/annexes/modeles-de-session.md](../../doc/spec/annexes/modeles-de-session.md)).
+  [doc/spec/annexes/modeles-de-collecte.md](../../doc/spec/annexes/modeles-de-collecte.md)).
 - **Recherche texte dans le Référentiel** (écran double-liste) — reportée à une V2, quand le
   Référentiel dépassera le seul Axe 1 actuel.
 - **`enum Role`/guard d'autorisation Coach** sur `Session` : hors périmètre, comme déjà noté par

@@ -46,12 +46,12 @@
       </div>
 
       <div class="creer__champ">
-        <label for="modele">Modèle de session</label>
+        <label for="modele">Modèle de collecte</label>
         <nz-select
           id="modele"
           name="modele"
           nzPlaceHolder="Choisir un Modèle"
-          [ngModel]="modeleSessionId()"
+          [ngModel]="modeleCollecteId()"
           (ngModelChange)="onModeleChange($event)"
         >
           @for (modele of modeles(); track modele.id) {

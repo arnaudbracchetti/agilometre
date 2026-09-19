@@ -14,7 +14,7 @@ import { ScoringV1 } from '../../scoring/domain/scoring-v1';
 import { EtatTour, Session } from '../domain/session';
 import { EtatToursQuery } from '../domain/etat-tours.query';
 import { GenerateurDeCode } from '../domain/generateur-de-code';
-import { Selection } from '../domain/selection';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { SessionRepository } from '../domain/session.repository';
 import { ObtenirProfilEntite } from './obtenir-profil-entite.usecase';
 

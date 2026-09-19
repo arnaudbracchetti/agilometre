@@ -9,12 +9,12 @@ export interface LigneListeSession {
   verrouillee: boolean;
   nbQuestions: number;
   /** `null` si le Modèle source a été supprimé depuis (ADR-0009 : aucune intégrité forte). */
-  modeleSessionNom: string | null;
+  modeleCollecteNom: string | null;
 }
 
 /**
- * Read model séparé du repository (même raisonnement que `ModeleSessionBibliothequeQuery`) :
- * requête directe joignant Session/Equipe/ModeleSession, jamais une méthode de SessionRepository
+ * Read model séparé du repository (même raisonnement que `ModeleCollecteBibliothequeQuery`) :
+ * requête directe joignant Session/Equipe/ModeleCollecte, jamais une méthode de SessionRepository
  * qui, lui, ne charge que l'agrégat complet.
  */
 export interface SessionListeQuery {

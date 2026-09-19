@@ -3,7 +3,7 @@ import { ReponseRepository } from '../../reponse/domain/reponse.repository';
 import { EtatTour, Session } from '../domain/session';
 import { EtatToursQuery } from '../domain/etat-tours.query';
 import { GenerateurDeCode } from '../domain/generateur-de-code';
-import { Selection } from '../domain/selection';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { SourceReponsesScorablesSession } from './source-reponses-scorables-session';
 
 const generateurDeCode: GenerateurDeCode = {

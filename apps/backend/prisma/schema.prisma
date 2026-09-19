@@ -154,7 +154,7 @@ model JetonCompte {
 // Bibliothèque globale de Sélections de Questions nommées et réutilisables (ADR-0008), sans
 // rattachement à une Équipe. Librement supprimable, y compris déjà utilisée par une ou plusieurs
 // Sessions (ADR-0009) — d'où l'absence de toute relation Prisma vers Session.
-model ModeleSession {
+model ModeleCollecte {
   id        String          @id @default(uuid())
   nom       String
   updatedAt DateTime        @updatedAt
@@ -165,16 +165,16 @@ model ModeleSession {
 // des bounded contexts séparés dans ce schéma, même convention que TourDeVote.questionId /
 // Sollicitation.questionId.
 model SelectionItem {
-  id              String        @id @default(uuid())
-  modeleSession   ModeleSession @relation(fields: [modeleSessionId], references: [id], onDelete: Cascade)
-  modeleSessionId String
-  questionId      String
-  ordre           Int
+  id               String         @id @default(uuid())
+  modeleCollecte   ModeleCollecte @relation(fields: [modeleCollecteId], references: [id], onDelete: Cascade)
+  modeleCollecteId String
+  questionId       String
+  ordre            Int
 
-  @@index([modeleSessionId])
+  @@index([modeleCollecteId])
 }
 
-// `modeleSessionId` est une chaîne simple obligatoire (pas de relation Prisma vers ModeleSession) :
+// `modeleCollecteId` est une chaîne simple obligatoire (pas de relation Prisma vers ModeleCollecte) :
 // la Sélection est copiée figée à la création (ADR-0009), le champ ne sert qu'à la traçabilité —
 // aucune contrainte d'intégrité forte, la suppression du Modèle source n'a aucun effet ici.
 // `code` : unique parmi les Sessions OUVERTE, via un index unique partiel ajouté à la main dans la
@@ -189,7 +189,7 @@ model Session {
   code             String?
   ouvertureLe      DateTime?
   indexCourant     Int                     @default(-1)
-  modeleSessionId  String
+  modeleCollecteId String
   items            SessionSelectionItem[]
   questionsSautees SessionQuestionSautee[]
   tours            TourDeVote[]

@@ -14,7 +14,7 @@ export type Capacite =
   | 'voirSyntheseSession'
   | 'voirMurDeBadges'
   | 'gererSessions'
-  | 'gererModelesSession'
+  | 'gererModelesCollecte'
   | 'gererCampagnesPouls';
 
 // La plupart des capacités ne listent que Role.Coach. `gererSonCompte` fait exception dès #60 :
@@ -40,6 +40,6 @@ export const CAPACITES: Record<Capacite, Role[]> = {
   voirSyntheseSession: [Role.Coach, Role.Membre],
   voirMurDeBadges: [Role.Coach],
   gererSessions: [Role.Coach],
-  gererModelesSession: [Role.Coach],
+  gererModelesCollecte: [Role.Coach],
   gererCampagnesPouls: [Role.Coach],
 };

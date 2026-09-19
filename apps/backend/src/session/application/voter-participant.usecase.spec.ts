@@ -7,7 +7,7 @@ import { Theme } from '../../referentiel/domain/theme';
 import { GenerateurDeCode } from '../domain/generateur-de-code';
 import { Reponse } from '../../reponse/domain/reponse';
 import { ReponseRepository } from '../../reponse/domain/reponse.repository';
-import { Selection } from '../domain/selection';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { TourDeVote } from '../domain/tour-de-vote';

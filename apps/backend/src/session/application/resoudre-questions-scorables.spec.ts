@@ -4,7 +4,7 @@ import { Question } from '../../referentiel/domain/question';
 import { Referentiel } from '../../referentiel/domain/referentiel';
 import { Theme } from '../../referentiel/domain/theme';
 import { GenerateurDeCode } from '../domain/generateur-de-code';
-import { Selection } from '../domain/selection';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { Session } from '../domain/session';
 import { ResoudreQuestionsScorables } from './resoudre-questions-scorables';
 

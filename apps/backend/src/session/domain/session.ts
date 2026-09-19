@@ -6,7 +6,7 @@ import {
   QuestionDejaSelectionneeError,
   QuestionIntrouvableDansSelectionError,
   Selection,
-} from './selection';
+} from '../../modele-collecte/domain/selection';
 
 export type StatutSession = 'PREPAREE' | 'OUVERTE' | 'CLOTUREE';
 
@@ -37,7 +37,7 @@ export class EquipeManquanteError extends Error {
 
 export class ModeleManquantError extends Error {
   constructor() {
-    super('Une Session doit être créée à partir d’un Modèle de session');
+    super('Une Session doit être créée à partir d’un Modèle de collecte');
     this.name = 'ModeleManquantError';
   }
 }
@@ -119,7 +119,7 @@ export type ErreurInvariantSession = EquipeManquanteError | ModeleManquantError;
 
 /**
  * Agrégat racine — une Session animée rattachée à une Équipe, initialisée avec une copie figée
- * de la Sélection du Modèle de session choisi (ADR-0009 : jamais de lien vivant vers ce Modèle).
+ * de la Sélection du Modèle de collecte choisi (ADR-0009 : jamais de lien vivant vers ce Modèle).
  */
 export class Session {
   /** indexCourant en salle d'attente : aucune Question courante (docs/design/agregat-tour-de-vote.md §1). */
@@ -130,7 +130,7 @@ export class Session {
     private _equipeId: string,
     private _date: Date,
     private _statut: StatutSession,
-    private _modeleSessionId: string,
+    private _modeleCollecteId: string,
     private _selection: Selection,
     private _code: string | null,
     private _indexCourant: number,
@@ -143,11 +143,11 @@ export class Session {
     id: string,
     equipeId: string,
     date: Date,
-    modeleSessionId: string,
+    modeleCollecteId: string,
     selection: Selection,
     generateurDeCode: GenerateurDeCode,
   ): Result<Session, ErreurInvariantSession> {
-    const validation = Session.valider(equipeId, modeleSessionId);
+    const validation = Session.valider(equipeId, modeleCollecteId);
     if (validation.estEchec) {
       return Result.echec(validation.erreur);
     }
@@ -157,7 +157,7 @@ export class Session {
         equipeId.trim(),
         date,
         'PREPAREE',
-        modeleSessionId.trim(),
+        modeleCollecteId.trim(),
         selection,
         null,
         Session.SANS_QUESTION_COURANTE,
@@ -178,7 +178,7 @@ export class Session {
     equipeId: string,
     date: Date,
     statut: StatutSession,
-    modeleSessionId: string,
+    modeleCollecteId: string,
     selection: Selection,
     code: string | null,
     indexCourant: number,
@@ -191,7 +191,7 @@ export class Session {
       equipeId,
       date,
       statut,
-      modeleSessionId,
+      modeleCollecteId,
       selection,
       code,
       indexCourant,
@@ -203,12 +203,12 @@ export class Session {
 
   private static valider(
     equipeId: string,
-    modeleSessionId: string,
+    modeleCollecteId: string,
   ): Result<void, ErreurInvariantSession> {
     if (equipeId.trim().length === 0) {
       return Result.echec(new EquipeManquanteError());
     }
-    if (modeleSessionId.trim().length === 0) {
+    if (modeleCollecteId.trim().length === 0) {
       return Result.echec(new ModeleManquantError());
     }
     return Result.succes(undefined);
@@ -222,8 +222,8 @@ export class Session {
     return this._date;
   }
 
-  get modeleSessionId(): string {
-    return this._modeleSessionId;
+  get modeleCollecteId(): string {
+    return this._modeleCollecteId;
   }
 
   get statut(): StatutSession {
@@ -293,17 +293,17 @@ export class Session {
 
   /** Remplace le Modèle source et réinitialise entièrement la Sélection (copie, pas de fusion). */
   changerModele(
-    modeleSessionId: string,
+    modeleCollecteId: string,
     nouvelleSelection: Selection,
   ): Result<void, ModeleManquantError | SessionNonModifiableError> {
     const garde = this.garantirModifiable();
     if (garde.estEchec) {
       return garde;
     }
-    if (modeleSessionId.trim().length === 0) {
+    if (modeleCollecteId.trim().length === 0) {
       return Result.echec(new ModeleManquantError());
     }
-    this._modeleSessionId = modeleSessionId.trim();
+    this._modeleCollecteId = modeleCollecteId.trim();
     this._selection = nouvelleSelection;
     return Result.succes(undefined);
   }
@@ -543,7 +543,7 @@ export class Session {
 
   /**
    * Détail enrichi : résout chaque QuestionId de la Sélection contre le Référentiel actif, dans
-   * l'ordre de la Sélection — même logique que `ModeleSession.selectionEnrichie`.
+   * l'ordre de la Sélection — même logique que `ModeleCollecte.selectionEnrichie`.
    */
   selectionEnrichie(referentiel: Referentiel): Question[] {
     const questionsActives = new Map<string, Question>(

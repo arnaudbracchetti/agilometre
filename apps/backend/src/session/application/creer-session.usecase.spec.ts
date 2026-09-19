@@ -1,8 +1,8 @@
 import { Equipe } from '../../organisation/domain/equipe';
 import { EquipeRepository } from '../../organisation/domain/equipe.repository';
 import { GenerateurDeCode } from '../domain/generateur-de-code';
-import { ModeleSession } from '../domain/modele-session';
-import { ModeleSessionRepository } from '../domain/modele-session.repository';
+import { ModeleCollecte } from '../../modele-collecte/domain/modele-collecte';
+import { ModeleCollecteRepository } from '../../modele-collecte/domain/modele-collecte.repository';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { CreerSession } from './creer-session.usecase';
@@ -43,12 +43,12 @@ class EquipeRepositoryFake implements EquipeRepository {
   }
 }
 
-class ModeleSessionRepositoryFake implements ModeleSessionRepository {
-  modeles: ModeleSession[] = [];
-  findById(id: string): Promise<ModeleSession | null> {
+class ModeleCollecteRepositoryFake implements ModeleCollecteRepository {
+  modeles: ModeleCollecte[] = [];
+  findById(id: string): Promise<ModeleCollecte | null> {
     return Promise.resolve(this.modeles.find((m) => m.id === id) ?? null);
   }
-  save(modele: ModeleSession): Promise<void> {
+  save(modele: ModeleCollecte): Promise<void> {
     if (!this.modeles.includes(modele)) {
       this.modeles.push(modele);
     }
@@ -101,8 +101,8 @@ describe('CreerSession', () => {
   it('copie la Sélection du Modèle dans une nouvelle Session ouverte', async () => {
     const equipes = new EquipeRepositoryFake();
     equipes.equipes.push(Equipe.creer('e1', 'Alpha', 'ent1').valeur);
-    const modeles = new ModeleSessionRepositoryFake();
-    const modele = ModeleSession.creer('m1', 'Diagnostic').valeur;
+    const modeles = new ModeleCollecteRepositoryFake();
+    const modele = ModeleCollecte.creer('m1', 'Diagnostic').valeur;
     modele.ajouterQuestion('q1');
     modele.ajouterQuestion('q2');
     modeles.modeles.push(modele);
@@ -119,7 +119,7 @@ describe('CreerSession', () => {
     expect(resultat.type).toBe('creee');
     if (resultat.type !== 'creee') throw new Error('unreachable');
     expect(resultat.session.equipeId).toBe('e1');
-    expect(resultat.session.modeleSessionId).toBe('m1');
+    expect(resultat.session.modeleCollecteId).toBe('m1');
     expect(resultat.session.selection.questionIds).toEqual(['q1', 'q2']);
     expect(sessions.sessions).toHaveLength(1);
   });
@@ -127,8 +127,8 @@ describe('CreerSession', () => {
   it('ne partage jamais l’instance de Sélection avec le Modèle source', async () => {
     const equipes = new EquipeRepositoryFake();
     equipes.equipes.push(Equipe.creer('e1', 'Alpha', 'ent1').valeur);
-    const modeles = new ModeleSessionRepositoryFake();
-    const modele = ModeleSession.creer('m1', 'Diagnostic').valeur;
+    const modeles = new ModeleCollecteRepositoryFake();
+    const modele = ModeleCollecte.creer('m1', 'Diagnostic').valeur;
     modele.ajouterQuestion('q1');
     modeles.modeles.push(modele);
     const sessions = new SessionRepositoryFake();
@@ -149,7 +149,7 @@ describe('CreerSession', () => {
 
   it('renvoie "equipe_introuvable" et ne sauvegarde rien si l’Équipe est inconnue', async () => {
     const equipes = new EquipeRepositoryFake();
-    const modeles = new ModeleSessionRepositoryFake();
+    const modeles = new ModeleCollecteRepositoryFake();
     const sessions = new SessionRepositoryFake();
     const useCase = new CreerSession(
       sessions,
@@ -167,7 +167,7 @@ describe('CreerSession', () => {
   it('renvoie "modele_introuvable" et ne sauvegarde rien si le Modèle est inconnu', async () => {
     const equipes = new EquipeRepositoryFake();
     equipes.equipes.push(Equipe.creer('e1', 'Alpha', 'ent1').valeur);
-    const modeles = new ModeleSessionRepositoryFake();
+    const modeles = new ModeleCollecteRepositoryFake();
     const sessions = new SessionRepositoryFake();
     const useCase = new CreerSession(
       sessions,

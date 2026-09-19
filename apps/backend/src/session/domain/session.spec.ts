@@ -4,7 +4,7 @@ import { Question } from '../../referentiel/domain/question';
 import { Referentiel } from '../../referentiel/domain/referentiel';
 import { Theme } from '../../referentiel/domain/theme';
 import { GenerateurDeCode } from './generateur-de-code';
-import { Selection } from './selection';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { Session } from './session';
 
 /** Fake du port : un seul Code fixe suffit, l'unicité elle-même n'est pas une préoccupation du domaine. */
@@ -64,7 +64,7 @@ describe('Session', () => {
 
       expect(resultat.estSucces).toBe(true);
       expect(resultat.valeur.equipeId).toBe('e1');
-      expect(resultat.valeur.modeleSessionId).toBe('m1');
+      expect(resultat.valeur.modeleCollecteId).toBe('m1');
       expect(resultat.valeur.statut).toBe('PREPAREE');
       expect(resultat.valeur.estVerrouillee()).toBe(false);
       expect(resultat.valeur.selection.questionIds).toEqual(['q1', 'q2']);
@@ -370,7 +370,7 @@ describe('Session', () => {
       );
 
       expect(resultat.estSucces).toBe(true);
-      expect(session.modeleSessionId).toBe('m2');
+      expect(session.modeleCollecteId).toBe('m2');
       expect(session.selection.questionIds).toEqual(['q3']);
     });
 
@@ -392,7 +392,7 @@ describe('Session', () => {
 
       expect(resultat.estEchec).toBe(true);
       expect(resultat.erreur.name).toBe('ModeleManquantError');
-      expect(session.modeleSessionId).toBe('m1');
+      expect(session.modeleCollecteId).toBe('m1');
       expect(session.selection.questionIds).toEqual(['q1']);
     });
 
@@ -417,7 +417,7 @@ describe('Session', () => {
 
       expect(resultat.estEchec).toBe(true);
       expect(resultat.erreur.name).toBe('SessionNonModifiableError');
-      expect(session.modeleSessionId).toBe('m1');
+      expect(session.modeleCollecteId).toBe('m1');
     });
 
     it('rejette le changement quand la Session est clôturée', () => {

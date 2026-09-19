@@ -36,7 +36,7 @@ import {
   ResultatObtenirSessionDetail,
 } from './application/obtenir-session-detail.usecase';
 import { ModifierInfosSession } from './application/modifier-infos-session.usecase';
-import { ChangerModeleSession } from './application/changer-modele-session.usecase';
+import { ChangerModeleCollecte } from './application/changer-modele-collecte.usecase';
 import { SupprimerSession } from './application/supprimer-session.usecase';
 import { OuvrirSession } from './application/ouvrir-session.usecase';
 import { ObtenirPilotageSession } from './application/obtenir-pilotage-session.usecase';
@@ -60,7 +60,7 @@ import { STATUT_VERS_DTO } from './statut-session.mapper';
 import {
   AjouterQuestionSessionDto,
   AjouterThemeSessionDto,
-  ChangerModeleSessionDto,
+  ChangerModeleCollecteDto,
   CreerSessionDto,
   ModifierInfosSessionDto,
   ReordonnerQuestionSessionDto,
@@ -96,7 +96,7 @@ function versSessionDto(
     entiteId,
     date: session.date.toISOString(),
     statut: STATUT_VERS_DTO[session.statut],
-    modeleSessionId: session.modeleSessionId,
+    modeleCollecteId: session.modeleCollecteId,
     verrouillee: session.estVerrouillee(),
     code: session.code,
     selection,
@@ -115,7 +115,7 @@ export class SessionAnimeeController {
     private readonly listerSessions: ListerSessions,
     private readonly obtenirSessionDetail: ObtenirSessionDetail,
     private readonly modifierInfosSession: ModifierInfosSession,
-    private readonly changerModeleSession: ChangerModeleSession,
+    private readonly changerModeleCollecte: ChangerModeleCollecte,
     private readonly supprimerSession: SupprimerSession,
     private readonly ouvrirSession: OuvrirSession,
     private readonly obtenirPilotageSession: ObtenirPilotageSession,
@@ -140,14 +140,14 @@ export class SessionAnimeeController {
     const resultat = await this.creerSession.executer(
       dto.equipeId,
       new Date(dto.date),
-      dto.modeleSessionId,
+      dto.modeleCollecteId,
     );
     if (resultat.type === 'equipe_introuvable') {
       throw new NotFoundException(`Équipe ${dto.equipeId} introuvable`);
     }
     if (resultat.type === 'modele_introuvable') {
       throw new NotFoundException(
-        `Modèle de session ${dto.modeleSessionId} introuvable`,
+        `Modèle de collecte ${dto.modeleCollecteId} introuvable`,
       );
     }
     if (resultat.type === 'invalide') {
@@ -383,18 +383,18 @@ export class SessionAnimeeController {
   @Patch(':id/modele')
   async changerModele(
     @Param('id') id: string,
-    @Body() dto: ChangerModeleSessionDto,
+    @Body() dto: ChangerModeleCollecteDto,
   ): Promise<SessionDto> {
-    const resultat = await this.changerModeleSession.executer(
+    const resultat = await this.changerModeleCollecte.executer(
       id,
-      dto.modeleSessionId,
+      dto.modeleCollecteId,
     );
     if (resultat.type === 'introuvable') {
       throw new NotFoundException(`Session ${id} introuvable`);
     }
     if (resultat.type === 'modele_introuvable') {
       throw new NotFoundException(
-        `Modèle de session ${dto.modeleSessionId} introuvable`,
+        `Modèle de collecte ${dto.modeleCollecteId} introuvable`,
       );
     }
     if (resultat.type === 'non_modifiable') {

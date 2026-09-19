@@ -73,7 +73,7 @@
                 <nz-tag [nzColor]="session.statut === 'OUVERTE' ? 'blue' : 'default'">
                   {{ session.statut === 'OUVERTE' ? 'Ouverte' : 'Clôturée' }}
                 </nz-tag>
-                <span class="profil-equipe__sessions-modele">{{ session.modeleSessionNom ?? 'Modèle supprimé' }}</span>
+                <span class="profil-equipe__sessions-modele">{{ session.modeleCollecteNom ?? 'Modèle supprimé' }}</span>
               </a>
             </li>
           }

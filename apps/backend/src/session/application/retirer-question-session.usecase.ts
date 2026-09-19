@@ -1,4 +1,4 @@
-import { QuestionIntrouvableDansSelectionError } from '../domain/selection';
+import { QuestionIntrouvableDansSelectionError } from '../../modele-collecte/domain/selection';
 import { Session, SessionVerrouilleeError } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 

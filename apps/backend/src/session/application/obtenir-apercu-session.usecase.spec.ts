@@ -1,6 +1,6 @@
 import { EquipeRepository } from '../../organisation/domain/equipe.repository';
 import { Equipe } from '../../organisation/domain/equipe';
-import { Selection } from '../domain/selection';
+import { Selection } from '../../modele-collecte/domain/selection';
 import { Session } from '../domain/session';
 import { SessionRepository } from '../domain/session.repository';
 import { ObtenirApercuSession } from './obtenir-apercu-session.usecase';

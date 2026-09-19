@@ -6,7 +6,7 @@ import {
   EntiteDto,
   EquipeDto,
   JetonSessionDto,
-  ModeleSessionDto,
+  ModeleCollecteDto,
   SessionDto,
   SyntheseSessionDto,
 } from '@agilometre/shared';
@@ -52,7 +52,7 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
     await prisma.sessionQuestionSautee.deleteMany();
     await prisma.session.deleteMany();
     await prisma.selectionItem.deleteMany();
-    await prisma.modeleSession.deleteMany();
+    await prisma.modeleCollecte.deleteMany();
     await prisma.equipe.deleteMany();
     await prisma.entite.deleteMany();
     await prisma.option.deleteMany();
@@ -105,13 +105,13 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
     return reponse.body as EquipeDto;
   }
 
-  async function creerModele(nom: string): Promise<ModeleSessionDto> {
+  async function creerModele(nom: string): Promise<ModeleCollecteDto> {
     const reponse = await request(app.getHttpServer())
-      .post('/api/modeles-session')
+      .post('/api/modeles-collecte')
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ nom })
       .expect(201);
-    return reponse.body as ModeleSessionDto;
+    return reponse.body as ModeleCollecteDto;
   }
 
   async function sessionEnVote(): Promise<SessionDto> {
@@ -120,7 +120,7 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
     const equipe = await creerEquipe('Équipe Alpha', entite.id);
     const modele = await creerModele('Diagnostic');
     await request(app.getHttpServer())
-      .post(`/api/modeles-session/${modele.id}/themes`)
+      .post(`/api/modeles-collecte/${modele.id}/themes`)
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1'] })
       .expect(201);
@@ -130,7 +130,7 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
-        modeleSessionId: modele.id,
+        modeleCollecteId: modele.id,
       })
       .expect(201);
     const sessionPreparee = creation.body as SessionDto;
@@ -215,7 +215,7 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
     const equipe = await creerEquipe('Équipe Beta', entite.id);
     const modele = await creerModele('Diagnostic 2');
     await request(app.getHttpServer())
-      .post(`/api/modeles-session/${modele.id}/themes`)
+      .post(`/api/modeles-collecte/${modele.id}/themes`)
       .set('Authorization', `Bearer ${jetonCoach}`)
       .send({ questionIds: ['q1'] })
       .expect(201);
@@ -225,7 +225,7 @@ describe('Synthèse de fin de Session (e2e) — carte #52', () => {
       .send({
         equipeId: equipe.id,
         date: '2026-04-01',
-        modeleSessionId: modele.id,
+        modeleCollecteId: modele.id,
       })
       .expect(201);
     const session = creation.body as SessionDto;

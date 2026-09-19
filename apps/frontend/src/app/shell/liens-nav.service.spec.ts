@@ -25,7 +25,7 @@ describe('LiensNavService', () => {
         children: [
           { label: 'Comptes', routerLink: '/comptes' },
           { label: 'Organisation', routerLink: '/organisation' },
-          { label: 'Modèles de session', routerLink: '/modeles-session' },
+          { label: 'Modèles de collecte', routerLink: '/modeles-collecte' },
         ],
       },
       { label: 'Sessions', routerLink: '/sessions' },

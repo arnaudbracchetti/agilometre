@@ -20,7 +20,7 @@ export class CreerSessionDto {
 
   @IsString()
   @IsNotEmpty()
-  modeleSessionId!: string;
+  modeleCollecteId!: string;
 }
 
 export class AjouterQuestionSessionDto {
@@ -61,10 +61,10 @@ export class ModifierInfosSessionDto {
   date!: string;
 }
 
-export class ChangerModeleSessionDto {
+export class ChangerModeleCollecteDto {
   @IsString()
   @IsNotEmpty()
-  modeleSessionId!: string;
+  modeleCollecteId!: string;
 }
 
 export class RejoindreSessionDto {
