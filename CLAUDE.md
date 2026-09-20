@@ -4,34 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Communication
 
-Talk to the user in French, even though this file, the code, and the agent skills invoked while
-working here (`/ddd`, `/grilling`, `/domain-modeling`, wayfinder, etc.) are all written in
-English.
+Talk to the user in French, even though this file, the code, and the agent skills invoked while working here (`/ddd`, `/grilling`, `/domain-modeling`, wayfinder, etc.) are all written in English.
 
 ## Git workflow
 
-Always ask for confirmation before creating a git commit — even at the end of a skill (like
-`/implement`) whose written instructions say to commit. Never commit silently as an implicit last
-step.
+Always ask for confirmation before creating a git commit — even at the end of a skill (like `/implement`) whose written instructions say to commit. Never commit silently as an implicit last step.
 
 ## Database safety
 
-Port 5433 (`pnpm dev:db`) is the developer's **own working database** — real, hand-entered data
-(referentiels, teams, sessions), not a scratch space. **Never run manual smoke tests, curl calls,
-or referentiel imports against port 5433** to verify a change — always use the isolated test
-database instead (port 5434, `pnpm dev:db:test`, database `agilometre_test`; see "pnpm/Docker
+Port 5433 (`pnpm dev:db`) is the developer's **own working database** — real, hand-entered data. **Never run manual smoke tests, curl calls, or referentiel imports against port 5433** to verify a change — always use the isolated test database instead (port 5434, `pnpm dev:db:test`, database `agilometre_test`; see "pnpm/Docker
 quirks" below for how `test:e2e` already does this). This is not a minor convenience: a
-referentiel import **replaces state wholesale** — `Referentiel.calculerChangements` archives every
-Theme/Question not present in the imported payload — so a single throwaway test import against
-the dev database once silently archived a real, previously-imported referentiel. If manual
-end-to-end verification against a running server is genuinely needed, start it against the test
-database's connection (`apps/backend/.env.test`), never the app's default `.env`.
+referentiel import **replaces state wholesale** — `Referentiel.calculerChangements` archives every Theme/Question not present in the imported payload — so a single throwaway test import against the dev database once silently archived a real, previously-imported referentiel. If manual end-to-end verification against a running server is genuinely needed, start it against the test database's connection (`apps/backend/.env.test`), never the app's default `.env`.
 
 ## What this is
 
-Agilomètre — an agile maturity diagnostic tool. Coaches run live voting sessions with teams
-(projected questions, multi-round votes) and configure recurring "pulse" email campaigns between
-sessions. Both feed the same scoring engine. Full product spec: [doc/spec/PRD-maturite-agile.md](doc/spec/PRD-maturite-agile.md) — read it before working on any domain logic (data model, anonymity rules, scoring engine, role-based views).
+Agilomètre — an agile maturity diagnostic tool. Coaches run live voting sessions with teams (projected questions, multi-round votes) and configure recurring "pulse" email campaigns between sessions. Both feed the same scoring engine. Full product spec: [doc/spec/PRD-maturite-agile.md](doc/spec/PRD-maturite-agile.md) — read it before working on any domain logic (data model, anonymity rules, scoring engine, role-based views).
 
 Key constraints from the PRD that shape the stack (§10):
 - Deployed on-premise at each client, one instance per client, no cloud dependency.

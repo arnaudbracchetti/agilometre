@@ -33,6 +33,13 @@ export class LiensNavService {
       liens.push({ label: 'Sessions', routerLink: '/sessions' });
     }
 
+    // Écran « Collecte d'informations » (doc/spec/annexes/campagne-de-pouls.md §6) : ce ticket ne
+    // porte que l'onglet Campagnes, la fusion avec l'onglet Sessions ci-dessus appartient à la
+    // carte #81. Lien provisoire, distinct du lien Sessions jusqu'à cette fusion.
+    if (this.droits.peut('gererCampagnesPouls')) {
+      liens.push({ label: 'Collecte de pouls', routerLink: '/collecte' });
+    }
+
     // Une seule page ('/profil', arbre de sélection) sert le Profil d'Équipe (Coach + Membre
     // d'équipe, #62) et le Profil d'Entité (Coach + Direction, #61) — l'un ou l'autre droit suffit
     // à y accéder, l'arbre lui-même se charge de filtrer ce que chaque Rôle peut y sélectionner

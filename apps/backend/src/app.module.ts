@@ -13,6 +13,7 @@ import { HealthModule } from './health/health.module';
 import { ReferentielModule } from './referentiel/referentiel.module';
 import { OrganisationModule } from './organisation/organisation.module';
 import { SessionModule } from './session/session.module';
+import { PoulsModule } from './pouls/pouls.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthGuard } from './auth/guards/auth.guard';
 import { PerimetreGuard } from './auth/guards/perimetre.guard';
@@ -63,6 +64,7 @@ const publicDir = join(__dirname, '..', '..', 'public');
     ReferentielModule,
     OrganisationModule,
     SessionModule,
+    PoulsModule,
     AuthModule,
   ],
   providers: [

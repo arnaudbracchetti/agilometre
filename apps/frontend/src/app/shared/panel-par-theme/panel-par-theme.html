@@ -1,0 +1,18 @@
+<nz-collapse class="panel-par-theme" [nzBordered]="false">
+  @for (groupe of groupes(); track groupe.themeId) {
+    <nz-collapse-panel [nzHeader]="enteteGroupe" [nzActive]="false">
+      <ng-template #enteteGroupe>
+        <span class="panel-par-theme__pastille" [style.background]="groupe.couleur"></span>
+        <span class="panel-par-theme__theme-libelle">{{ groupe.themeLibelle }}</span>
+        <span class="panel-par-theme__theme-compte">
+          {{ groupe.questions.length }} question{{ groupe.questions.length > 1 ? 's' : '' }}
+        </span>
+      </ng-template>
+      <ul class="panel-par-theme__liste">
+        @for (question of groupe.questions; track question.questionId) {
+          <li>{{ question.libelle }}</li>
+        }
+      </ul>
+    </nz-collapse-panel>
+  }
+</nz-collapse>

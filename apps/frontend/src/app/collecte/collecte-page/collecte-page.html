@@ -1,0 +1,18 @@
+<div class="collecte">
+  <nav class="collecte__arbre" aria-labelledby="collecte-arbre-titre">
+    <h2 class="collecte__titre" id="collecte-arbre-titre">Organisation</h2>
+    <app-arbre-organisation />
+  </nav>
+
+  <section class="collecte__detail">
+    <nz-tabs>
+      <nz-tab nzTitle="Campagnes">
+        @if (equipeSelectionneeId(); as equipeId) {
+          <app-campagne-tab [equipeId]="equipeId" />
+        } @else {
+          <p class="collecte__etat-vide">Sélectionnez une Équipe dans l’arbre pour voir sa Campagne de pouls.</p>
+        }
+      </nz-tab>
+    </nz-tabs>
+  </section>
+</div>

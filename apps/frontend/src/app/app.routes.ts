@@ -99,6 +99,13 @@ export const routes: Routes = [
         ],
       },
       {
+        path: 'collecte',
+        canActivate: [droitGuard('gererCampagnesPouls')],
+        data: { breadcrumb: 'Collecte de pouls' },
+        loadComponent: () =>
+          import('./collecte/collecte-page/collecte-page').then((m) => m.CollectePage),
+      },
+      {
         path: 'modeles-collecte',
         data: { breadcrumb: 'Modèles de collecte' },
         children: [

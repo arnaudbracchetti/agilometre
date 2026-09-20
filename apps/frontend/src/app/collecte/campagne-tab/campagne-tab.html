@@ -1,0 +1,29 @@
+<div class="campagne-tab">
+  @if (chargementEnCours()) {
+    <p class="campagne-tab__etat">Chargement…</p>
+  } @else if (!campagne()) {
+    <div class="campagne-tab__vide">
+      <p>Aucune Campagne de pouls pour cette Équipe.</p>
+      <button nz-button nzType="primary" (click)="ouvrirCreation()">Créer une Campagne de pouls</button>
+    </div>
+  } @else {
+    <div class="campagne-tab__configuration">
+      <h3 class="campagne-tab__titre">Configuration</h3>
+      <dl class="campagne-tab__champs">
+        <dt>Statut</dt>
+        <dd>{{ campagne()!.statut }}</dd>
+        <dt>Rythme</dt>
+        <dd>{{ joursEnvoiLibelles() }} à {{ heureEnvoiLibelle() }}</dd>
+        <dt>Questions par envoi</dt>
+        <dd>{{ campagne()!.questionsParEnvoi }}</dd>
+      </dl>
+    </div>
+
+    <div class="campagne-tab__panel">
+      <h3 class="campagne-tab__titre">
+        Panel — {{ campagne()!.panel.length }} question{{ campagne()!.panel.length > 1 ? 's' : '' }}
+      </h3>
+      <app-panel-par-theme [questions]="campagne()!.panel" />
+    </div>
+  }
+</div>

@@ -26,6 +26,13 @@ enum StatutSession {
   CLOTUREE
 }
 
+enum StatutCampagne {
+  BROUILLON
+  ACTIVE
+  SUSPENDUE
+  TERMINEE
+}
+
 // --- Référentiel : ré-importable dans le temps via Clé stable (ADR 0004) ---
 
 model Referentiel {
@@ -272,27 +279,72 @@ model Participation {
 
 // --- Campagne de pouls (§4, §8) ---
 
+// Au plus une Campagne ACTIVE par Équipe : garde applicative dans le use case (via le repository),
+// doublée d'un index unique partiel écrit à la main dans la migration - non représentable ici, même
+// limitation que Session_code_ouverte_key :
+//   CREATE UNIQUE INDEX "CampagnePouls_equipe_active_key"
+//     ON "CampagnePouls" ("equipeId") WHERE "statut" = 'ACTIVE';
+// `modeleCollecteId` est un scalaire nu, sans relation Prisma ni FK (ADR-0009) : le Panel ci-dessous
+// est une copie figée, la suppression du Modèle source n'a aucun effet.
+// Pas de dateFin : la terminaison est un geste du Coach, jamais une date (ADR-0026).
 model CampagnePouls {
-  id                String          @id @default(uuid())
-  equipe            Equipe          @relation(fields: [equipeId], references: [id])
+  id                String              @id @default(uuid())
+  equipe            Equipe              @relation(fields: [equipeId], references: [id])
   equipeId          String
-  rythmeJours       Int
-  questionsParEnvoi Int             @default(1)
-  dateFin           DateTime?
+  statut            StatutCampagne      @default(BROUILLON)
+  modeleCollecteId  String
+  joursEnvoi        Int[]
+  heureEnvoi        Int
+  questionsParEnvoi Int
+  panel             CampagnePanelItem[]
   sollicitations    Sollicitation[]
 }
 
-// Trace qui a été sollicité, sur quelle question, sans jamais lier à la réponse (§5).
-model Sollicitation {
+// Copie figée de la Sélection du Modèle de collecte (ADR-0009) - même patron que
+// SelectionItem. `questionId` en chaîne simple : Référentiel et Pouls sont des bounded
+// contexts séparés.
+model CampagnePanelItem {
   id         String        @id @default(uuid())
-  campagne   CampagnePouls @relation(fields: [campagneId], references: [id])
+  campagne   CampagnePouls @relation(fields: [campagneId], references: [id], onDelete: Cascade)
+  campagneId String
+  questionId String
+  ordre      Int
+
+  @@index([campagneId])
+}
+
+// `envoyeeLe` porte l'instant d'Échéance calculé par le rythme, PAS l'instant réel d'écriture :
+// toutes les Sollicitations d'un même envoi partagent exactement la même valeur. C'est ce qui rend
+// l'Échéance lisible sans la persister (docs/design/agregat-campagne-de-pouls.md §1).
+// L'unique partiel sur (campagneId, membreId, envoyeeLe) est la garantie anti-doublon contre deux
+// réveils concurrents de l'ordonnanceur.
+// `expireLe` est l'échéance suivante, figée à l'envoi : un changement de rythme ultérieur ne la
+// déplace pas. Vérifié à la résolution du Jeton, jamais par un balayage de fond.
+// Aucun lien vers Reponse, jamais (ADR-0001).
+model Sollicitation {
+  id         String                  @id @default(uuid())
+  campagne   CampagnePouls           @relation(fields: [campagneId], references: [id], onDelete: Cascade)
   campagneId String
   membreId   String
-  questionId String
-  tokenHash  String        @unique
-  envoyeeLe  DateTime      @default(now())
+  tokenHash  String                  @unique
+  envoyeeLe  DateTime
   expireLe   DateTime
   honoreeLe  DateTime?
+  questions  SollicitationQuestion[]
+
+  @@unique([campagneId, membreId, envoyeeLe])
+  @@index([campagneId, envoyeeLe])
+}
+
+// Les N Questions d'une Sollicitation (annexe §4 : un Jeton = une Sollicitation = N Questions =
+// une soumission unique). Corrige le `questionId` singulier du squelette d'init.
+model SollicitationQuestion {
+  sollicitation   Sollicitation @relation(fields: [sollicitationId], references: [id], onDelete: Cascade)
+  sollicitationId String
+  questionId      String
+  ordre           Int
+
+  @@id([sollicitationId, questionId])
 }
 
 // --- Réponse anonyme (§4, §5) : aucun lien vers l'identité du répondant ---

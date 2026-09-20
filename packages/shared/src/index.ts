@@ -6,3 +6,4 @@ export * from './organisation';
 export * from './referentiel';
 export * from './modele-collecte';
 export * from './session';
+export * from './pouls';

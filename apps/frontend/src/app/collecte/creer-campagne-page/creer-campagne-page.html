@@ -1,0 +1,76 @@
+<div class="creer">
+  <div class="creer__corps">
+    <form class="creer__formulaire" (ngSubmit)="creer()">
+      <div class="creer__champ">
+        <label for="modele">Modèle de collecte</label>
+        <nz-select
+          id="modele"
+          name="modele"
+          nzPlaceHolder="Choisir un Modèle"
+          [ngModel]="modeleCollecteId()"
+          (ngModelChange)="onModeleChange($event)"
+        >
+          @for (modele of modeles(); track modele.id) {
+            <nz-option [nzValue]="modele.id" [nzLabel]="modele.nom"></nz-option>
+          }
+        </nz-select>
+      </div>
+
+      <div class="creer__champ">
+        <span class="creer__label">Jours d’envoi</span>
+        <div class="creer__jours">
+          @for (jour of joursSemaine; track jour.numero) {
+            <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -- nz-checkbox rend son propre <input> projeté, invisible à l'analyse statique -->
+            <label
+              nz-checkbox
+              [ngModel]="joursEnvoi().includes(jour.numero)"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onJourChange(jour.numero, $event)"
+            >
+              {{ jour.libelle }}
+            </label>
+          }
+        </div>
+      </div>
+
+      <div class="creer__champ">
+        <label for="heure">Heure d’envoi</label>
+        <nz-time-picker
+          id="heure"
+          name="heure"
+          nzFormat="HH:mm"
+          [nzMinuteStep]="15"
+          [ngModel]="heureEnvoi()"
+          (ngModelChange)="heureEnvoi.set($event)"
+        ></nz-time-picker>
+      </div>
+
+      <div class="creer__champ">
+        <label for="questionsParEnvoi">Questions par envoi</label>
+        <nz-input-number
+          id="questionsParEnvoi"
+          name="questionsParEnvoi"
+          [nzMin]="1"
+          [ngModel]="questionsParEnvoi()"
+          (ngModelChange)="questionsParEnvoi.set($event)"
+        ></nz-input-number>
+      </div>
+
+      <app-dialog-actions
+        libelleAction="Créer"
+        [actionDesactivee]="!formulaireValide()"
+        [actionEnCours]="creationEnCours()"
+        (annuler)="annuler()"
+      ></app-dialog-actions>
+    </form>
+
+    @if (apercuModele(); as modele) {
+      <aside class="creer__apercu">
+        <h3 class="creer__apercu-titre">
+          Panel — {{ modele.selection.length }} question{{ modele.selection.length > 1 ? 's' : '' }}
+        </h3>
+        <app-panel-par-theme [questions]="modele.selection" />
+      </aside>
+    }
+  </div>
+</div>

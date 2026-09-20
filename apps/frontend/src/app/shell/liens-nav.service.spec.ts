@@ -16,7 +16,7 @@ describe('LiensNavService', () => {
     expect(creerService(null).liens()).toEqual([]);
   });
 
-  it('un Coach voit Administration (avec ses trois sous-entrées), Sessions et Profil', () => {
+  it('un Coach voit Administration (avec ses trois sous-entrées), Sessions, Collecte de pouls et Profil', () => {
     const liens = creerService(Role.Coach).liens();
 
     expect(liens).toEqual([
@@ -29,6 +29,7 @@ describe('LiensNavService', () => {
         ],
       },
       { label: 'Sessions', routerLink: '/sessions' },
+      { label: 'Collecte de pouls', routerLink: '/collecte' },
       { label: 'Profil', routerLink: '/profil' },
     ]);
   });
